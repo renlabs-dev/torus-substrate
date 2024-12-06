@@ -1,0 +1,31 @@
+[package]
+name = "torus-runtime"
+description = "The torus blockchain runtime."
+version = "0.1.0"
+license = "MIT-0"
+authors.workspace = true
+edition.workspace = true
+
+[features]
+default = ["std"]
+std = ["codec/std", "pallet-torus0/std", "polkadot-sdk/std", "scale-info/std"]
+
+[dependencies]
+codec.workspace = true
+scale-info.workspace = true
+polkadot-sdk = { workspace = true, features = [
+	"runtime",
+
+	"pallet-balances",
+	"pallet-sudo",
+	"pallet-timestamp",
+	"pallet-transaction-payment",
+	"pallet-transaction-payment-rpc-runtime-api",
+] }
+
+pallet-torus0.workspace = true
+
+[build-dependencies]
+polkadot-sdk = { optional = true, workspace = true, features = [
+	"substrate-wasm-builder",
+] }

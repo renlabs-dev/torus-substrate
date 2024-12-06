@@ -1,0 +1,23 @@
+[workspace]
+members = ["node", "runtime", "pallets/*"]
+resolver = "2"
+
+[workspace.package]
+authors = ["Luiz Carvalho <luizcmpc@gmail.com>"]
+edition = "2021"
+
+[workspace.dependencies]
+torus-node = { path = "./node", default-features = false }
+torus-runtime = { path = "./runtime", default-features = false }
+pallet-torus0 = { path = "./pallets/torus0", default-features = false }
+
+polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-stable2409-2", default-features = false }
+
+codec = { version = "3.6.12", default-features = false, package = "parity-scale-codec" }
+scale-info = { version = "2.11.1", default-features = false }
+
+clap = "4.5.22"
+futures = "0.3"
+futures-timer = "3"
+jsonrpsee = "0.24"
+serde_json = "1"

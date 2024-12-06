@@ -1,0 +1,52 @@
+name: Linting
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Rust toolchain
+        run: |
+          rustup set profile minimal
+          rustup show
+
+      - name: Ensure Rust formatting
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          version: 3.20.1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Clippy errors
+        uses: actions-rs/clippy-check@v1
+        continue-on-error: true
+        env:
+          SKIP_WASM_BUILD: 1
+        with:
+          args: --color=always -- -D warnings
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run tests
+        env:
+          SKIP_WASM_BUILD: 1
+        run: cargo test
