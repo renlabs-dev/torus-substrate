@@ -6896,6 +6896,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-governance0"
+version = "0.1.0"
+dependencies = [
+ "pallet-torus0",
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "scale-info",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "38.0.0"
 source = "git+https://github.com/paritytech/polkadot-sdk.git?tag=polkadot-stable2409-2#dba2dd59101617aad64d167e400b19e2c35052b1"
