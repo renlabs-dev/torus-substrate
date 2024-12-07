@@ -48,9 +48,6 @@ pub mod pallet {
         StorageValue<_, T::AccountId, ValueQuery, DefaultDaoTreasuryAddress<T>>;
 
     #[pallet::storage]
-    pub type RestrictContractDeploy<T: Config> = StorageValue<_, bool, ValueQuery>;
-
-    #[pallet::storage]
     pub type AgentApplications<T: Config> = StorageMap<_, Identity, u64, AgentApplication<T>>;
 
     #[pallet::storage]
