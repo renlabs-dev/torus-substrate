@@ -1,22 +1,69 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod application;
+mod config;
 mod curator;
 mod proposal;
 mod voting;
 mod whitelist;
 
+use crate::application::AgentApplication;
+use crate::config::GovernanceConfiguration;
+use crate::proposal::{Proposal, ProposalId, UnrewardedProposal};
 use frame::testing_prelude::{DispatchResult, OriginFor};
 pub use pallet::*;
+use polkadot_sdk::frame_support::Identity;
+use polkadot_sdk::frame_support::{pallet_prelude::*, PalletId};
 use polkadot_sdk::polkadot_sdk_frame as frame;
+use polkadot_sdk::sp_runtime::traits::AccountIdConversion;
 use polkadot_sdk::sp_std::vec::Vec;
 
 #[frame::pallet]
 pub mod pallet {
     use super::*;
 
+    #[pallet::storage]
+    pub type Proposals<T: Config> = StorageMap<_, Identity, ProposalId, Proposal<T>>;
+
+    #[pallet::storage]
+    pub type UnrewardedProposals<T: Config> =
+        StorageMap<_, Identity, ProposalId, UnrewardedProposal<T>>;
+
+    #[pallet::storage]
+    pub type NotDelegatingVotingPower<T: Config> =
+        StorageValue<_, BoundedBTreeSet<T::AccountId, ConstU32<{ u32::MAX }>>, ValueQuery>;
+
+    #[pallet::storage]
+    pub type GlobalGovernanceConfig<T: Config> =
+        StorageValue<_, GovernanceConfiguration, ValueQuery>;
+
+    // This has to be different than DefaultKey, so we are not conflicting in tests.
+    #[pallet::type_value]
+    pub fn DefaultDaoTreasuryAddress<T: Config>() -> T::AccountId {
+        <T as Config>::PalletId::get().into_account_truncating()
+    }
+
+    #[pallet::storage]
+    pub type DaoTreasuryAddress<T: Config> =
+        StorageValue<_, T::AccountId, ValueQuery, DefaultDaoTreasuryAddress<T>>;
+
+    #[pallet::storage]
+    pub type RestrictContractDeploy<T: Config> = StorageValue<_, bool, ValueQuery>;
+
+    #[pallet::storage]
+    pub type AgentApplications<T: Config> = StorageMap<_, Identity, u64, AgentApplication<T>>;
+
+    #[pallet::storage]
+    pub type Whitelist<T: Config> = StorageMap<_, Identity, T::AccountId, ()>;
+
+    #[pallet::storage]
+    pub type Curators<T: Config> = StorageMap<_, Identity, T::AccountId, ()>;
+
     #[pallet::config]
-    pub trait Config: polkadot_sdk::frame_system::Config {}
+    pub trait Config: polkadot_sdk::frame_system::Config {
+        #[pallet::constant]
+        type PalletId: Get<PalletId>;
+    }
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);

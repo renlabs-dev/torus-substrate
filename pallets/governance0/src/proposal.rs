@@ -3,7 +3,7 @@ use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, DebugNoBound},
     polkadot_sdk_frame::prelude::OriginFor,
     sp_core::ConstU32,
-    sp_runtime::{BoundedBTreeSet, BoundedVec},
+    sp_runtime::{BoundedBTreeMap, BoundedBTreeSet, BoundedVec},
     sp_std::vec::Vec,
 };
 use scale_info::TypeInfo;
@@ -50,6 +50,14 @@ pub enum ProposalStatus<T: crate::Config> {
 pub enum ProposalData<T: crate::Config> {
     GlobalCustom,
     TransferDaoTreasury { account: T::AccountId, amount: u64 },
+}
+
+#[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
+#[scale_info(skip_type_params(T))]
+pub struct UnrewardedProposal<T: crate::Config> {
+    pub block: u64,
+    pub votes_for: BoundedBTreeMap<T::AccountId, u64, ConstU32<{ u32::MAX }>>,
+    pub votes_against: BoundedBTreeMap<T::AccountId, u64, ConstU32<{ u32::MAX }>>,
 }
 
 pub fn add_global_custom_proposal<T: crate::Config>(
