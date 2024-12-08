@@ -13864,6 +13864,7 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",
+ "smallvec",
 ]
 
 [[package]]

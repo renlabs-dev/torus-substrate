@@ -13,19 +13,20 @@ std = ["codec/std", "pallet-torus0/std", "polkadot-sdk/std", "scale-info/std"]
 [dependencies]
 codec.workspace = true
 scale-info.workspace = true
+smallvec.workspace = true
 polkadot-sdk = { workspace = true, features = [
-	"runtime",
-
-	"pallet-balances",
-	"pallet-sudo",
-	"pallet-timestamp",
-	"pallet-transaction-payment",
-	"pallet-transaction-payment-rpc-runtime-api",
+    "runtime",
+    "pallet-balances",
+    "pallet-sudo",
+    "pallet-timestamp",
+    "pallet-transaction-payment",
+    "pallet-transaction-payment-rpc-runtime-api",
+    "sp-arithmetic",
 ] }
 
 pallet-torus0.workspace = true
 
 [build-dependencies]
 polkadot-sdk = { optional = true, workspace = true, features = [
-	"substrate-wasm-builder",
+    "substrate-wasm-builder",
 ] }
