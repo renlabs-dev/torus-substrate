@@ -24,7 +24,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 extern crate alloc;
 
 use alloc::{vec, vec::Vec};
-use core::u64;
 
 use crate::interface::Balance;
 use frame_support::{
@@ -191,7 +190,7 @@ impl frame_system::Config for Runtime {
     type DbWeight = RocksDbWeight;
     /// Specifies how many recent block hashes to keep in storage
     /// Older block hashes are pruned when this limit is reached
-    type BlockHashCount = frame_support::traits::ConstU32<768>;
+    type BlockHashCount = ConstU32<768>;
 }
 
 impl pallet_balances::Config for Runtime {
@@ -284,7 +283,7 @@ impl WeightToFeePolynomial for LengthToFee {
             WeightToFeeCoefficient {
                 degree: 3,
                 coeff_frac: Perbill::zero(),
-                coeff_integer: 1 * currency::SUPPLY_FACTOR,
+                coeff_integer: currency::SUPPLY_FACTOR,
                 negative: false,
             },
         ]
@@ -303,7 +302,7 @@ pub mod currency {
     /// Base fee per weight unit
     pub const WEIGHT_FEE: Balance = 50 * KILOWEI * SUPPLY_FACTOR / 4;
     /// Fee per transaction byte
-    pub const TRANSACTION_BYTE_FEE: Balance = 1 * GIGAWEI * SUPPLY_FACTOR;
+    pub const TRANSACTION_BYTE_FEE: Balance = GIGAWEI * SUPPLY_FACTOR;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
