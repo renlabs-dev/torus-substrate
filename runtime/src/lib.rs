@@ -132,6 +132,8 @@ mod runtime {
     pub type Torus = pallet_torus0::Pallet<Runtime>;
 }
 
+/// The runtime has 18 token decimals
+const TOKEN_DECIMALS: u32 = 18;
 /// Percentage of block resources allocated to normal dispatches (75%)
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// Maximum allowed proof size for a block
@@ -203,10 +205,10 @@ impl pallet_balances::Config for Runtime {
     /// The type for recording an account's freezing reason
     type RuntimeFreezeReason = ();
     /// The type for recording account balances
-    type Balance = u64;
+    type Balance = u128;
     /// The minimum amount required to keep an account open
     /// 0.1 Unit
-    type ExistentialDeposit = ConstU64<100_000_000>;
+    type ExistentialDeposit = ConstU128<{ 10_u128.pow(TOKEN_DECIMALS) / 10 }>;
     /// The identifier for reserved tokens
     type ReserveIdentifier = ();
     /// The identifier for frozen tokens
@@ -313,7 +315,7 @@ impl pallet_transaction_payment::Config for Runtime {
     /// Multiplier for operational transactions (set to 5x)
     type OperationalFeeMultiplier = ConstU8<5>;
     /// Converts transaction weight to fee using a constant multiplier
-    type WeightToFee = ConstantMultiplier<Balance, ConstU64<{ currency::WEIGHT_FEE }>>;
+    type WeightToFee = ConstantMultiplier<Balance, ConstU128<{ currency::WEIGHT_FEE }>>;
     /// Converts transaction length to fee using polynomial formula
     type LengthToFee = LengthToFee;
     /// Dynamic fee adjustment based on block fullness
