@@ -241,13 +241,12 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
     // Base: 1 token + (88 bytes * 0.01 token)
-    pub const DepositBase: Balance = (1 * 10u128.saturating_pow(TOKEN_DECIMALS))  // 1 token
+    pub const DepositBase: Balance = 10u128.saturating_pow(TOKEN_DECIMALS)  // 1 token
         + (88 * 10u128.saturating_pow(TOKEN_DECIMALS - 2));  // 0.01 token per byte
-
-    // Factor: 0 token + (32 bytes * 0.01 token)
-    pub const DepositFactor: Balance = (0 * 10u128.saturating_pow(TOKEN_DECIMALS))  // 0 token
-        + (32 * 10u128.saturating_pow(TOKEN_DECIMALS - 2));  // 0.01 token per byte
-
+    // Factor: (32 bytes * 0.01 token)
+    pub const DepositFactor: Balance =
+        32 * 10u128.saturating_pow(TOKEN_DECIMALS - 2);  // 0.01 token per byte
+    // Maximum number of participans in a multisignature
     pub const MaxSignatories: u32 = 100;
 }
 
