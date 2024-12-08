@@ -127,8 +127,12 @@ mod runtime {
     #[runtime::pallet_index(4)]
     pub type TransactionPayment = pallet_transaction_payment::Pallet<Runtime>;
 
-    /// The Torus pallet.
+    /// Provides multisignature transaction functionality
     #[runtime::pallet_index(5)]
+    pub type Multisig = pallet_multisig::Pallet<Runtime>;
+
+    /// The Torus pallet.
+    #[runtime::pallet_index(6)]
     pub type Torus = pallet_torus0::Pallet<Runtime>;
 }
 
@@ -233,6 +237,37 @@ impl pallet_sudo::Config for Runtime {
     type RuntimeCall = RuntimeCall;
     /// Weight information for the extrinsics in this pallet
     type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+    // Base: 1 token + (88 bytes * 0.01 token)
+    pub const DepositBase: Balance = (1 * 10u128.saturating_pow(TOKEN_DECIMALS))  // 1 token
+        + (88 * 10u128.saturating_pow(TOKEN_DECIMALS - 2));  // 0.01 token per byte
+
+    // Factor: 0 token + (32 bytes * 0.01 token)
+    pub const DepositFactor: Balance = (0 * 10u128.saturating_pow(TOKEN_DECIMALS))  // 0 token
+        + (32 * 10u128.saturating_pow(TOKEN_DECIMALS - 2));  // 0.01 token per byte
+
+    pub const MaxSignatories: u32 = 100;
+}
+
+impl pallet_multisig::Config for Runtime {
+    /// The overarching event type.
+    type RuntimeEvent = RuntimeEvent;
+    /// The overarching call type.
+    type RuntimeCall = RuntimeCall;
+    /// The currency mechanism that handles deposits and balances.
+    type Currency = Balances;
+    /// The base deposit amount required for creating a multisig transaction.
+    /// Calculated as: 1 token + (88 bytes * 0.01 token)
+    type DepositBase = DepositBase;
+    /// The additional deposit amount required per signatory.
+    /// Calculated as: 0 token + (32 bytes * 0.01 token)
+    type DepositFactor = DepositFactor;
+    /// The maximum number of signatories allowed for a multisig transaction.
+    type MaxSignatories = MaxSignatories;
+    /// Weight information for extrinsics in this pallet.
+    type WeightInfo = pallet_multisig::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_timestamp::Config for Runtime {
