@@ -39,7 +39,6 @@ jobs:
 
       - name: Check Clippy errors
         uses: actions-rs/clippy-check@v1
-        continue-on-error: true
         env:
           SKIP_WASM_BUILD: 1
         with:
