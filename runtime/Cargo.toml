@@ -19,6 +19,8 @@ polkadot-sdk = { workspace = true, features = [
     "pallet-balances",
     "pallet-sudo",
     "pallet-multisig",
+    "pallet-aura",
+    "pallet-grandpa",
     "pallet-timestamp",
     "pallet-transaction-payment",
     "pallet-transaction-payment-rpc-runtime-api",

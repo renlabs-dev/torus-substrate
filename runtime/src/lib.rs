@@ -33,6 +33,7 @@ use frame_support::{
         ConstantMultiplier, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
     },
 };
+use pallet_aura::MinimumPeriodTimesTwo;
 use pallet_transaction_payment::{
     FeeDetails, FungibleAdapter, Multiplier, RuntimeDispatchInfo, TargetedFeeAdjustment,
 };
@@ -42,6 +43,7 @@ use polkadot_sdk::{
     *,
 };
 use smallvec::smallvec;
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::{Perbill, Perquintill};
 
 pub mod apis;
@@ -66,6 +68,29 @@ pub fn native_version() -> NativeVersion {
         runtime_version: VERSION,
         can_author_with: Default::default(),
     }
+}
+
+type Block = frame::runtime::types_common::BlockOf<Runtime, SignedExtra>;
+type Header = HeaderFor<Runtime>;
+type RuntimeExecutive =
+    Executive<Runtime, Block, frame_system::ChainContext<Runtime>, Runtime, AllPalletsWithSystem>;
+
+/// Some re-exports that the node side code needs to know. Some are useful in this context as well.
+///
+/// Other types should preferably be private.
+// TODO: this should be standardized in some way, see:
+// https://github.com/paritytech/substrate/issues/10579#issuecomment-1600537558
+pub mod interface {
+    use super::Runtime;
+    use polkadot_sdk::{polkadot_sdk_frame as frame, *};
+
+    pub type Block = super::Block;
+    pub use frame::runtime::types_common::OpaqueBlock;
+    pub type AccountId = <Runtime as frame_system::Config>::AccountId;
+    pub type Nonce = <Runtime as frame_system::Config>::Nonce;
+    pub type Hash = <Runtime as frame_system::Config>::Hash;
+    pub type Balance = <Runtime as pallet_balances::Config>::Balance;
+    pub type MinimumBalance = <Runtime as pallet_balances::Config>::ExistentialDeposit;
 }
 
 /// The signed extensions that are added to the runtime.
@@ -111,28 +136,36 @@ mod runtime {
     #[runtime::pallet_index(0)]
     pub type System = frame_system::Pallet<Runtime>;
 
-    /// Provides a way for consensus systems to set and check the onchain time.
+    /// Aura consensus pallet
     #[runtime::pallet_index(1)]
+    pub type Aura = pallet_aura::Pallet<Runtime>;
+
+    /// Grandpa finality pallet
+    #[runtime::pallet_index(2)]
+    pub type Grandpa = pallet_grandpa::Pallet<Runtime>;
+
+    /// Provides a way for consensus systems to set and check the onchain time.
+    #[runtime::pallet_index(3)]
     pub type Timestamp = pallet_timestamp::Pallet<Runtime>;
 
     /// Provides the ability to keep track of balances.
-    #[runtime::pallet_index(2)]
+    #[runtime::pallet_index(4)]
     pub type Balances = pallet_balances::Pallet<Runtime>;
 
     /// Provides a way to execute privileged functions.
-    #[runtime::pallet_index(3)]
+    #[runtime::pallet_index(5)]
     pub type Sudo = pallet_sudo::Pallet<Runtime>;
 
     /// Provides the ability to charge for extrinsic execution.
-    #[runtime::pallet_index(4)]
+    #[runtime::pallet_index(6)]
     pub type TransactionPayment = pallet_transaction_payment::Pallet<Runtime>;
 
     /// Provides multisignature transaction functionality
-    #[runtime::pallet_index(5)]
+    #[runtime::pallet_index(7)]
     pub type Multisig = pallet_multisig::Pallet<Runtime>;
 
     /// The Torus pallet.
-    #[runtime::pallet_index(6)]
+    #[runtime::pallet_index(8)]
     pub type Torus = pallet_torus0::Pallet<Runtime>;
 }
 
@@ -143,23 +176,20 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// Maximum allowed proof size for a block
 const MAX_PROOF_SIZE: u64 = u64::MAX;
 
+// --- Frame System ---
+
 parameter_types! {
     /// Runtime version identifier
     pub const Version: RuntimeVersion = VERSION;
-
     /// Block weight limits with default configurations and 2x reference time
     pub BlockWeights: frame_system::limits::BlockWeights =
         frame_system::limits::BlockWeights::with_sensible_defaults(
             Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), MAX_PROOF_SIZE),
             NORMAL_DISPATCH_RATIO
         );
-
     /// Block length limits set to 5MB with normal dispatch ratio
     pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
         ::max_with_normal_ratio(10 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-
-    /// SS58 address format identifier
-    pub const SS58Prefix: u8 = 42;
 }
 
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig)]
@@ -182,7 +212,7 @@ impl frame_system::Config for Runtime {
     type AccountData = pallet_balances::AccountData<<Runtime as pallet_balances::Config>::Balance>;
     /// The SS58 prefix used to generate addresses for this chain
     /// Helps distinguish addresses between different chains
-    type SS58Prefix = SS58Prefix;
+    type SS58Prefix = ConstU16<42>;
     /// Contains version information about the runtime
     /// Used for runtime upgrades and compatibility
     type Version = Version;
@@ -198,6 +228,8 @@ impl frame_system::Config for Runtime {
     /// Older block hashes are pruned when this limit is reached
     type BlockHashCount = ConstU32<768>;
 }
+
+// --- Balances ---
 
 impl pallet_balances::Config for Runtime {
     /// The means of storing the balances of an account
@@ -230,6 +262,8 @@ impl pallet_balances::Config for Runtime {
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 
+// --- Sudo ---
+
 impl pallet_sudo::Config for Runtime {
     /// The overarching event type that will be emitted by this pallet
     type RuntimeEvent = RuntimeEvent;
@@ -239,6 +273,8 @@ impl pallet_sudo::Config for Runtime {
     type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
+// --- Multisig ---
+
 parameter_types! {
     // Base: 1 token + (88 bytes * 0.01 token)
     pub const DepositBase: Balance = 10u128.saturating_pow(TOKEN_DECIMALS)  // 1 token
@@ -246,8 +282,6 @@ parameter_types! {
     // Factor: (32 bytes * 0.01 token)
     pub const DepositFactor: Balance =
         32 * 10u128.saturating_pow(TOKEN_DECIMALS - 2);  // 0.01 token per byte
-    // Maximum number of participans in a multisignature
-    pub const MaxSignatories: u32 = 100;
 }
 
 impl pallet_multisig::Config for Runtime {
@@ -264,10 +298,12 @@ impl pallet_multisig::Config for Runtime {
     /// Calculated as: 0 token + (32 bytes * 0.01 token)
     type DepositFactor = DepositFactor;
     /// The maximum number of signatories allowed for a multisig transaction.
-    type MaxSignatories = MaxSignatories;
+    type MaxSignatories = ConstU32<100>;
     /// Weight information for extrinsics in this pallet.
     type WeightInfo = pallet_multisig::weights::SubstrateWeight<Runtime>;
 }
+
+// --- Timestamp ---
 
 impl pallet_timestamp::Config for Runtime {
     /// The type used to store timestamps. In this case, it's an unsigned 64-bit integer.
@@ -280,6 +316,8 @@ impl pallet_timestamp::Config for Runtime {
     /// Weight information for the extrinsics in this pallet
     type WeightInfo = pallet_timestamp::weights::SubstrateWeight<Runtime>;
 }
+
+// --- Transaction Payment ---
 
 parameter_types! {
     pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(35);
@@ -356,28 +394,45 @@ impl pallet_transaction_payment::Config for Runtime {
     type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Runtime>;
 }
 
-impl pallet_torus0::Config for Runtime {}
+// --- Aura ---
 
-type Block = frame::runtime::types_common::BlockOf<Runtime, SignedExtra>;
-type Header = HeaderFor<Runtime>;
-
-type RuntimeExecutive =
-    Executive<Runtime, Block, frame_system::ChainContext<Runtime>, Runtime, AllPalletsWithSystem>;
-
-/// Some re-exports that the node side code needs to know. Some are useful in this context as well.
-///
-/// Other types should preferably be private.
-// TODO: this should be standardized in some way, see:
-// https://github.com/paritytech/substrate/issues/10579#issuecomment-1600537558
-pub mod interface {
-    use super::Runtime;
-    use polkadot_sdk::{polkadot_sdk_frame as frame, *};
-
-    pub type Block = super::Block;
-    pub use frame::runtime::types_common::OpaqueBlock;
-    pub type AccountId = <Runtime as frame_system::Config>::AccountId;
-    pub type Nonce = <Runtime as frame_system::Config>::Nonce;
-    pub type Hash = <Runtime as frame_system::Config>::Hash;
-    pub type Balance = <Runtime as pallet_balances::Config>::Balance;
-    pub type MinimumBalance = <Runtime as pallet_balances::Config>::ExistentialDeposit;
+impl pallet_aura::Config for Runtime {
+    /// The identifier type for an authority.
+    type AuthorityId = AuraId;
+    /// The way to handle disabled validators.
+    /// `()` means no special handling for disabled validators.
+    type DisabledValidators = ();
+    /// Maximum number of authorities that can be set in the AURA consensus.
+    type MaxAuthorities = ConstU32<128>;
+    /// Configuration parameter to allow or disallow multiple blocks per slot.
+    /// Set to false to prevent multiple blocks in the same slot.
+    type AllowMultipleBlocksPerSlot = ConstBool<false>;
+    /// The duration of a slot in the AURA consensus mechanism.
+    /// Uses MinimumPeriodTimesTwo for slot duration calculation.
+    type SlotDuration = MinimumPeriodTimesTwo<Runtime>;
 }
+
+// --- Grandpa ---
+
+impl pallet_grandpa::Config for Runtime {
+    /// The overarching event type for the runtime.
+    type RuntimeEvent = RuntimeEvent;
+    /// The proof of key ownership, using Void since it's not implemented.
+    type KeyOwnerProof = sp_core::Void;
+    /// Maximum number of authorities that can participate in GRANDPA consensus.
+    type MaxAuthorities = ConstU32<128>;
+    /// Maximum number of entries in the session changes per set ID.
+    /// Set to 0 as it's not being utilized.
+    type MaxSetIdSessionEntries = ConstU64<0>;
+    /// System for reporting equivocations.
+    /// Empty implementation as it's not being utilized.
+    type EquivocationReportSystem = ();
+    /// Maximum number of nominators allowed per validator.
+    type MaxNominators = ConstU32<200>;
+    /// Weight information for the pallet
+    type WeightInfo = ();
+}
+
+// --- Torus ---
+
+impl pallet_torus0::Config for Runtime {}
