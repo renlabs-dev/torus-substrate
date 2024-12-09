@@ -8686,10 +8686,6 @@ dependencies = [
  "sc-client-db",
  "sc-consensus",
  "sc-consensus-aura",
- "sc-consensus-babe",
- "sc-consensus-babe-rpc",
- "sc-consensus-beefy",
- "sc-consensus-beefy-rpc",
  "sc-consensus-epochs",
  "sc-consensus-grandpa",
  "sc-consensus-grandpa-rpc",
@@ -8697,15 +8693,12 @@ dependencies = [
  "sc-consensus-pow",
  "sc-consensus-slots",
  "sc-executor",
- "sc-executor-common",
  "sc-executor-wasmtime",
  "sc-informant",
  "sc-keystore",
- "sc-mixnet",
  "sc-network",
  "sc-network-common",
  "sc-network-gossip",
- "sc-network-light",
  "sc-network-statement",
  "sc-network-sync",
  "sc-network-transactions",
@@ -10515,84 +10508,6 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "substrate-prometheus-endpoint",
- "thiserror",
-]
-
-[[package]]
-name = "sc-consensus-babe-rpc"
-version = "0.45.0"
-source = "git+https://github.com/paritytech/polkadot-sdk.git?tag=polkadot-stable2409-2#dba2dd59101617aad64d167e400b19e2c35052b1"
-dependencies = [
- "futures",
- "jsonrpsee",
- "sc-consensus-babe",
- "sc-consensus-epochs",
- "sc-rpc-api",
- "serde",
- "sp-api",
- "sp-application-crypto",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-babe",
- "sp-core",
- "sp-keystore",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "sc-consensus-beefy"
-version = "24.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk.git?tag=polkadot-stable2409-2#dba2dd59101617aad64d167e400b19e2c35052b1"
-dependencies = [
- "array-bytes",
- "async-channel",
- "async-trait",
- "fnv",
- "futures",
- "log",
- "parity-scale-codec",
- "parking_lot 0.12.3",
- "sc-client-api",
- "sc-consensus",
- "sc-network",
- "sc-network-gossip",
- "sc-network-sync",
- "sc-network-types",
- "sc-utils",
- "sp-api",
- "sp-application-crypto",
- "sp-arithmetic",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-beefy",
- "sp-core",
- "sp-crypto-hashing",
- "sp-keystore",
- "sp-runtime",
- "substrate-prometheus-endpoint",
- "thiserror",
- "tokio",
- "wasm-timer",
-]
-
-[[package]]
-name = "sc-consensus-beefy-rpc"
-version = "24.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk.git?tag=polkadot-stable2409-2#dba2dd59101617aad64d167e400b19e2c35052b1"
-dependencies = [
- "futures",
- "jsonrpsee",
- "log",
- "parity-scale-codec",
- "parking_lot 0.12.3",
- "sc-consensus-beefy",
- "sc-rpc",
- "serde",
- "sp-application-crypto",
- "sp-consensus-beefy",
- "sp-core",
- "sp-runtime",
  "thiserror",
 ]
 
