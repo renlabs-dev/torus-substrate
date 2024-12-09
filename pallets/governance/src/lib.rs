@@ -3,6 +3,7 @@
 mod application;
 mod config;
 mod curator;
+mod ext;
 mod proposal;
 mod voting;
 mod whitelist;
@@ -10,6 +11,7 @@ mod whitelist;
 use crate::application::AgentApplication;
 use crate::config::GovernanceConfiguration;
 use crate::proposal::{Proposal, ProposalId, UnrewardedProposal};
+pub(crate) use ext::*;
 use frame::testing_prelude::{DispatchResult, OriginFor};
 pub use pallet::*;
 use polkadot_sdk::frame_support::Identity;
@@ -20,6 +22,8 @@ use polkadot_sdk::sp_std::vec::Vec;
 
 #[frame::pallet(dev_mode)]
 pub mod pallet {
+    use frame::traits::Currency;
+
     use super::*;
 
     #[pallet::storage]
@@ -48,7 +52,8 @@ pub mod pallet {
         StorageValue<_, T::AccountId, ValueQuery, DefaultDaoTreasuryAddress<T>>;
 
     #[pallet::storage]
-    pub type AgentApplications<T: Config> = StorageMap<_, Identity, u64, AgentApplication<T>>;
+    pub type AgentApplications<T: Config> =
+        StorageMap<_, Identity, BalanceOf<T>, AgentApplication<T>>;
 
     #[pallet::storage]
     pub type Whitelist<T: Config> = StorageMap<_, Identity, T::AccountId, ()>;
@@ -60,6 +65,8 @@ pub mod pallet {
     pub trait Config: polkadot_sdk::frame_system::Config {
         #[pallet::constant]
         type PalletId: Get<PalletId>;
+
+        type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
     }
 
     #[pallet::pallet]
@@ -138,7 +145,7 @@ pub mod pallet {
         #[pallet::weight(0)]
         pub fn add_dao_treasury_transfer_proposal_extrinsic(
             origin: OriginFor<T>,
-            value: u64,
+            value: BalanceOf<T>,
             destination_key: T::AccountId,
             data: Vec<u8>,
         ) -> DispatchResult {

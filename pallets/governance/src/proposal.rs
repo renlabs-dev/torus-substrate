@@ -8,6 +8,8 @@ use polkadot_sdk::{
 };
 use scale_info::TypeInfo;
 
+use crate::BalanceOf;
+
 pub type ProposalId = u64;
 
 #[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
@@ -19,7 +21,7 @@ pub struct Proposal<T: crate::Config> {
     pub data: ProposalData<T>,
     pub status: ProposalStatus<T>,
     pub metadata: BoundedVec<u8, ConstU32<256>>,
-    pub proposal_cost: u64,
+    pub proposal_cost: BalanceOf<T>,
     pub creation_block: u64,
 }
 
@@ -29,18 +31,18 @@ pub enum ProposalStatus<T: crate::Config> {
     Open {
         votes_for: BoundedBTreeSet<T::AccountId, ConstU32<{ u32::MAX }>>,
         votes_against: BoundedBTreeSet<T::AccountId, ConstU32<{ u32::MAX }>>,
-        stake_for: u64,
-        stake_against: u64,
+        stake_for: BalanceOf<T>,
+        stake_against: BalanceOf<T>,
     },
     Accepted {
         block: u64,
-        stake_for: u64,
-        stake_against: u64,
+        stake_for: BalanceOf<T>,
+        stake_against: BalanceOf<T>,
     },
     Refused {
         block: u64,
-        stake_for: u64,
-        stake_against: u64,
+        stake_for: BalanceOf<T>,
+        stake_against: BalanceOf<T>,
     },
     Expired,
 }
@@ -69,7 +71,7 @@ pub fn add_global_custom_proposal<T: crate::Config>(
 
 pub fn add_dao_treasury_transfer_proposal<T: crate::Config>(
     _origin: OriginFor<T>,
-    _value: u64,
+    _value: BalanceOf<T>,
     _destination_key: T::AccountId,
     _data: Vec<u8>,
 ) -> DispatchResult {
