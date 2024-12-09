@@ -1,6 +1,6 @@
 use std::{borrow::Cow, net::IpAddr};
 
-use polkadot_sdk::sp_keyring::Sr25519Keyring;
+use polkadot_sdk::sp_keyring::Ed25519Keyring;
 
 mod flags;
 mod run;
@@ -58,14 +58,14 @@ struct Account<'a> {
 #[derive(Clone)]
 enum NodeId<'a> {
     Arbitrary(Cow<'a, str>),
-    Keyring(Sr25519Keyring),
+    Keyring(Ed25519Keyring),
 }
 
 impl std::fmt::Display for NodeId<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             NodeId::Arbitrary(s) => write!(f, "{s}"),
-            NodeId::Keyring(keyring) => write!(f, "{keyring}"),
+            NodeId::Keyring(keyring) => write!(f, "{}", keyring.to_account_id()),
         }
     }
 }
@@ -88,7 +88,7 @@ static BOB_ACCOUNT: Account<'static> = Account {
 
 static BOB_NODE: Node<'static> = Node {
     name: Some(Cow::Borrowed("Bob")),
-    id: Some(NodeId::Keyring(Sr25519Keyring::Bob)),
+    id: Some(NodeId::Keyring(Ed25519Keyring::Bob)),
     key: Some(Cow::Borrowed(
         "e83fa0787cb280d95c666ead866a2a4bc1ee1e36faa1ed06623595eb3f474681",
     )),
@@ -99,7 +99,7 @@ static BOB_NODE: Node<'static> = Node {
 
 static ALICE_NODE: Node<'static> = Node {
     name: Some(Cow::Borrowed("Alice")),
-    id: Some(NodeId::Keyring(Sr25519Keyring::Alice)),
+    id: Some(NodeId::Keyring(Ed25519Keyring::Alice)),
     key: Some(Cow::Borrowed(
         "2756181a3b9bca683a35b51a0a5d75ee536738680bcb9066c68be1db305a1ac5",
     )),

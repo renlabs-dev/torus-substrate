@@ -1,4 +1,4 @@
-use std::{borrow::Cow, net::Ipv4Addr, str::FromStr};
+use std::{borrow::Cow, net::Ipv4Addr};
 
 use super::*;
 
@@ -182,7 +182,6 @@ mod ops {
         node: &Node<'_>,
         bootnodes: &[String],
         isolated: bool,
-        local_seal: bool,
     ) -> Command {
         #[rustfmt::skip]
         let mut cmd = torus_node!(
@@ -196,10 +195,6 @@ mod ops {
             "--discover-local",
             "--rpc-max-response-size","100"
         );
-
-        // if local_seal {
-        //     cmd.arg("--sealing=localnet");
-        // }
 
         if !bootnodes.is_empty() {
             cmd.arg("--bootnodes").args(bootnodes);
