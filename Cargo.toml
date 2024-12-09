@@ -1,5 +1,5 @@
 [workspace]
-members = ["node", "runtime", "pallets/*"]
+members = ["node", "runtime", "pallets/*", "xtask"]
 resolver = "2"
 
 [workspace.package]
