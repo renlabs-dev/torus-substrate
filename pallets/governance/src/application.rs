@@ -7,20 +7,22 @@ use polkadot_sdk::sp_runtime::BoundedVec;
 use polkadot_sdk::sp_std::vec::Vec;
 use scale_info::TypeInfo;
 
+use crate::{AccountIdOf, BalanceOf, Block};
+
 #[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct AgentApplication<T: crate::Config> {
     pub id: u32,
-    pub payer_key: T::AccountId,
-    pub agent_key: T::AccountId,
+    pub payer_key: AccountIdOf<T>,
+    pub agent_key: AccountIdOf<T>,
     pub data: BoundedVec<u8, ConstU32<256>>,
-    pub cost: u64,
-    pub expires_at: u64,
+    pub cost: BalanceOf<T>,
+    pub expires_at: Block,
 }
 
 pub fn submit_application<T: crate::Config>(
     _origin: OriginFor<T>,
-    _agent_key: T::AccountId,
+    _agent_key: AccountIdOf<T>,
     _data: Vec<u8>,
 ) -> DispatchResult {
     todo!()

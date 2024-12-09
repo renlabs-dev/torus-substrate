@@ -35,31 +35,31 @@ pub mod pallet {
 
     #[pallet::storage]
     pub type NotDelegatingVotingPower<T: Config> =
-        StorageValue<_, BoundedBTreeSet<T::AccountId, ConstU32<{ u32::MAX }>>, ValueQuery>;
+        StorageValue<_, BoundedBTreeSet<AccountIdOf<T>, ConstU32<{ u32::MAX }>>, ValueQuery>;
 
     #[pallet::storage]
     pub type GlobalGovernanceConfig<T: Config> =
-        StorageValue<_, GovernanceConfiguration, ValueQuery>;
+        StorageValue<_, GovernanceConfiguration<T>, ValueQuery>;
 
     // This has to be different than DefaultKey, so we are not conflicting in tests.
     #[pallet::type_value]
-    pub fn DefaultDaoTreasuryAddress<T: Config>() -> T::AccountId {
+    pub fn DefaultDaoTreasuryAddress<T: Config>() -> AccountIdOf<T> {
         <T as Config>::PalletId::get().into_account_truncating()
     }
 
     #[pallet::storage]
     pub type DaoTreasuryAddress<T: Config> =
-        StorageValue<_, T::AccountId, ValueQuery, DefaultDaoTreasuryAddress<T>>;
+        StorageValue<_, AccountIdOf<T>, ValueQuery, DefaultDaoTreasuryAddress<T>>;
 
     #[pallet::storage]
     pub type AgentApplications<T: Config> =
         StorageMap<_, Identity, BalanceOf<T>, AgentApplication<T>>;
 
     #[pallet::storage]
-    pub type Whitelist<T: Config> = StorageMap<_, Identity, T::AccountId, ()>;
+    pub type Whitelist<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
     #[pallet::storage]
-    pub type Curators<T: Config> = StorageMap<_, Identity, T::AccountId, ()>;
+    pub type Curators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
     #[pallet::config]
     pub trait Config: polkadot_sdk::frame_system::Config {
@@ -76,13 +76,16 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
         #[pallet::weight(0)]
-        pub fn add_curator_extrinsic(origin: OriginFor<T>, key: T::AccountId) -> DispatchResult {
+        pub fn add_curator_extrinsic(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             curator::add_curator::<T>(origin, key)
         }
 
         #[pallet::call_index(1)]
         #[pallet::weight(0)]
-        pub fn remove_curator_extrinsic(origin: OriginFor<T>, key: T::AccountId) -> DispatchResult {
+        pub fn remove_curator_extrinsic(
+            origin: OriginFor<T>,
+            key: AccountIdOf<T>,
+        ) -> DispatchResult {
             curator::remove_curator::<T>(origin, key)
         }
 
@@ -90,7 +93,7 @@ pub mod pallet {
         #[pallet::weight(0)]
         pub fn add_to_whitelist_extrinsic(
             origin: OriginFor<T>,
-            key: T::AccountId,
+            key: AccountIdOf<T>,
         ) -> DispatchResult {
             whitelist::add_to_whitelist::<T>(origin, key)
         }
@@ -99,7 +102,7 @@ pub mod pallet {
         #[pallet::weight(0)]
         pub fn remove_from_whitelist_extrinsic(
             origin: OriginFor<T>,
-            key: T::AccountId,
+            key: AccountIdOf<T>,
         ) -> DispatchResult {
             whitelist::remove_from_whitelist::<T>(origin, key)
         }
@@ -108,7 +111,7 @@ pub mod pallet {
         #[pallet::weight(0)]
         pub fn submit_application_extrinsic(
             origin: OriginFor<T>,
-            agent_key: T::AccountId,
+            agent_key: AccountIdOf<T>,
             data: Vec<u8>,
         ) -> DispatchResult {
             application::submit_application::<T>(origin, agent_key, data)
@@ -146,7 +149,7 @@ pub mod pallet {
         pub fn add_dao_treasury_transfer_proposal_extrinsic(
             origin: OriginFor<T>,
             value: BalanceOf<T>,
-            destination_key: T::AccountId,
+            destination_key: AccountIdOf<T>,
             data: Vec<u8>,
         ) -> DispatchResult {
             proposal::add_dao_treasury_transfer_proposal::<T>(origin, value, destination_key, data)

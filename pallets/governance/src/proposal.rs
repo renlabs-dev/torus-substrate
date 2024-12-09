@@ -8,7 +8,7 @@ use polkadot_sdk::{
 };
 use scale_info::TypeInfo;
 
-use crate::BalanceOf;
+use crate::{AccountIdOf, BalanceOf, Block};
 
 pub type ProposalId = u64;
 
@@ -16,31 +16,31 @@ pub type ProposalId = u64;
 #[scale_info(skip_type_params(T))]
 pub struct Proposal<T: crate::Config> {
     pub id: ProposalId,
-    pub proposer: T::AccountId,
-    pub expiration_block: u64,
+    pub proposer: AccountIdOf<T>,
+    pub expiration_block: Block,
     pub data: ProposalData<T>,
     pub status: ProposalStatus<T>,
     pub metadata: BoundedVec<u8, ConstU32<256>>,
     pub proposal_cost: BalanceOf<T>,
-    pub creation_block: u64,
+    pub creation_block: Block,
 }
 
 #[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub enum ProposalStatus<T: crate::Config> {
     Open {
-        votes_for: BoundedBTreeSet<T::AccountId, ConstU32<{ u32::MAX }>>,
-        votes_against: BoundedBTreeSet<T::AccountId, ConstU32<{ u32::MAX }>>,
+        votes_for: BoundedBTreeSet<AccountIdOf<T>, ConstU32<{ u32::MAX }>>,
+        votes_against: BoundedBTreeSet<AccountIdOf<T>, ConstU32<{ u32::MAX }>>,
         stake_for: BalanceOf<T>,
         stake_against: BalanceOf<T>,
     },
     Accepted {
-        block: u64,
+        block: Block,
         stake_for: BalanceOf<T>,
         stake_against: BalanceOf<T>,
     },
     Refused {
-        block: u64,
+        block: Block,
         stake_for: BalanceOf<T>,
         stake_against: BalanceOf<T>,
     },
@@ -51,15 +51,18 @@ pub enum ProposalStatus<T: crate::Config> {
 #[scale_info(skip_type_params(T))]
 pub enum ProposalData<T: crate::Config> {
     GlobalCustom,
-    TransferDaoTreasury { account: T::AccountId, amount: u64 },
+    TransferDaoTreasury {
+        account: AccountIdOf<T>,
+        amount: BalanceOf<T>,
+    },
 }
 
 #[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub struct UnrewardedProposal<T: crate::Config> {
-    pub block: u64,
-    pub votes_for: BoundedBTreeMap<T::AccountId, u64, ConstU32<{ u32::MAX }>>,
-    pub votes_against: BoundedBTreeMap<T::AccountId, u64, ConstU32<{ u32::MAX }>>,
+    pub block: Block,
+    pub votes_for: BoundedBTreeMap<AccountIdOf<T>, u64, ConstU32<{ u32::MAX }>>,
+    pub votes_against: BoundedBTreeMap<AccountIdOf<T>, u64, ConstU32<{ u32::MAX }>>,
 }
 
 pub fn add_global_custom_proposal<T: crate::Config>(
@@ -72,7 +75,7 @@ pub fn add_global_custom_proposal<T: crate::Config>(
 pub fn add_dao_treasury_transfer_proposal<T: crate::Config>(
     _origin: OriginFor<T>,
     _value: BalanceOf<T>,
-    _destination_key: T::AccountId,
+    _destination_key: AccountIdOf<T>,
     _data: Vec<u8>,
 ) -> DispatchResult {
     todo!()

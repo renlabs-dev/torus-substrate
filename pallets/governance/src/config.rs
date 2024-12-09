@@ -2,17 +2,20 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{frame_support::DebugNoBound, sp_runtime::Percent};
 use scale_info::TypeInfo;
 
+use crate::{BalanceOf, BlockAmount};
+
 #[derive(Clone, TypeInfo, Decode, Encode, PartialEq, Eq, DebugNoBound, MaxEncodedLen)]
-pub struct GovernanceConfiguration {
-    pub proposal_cost: u64,
-    pub proposal_expiration: u32,
-    pub agent_application_cost: u64,
+#[scale_info(skip_type_params(T))]
+pub struct GovernanceConfiguration<T: crate::Config> {
+    pub proposal_cost: BalanceOf<T>,
+    pub proposal_expiration: BlockAmount,
+    pub agent_application_cost: BalanceOf<T>,
     pub proposal_reward_treasury_allocation: Percent,
-    pub max_proposal_reward_treasury_allocation: u64,
-    pub proposal_reward_interval: u64,
+    pub max_proposal_reward_treasury_allocation: BalanceOf<T>,
+    pub proposal_reward_interval: BlockAmount,
 }
 
-impl Default for GovernanceConfiguration {
+impl<T: crate::Config> Default for GovernanceConfiguration<T> {
     fn default() -> Self {
         Self {
             proposal_cost: 10_000_000_000_000,
