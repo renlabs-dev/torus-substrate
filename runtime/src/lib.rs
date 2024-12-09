@@ -139,6 +139,89 @@ mod runtime {
     pub type Torus0 = pallet_torus0::Pallet<Runtime>;
 }
 
+parameter_types! {
+    pub const Version: RuntimeVersion = VERSION;
+}
+
+#[derive_impl(frame_system::config_preludes::SolochainDefaultConfig)]
+impl frame_system::Config for Runtime {
+    type Block = Block;
+    type Version = Version;
+    type AccountData = pallet_balances::AccountData<<Runtime as pallet_balances::Config>::Balance>;
+}
+
+#[derive_impl(pallet_balances::config_preludes::TestDefaultConfig)]
+impl pallet_balances::Config for Runtime {
+    type AccountStore = System;
+}
+
+#[derive_impl(pallet_sudo::config_preludes::TestDefaultConfig)]
+impl pallet_sudo::Config for Runtime {}
+
+#[derive_impl(pallet_timestamp::config_preludes::TestDefaultConfig)]
+impl pallet_timestamp::Config for Runtime {}
+
+#[derive_impl(pallet_transaction_payment::config_preludes::TestDefaultConfig)]
+impl pallet_transaction_payment::Config for Runtime {
+    type OnChargeTransaction = pallet_transaction_payment::FungibleAdapter<Balances, ()>;
+    // Setting fee as independent of the weight of the extrinsic for demo purposes
+    type WeightToFee = NoFee<<Self as pallet_balances::Config>::Balance>;
+    // Setting fee as fixed for any length of the call data for demo purposes
+    type LengthToFee = FixedFee<1, <Self as pallet_balances::Config>::Balance>;
+}
+
+impl pallet_torus0::Config for Runtime {
+    type DefaultBondsMovingAverage;
+
+    type DefaultMinValidatorStake;
+
+    type DefaultMaxAllowedUids;
+
+    type DefaultImmunityPeriod;
+
+    type DefaultMinAllowedWeights;
+
+    type DefaultMaxWeightAge;
+
+    type DefaultMaxAllowedWeights;
+
+    type DefaultTempo;
+
+    type DefaultMinNameLength;
+
+    type DefaultMaxNameLength;
+
+    type DefaultMaxAllowedAgents;
+
+    type DefaultMaxRegistrationsPerBlock;
+
+    type DefaultMinimumAllowedStake;
+
+    type DefaultMinStakeDelegationFee;
+
+    type DefaultMinWeightControlFee;
+
+    #[doc = " The storage MaxNameLength should be constrained to be no more than the value of this."]
+    #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
+    type MaxAgentNameLengthConstraint;
+
+    #[doc = " This is needed on agent::Agent to set the `address` field BoundedVec max length."]
+    type MaxAgentAddressLengthConstraint;
+
+    type Currency;
+}
+
+type Block = frame::runtime::types_common::BlockOf<Runtime, SignedExtra>;
+type Header = HeaderFor<Runtime>;
+
+type RuntimeExecutive =
+    Executive<Runtime, Block, frame_system::ChainContext<Runtime>, Runtime, AllPalletsWithSystem>;
+
+/// Some re-exports that the node side code needs to know. Some are useful in this context as well.
+///
+/// Other types should preferably be private.
+// TODO: this should be standardized in some way, see:
+// https://github.com/paritytech/substrate/issues/10579#issuecomment-1600537558
 pub mod interface {
     use super::Runtime;
     use polkadot_sdk::{polkadot_sdk_frame as frame, *};
