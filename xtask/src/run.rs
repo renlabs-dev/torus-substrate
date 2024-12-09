@@ -1,4 +1,4 @@
-use polkadot_sdk::sp_keyring::ed25519::Keyring;
+use polkadot_sdk::sp_keyring::sr25519::Keyring;
 use std::{borrow::Cow, net::Ipv4Addr};
 
 use super::*;
@@ -57,7 +57,7 @@ pub(super) fn run(mut r: flags::Run) {
 
     let path = r.path.unwrap_or_else(|| {
         tempfile::Builder::new()
-            .prefix("commune-node-data")
+            .prefix("torus-node-data")
             .suffix(node.name.as_ref().unwrap_or(&Cow::Borrowed("")).as_ref())
             .tempdir()
             .expect("failed to create tempdir")
@@ -118,7 +118,7 @@ mod ops {
     macro_rules! node_subspace {
         ($($arg:expr),*) => {{
             let mut cmd = Command::new("cargo");
-            cmd.args(["run", "--release", "--package", "node-subspace", "--"]);
+            cmd.args(["run", "--release", "--package", "torus-node", "--"]);
             $(cmd.arg($arg);)*
             cmd
         }};
