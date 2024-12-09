@@ -5,5 +5,9 @@ edition = "2021"
 
 [dependencies]
 xflags = "0.3.2"
-polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
+polkadot-sdk = { workspace = true, features = [
+  "experimental",
+  "runtime",
+  "std",
+] }
 tempfile = "3.14.0"
