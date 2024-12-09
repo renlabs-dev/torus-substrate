@@ -47,7 +47,7 @@ pub(super) fn run(mut r: flags::Run) {
         _ => {}
     }
 
-    let (chain_spec, local_seal) = match &r.subcommand {
+    let (chain_spec, _local_seal) = match &r.subcommand {
         flags::RunCmd::Local(local) => {
             let chain_path = local
                 .chain_spec
@@ -70,17 +70,10 @@ pub(super) fn run(mut r: flags::Run) {
     ops::key_insert_cmd(&path, &chain_spec, &account.suri, "aura");
     ops::key_insert_cmd(&path, &chain_spec, &account.suri, "gran");
 
-    let _run = ops::run_node(
-        &path,
-        &chain_spec,
-        &node,
-        &r.bootnodes,
-        r.isolated,
-        local_seal,
-    )
-    .spawn()
-    .unwrap()
-    .wait();
+    let _run = ops::run_node(&path, &chain_spec, &node, &r.bootnodes, r.isolated)
+        .spawn()
+        .unwrap()
+        .wait();
 }
 
 #[allow(dead_code)]
