@@ -18,7 +18,6 @@
 
         generalBuildInputs = with pkgs; [
           bashInteractive
-          glibc_multi.dev
           openssl.dev
           pkg-config
           rocksdb
@@ -26,7 +25,7 @@
         ];
         buildInputs = if pkgs.stdenv.isLinux
           then generalBuildInputs ++ [ pkgs.jemalloc pkgs.pkgsi686Linux.glibc ]
-          else generalBuildInputs;
+          else generalBuildInputs ++ [ pkgs.darwin.apple_sdk.frameworks.SystemConfiguration ] ;
         nativeBuildInputs = with pkgs; [ git rust clang protobuf sccache ];
       in
       {
@@ -42,8 +41,10 @@
             OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
             OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include";
             RUSTC_WRAPPER = "${pkgs.sccache}/bin/sccache";
-          } // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux { JEMALLOC_OVERRIDE = "${pkgs.jemalloc}/lib/libjemalloc.so"; };
+          } // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux { JEMALLOC_OVERRIDE = "${pkgs.jemalloc}/lib/libjemalloc.so"; }
+            // nixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin { SKIP_WASM_BUILD = "1"; };
         };
       }
     );
 }
+
