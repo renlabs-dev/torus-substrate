@@ -18,7 +18,7 @@ use polkadot_sdk::polkadot_sdk_frame as frame;
 use polkadot_sdk::sp_runtime::traits::AccountIdConversion;
 use polkadot_sdk::sp_std::vec::Vec;
 
-#[frame::pallet]
+#[frame::pallet(dev_mode)]
 pub mod pallet {
     use super::*;
 
