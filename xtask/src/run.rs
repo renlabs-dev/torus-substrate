@@ -1,3 +1,4 @@
+use polkadot_sdk::sp_keyring::ed25519::Keyring;
 use std::{borrow::Cow, net::Ipv4Addr};
 
 use super::*;
@@ -5,7 +6,7 @@ use super::*;
 pub(super) fn run(mut r: flags::Run) {
     let bob_node = Node {
         name: Some(Cow::Borrowed("Bob")),
-        id: Some(Cow::Borrowed(Keyring::Bob.to_account_id())),
+        id: Some(Cow::Owned(Keyring::Bob.to_account_id().to_string())),
         key: Some(Cow::Borrowed(
             "e83fa0787cb280d95c666ead866a2a4bc1ee1e36faa1ed06623595eb3f474681",
         )),
@@ -16,7 +17,7 @@ pub(super) fn run(mut r: flags::Run) {
 
     let alice_node: Node<'static> = Node {
         name: Some(Cow::Borrowed("Alice")),
-        id: Some(Cow::Borrowed(Keyring::Alice.to_account_id())),
+        id: Some(Cow::Owned(Keyring::Alice.to_account_id().to_string())),
         key: Some(Cow::Borrowed(
             "2756181a3b9bca683a35b51a0a5d75ee536738680bcb9066c68be1db305a1ac5",
         )),
@@ -29,16 +30,16 @@ pub(super) fn run(mut r: flags::Run) {
         (true, false) => {
             if r.bootnodes.is_empty() {
                 r.bootnodes
-                    .push(BOB_NODE.bootnode_uri(Ipv4Addr::LOCALHOST.into()));
+                    .push(bob_node.bootnode_uri(Ipv4Addr::LOCALHOST.into()));
             }
-            (ALICE_NODE.clone(), ALICE_ACCOUNT.clone())
+            (alice_node.clone(), ALICE_ACCOUNT.clone())
         }
         (false, true) => {
             if r.bootnodes.is_empty() {
                 r.bootnodes
-                    .push(ALICE_NODE.bootnode_uri(Ipv4Addr::LOCALHOST.into()));
+                    .push(alice_node.bootnode_uri(Ipv4Addr::LOCALHOST.into()));
             }
-            (BOB_NODE.clone(), BOB_ACCOUNT.clone())
+            (bob_node.clone(), BOB_ACCOUNT.clone())
         }
         (false, false) => (Node::default(), Account::default()),
         _ => panic!("select only one of: --alice, --bob"),
