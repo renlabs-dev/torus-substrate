@@ -115,7 +115,7 @@ mod runtime {
 
     /// The Torus pallet.
     #[runtime::pallet_index(5)]
-    pub type Torus = pallet_torus0::Pallet<Runtime>;
+    pub type Torus0 = pallet_torus0::Pallet<Runtime>;
 }
 
 parameter_types! {
@@ -149,7 +149,7 @@ impl pallet_transaction_payment::Config for Runtime {
     type LengthToFee = FixedFee<1, <Self as pallet_balances::Config>::Balance>;
 }
 
-impl pallet_torus0::Config for Runtime {}
+// impl pallet_torus0::Config for Runtime {}
 
 type Block = frame::runtime::types_common::BlockOf<Runtime, SignedExtra>;
 type Header = HeaderFor<Runtime>;

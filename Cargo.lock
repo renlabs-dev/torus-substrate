@@ -7777,6 +7777,7 @@ name = "pallet-torus0"
 version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
+ "paste",
  "polkadot-sdk",
  "scale-info",
 ]
