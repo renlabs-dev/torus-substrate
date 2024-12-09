@@ -37,6 +37,7 @@
             LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
             ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
             ZSTD_SYS_USE_PKG_CONFIG = "true";
+            OPENSSL_NO_VENDOR = "1";
             OPENSSL_DIR = "${pkgs.openssl.dev}";
             OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
             OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include";
