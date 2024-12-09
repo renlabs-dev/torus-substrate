@@ -19,7 +19,7 @@ pub mod pallet {
         StorageMap<_, Identity, u16, BoundedVec<(u16, u16), ConstU32<{ u32::MAX }>>>;
 
     #[pallet::storage]
-    pub type PendingEmission<T> = StorageMap<_, Identity, u16, u64, ValueQuery>;
+    pub type PendingEmission<T> = StorageMap<_, Identity, u16, u64>;
 
     #[pallet::storage]
     pub type UnitEmission<T> = StorageValue<_, u64, ValueQuery, ConstU64<23148148148>>;
