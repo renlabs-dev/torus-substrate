@@ -1,5 +1,5 @@
 [package]
-name = "pallet-governance0"
+name = "pallet-governance"
 description = "The chain's governance pallet."
 version = "0.1.0"
 license = "MIT-0"
