@@ -1,45 +1,22 @@
-use polkadot_sdk::sp_keyring::sr25519::Keyring;
-use std::{borrow::Cow, net::Ipv4Addr};
+use std::{borrow::Cow, net::Ipv4Addr, str::FromStr};
 
 use super::*;
 
 pub(super) fn run(mut r: flags::Run) {
-    let bob_node = Node {
-        name: Some(Cow::Borrowed("Bob")),
-        id: Some(Cow::Owned(Keyring::Bob.to_account_id().to_string())),
-        key: Some(Cow::Borrowed(
-            "e83fa0787cb280d95c666ead866a2a4bc1ee1e36faa1ed06623595eb3f474681",
-        )),
-        tcp_port: 30342,
-        rpc_port: 9952,
-        validator: true,
-    };
-
-    let alice_node: Node<'static> = Node {
-        name: Some(Cow::Borrowed("Alice")),
-        id: Some(Cow::Owned(Keyring::Alice.to_account_id().to_string())),
-        key: Some(Cow::Borrowed(
-            "2756181a3b9bca683a35b51a0a5d75ee536738680bcb9066c68be1db305a1ac5",
-        )),
-        tcp_port: 30341,
-        rpc_port: 9951,
-        validator: true,
-    };
-
     let (mut node, mut account) = match (r.alice, r.bob) {
         (true, false) => {
             if r.bootnodes.is_empty() {
                 r.bootnodes
-                    .push(bob_node.bootnode_uri(Ipv4Addr::LOCALHOST.into()));
+                    .push(BOB_NODE.bootnode_uri(Ipv4Addr::LOCALHOST.into()));
             }
-            (alice_node.clone(), ALICE_ACCOUNT.clone())
+            (ALICE_NODE.clone(), ALICE_ACCOUNT.clone())
         }
         (false, true) => {
             if r.bootnodes.is_empty() {
                 r.bootnodes
-                    .push(alice_node.bootnode_uri(Ipv4Addr::LOCALHOST.into()));
+                    .push(ALICE_NODE.bootnode_uri(Ipv4Addr::LOCALHOST.into()));
             }
-            (bob_node.clone(), BOB_ACCOUNT.clone())
+            (BOB_NODE.clone(), BOB_ACCOUNT.clone())
         }
         (false, false) => (Node::default(), Account::default()),
         _ => panic!("select only one of: --alice, --bob"),
@@ -52,7 +29,7 @@ pub(super) fn run(mut r: flags::Run) {
     if let Some(node_key) = r.node_key {
         let node_id = ops::key_inspect_node_cmd(&node_key);
         node.key = Some(node_key.into());
-        node.id = Some(node_id.into());
+        node.id = Some(NodeId::Arbitrary(node_id.into()));
     }
 
     let path = r.path.unwrap_or_else(|| {
@@ -115,7 +92,7 @@ mod ops {
         process::{Command, Stdio},
     };
 
-    macro_rules! node_subspace {
+    macro_rules! torus_node {
         ($($arg:expr),*) => {{
             let mut cmd = Command::new("cargo");
             cmd.args(["run", "--release", "--package", "torus-node", "--"]);
@@ -125,7 +102,7 @@ mod ops {
     }
 
     pub fn build_chain_spec(chain_spec: &str) -> Command {
-        node_subspace!(
+        torus_node!(
             "build-spec",
             "--raw",
             "--chain",
@@ -135,7 +112,7 @@ mod ops {
     }
 
     pub fn key_generate() -> Command {
-        node_subspace!(
+        torus_node!(
             "key",
             "generate",
             "--scheme",
@@ -158,7 +135,7 @@ mod ops {
         };
 
         #[rustfmt::skip]
-        node_subspace!(
+        torus_node!(
             "key", "insert",
             "--base-path", base_path,
             "--chain", chain_spec,
@@ -173,7 +150,7 @@ mod ops {
     }
 
     pub fn key_inspect_cmd(suri: &str) -> Command {
-        node_subspace!(
+        torus_node!(
             "key",
             "inspect",
             "--scheme",
@@ -185,7 +162,7 @@ mod ops {
     }
 
     pub fn key_inspect_node_cmd(key: &str) -> String {
-        let mut child = node_subspace!("key", "inspect-node-key")
+        let mut child = torus_node!("key", "inspect-node-key")
             .stdin(Stdio::piped())
             .spawn()
             .expect("failed to inspect node key");
@@ -208,7 +185,7 @@ mod ops {
         local_seal: bool,
     ) -> Command {
         #[rustfmt::skip]
-        let mut cmd = node_subspace!(
+        let mut cmd = torus_node!(
             "--base-path", base_path,
             "--chain", chain_spec,
             "--unsafe-rpc-external",
@@ -220,9 +197,9 @@ mod ops {
             "--rpc-max-response-size","100"
         );
 
-        if local_seal {
-            cmd.arg("--sealing=localnet");
-        }
+        // if local_seal {
+        //     cmd.arg("--sealing=localnet");
+        // }
 
         if !bootnodes.is_empty() {
             cmd.arg("--bootnodes").args(bootnodes);

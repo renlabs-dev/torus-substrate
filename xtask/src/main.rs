@@ -1,5 +1,7 @@
 use std::{borrow::Cow, net::IpAddr};
 
+use polkadot_sdk::sp_keyring::Sr25519Keyring;
+
 mod flags;
 mod run;
 
@@ -11,7 +13,7 @@ fn main() {
 #[derive(Clone)]
 pub(crate) struct Node<'a> {
     pub(crate) name: Option<Cow<'a, str>>,
-    pub(crate) id: Option<Cow<'a, str>>,
+    pub(crate) id: Option<NodeId<'a>>,
     pub(crate) key: Option<Cow<'a, str>>,
     pub(crate) tcp_port: u16,
     pub(crate) rpc_port: u16,
@@ -53,6 +55,21 @@ struct Account<'a> {
     pub(crate) grandpa_address: Cow<'a, str>,
 }
 
+#[derive(Clone)]
+enum NodeId<'a> {
+    Arbitrary(Cow<'a, str>),
+    Keyring(Sr25519Keyring),
+}
+
+impl std::fmt::Display for NodeId<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NodeId::Arbitrary(s) => write!(f, "{s}"),
+            NodeId::Keyring(keyring) => write!(f, "{keyring}"),
+        }
+    }
+}
+
 static ALICE_ACCOUNT: Account<'static> = Account {
     suri: Cow::Borrowed(
         "bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice",
@@ -67,4 +84,26 @@ static BOB_ACCOUNT: Account<'static> = Account {
     ),
     aura_address: Cow::Borrowed("5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"),
     grandpa_address: Cow::Borrowed("5GoNkf6WdbxCFnPdAnYYQyCjAKPJgLNxXwPjwTh6DGg6gN3E"),
+};
+
+static BOB_NODE: Node<'static> = Node {
+    name: Some(Cow::Borrowed("Bob")),
+    id: Some(NodeId::Keyring(Sr25519Keyring::Bob)),
+    key: Some(Cow::Borrowed(
+        "e83fa0787cb280d95c666ead866a2a4bc1ee1e36faa1ed06623595eb3f474681",
+    )),
+    tcp_port: 30342,
+    rpc_port: 9952,
+    validator: true,
+};
+
+static ALICE_NODE: Node<'static> = Node {
+    name: Some(Cow::Borrowed("Alice")),
+    id: Some(NodeId::Keyring(Sr25519Keyring::Alice)),
+    key: Some(Cow::Borrowed(
+        "2756181a3b9bca683a35b51a0a5d75ee536738680bcb9066c68be1db305a1ac5",
+    )),
+    tcp_port: 30341,
+    rpc_port: 9951,
+    validator: true,
 };
