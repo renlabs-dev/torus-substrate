@@ -8,7 +8,7 @@ pub use pallet::*;
 use polkadot_sdk::frame_support::pallet_prelude::{ValueQuery, *};
 use polkadot_sdk::polkadot_sdk_frame as frame;
 
-#[frame::pallet]
+#[frame::pallet(dev_mode)]
 pub mod pallet {
     use frame::traits::ConstU64;
 
