@@ -1,4 +1,5 @@
 use crate::*;
+use alloc::vec;
 use pallet_grandpa::AuthorityId as GrandpaId;
 use polkadot_sdk::{
     polkadot_sdk_frame::runtime::prelude::*, sp_consensus_aura::sr25519::AuthorityId as AuraId,
