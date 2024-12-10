@@ -23,27 +23,10 @@
 //
 // For more information, please refer to <http://unlicense.org>
 // Substrate and Polkadot dependencies
-use frame_support::{
-    derive_impl, parameter_types,
-    traits::{ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, VariantCountOf},
-    weights::{
-        constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
-        IdentityFee, Weight,
-    },
+use crate::*;
+use polkadot_sdk::{
+    pallet_aura::MinimumPeriodTimesTwo, sp_consensus_aura::sr25519::AuthorityId as AuraId,
 };
-use frame_system::limits::{BlockLength, BlockWeights};
-use pallet_transaction_payment::{ConstFeeMultiplier, FungibleAdapter, Multiplier};
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::{traits::One, Perbill};
-use sp_version::RuntimeVersion;
-
-// Local module imports
-use super::{
-    AccountId, Aura, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo, Runtime,
-    RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask,
-    System, EXISTENTIAL_DEPOSIT, SLOT_DURATION, VERSION,
-};
-
 /// The runtime has 18 token decimals
 const TOKEN_DECIMALS: u32 = 18;
 /// Percentage of block resources allocated to normal dispatches (75%)
@@ -62,7 +45,7 @@ parameter_types! {
             Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), MAX_PROOF_SIZE),
             NORMAL_DISPATCH_RATIO
         );
-    /// Block length limits set to 5MB with normal dispatch ratio
+    /// Block length limits set to 10MB with normal dispatch ratio
     pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
         ::max_with_normal_ratio(10 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 }
@@ -87,7 +70,7 @@ impl frame_system::Config for Runtime {
     type AccountData = pallet_balances::AccountData<<Runtime as pallet_balances::Config>::Balance>;
     /// The SS58 prefix used to generate addresses for this chain
     /// Helps distinguish addresses between different chains
-    type SS58Prefix = ConstU16<888>;
+    type SS58Prefix = ConstU16<42>;
     /// Contains version information about the runtime
     /// Used for runtime upgrades and compatibility
     type Version = Version;

@@ -28,8 +28,8 @@ pub type ChainSpec = sc_service::GenericChainSpec;
 
 fn props() -> Properties {
     let mut properties = Properties::new();
-    properties.insert("tokenDecimals".to_string(), 0.into());
-    properties.insert("tokenSymbol".to_string(), "MINI".into());
+    properties.insert("tokenDecimals".to_string(), 18.into());
+    properties.insert("tokenSymbol".to_string(), "TOR".into());
     properties
 }
 

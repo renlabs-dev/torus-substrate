@@ -1,60 +1,72 @@
+// This is free and unencumbered software released into the public domain.
+//
+// Anyone is free to copy, modify, publish, use, compile, sell, or
+// distribute this software, either in source code form or as a compiled
+// binary, for any purpose, commercial or non-commercial, and by any
+// means.
+//
+// In jurisdictions that recognize copyright laws, the author or authors
+// of this software dedicate any and all copyright interest in the
+// software to the public domain. We make this dedication for the benefit
+// of the public at large and to the detriment of our heirs and
+// successors. We intend this dedication to be an overt act of
+// relinquishment in perpetuity of all present and future rights to this
+// software under copyright law.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+// IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+//
+// For more information, please refer to <http://unlicense.org>
+// Substrate and Polkadot dependencies
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-pub mod apis;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarks;
 pub mod configs;
 
 extern crate alloc;
 use alloc::vec::Vec;
-use sp_runtime::{
-    generic, impl_opaque_keys,
-    traits::{BlakeTwo256, IdentifyAccount, Verify},
-    MultiAddress, MultiSignature,
-};
+use interface::*;
 #[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
+use sp_version::{NativeVersion, RuntimeVersion};
 
-pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
+pub use sp_runtime::{impl_opaque_keys, BuildStorage, Perbill, Perquintill};
 
+use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustment};
 use polkadot_sdk::{
+    frame_executive,
+    frame_support,
+    // Other utilities
+    frame_support::{
+        traits::VariantCountOf,
+        weights::{
+            constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
+            ConstantMultiplier, WeightToFeeCoefficient, WeightToFeeCoefficients,
+            WeightToFeePolynomial,
+        },
+    },
+    frame_system,
+    // Pallets
     polkadot_sdk_frame::{self as frame, prelude::*, runtime::prelude::*},
     sp_arithmetic::FixedPointNumber,
+    sp_core,
     *,
 };
 
-pub mod genesis_config_presets;
+use smallvec::smallvec;
 
-/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
-/// the specifics of the runtime. They can then be made to be agnostic over specific formats
-/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
-/// to even the core data structures.
-pub mod opaque {
-    use super::*;
-    use sp_runtime::{
-        generic,
-        traits::{BlakeTwo256, Hash as HashT},
-    };
-
-    pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-    /// Opaque block header type.
-    pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-    /// Opaque block type.
-    pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-    /// Opaque block identifier type.
-    pub type BlockId = generic::BlockId<Block>;
-    /// Opaque block hash type.
-    pub type Hash = <BlakeTwo256 as HashT>::Output;
-}
+pub mod apis;
 
 impl_opaque_keys! {
     pub struct SessionKeys {
@@ -63,16 +75,22 @@ impl_opaque_keys! {
     }
 }
 
+/// The runtime version.
 #[runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: alloc::borrow::Cow::Borrowed("torus-runtime"),
-    impl_name: alloc::borrow::Cow::Borrowed("torus-runtime"),
+    spec_name: create_runtime_str!("torus-runtime"),
+    impl_name: create_runtime_str!("torus-runtime"),
     authoring_version: 1,
-    spec_version: 0,
+    // The version of the runtime specification. A full node will not attempt to use its native
+    //   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
+    //   `spec_version`, and `authoring_version` are the same between Wasm and native.
+    // This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
+    //   the compatible custom types.
+    spec_version: 100,
     impl_version: 1,
-    apis: RUNTIME_API_VERSIONS,
+    apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
-    system_version: 1,
+    state_version: 1,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -84,98 +102,29 @@ pub fn native_version() -> NativeVersion {
     }
 }
 
-mod block_times {
-    /// This determines the average expected block time that we are targeting. Blocks will be
-    /// produced at a minimum duration defined by `SLOT_DURATION`. `SLOT_DURATION` is picked up by
-    /// `pallet_timestamp` which is in turn picked up by `pallet_aura` to implement `fn
-    /// slot_duration()`.
-    ///
-    /// Change this to adjust the block time.
-    pub const MILLI_SECS_PER_BLOCK: u64 = 6000;
-
-    // NOTE: Currently it is not possible to change the slot duration after the chain has started.
-    // Attempting to do so will brick block production.
-    pub const SLOT_DURATION: u64 = MILLI_SECS_PER_BLOCK;
-}
-pub use block_times::*;
-
-// Time is measured by number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLI_SECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
-
-pub const BLOCK_HASH_COUNT: BlockNumber = 2400;
-
-// Unit = the base number of indivisible units for balances
-pub const UNIT: Balance = 1_000_000_000_000;
-pub const MILLI_UNIT: Balance = 1_000_000_000;
-pub const MICRO_UNIT: Balance = 1_000_000;
-
-/// Existential deposit.
-pub const EXISTENTIAL_DEPOSIT: Balance = MILLI_UNIT;
-
-/// The version information used to identify this runtime when compiled natively.
-#[cfg(feature = "std")]
-pub fn native_version() -> NativeVersion {
-    NativeVersion {
-        runtime_version: VERSION,
-        can_author_with: Default::default(),
-    }
-}
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type Nonce = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// The address format for describing accounts.
-pub type Address = MultiAddress<AccountId, ()>;
-
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-/// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
-
-/// BlockId type as expected by this runtime.
-pub type BlockId = generic::BlockId<Block>;
-
-/// The `TransactionExtension` to the basic transaction logic.
-pub type TxExtension = (
+/// The signed extensions that are added to the runtime.
+type SignedExtra = (
+    // Checks that the sender is not the zero address.
     frame_system::CheckNonZeroSender<Runtime>,
+    // Checks that the runtime version is correct.
     frame_system::CheckSpecVersion<Runtime>,
+    // Checks that the transaction version is correct.
     frame_system::CheckTxVersion<Runtime>,
+    // Checks that the genesis hash is correct.
     frame_system::CheckGenesis<Runtime>,
+    // Checks that the era is valid.
     frame_system::CheckEra<Runtime>,
+    // Checks that the nonce is valid.
     frame_system::CheckNonce<Runtime>,
+    // Checks that the weight is valid.
     frame_system::CheckWeight<Runtime>,
+    // Ensures that the sender has enough funds to pay for the transaction
+    // and deducts the fee from the sender's account.
     pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-    frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
 );
 
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic =
-    generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, TxExtension>;
-
-/// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<RuntimeCall, TxExtension>;
+type Block = frame::runtime::types_common::BlockOf<Runtime, SignedExtra>;
+type Header = HeaderFor<Runtime>;
 
 /// All migrations of the runtime, aside from the ones declared in the pallets.
 ///
@@ -184,7 +133,7 @@ pub type SignedPayload = generic::SignedPayload<RuntimeCall, TxExtension>;
 type Migrations = ();
 
 /// Executive: handles dispatch to the various modules.
-pub type Executive = frame_executive::Executive<
+pub type RuntimeExecutive = frame_executive::Executive<
     Runtime,
     Block,
     frame_system::ChainContext<Runtime>,
@@ -236,4 +185,17 @@ mod runtime {
 
     #[runtime::pallet_index(8)]
     pub type Torus0 = pallet_torus0::Pallet<Runtime>;
+}
+
+pub mod interface {
+    use super::Runtime;
+    use polkadot_sdk::{polkadot_sdk_frame as frame, *};
+
+    pub type Block = super::Block;
+    pub use frame::runtime::types_common::OpaqueBlock;
+    pub type AccountId = <Runtime as frame_system::Config>::AccountId;
+    pub type Nonce = <Runtime as frame_system::Config>::Nonce;
+    pub type Hash = <Runtime as frame_system::Config>::Hash;
+    pub type Balance = <Runtime as pallet_balances::Config>::Balance;
+    pub type MinimumBalance = <Runtime as pallet_balances::Config>::ExistentialDeposit;
 }

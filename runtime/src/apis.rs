@@ -24,26 +24,11 @@
 // For more information, please refer to <http://unlicense.org>
 
 // External crates imports
-use alloc::vec::Vec;
-use frame_support::{
-    genesis_builder_helper::{build_state, get_preset},
-    weights::Weight,
-};
+use crate::*;
 use pallet_grandpa::AuthorityId as GrandpaId;
-use sp_api::impl_runtime_apis;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::{
-    traits::{Block as BlockT, NumberFor},
-    transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult,
-};
-use sp_version::RuntimeVersion;
-
-// Local module imports
-use super::{
-    AccountId, Aura, Balance, Block, Executive, Grandpa, InherentDataExt, Nonce, Runtime,
-    RuntimeCall, RuntimeGenesisConfig, SessionKeys, System, TransactionPayment, VERSION,
+use polkadot_sdk::{
+    polkadot_sdk_frame::runtime::prelude::*, sp_consensus_aura::sr25519::AuthorityId as AuraId,
+    sp_core::crypto::KeyTypeId,
 };
 
 impl_runtime_apis! {
@@ -53,11 +38,11 @@ impl_runtime_apis! {
         }
 
         fn execute_block(block: Block) {
-            Executive::execute_block(block);
+            RuntimeExecutive::execute_block(block);
         }
 
-        fn initialize_block(header: &<Block as BlockT>::Header) -> sp_runtime::ExtrinsicInclusionMode {
-            Executive::initialize_block(header)
+        fn initialize_block(header: &Header) -> sp_runtime::ExtrinsicInclusionMode {
+            RuntimeExecutive::initialize_block(header)
         }
     }
 
@@ -76,15 +61,15 @@ impl_runtime_apis! {
     }
 
     impl sp_block_builder::BlockBuilder<Block> for Runtime {
-        fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
-            Executive::apply_extrinsic(extrinsic)
+        fn apply_extrinsic(extrinsic: ExtrinsicFor<Runtime>) -> ApplyExtrinsicResult {
+            RuntimeExecutive::apply_extrinsic(extrinsic)
         }
 
-        fn finalize_block() -> <Block as BlockT>::Header {
-            Executive::finalize_block()
+        fn finalize_block() -> Header {
+            RuntimeExecutive::finalize_block()
         }
 
-        fn inherent_extrinsics(data: sp_inherents::InherentData) -> Vec<<Block as BlockT>::Extrinsic> {
+        fn inherent_extrinsics(data: sp_inherents::InherentData) -> Vec<ExtrinsicFor<Runtime>> {
             data.create_extrinsics()
         }
 
@@ -99,16 +84,16 @@ impl_runtime_apis! {
     impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
         fn validate_transaction(
             source: TransactionSource,
-            tx: <Block as BlockT>::Extrinsic,
-            block_hash: <Block as BlockT>::Hash,
+            tx: ExtrinsicFor<Runtime>,
+            block_hash: Hash,
         ) -> TransactionValidity {
-            Executive::validate_transaction(source, tx, block_hash)
+            RuntimeExecutive::validate_transaction(source, tx, block_hash)
         }
     }
 
     impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
-        fn offchain_worker(header: &<Block as BlockT>::Header) {
-            Executive::offchain_worker(header)
+        fn offchain_worker(header: &Header) {
+            RuntimeExecutive::offchain_worker(header)
         }
     }
 
@@ -145,8 +130,8 @@ impl_runtime_apis! {
 
         fn submit_report_equivocation_unsigned_extrinsic(
             _equivocation_proof: sp_consensus_grandpa::EquivocationProof<
-                <Block as BlockT>::Hash,
-                NumberFor<Block>,
+                Hash,
+                sp_runtime::traits::NumberFor<Block>,
             >,
             _key_owner_proof: sp_consensus_grandpa::OpaqueKeyOwnershipProof,
         ) -> Option<()> {
@@ -172,13 +157,13 @@ impl_runtime_apis! {
 
     impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
         fn query_info(
-            uxt: <Block as BlockT>::Extrinsic,
+            uxt: ExtrinsicFor<Runtime>,
             len: u32,
         ) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
             TransactionPayment::query_info(uxt, len)
         }
         fn query_fee_details(
-            uxt: <Block as BlockT>::Extrinsic,
+            uxt: ExtrinsicFor<Runtime>,
             len: u32,
         ) -> pallet_transaction_payment::FeeDetails<Balance> {
             TransactionPayment::query_fee_details(uxt, len)
@@ -223,7 +208,6 @@ impl_runtime_apis! {
             use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
             use frame_support::traits::StorageInfoTrait;
             use frame_system_benchmarking::Pallet as SystemBench;
-            use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
             use baseline::Pallet as BaselineBench;
             use super::*;
 
@@ -237,11 +221,10 @@ impl_runtime_apis! {
 
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
-        ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, alloc::string::String> {
+        ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
             use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
             use sp_storage::TrackedStorageKey;
             use frame_system_benchmarking::Pallet as SystemBench;
-            use frame_system_benchmarking::extensions::Pallet as SystemExtensionsBench;
             use baseline::Pallet as BaselineBench;
             use super::*;
 
@@ -265,7 +248,7 @@ impl_runtime_apis! {
             // NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
             // have a backtrace here. If any of the pre/post migration checks fail, we shall stop
             // right here and right now.
-            let weight = Executive::try_runtime_upgrade(checks).unwrap();
+            let weight = RuntimeExecutive::try_runtime_upgrade(checks).unwrap();
             (weight, super::configs::RuntimeBlockWeights::get().max_block)
         }
 
@@ -277,7 +260,7 @@ impl_runtime_apis! {
         ) -> Weight {
             // NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
             // have a backtrace here.
-            Executive::try_execute_block(block, state_root_check, signature_check, select).expect("execute-block failed")
+            RuntimeExecutive::try_execute_block(block, state_root_check, signature_check, select).expect("execute-block failed")
         }
     }
 
@@ -287,11 +270,11 @@ impl_runtime_apis! {
         }
 
         fn get_preset(id: &Option<sp_genesis_builder::PresetId>) -> Option<Vec<u8>> {
-            get_preset::<RuntimeGenesisConfig>(id, crate::genesis_config_presets::get_preset)
+            get_preset::<RuntimeGenesisConfig>(id, |_| None)
         }
 
         fn preset_names() -> Vec<sp_genesis_builder::PresetId> {
-            crate::genesis_config_presets::preset_names()
+            vec![]
         }
     }
 }
