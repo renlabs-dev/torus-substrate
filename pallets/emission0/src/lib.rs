@@ -1,16 +1,18 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod ext;
 mod weights;
 
 use crate::frame::testing_prelude::DispatchResult;
 use crate::frame::testing_prelude::OriginFor;
+pub(crate) use ext::*;
 pub use pallet::*;
 use polkadot_sdk::frame_support::pallet_prelude::{ValueQuery, *};
 use polkadot_sdk::polkadot_sdk_frame as frame;
 
 #[frame::pallet(dev_mode)]
 pub mod pallet {
-    use frame::traits::ConstU64;
+    use frame::traits::{ConstU128, Currency};
 
     use super::*;
 
@@ -19,13 +21,16 @@ pub mod pallet {
         StorageMap<_, Identity, u16, BoundedVec<(u16, u16), ConstU32<{ u32::MAX }>>>;
 
     #[pallet::storage]
-    pub type PendingEmission<T> = StorageMap<_, Identity, u16, u64>;
+    pub type PendingEmission<T> = StorageMap<_, Identity, u16, BalanceOf<T>>;
 
     #[pallet::storage]
-    pub type UnitEmission<T> = StorageValue<_, u64, ValueQuery, ConstU64<23148148148>>;
+    pub type UnitEmission<T: Config> =
+        StorageValue<_, BalanceOf<T>, ValueQuery, ConstU128<23148148148>>;
 
     #[pallet::config]
-    pub trait Config: polkadot_sdk::frame_system::Config {}
+    pub trait Config: polkadot_sdk::frame_system::Config {
+        type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
+    }
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -46,7 +51,7 @@ pub mod pallet {
         #[pallet::weight(0)]
         pub fn delegate_weight_control_extrinsic(
             origin: OriginFor<T>,
-            target: T::AccountId,
+            target: AccountOf<T>,
         ) -> DispatchResult {
             weights::delegate_weight_control::<T>(origin, target)
         }
