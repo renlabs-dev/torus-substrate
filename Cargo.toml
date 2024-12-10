@@ -14,7 +14,6 @@ pallet-torus0 = { path = "./pallets/torus0", default-features = false }
 
 # Polkadot SDK
 polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-stable2409-2", default-features = false }
-frame-metadata = { version = "18.0.0", default-features = false }
 
 # Substrate
 codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }
