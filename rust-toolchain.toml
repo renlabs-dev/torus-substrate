@@ -1,5 +1,11 @@
 [toolchain]
-channel = "1.83.0"
+# DO NOT BUMP BEFORE CHECKING https://github.com/oxalica/rust-overlay/issues/197
+# Cargo on Rust 1.83.0 hard codes the strip dependency to /usr/bin/strip,
+# which cannot strip WASM binaries. llvm-strip should be used instead, and is
+# done in the nixpkgs repo (https://github.com/rust-lang/rust/pull/130781),
+# but we use the oxalica overlay, which does not fix this yet.
+# Should be fixed by https://github.com/rust-lang/rust/issues/123151.
+channel = "1.82.0"
 components = ["clippy", "rustfmt", "rust-src"]
 targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 profile = "minimal"
