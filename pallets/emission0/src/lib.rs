@@ -17,11 +17,15 @@ pub mod pallet {
     use super::*;
 
     #[pallet::storage]
-    pub type Weights<T> =
-        StorageMap<_, Identity, u16, BoundedVec<(u16, u16), ConstU32<{ u32::MAX }>>>;
+    pub type Weights<T: Config> = StorageMap<
+        _,
+        Identity,
+        AccountIdOf<T>,
+        BoundedVec<(AccountIdOf<T>, u16), ConstU32<{ u32::MAX }>>,
+    >;
 
     #[pallet::storage]
-    pub type PendingEmission<T> = StorageMap<_, Identity, u16, BalanceOf<T>>;
+    pub type PendingEmission<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, BalanceOf<T>>;
 
     #[pallet::storage]
     pub type UnitEmission<T: Config> =
@@ -51,7 +55,7 @@ pub mod pallet {
         #[pallet::weight(0)]
         pub fn delegate_weight_control_extrinsic(
             origin: OriginFor<T>,
-            target: AccountOf<T>,
+            target: AccountIdOf<T>,
         ) -> DispatchResult {
             weights::delegate_weight_control::<T>(origin, target)
         }
