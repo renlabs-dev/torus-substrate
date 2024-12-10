@@ -5,7 +5,19 @@ version = "0.1.0"
 license = "MIT-0"
 authors.workspace = true
 edition.workspace = true
-publish = false
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "polkadot-sdk/std",
+    "scale-info/std",
+    "serde_json/std",
+    "pallet-torus0/std",
+]
+
+runtime-benchmarks = ["polkadot-sdk/runtime-benchmarks"]
+try-runtime = ["polkadot-sdk/try-runtime"]
 
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
@@ -24,15 +36,6 @@ polkadot-sdk = { workspace = true, features = [
     "pallet-timestamp",
     "pallet-transaction-payment",
     "pallet-transaction-payment-rpc-runtime-api",
-    "frame-executive",
-    "frame-support",
-    "frame-system",
-    "frame-try-runtime",
-    "frame-system-benchmarking",
-    "frame-benchmarking",
-    "frame-metadata-hash-extension",
-    "frame-system-rpc-runtime-api",
-    "substrate-wasm-builder",
 ] }
 
 # Local dependencies
@@ -42,17 +45,3 @@ pallet-torus0.workspace = true
 polkadot-sdk = { optional = true, workspace = true, features = [
     "substrate-wasm-builder",
 ] }
-
-[features]
-default = ["std"]
-std = [
-    "codec/std",
-    "polkadot-sdk/std",
-    "scale-info/std",
-    "serde_json/std",
-    "pallet-torus0/std",
-]
-
-runtime-benchmarks = ["polkadot-sdk/runtime-benchmarks"]
-
-try-runtime = ["polkadot-sdk/try-runtime"]
