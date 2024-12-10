@@ -44,8 +44,7 @@
             OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
             OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include";
             RUSTC_WRAPPER = "${pkgs.sccache}/bin/sccache";
-          } // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux { JEMALLOC_OVERRIDE = "${pkgs.jemalloc}/lib/libjemalloc.so"; }
-          // nixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin { SKIP_WASM_BUILD = "1"; };
+          } // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux { JEMALLOC_OVERRIDE = "${pkgs.jemalloc}/lib/libjemalloc.so"; };
         };
       }
     );
