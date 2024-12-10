@@ -23,8 +23,6 @@ use polkadot_sdk::{
     sp_core, *,
 };
 
-use smallvec::smallvec;
-
 pub mod apis;
 
 impl_opaque_keys! {

@@ -193,7 +193,7 @@ impl WeightToFeePolynomial for LengthToFee {
 
     /// Returns coefficients for a polynomial that converts transaction length to fee
     fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-        smallvec![
+        sp_std::vec![
             WeightToFeeCoefficient {
                 degree: 1,
                 coeff_frac: Perbill::zero(),
@@ -207,6 +207,7 @@ impl WeightToFeePolynomial for LengthToFee {
                 negative: false,
             },
         ]
+        .into()
     }
 }
 
