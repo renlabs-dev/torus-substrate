@@ -3,11 +3,11 @@
 mod ext;
 mod weights;
 
-use crate::frame::testing_prelude::DispatchResult;
-use crate::frame::testing_prelude::OriginFor;
 pub(crate) use ext::*;
 pub use pallet::*;
+use polkadot_sdk::frame_support::dispatch::DispatchResult;
 use polkadot_sdk::frame_support::pallet_prelude::{ValueQuery, *};
+use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
 use polkadot_sdk::polkadot_sdk_frame as frame;
 
 #[frame::pallet(dev_mode)]
