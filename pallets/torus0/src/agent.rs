@@ -36,7 +36,7 @@ pub fn update<T: crate::Config>(
     _name: Vec<u8>,
     _address: Vec<u8>,
     _metadata: Option<Vec<u8>>,
-    _stake_delegation_fee: Option<Percent>,
+    _staking_fee: Option<Percent>,
     _weight_control_fee: Option<Percent>,
 ) -> DispatchResult {
     todo!()
