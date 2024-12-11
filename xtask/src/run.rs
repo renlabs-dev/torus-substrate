@@ -29,7 +29,7 @@ pub(super) fn run(mut r: flags::Run) {
     if let Some(node_key) = r.node_key {
         let node_id = ops::key_inspect_node_cmd(&node_key);
         node.key = Some(node_key.into());
-        node.id = Some(NodeId::Arbitrary(node_id.into()));
+        node.id = Some(node_id.into());
     }
 
     let path = r.path.unwrap_or_else(|| {
@@ -51,11 +51,9 @@ pub(super) fn run(mut r: flags::Run) {
         flags::RunCmd::Local(local) => {
             let chain_path = local
                 .chain_spec
-                .clone()
-                .unwrap_or_else(|| std::env::current_dir().unwrap().join("specs/local.json"));
-            if !chain_path.exists() {
-                panic!("Missing spec.json file. Define it with --chain-spec path/to/spec.json");
-            }
+                .as_ref()
+                .map(|s| s.to_str().expect("invalid string"))
+                .unwrap_or_else(|| "dev");
 
             account.suri = local
                 .account_suri
