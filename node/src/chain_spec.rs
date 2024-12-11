@@ -17,11 +17,10 @@
 
 use polkadot_sdk::{
     sc_service::{ChainType, Properties},
-    sp_keyring::AccountKeyring,
     *,
 };
 use serde_json::{json, Value};
-use torus_runtime::{BalancesConfig, SudoConfig, WASM_BINARY};
+use torus_runtime::WASM_BINARY;
 
 /// This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec;
@@ -38,8 +37,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
         WASM_BINARY.expect("Development wasm not available"),
         Default::default(),
     )
-    .with_name("Development")
-    .with_id("dev")
+    .with_name("Torus")
+    .with_id("torus")
     .with_chain_type(ChainType::Development)
     .with_genesis_config_patch(testnet_genesis())
     .with_properties(props())
@@ -48,14 +47,32 @@ pub fn development_config() -> Result<ChainSpec, String> {
 
 /// Configure initial storage state for FRAME pallets.
 fn testnet_genesis() -> Value {
-    use polkadot_sdk::polkadot_sdk_frame::traits::Get;
-    use torus_runtime::interface::{Balance, MinimumBalance};
+    use polkadot_sdk::{
+        polkadot_sdk_frame::traits::Get,
+        sp_keyring::{Ed25519Keyring, Sr25519Keyring},
+    };
+
+    use torus_runtime::{
+        interface::{Balance, MinimumBalance},
+        BalancesConfig, SudoConfig,
+    };
+
     let endowment = <MinimumBalance as Get<Balance>>::get().max(1) * 1000;
-    let balances = AccountKeyring::iter()
+    let balances = Sr25519Keyring::iter()
         .map(|a| (a.to_account_id(), endowment))
         .collect::<Vec<_>>();
+
+    let aura = [Sr25519Keyring::Alice, Sr25519Keyring::Bob];
+    let grandpa = [Ed25519Keyring::Alice, Ed25519Keyring::Bob];
+
     json!({
         "balances": BalancesConfig { balances },
-        "sudo": SudoConfig { key: Some(AccountKeyring::Alice.to_account_id()) },
+        "sudo": SudoConfig { key: Some(Sr25519Keyring::Alice.to_account_id()) },
+        "aura": {
+            "authorities": aura.iter().map(|x| (dbg!(x.public().to_string()))).collect::<Vec<_>>(),
+        },
+        "grandpa": {
+            "authorities": grandpa.iter().map(|x| (x.public().to_string(), 1)).collect::<Vec<_>>(),
+        },
     })
 }
