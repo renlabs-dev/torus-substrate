@@ -1,0 +1,16 @@
+[package]
+name = "test-utils"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+codec.workspace = true
+scale-info.workspace = true
+polkadot-sdk = { workspace = true, features = [
+    "std",
+    "runtime",
+    "pallet-balances",
+] }
+
+pallet-torus0.workspace = true

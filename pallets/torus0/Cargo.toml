@@ -16,3 +16,6 @@ try-runtime = ["polkadot-sdk/try-runtime"]
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
+
+[dev-dependencies]
+test-utils.workspace = true
