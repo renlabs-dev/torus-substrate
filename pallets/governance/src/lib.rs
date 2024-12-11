@@ -13,17 +13,14 @@ use crate::config::GovernanceConfiguration;
 use crate::proposal::{Proposal, ProposalId, UnrewardedProposal};
 pub(crate) use ext::*;
 pub use pallet::*;
-use polkadot_sdk::frame_support::{
-    dispatch::DispatchResult, pallet_prelude::*, Identity, PalletId,
-};
-use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
-use polkadot_sdk::polkadot_sdk_frame as frame;
+use polkadot_sdk::frame_support::Identity;
+use polkadot_sdk::frame_support::{pallet_prelude::*, PalletId};
+use polkadot_sdk::polkadot_sdk_frame::{self as frame, prelude::OriginFor, traits::Currency};
 use polkadot_sdk::sp_runtime::traits::AccountIdConversion;
 use polkadot_sdk::sp_std::vec::Vec;
 
 #[frame::pallet(dev_mode)]
 pub mod pallet {
-    use frame::traits::Currency;
 
     use super::*;
 

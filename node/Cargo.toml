@@ -17,7 +17,6 @@ futures-timer.workspace = true
 jsonrpsee = { workspace = true, features = ["server"] }
 polkadot-sdk = { workspace = true, features = [
     "std",
-
     "sc-allocator",
     "sc-authority-discovery",
     "sc-basic-authorship",
