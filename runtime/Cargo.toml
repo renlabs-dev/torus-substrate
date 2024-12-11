@@ -10,14 +10,23 @@ edition.workspace = true
 default = ["std"]
 std = [
     "codec/std",
-    "polkadot-sdk/std",
     "scale-info/std",
     "serde_json/std",
-    "pallet-torus0/std",
-]
 
-runtime-benchmarks = ["polkadot-sdk/runtime-benchmarks"]
-try-runtime = ["polkadot-sdk/try-runtime"]
+    "polkadot-sdk/std",
+    "pallet-torus0/std",
+    "pallet-governance/std",
+]
+runtime-benchmarks = [
+    "polkadot-sdk/runtime-benchmarks",
+    "pallet-torus0/runtime-benchmarks",
+    "pallet-governance/runtime-benchmarks",
+]
+try-runtime = [
+    "polkadot-sdk/try-runtime",
+    "pallet-torus0/try-runtime",
+    "pallet-governance/try-runtime",
+]
 
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
@@ -39,8 +48,10 @@ polkadot-sdk = { workspace = true, features = [
 
 # Local dependencies
 pallet-torus0.workspace = true
+pallet-governance.workspace = true
 
 [build-dependencies]
 polkadot-sdk = { optional = true, workspace = true, features = [
+    "std",
     "substrate-wasm-builder",
 ] }

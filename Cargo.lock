@@ -16324,6 +16324,7 @@ dependencies = [
 name = "torus-runtime"
 version = "0.1.0"
 dependencies = [
+ "pallet-governance",
  "pallet-torus0",
  "parity-scale-codec",
  "polkadot-sdk",
