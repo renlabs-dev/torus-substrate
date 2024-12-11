@@ -28,7 +28,8 @@ pub mod pallet {
     use super::*;
 
     #[pallet::storage]
-    pub type MaxAllowedValidators<T> = StorageValue<_, u16>;
+    pub type MaxAllowedValidators<T: Config> =
+        StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedValidators>;
 
     #[pallet::storage]
     pub type Burn<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
@@ -48,9 +49,6 @@ pub mod pallet {
     #[pallet::storage]
     pub type MinValidatorStake<T: Config> =
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinValidatorStake>;
-
-    #[pallet::storage]
-    pub type MaxAllowedUids<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedUids>;
 
     #[pallet::storage]
     pub type ImmunityPeriod<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultImmunityPeriod>;
@@ -123,13 +121,10 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: polkadot_sdk::frame_system::Config {
         #[pallet::constant]
-        type DefaultBondsMovingAverage: Get<u64>;
+        type DefaultMaxAllowedValidators: Get<u16>;
 
         #[pallet::constant]
         type DefaultMinValidatorStake: Get<BalanceOf<Self>>;
-
-        #[pallet::constant]
-        type DefaultMaxAllowedUids: Get<u16>;
 
         #[pallet::constant]
         type DefaultImmunityPeriod: Get<u16>;
@@ -162,10 +157,10 @@ pub mod pallet {
         type DefaultMinimumAllowedStake: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        type DefaultMinStakeDelegationFee: Get<Percent>;
+        type DefaultMinStakingFee: Get<u8>;
 
         #[pallet::constant]
-        type DefaultMinWeightControlFee: Get<Percent>;
+        type DefaultMinWeightControlFee: Get<u8>;
 
         /// The storage MaxNameLength should be constrained to be no more than the value of this.
         /// This is needed on agent::Agent to set the `name` field BoundedVec max length.
