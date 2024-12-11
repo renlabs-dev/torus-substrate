@@ -28,33 +28,7 @@ pub mod pallet {
     use super::*;
 
     #[pallet::storage]
-    pub type Bonds<T: Config> =
-        StorageMap<_, Identity, AccountIdOf<T>, Vec<(u16, u16)>, ValueQuery>;
-
-    #[pallet::storage]
-    pub type BondsMovingAverage<T: Config> =
-        StorageValue<_, u64, ValueQuery, T::DefaultBondsMovingAverage>;
-
-    #[pallet::storage]
-    pub type ValidatorPermits<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
-
-    #[pallet::storage]
-    pub type ValidatorTrust<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, u16>;
-
-    #[pallet::storage]
-    pub type PruningScores<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, u16>;
-
-    #[pallet::storage]
     pub type MaxAllowedValidators<T> = StorageValue<_, u16>;
-
-    #[pallet::storage]
-    pub type Consensus<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, u16>;
-
-    #[pallet::storage]
-    pub type Active<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, bool>;
-
-    #[pallet::storage]
-    pub type Rank<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, u16>;
 
     #[pallet::storage]
     pub type Burn<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
@@ -100,18 +74,6 @@ pub mod pallet {
     pub type Agents<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, Agent<T>>;
 
     #[pallet::storage]
-    pub type Incentive<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, u16>;
-
-    #[pallet::storage]
-    pub type Trust<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, u16>;
-
-    #[pallet::storage]
-    pub type Dividends<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, u16>;
-
-    #[pallet::storage]
-    pub type Emission<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, BalanceOf<T>>;
-
-    #[pallet::storage]
     pub type LastUpdate<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, Block>;
 
     #[pallet::storage]
@@ -151,10 +113,6 @@ pub mod pallet {
     #[pallet::storage]
     pub type MinimumAllowedStake<T: Config> =
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinimumAllowedStake>;
-
-    #[pallet::storage]
-    pub type WeightControlDelegation<T: Config> =
-        StorageDoubleMap<_, Identity, u16, Identity, T::AccountId, T::AccountId>;
 
     #[pallet::storage]
     pub type FeeConstraints<T: Config> = StorageValue<_, ValidatorFeeConstraints<T>, ValueQuery>;
