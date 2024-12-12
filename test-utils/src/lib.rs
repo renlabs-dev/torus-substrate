@@ -56,7 +56,44 @@ parameter_types! {
     pub const MaxReserves: u32 = 50;
 }
 
-impl pallet_torus0::Config for Test {}
+impl pallet_torus0::Config for Test {
+    type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>;
+
+    type DefaultImmunityPeriod = ConstU16<0>;
+
+    type DefaultMinAllowedWeights = ConstU16<1>;
+
+    type DefaultMaxWeightAge = ConstU64<3_600>;
+
+    type DefaultMaxAllowedWeights = ConstU16<420>;
+
+    type DefaultTempo = ConstU16<100>;
+
+    type DefaultMinNameLength = ConstU16<2>;
+
+    type DefaultMaxNameLength = ConstU16<32>;
+
+    type DefaultMaxAllowedAgents = ConstU16<10_000>;
+
+    type DefaultMaxAllowedValidators = ConstU16<128>;
+
+    type DefaultMaxRegistrationsPerBlock = ConstU16<10>;
+
+    type DefaultMinimumAllowedStake = ConstU128<500000000>;
+
+    type DefaultMinStakingFee = ConstU8<5>;
+
+    type DefaultMinWeightControlFee = ConstU8<4>;
+
+    #[doc = " The storage MaxNameLength should be constrained to be no more than the value of this."]
+    #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
+    type MaxAgentNameLengthConstraint = ConstU32<256>;
+
+    #[doc = " This is needed on agent::Agent to set the `address` field BoundedVec max length."]
+    type MaxAgentAddressLengthConstraint = ConstU32<256>;
+
+    type Currency = Balances;
+}
 
 impl pallet_balances::Config for Test {
     type RuntimeEvent = RuntimeEvent;

@@ -139,6 +139,15 @@ mod runtime {
     pub type Torus0 = pallet_torus0::Pallet<Runtime>;
 }
 
+parameter_types! {
+    pub const Version: RuntimeVersion = VERSION;
+}
+
+/// Some re-exports that the node side code needs to know. Some are useful in this context as well.
+///
+/// Other types should preferably be private.
+// TODO: this should be standardized in some way, see:
+// https://github.com/paritytech/substrate/issues/10579#issuecomment-1600537558
 pub mod interface {
     use super::Runtime;
     use polkadot_sdk::{polkadot_sdk_frame as frame, *};
