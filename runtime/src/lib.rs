@@ -3,10 +3,6 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarks;
-pub mod configs;
-
 extern crate alloc;
 use alloc::vec::Vec;
 use interface::*;
@@ -14,16 +10,20 @@ use interface::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
-use sp_runtime::impl_opaque_keys;
-
 use polkadot_sdk::{
     frame_executive, frame_support, frame_system,
     polkadot_sdk_frame::{self as frame, prelude::*, runtime::prelude::*},
     sp_arithmetic::FixedPointNumber,
-    sp_core, *,
+    sp_core,
+    sp_runtime::impl_opaque_keys,
+    *,
 };
 
 pub mod apis;
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarks;
+pub mod configs;
+pub mod precompiles;
 
 impl_opaque_keys! {
     pub struct SessionKeys {
@@ -74,9 +74,6 @@ type SignedExtra = (
     // and deducts the fee from the sender's account.
     pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
-
-type Block = frame::runtime::types_common::BlockOf<Runtime, SignedExtra>;
-type Header = HeaderFor<Runtime>;
 
 /// All migrations of the runtime, aside from the ones declared in the pallets.
 ///
@@ -136,6 +133,15 @@ mod runtime {
     pub type Multisig = pallet_multisig::Pallet<Runtime>;
 
     #[runtime::pallet_index(8)]
+    pub type Ethereum = pallet_ethereum::Pallet<Runtime>;
+
+    #[runtime::pallet_index(9)]
+    pub type EVM = pallet_evm::Pallet<Runtime>;
+
+    #[runtime::pallet_index(10)]
+    pub type BaseFee = pallet_base_fee::Pallet<Runtime>;
+
+    #[runtime::pallet_index(11)]
     pub type Torus0 = pallet_torus0::Pallet<Runtime>;
 }
 
@@ -149,11 +155,29 @@ parameter_types! {
 // TODO: this should be standardized in some way, see:
 // https://github.com/paritytech/substrate/issues/10579#issuecomment-1600537558
 pub mod interface {
-    use super::Runtime;
-    use polkadot_sdk::{polkadot_sdk_frame as frame, *};
+    use crate::RuntimeCall;
 
-    pub type Block = super::Block;
-    pub use frame::runtime::types_common::OpaqueBlock;
+    use super::Runtime;
+    use polkadot_sdk::{
+        frame_system, pallet_balances,
+        sp_core::H160,
+        sp_runtime::{self, generic, traits::BlakeTwo256, MultiSignature},
+    };
+
+    pub type BlockNumber = u64;
+
+    pub type Signature = MultiSignature;
+    pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+
+    pub type UncheckedExtrinsic =
+        fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, super::SignedExtra>;
+
+    pub type CheckedExtrinsic =
+        fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, super::SignedExtra, H160>;
+
+    pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+    pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
     pub type AccountId = <Runtime as frame_system::Config>::AccountId;
     pub type Nonce = <Runtime as frame_system::Config>::Nonce;
     pub type Hash = <Runtime as frame_system::Config>::Hash;

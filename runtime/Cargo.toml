@@ -16,11 +16,28 @@ std = [
     "polkadot-sdk/std",
     "pallet-torus0/std",
     "pallet-governance/std",
+
+    # Frontier
+    "fp-evm/std",
+    "fp-rpc/std",
+    "fp-self-contained/std",
+    "pallet-base-fee/std",
+    "pallet-dynamic-fee/std",
+    "pallet-ethereum/std",
+    "pallet-evm/std",
+    "pallet-evm-chain-id/std",
+    "pallet-evm-precompile-modexp/std",
+    "pallet-evm-precompile-sha3fips/std",
+    "pallet-evm-precompile-simple/std",
 ]
 runtime-benchmarks = [
     "polkadot-sdk/runtime-benchmarks",
     "pallet-torus0/runtime-benchmarks",
     "pallet-governance/runtime-benchmarks",
+
+    # Frontier
+    "pallet-ethereum/runtime-benchmarks",
+    "pallet-evm/runtime-benchmarks",
 ]
 try-runtime = [
     "polkadot-sdk/try-runtime",
@@ -45,6 +62,19 @@ polkadot-sdk = { workspace = true, features = [
     "pallet-transaction-payment",
     "pallet-transaction-payment-rpc-runtime-api",
 ] }
+
+# Frontier
+fp-evm = { workspace = true, features = ["serde"] }
+fp-rpc.workspace = true
+fp-self-contained = { workspace = true, features = ["serde"] }
+pallet-base-fee.workspace = true
+pallet-dynamic-fee.workspace = true
+pallet-ethereum.workspace = true
+pallet-evm.workspace = true
+pallet-evm-chain-id.workspace = true
+pallet-evm-precompile-modexp.workspace = true
+pallet-evm-precompile-sha3fips.workspace = true
+pallet-evm-precompile-simple.workspace = true
 
 # Local dependencies
 pallet-torus0.workspace = true

@@ -17,6 +17,8 @@
 
 use polkadot_sdk::{sc_cli::RunCmd, *};
 
+pub mod eth;
+
 #[derive(Clone, Copy, Debug, Default)]
 pub enum Consensus {
     #[default]
@@ -46,11 +48,14 @@ pub struct Cli {
     #[command(subcommand)]
     pub subcommand: Option<Subcommand>,
 
-    #[clap(long, default_value = "aura")]
+    #[arg(long, default_value = "aura")]
     pub consensus: Consensus,
 
     #[clap(flatten)]
     pub run: RunCmd,
+
+    #[command(flatten)]
+    pub eth: eth::EthConfiguration,
 }
 
 #[derive(Debug, clap::Subcommand)]
