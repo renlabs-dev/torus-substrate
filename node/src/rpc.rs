@@ -22,44 +22,84 @@
 
 #![warn(missing_docs)]
 
+use eth::EthDeps;
+use futures::channel::mpsc;
 use jsonrpsee::RpcModule;
 use polkadot_sdk::{
+    pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer},
+    sc_consensus_manual_seal::{
+        rpc::{ManualSeal, ManualSealApiServer},
+        EngineCommand,
+    },
+    sc_rpc::SubscriptionTaskExecutor,
+    sc_transaction_pool::ChainApi,
     sc_transaction_pool_api::TransactionPool,
-    sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata},
-    *,
+    sp_inherents::CreateInherentDataProviders,
+    sp_runtime::traits::Block as BlockT,
+    substrate_frame_rpc_system::{System, SystemApiServer},
 };
 use std::sync::Arc;
-use torus_runtime::interface::{AccountId, Nonce, OpaqueBlock};
+use torus_runtime::interface::{Block, Hash};
+
+use crate::service::FullClient;
+
+/// ETH related RPC calls.
+pub mod eth;
 
 /// Full client dependencies.
-pub struct FullDeps<C, P> {
+pub struct FullDeps<P, A: ChainApi, CT, CIDP> {
     /// The client instance to use.
-    pub client: Arc<C>,
+    pub client: Arc<FullClient>,
     /// Transaction pool instance.
     pub pool: Arc<P>,
+    /// Manual seal command sink
+    pub command_sink: Option<mpsc::Sender<EngineCommand<Hash>>>,
+    /// Ethereum-compatibility specific dependencies.
+    pub eth: EthDeps<P, A, CT, CIDP>,
 }
 
 /// Instantiate all full RPC extensions.
-pub fn create_full<C, P>(
-    deps: FullDeps<C, P>,
+pub fn create_full<P, A, CT, CIDP>(
+    deps: FullDeps<P, A, CT, CIDP>,
+    subscription_task_executor: SubscriptionTaskExecutor,
+    pubsub_notification_sinks: Arc<
+        fc_mapping_sync::EthereumBlockNotificationSinks<
+            fc_mapping_sync::EthereumBlockNotification<Block>,
+        >,
+    >,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
-    C: Send
-        + Sync
-        + 'static
-        + sp_api::ProvideRuntimeApi<OpaqueBlock>
-        + HeaderBackend<OpaqueBlock>
-        + HeaderMetadata<OpaqueBlock, Error = BlockChainError>
-        + 'static,
-    C::Api: sp_block_builder::BlockBuilder<OpaqueBlock>,
-    C::Api: substrate_frame_rpc_system::AccountNonceApi<OpaqueBlock, AccountId, Nonce>,
-    P: TransactionPool + 'static,
+    P: TransactionPool<Block = Block> + 'static,
+    A: ChainApi<Block = Block> + 'static,
+    CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
+    CT: fp_rpc::ConvertTransaction<<Block as BlockT>::Extrinsic> + Send + Sync + 'static,
 {
-    use polkadot_sdk::substrate_frame_rpc_system::{System, SystemApiServer};
-    let mut module = RpcModule::new(());
-    let FullDeps { client, pool } = deps;
+    let mut io = RpcModule::new(());
+    let FullDeps {
+        client,
+        pool,
+        command_sink,
+        eth,
+    } = deps;
 
-    module.merge(System::new(client.clone(), pool.clone()).into_rpc())?;
+    io.merge(System::new(client.clone(), pool).into_rpc())?;
+    io.merge(TransactionPayment::new(client).into_rpc())?;
 
-    Ok(module)
+    if let Some(command_sink) = command_sink {
+        io.merge(
+            // We provide the rpc handler with the sending end of the channel to allow the rpc
+            // send EngineCommands to the background block authorship task.
+            ManualSeal::new(command_sink).into_rpc(),
+        )?;
+    }
+
+    // Ethereum compatibility RPCs
+    let io = eth::create_eth::<_, _, _, _>(
+        io,
+        eth,
+        subscription_task_executor,
+        pubsub_notification_sinks,
+    )?;
+
+    Ok(io)
 }

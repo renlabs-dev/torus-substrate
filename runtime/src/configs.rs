@@ -1,4 +1,5 @@
 use crate::*;
+use frame_support::PalletId;
 use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustment};
 use polkadot_sdk::{
     frame_support::{
@@ -14,6 +15,8 @@ use polkadot_sdk::{
     sp_consensus_aura::sr25519::AuthorityId as AuraId,
 };
 use sp_runtime::Perbill;
+
+pub mod eth;
 
 /// The runtime has 18 token decimals
 const TOKEN_DECIMALS: u32 = 18;
@@ -40,6 +43,8 @@ parameter_types! {
 
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig)]
 impl frame_system::Config for Runtime {
+    /// The default identifier used to distinguish between accounts.
+    type AccountId = sp_runtime::AccountId32;
     /// The type that defines the structure of blocks in the runtime
     type Block = Block;
     /// The type that handles all events emitted by the runtime
@@ -72,7 +77,7 @@ impl frame_system::Config for Runtime {
     type DbWeight = RocksDbWeight;
     /// Specifies how many recent block hashes to keep in storage
     /// Older block hashes are pruned when this limit is reached
-    type BlockHashCount = ConstU32<2400>;
+    type BlockHashCount = ConstU64<2400>;
 }
 
 // --- Balances ---
@@ -283,6 +288,8 @@ impl pallet_grandpa::Config for Runtime {
 // --- Torus ---
 
 impl pallet_torus0::Config for Runtime {
+    type Currency = Balances;
+
     type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>;
 
     type DefaultImmunityPeriod = ConstU16<0>;
@@ -317,6 +324,14 @@ impl pallet_torus0::Config for Runtime {
 
     #[doc = " This is needed on agent::Agent to set the `address` field BoundedVec max length."]
     type MaxAgentAddressLengthConstraint = ConstU32<256>;
+}
+
+parameter_types! {
+    pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
+}
+
+impl pallet_governance::Config for Runtime {
+    type PalletId = GovernancePalletId;
 
     type Currency = Balances;
 }

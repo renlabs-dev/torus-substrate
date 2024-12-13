@@ -69,7 +69,7 @@ fn testnet_genesis() -> Value {
         "balances": BalancesConfig { balances },
         "sudo": SudoConfig { key: Some(Sr25519Keyring::Alice.to_account_id()) },
         "aura": {
-            "authorities": aura.iter().map(|x| (dbg!(x.public().to_string()))).collect::<Vec<_>>(),
+            "authorities": aura.iter().map(|x| (x.public().to_string())).collect::<Vec<_>>(),
         },
         "grandpa": {
             "authorities": grandpa.iter().map(|x| (x.public().to_string(), 1)).collect::<Vec<_>>(),
