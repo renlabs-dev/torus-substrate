@@ -5,9 +5,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs/24.05";
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    pre-commit-hooks.url = "github:cachix/git-hooks.nix";
   };
 
-  outputs = { self, nixpkgs, rust-overlay, flake-utils, ... }:
+  outputs = { self, nixpkgs, rust-overlay, pre-commit-hooks, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [ (import rust-overlay) ];
@@ -31,7 +32,17 @@
         nativeBuildInputs = with pkgs; [ git rust clang protobuf sccache ];
       in
       {
+        checks = pkgs.mkShell {
+          pre-commit-check = pre-commit-hooks.lib.${system}.run {
+            src = ./.;
+            hooks = {
+              rustfmt.enable = true;
+            };
+          };
+        };
+
         devShells.default = pkgs.mkShell {
+          inherit (self.checks.${system}.pre-commit-check) shellHook;
           buildInputs = buildInputs;
           nativeBuildInputs = nativeBuildInputs;
 
