@@ -238,14 +238,12 @@ pub struct UnrewardedProposal<T: crate::Config> {
     pub votes_against: BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>,
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn add_global_params_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     data: GlobalParamsData<T>,
     metadata: Vec<u8>,
 ) -> DispatchResult {
     let data = ProposalData::<T>::GlobalParams(data);
-
     add_proposal::<T>(proposer, data, metadata)
 }
 

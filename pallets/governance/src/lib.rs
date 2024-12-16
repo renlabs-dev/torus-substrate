@@ -152,7 +152,7 @@ pub mod pallet {
             application::accept_application::<T>(application_id)
         }
 
-        #[pallet::call_index(5)]
+        #[pallet::call_index(8)]
         #[pallet::weight(0)]
         pub fn deny_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
             curator::ensure_curator::<T>(origin)?;
@@ -181,7 +181,7 @@ pub mod pallet {
             application::submit_application::<T>(payer, agent_key, metadata)
         }
 
-        #[pallet::call_index(8)]
+        #[pallet::call_index(10)]
         #[pallet::weight(0)]
         pub fn add_global_params_proposal(
             origin: OriginFor<T>,
@@ -219,7 +219,7 @@ pub mod pallet {
             )
         }
 
-        #[pallet::call_index(11)]
+        #[pallet::call_index(13)]
         #[pallet::weight(0)]
         pub fn vote_proposal(
             origin: OriginFor<T>,
@@ -230,7 +230,7 @@ pub mod pallet {
             voting::add_vote::<T>(voter, proposal_id, agree)
         }
 
-        #[pallet::call_index(12)]
+        #[pallet::call_index(14)]
         #[pallet::weight(0)]
         pub fn remove_vote_proposal(origin: OriginFor<T>, proposal_id: u64) -> DispatchResult {
             let voter = ensure_signed(origin)?;
