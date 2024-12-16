@@ -10,13 +10,21 @@ mod whitelist;
 
 use crate::application::AgentApplication;
 use crate::config::GovernanceConfiguration;
-use crate::proposal::{Proposal, ProposalId, UnrewardedProposal};
+use crate::proposal::Proposal;
+use crate::proposal::ProposalId;
+use crate::proposal::UnrewardedProposal;
 pub(crate) use ext::*;
+use frame::prelude::ensure_root;
 pub use pallet::*;
-use polkadot_sdk::frame_support::Identity;
-use polkadot_sdk::frame_support::{pallet_prelude::*, PalletId};
-use polkadot_sdk::polkadot_sdk_frame::{self as frame, prelude::OriginFor, traits::Currency};
-use polkadot_sdk::sp_runtime::traits::AccountIdConversion;
+use polkadot_sdk::frame_support::{
+    dispatch::DispatchResult,
+    pallet_prelude::{ValueQuery, *},
+    traits::Currency,
+    Identity, PalletId,
+};
+use polkadot_sdk::frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor};
+use polkadot_sdk::polkadot_sdk_frame::traits::AccountIdConversion;
+use polkadot_sdk::polkadot_sdk_frame::{self as frame};
 use polkadot_sdk::sp_std::vec::Vec;
 
 #[frame::pallet(dev_mode)]
@@ -50,8 +58,10 @@ pub mod pallet {
         StorageValue<_, AccountIdOf<T>, ValueQuery, DefaultDaoTreasuryAddress<T>>;
 
     #[pallet::storage]
-    pub type AgentApplications<T: Config> =
-        StorageMap<_, Identity, BalanceOf<T>, AgentApplication<T>>;
+    pub type AgentApplications<T: Config> = StorageMap<_, Identity, u32, AgentApplication<T>>;
+
+    #[pallet::storage]
+    pub type AgentApplicationId<T: Config> = StorageValue<_, u32, ValueQuery>;
 
     #[pallet::storage]
     pub type Whitelist<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
@@ -59,10 +69,26 @@ pub mod pallet {
     #[pallet::storage]
     pub type Curators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
-    #[pallet::config]
-    pub trait Config: polkadot_sdk::frame_system::Config {
+    #[pallet::config(with_default)]
+    pub trait Config: polkadot_sdk::frame_system::Config + pallet_torus0::Config {
         #[pallet::constant]
         type PalletId: Get<PalletId>;
+
+        #[pallet::constant]
+        type MinApplicationDataLength: Get<u32>;
+
+        #[pallet::constant]
+        type MaxApplicationDataLength: Get<u32>;
+
+        #[pallet::constant]
+        type ApplicationExpiration: Get<BlockAmount>;
+
+        #[pallet::constant]
+        type MaxPenaltyPercentage: Get<u8>;
+
+        #[pallet::no_default_bounds]
+        type RuntimeEvent: From<Event<Self>>
+            + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
 
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
     }
@@ -70,12 +96,29 @@ pub mod pallet {
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
+    #[pallet::hooks]
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+        fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
+            let current_block: u64 = block_number
+                .try_into()
+                .ok()
+                .expect("blockchain won't pass 2 ^ 64 blocks");
+
+            application::remove_expired_applications::<T>(current_block);
+            proposal::tick_proposals::<T>(current_block);
+            proposal::tick_proposal_rewards::<T>(current_block);
+
+            Weight::zero()
+        }
+    }
+
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
         #[pallet::weight(0)]
         pub fn add_curator_extrinsic(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            curator::add_curator::<T>(origin, key)
+            ensure_root(origin)?;
+            curator::add_curator::<T>(key)
         }
 
         #[pallet::call_index(1)]
@@ -84,7 +127,8 @@ pub mod pallet {
             origin: OriginFor<T>,
             key: AccountIdOf<T>,
         ) -> DispatchResult {
-            curator::remove_curator::<T>(origin, key)
+            ensure_root(origin)?;
+            curator::remove_curator::<T>(key)
         }
 
         #[pallet::call_index(2)]
@@ -93,7 +137,8 @@ pub mod pallet {
             origin: OriginFor<T>,
             key: AccountIdOf<T>,
         ) -> DispatchResult {
-            whitelist::add_to_whitelist::<T>(origin, key)
+            curator::ensure_curator::<T>(origin)?;
+            whitelist::add_to_whitelist::<T>(key)
         }
 
         #[pallet::call_index(3)]
@@ -102,47 +147,90 @@ pub mod pallet {
             origin: OriginFor<T>,
             key: AccountIdOf<T>,
         ) -> DispatchResult {
-            whitelist::remove_from_whitelist::<T>(origin, key)
+            curator::ensure_curator::<T>(origin)?;
+            whitelist::remove_from_whitelist::<T>(key)
         }
 
         #[pallet::call_index(4)]
+        #[pallet::weight(0)]
+        pub fn accept_application_extrinsic(
+            origin: OriginFor<T>,
+            application_id: u32,
+        ) -> DispatchResult {
+            curator::ensure_curator::<T>(origin)?;
+            application::accept_application::<T>(application_id)
+        }
+
+        #[pallet::call_index(5)]
+        #[pallet::weight(0)]
+        pub fn deny_application_extrinsic(
+            origin: OriginFor<T>,
+            application_id: u32,
+        ) -> DispatchResult {
+            curator::ensure_curator::<T>(origin)?;
+            application::deny_application::<T>(application_id)
+        }
+
+        #[pallet::call_index(6)]
+        #[pallet::weight(0)]
+        pub fn penalize_agent_extrinsic(
+            origin: OriginFor<T>,
+            agent_key: AccountIdOf<T>,
+            percentage: u8,
+        ) -> DispatchResult {
+            curator::ensure_curator::<T>(origin)?;
+            curator::penalize_agent::<T>(agent_key, percentage)
+        }
+
+        #[pallet::call_index(7)]
         #[pallet::weight(0)]
         pub fn submit_application_extrinsic(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
             data: Vec<u8>,
         ) -> DispatchResult {
-            application::submit_application::<T>(origin, agent_key, data)
+            let payer = ensure_signed(origin)?;
+            application::submit_application::<T>(payer, agent_key, data)
         }
 
-        #[pallet::call_index(5)]
+        #[pallet::call_index(8)]
         #[pallet::weight(0)]
-        pub fn accept_application_extrinsic(
+        pub fn add_global_params_proposal_extrinsic(
             origin: OriginFor<T>,
-            application_id: u32,
+            min_name_length: u16,
+            max_name_length: u16,
+            max_allowed_agents: u16,
+            max_allowed_weights: u16,
+            min_weight_stake: BalanceOf<T>,
+            min_weight_control_fee: u8,
+            min_staking_fee: u8,
+            data: Vec<u8>,
         ) -> DispatchResult {
-            application::accept_application::<T>(origin, application_id)
+            let proposer = ensure_signed(origin)?;
+            proposal::add_global_params_proposal::<T>(
+                proposer,
+                min_name_length,
+                max_name_length,
+                max_allowed_agents,
+                max_allowed_weights,
+                min_weight_stake,
+                min_weight_control_fee,
+                min_staking_fee,
+                data,
+            )
         }
 
-        #[pallet::call_index(6)]
-        #[pallet::weight(0)]
-        pub fn deny_application_extrinsic(
-            origin: OriginFor<T>,
-            application_id: u32,
-        ) -> DispatchResult {
-            application::deny_application::<T>(origin, application_id)
-        }
-
-        #[pallet::call_index(7)]
+        #[pallet::call_index(9)]
         #[pallet::weight(0)]
         pub fn add_global_custom_proposal_extrinsic(
             origin: OriginFor<T>,
             data: Vec<u8>,
         ) -> DispatchResult {
-            proposal::add_global_custom_proposal::<T>(origin, data)
+            let proposer = ensure_signed(origin)?;
+            proposal::add_global_custom_proposal::<T>(proposer, data)
         }
 
-        #[pallet::call_index(8)]
+        #[pallet::call_index(10)]
         #[pallet::weight(0)]
         pub fn add_dao_treasury_transfer_proposal_extrinsic(
             origin: OriginFor<T>,
@@ -150,39 +238,76 @@ pub mod pallet {
             destination_key: AccountIdOf<T>,
             data: Vec<u8>,
         ) -> DispatchResult {
-            proposal::add_dao_treasury_transfer_proposal::<T>(origin, value, destination_key, data)
+            let proposer = ensure_signed(origin)?;
+            proposal::add_dao_treasury_transfer_proposal::<T>(
+                proposer,
+                value,
+                destination_key,
+                data,
+            )
         }
 
-        #[pallet::call_index(9)]
+        #[pallet::call_index(11)]
         #[pallet::weight(0)]
         pub fn vote_proposal_extrinsic(
             origin: OriginFor<T>,
             proposal_id: u64,
             agree: bool,
         ) -> DispatchResult {
-            voting::add_vote::<T>(origin, proposal_id, agree)
+            let voter = ensure_signed(origin)?;
+            voting::add_vote::<T>(voter, proposal_id, agree)
         }
 
-        #[pallet::call_index(10)]
+        #[pallet::call_index(12)]
         #[pallet::weight(0)]
         pub fn remove_vote_proposal_extrinsic(
             origin: OriginFor<T>,
             proposal_id: u64,
         ) -> DispatchResult {
-            voting::remove_vote::<T>(origin, proposal_id)
+            let voter = ensure_signed(origin)?;
+            voting::remove_vote::<T>(voter, proposal_id)
         }
 
-        #[pallet::call_index(11)]
+        #[pallet::call_index(13)]
         #[pallet::weight(0)]
         pub fn enable_vote_delegation_extrinsic(origin: OriginFor<T>) -> DispatchResult {
             voting::enable_delegation::<T>(origin)
         }
 
-        #[pallet::call_index(12)]
+        #[pallet::call_index(14)]
         #[pallet::weight(0)]
         pub fn disable_vote_delegation_extrinsic(origin: OriginFor<T>) -> DispatchResult {
             voting::disable_delegation::<T>(origin)
         }
+    }
+
+    #[pallet::event]
+    #[pallet::generate_deposit(pub(crate) fn deposit_event)]
+    pub enum Event<T: Config> {
+        /// A new proposal has been created.
+        ProposalCreated(ProposalId),
+        /// A proposal has been accepted.
+        ProposalAccepted(ProposalId),
+        /// A proposal has been refused.
+        ProposalRefused(ProposalId),
+        /// A proposal has expired.
+        ProposalExpired(ProposalId),
+        /// A vote has been cast on a proposal.
+        ProposalVoted(u64, T::AccountId, bool),
+        /// A vote has been unregistered from a proposal.
+        ProposalVoteUnregistered(u64, T::AccountId),
+        /// An agent account has been added to the whitelist.
+        WhitelistAdded(T::AccountId),
+        /// An agent account has been removed from the whitelist.
+        WhitelistRemoved(T::AccountId),
+        /// A new application has been created.
+        ApplicationCreated(u32),
+        /// An application has been accepted.
+        ApplicationAccepted(u32),
+        /// An application has been denied.
+        ApplicationDenied(u32),
+        /// An application has expired.
+        ApplicationExpired(u32),
     }
 
     #[pallet::error]
@@ -224,8 +349,6 @@ pub mod pallet {
         /// The voter is delegating its voting power to their staked modules. Disable voting power
         /// delegation.
         VoterIsDelegatingVotingPower,
-        /// The network vote mode must be authority for changes to be imposed.
-        VoteModeIsNotAuthority,
         /// An internal error occurred, probably relating to the size of the bounded sets.
         InternalError,
         /// The application data is too small or empty.
@@ -250,5 +373,15 @@ pub mod pallet {
         NotWhitelisted,
         /// Failed to convert the given value to a balance.
         CouldNotConvertToBalance,
+        /// The application data provided does not meet the length requirement
+        InvalidApplicationDataLength,
+        /// The penalty percentage provided does not meet the maximum requirement
+        InvalidAgentPenaltyPercentage,
+        /// The key is already a curator.
+        AlreadyCurator,
+        /// Agent not found
+        AgentNotFound,
+        /// Invalid agent penalty percentage
+        InvalidPenaltyPercentage,
     }
 }

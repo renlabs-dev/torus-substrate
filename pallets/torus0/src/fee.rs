@@ -8,7 +8,7 @@ use scale_info::TypeInfo;
 #[derive(DebugNoBound, Decode, Encode, MaxEncodedLen, PartialEq, Eq, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 pub struct ValidatorFeeConstraints<T: crate::Config> {
-    pub min_stake_delegation_fee: Percent,
+    pub min_staking_fee: Percent,
     pub min_weight_control_fee: Percent,
     pub _pd: PhantomData<T>,
 }
@@ -16,7 +16,7 @@ pub struct ValidatorFeeConstraints<T: crate::Config> {
 impl<T: crate::Config> Default for ValidatorFeeConstraints<T> {
     fn default() -> Self {
         Self {
-            min_stake_delegation_fee: Percent::from_percent(T::DefaultMinStakingFee::get()),
+            min_staking_fee: Percent::from_percent(T::DefaultMinStakingFee::get()),
             min_weight_control_fee: Percent::from_percent(T::DefaultMinWeightControlFee::get()),
             _pd: PhantomData,
         }
@@ -26,7 +26,7 @@ impl<T: crate::Config> Default for ValidatorFeeConstraints<T> {
 #[derive(DebugNoBound, Decode, Encode, MaxEncodedLen, PartialEq, Eq, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 pub struct ValidatorFee<T: crate::Config> {
-    pub stake_delegation_fee: Percent,
+    pub staking_fee: Percent,
     pub weight_control_fee: Percent,
     pub _pd: PhantomData<T>,
 }
@@ -34,7 +34,7 @@ pub struct ValidatorFee<T: crate::Config> {
 impl<T: crate::Config> Default for ValidatorFee<T> {
     fn default() -> Self {
         Self {
-            stake_delegation_fee: Percent::from_percent(T::DefaultMinStakingFee::get()),
+            staking_fee: Percent::from_percent(T::DefaultMinStakingFee::get()),
             weight_control_fee: Percent::from_percent(T::DefaultMinWeightControlFee::get()),
             _pd: PhantomData,
         }

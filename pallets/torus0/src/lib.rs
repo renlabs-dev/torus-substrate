@@ -4,7 +4,7 @@ mod agent;
 mod balance;
 mod ext;
 mod fee;
-mod stake;
+pub mod stake;
 
 use crate::agent::Agent;
 use crate::fee::ValidatorFee;

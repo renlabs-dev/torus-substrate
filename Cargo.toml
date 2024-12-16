@@ -18,6 +18,7 @@ test-utils.path = "./test-utils"
 # Substrate
 codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }
 scale-info = { version = "2.11.1", default-features = false }
+
 polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "stable2409", default-features = false }
 
 # Frontier
@@ -42,6 +43,8 @@ pallet-evm-chain-id = { git = "https://github.com/paritytech/frontier.git", rev 
 pallet-evm-precompile-modexp = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
 pallet-evm-precompile-sha3fips = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
 pallet-evm-precompile-simple = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
+
+substrate-fixed = { git = "https://github.com/encointer/substrate-fixed", default-features = false }
 
 # CLI-specific dependencies
 clap = { version = "4.5.22", features = ["derive"] }
