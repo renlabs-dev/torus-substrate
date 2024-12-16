@@ -4,7 +4,7 @@ use crate::BoundedVec;
 use crate::DebugNoBound;
 use crate::TypeInfo;
 use crate::{
-    get_balance, transfer_balance, AccountIdOf, BalanceOf, Block, DaoTreasuryAddress, Error, Event,
+    get_balance, transfer_balance, AccountIdOf, BalanceOf, Block, DaoTreasuryAddress, Error,
     GlobalGovernanceConfig, Proposals, UnrewardedProposals,
 };
 use crate::{GovernanceConfiguration, NotDelegatingVotingPower};
@@ -194,6 +194,7 @@ pub struct UnrewardedProposal<T: crate::Config> {
     pub votes_against: BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn add_global_params_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     min_name_length: u16,
@@ -262,7 +263,7 @@ fn add_proposal<T: crate::Config>(
 
     let proposal = Proposal::<T> {
         id: proposal_id,
-        proposer: proposer,
+        proposer,
         expiration_block: current_block + config.proposal_expiration,
         data,
         status: ProposalStatus::Open {

@@ -40,7 +40,7 @@ pub fn submit_application<T: crate::Config>(
     if data_len < T::MinApplicationDataLength::get()
         || data_len > T::MaxApplicationDataLength::get()
     {
-        return Err(crate::Error::<T>::InvalidApplicationDataLength)?;
+        return Err(crate::Error::<T>::InvalidApplicationDataLength.into());
     }
 
     let current_block: u64 =

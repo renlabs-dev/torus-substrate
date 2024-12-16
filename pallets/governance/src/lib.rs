@@ -29,6 +29,7 @@ use polkadot_sdk::sp_std::vec::Vec;
 
 #[frame::pallet(dev_mode)]
 pub mod pallet {
+    #![allow(clippy::too_many_arguments)]
 
     use super::*;
 
