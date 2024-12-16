@@ -1,4 +1,5 @@
 use crate::add_balance;
+use crate::remove_balance;
 use crate::BoundedBTreeSet;
 use crate::BoundedVec;
 use crate::DebugNoBound;
@@ -248,8 +249,7 @@ fn add_proposal<T: crate::Config>(
     let config = GlobalGovernanceConfig::<T>::get();
 
     let cost = config.proposal_cost;
-
-    // TODO: charge cost
+    remove_balance::<T>(&proposer, cost)?;
 
     let proposal_id: u64 = crate::Proposals::<T>::iter()
         .count()
