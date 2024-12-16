@@ -9,11 +9,7 @@ use polkadot_sdk::{
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure, storage::with_storage_layer},
     polkadot_sdk_frame::prelude::OriginFor,
-    sc_telemetry::log,
-    sp_core::ConstU32,
-    sp_runtime::{BoundedBTreeMap, DispatchError, Percent},
 };
-use substrate_fixed::types::I92F36;
 
 pub fn add_vote<T: crate::Config>(
     voter: AccountIdOf<T>,

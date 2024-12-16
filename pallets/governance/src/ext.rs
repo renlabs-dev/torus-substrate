@@ -32,7 +32,7 @@ pub(super) fn remove_balance<T: crate::Config>(
 }
 
 pub(super) fn add_balance<T: crate::Config>(key: &AccountIdOf<T>, amount: BalanceOf<T>) {
-    let _ = <T as crate::Config>::Currency::deposit_creating(&key, amount);
+    let _ = <T as crate::Config>::Currency::deposit_creating(key, amount);
 }
 
 pub(super) fn transfer_balance<T: crate::Config>(
