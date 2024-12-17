@@ -245,6 +245,8 @@ pub fn add_global_params_proposal<T: crate::Config>(
     metadata: Vec<u8>,
 ) -> DispatchResult {
     let data = ProposalData::<T>::GlobalParams(data);
+    data.validate()?;
+
     add_proposal::<T>(proposer, data, metadata)
 }
 
