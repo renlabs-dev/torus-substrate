@@ -158,7 +158,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
         #[pallet::weight(0)]
-        pub fn add_stake_extrinsic(
+        pub fn add_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
             amount: BalanceOf<T>,
@@ -168,7 +168,7 @@ pub mod pallet {
 
         #[pallet::call_index(1)]
         #[pallet::weight(0)]
-        pub fn remove_stake_extrinsic(
+        pub fn remove_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
             amount: BalanceOf<T>,
@@ -178,7 +178,7 @@ pub mod pallet {
 
         #[pallet::call_index(2)]
         #[pallet::weight(0)]
-        pub fn transfer_stake_extrinsic(
+        pub fn transfer_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
             new_agent_key: AccountIdOf<T>,
@@ -189,7 +189,7 @@ pub mod pallet {
 
         #[pallet::call_index(3)]
         #[pallet::weight(0)]
-        pub fn transfer_balance_extrinsic(
+        pub fn transfer_balance(
             origin: OriginFor<T>,
             destination: AccountIdOf<T>,
             amount: BalanceOf<T>,
@@ -199,7 +199,7 @@ pub mod pallet {
 
         #[pallet::call_index(4)]
         #[pallet::weight(0)]
-        pub fn register_agent_extrinsic(
+        pub fn register_agent(
             origin: OriginFor<T>,
             name: Vec<u8>,
             address: Vec<u8>,
@@ -211,13 +211,13 @@ pub mod pallet {
 
         #[pallet::call_index(5)]
         #[pallet::weight(0)]
-        pub fn deregister_agent_extrinsic(origin: OriginFor<T>) -> DispatchResult {
+        pub fn deregister_agent(origin: OriginFor<T>) -> DispatchResult {
             agent::deregister::<T>(origin)
         }
 
         #[pallet::call_index(6)]
         #[pallet::weight(0)]
-        pub fn update_agent_extrinsic(
+        pub fn update_agent(
             origin: OriginFor<T>,
             name: Vec<u8>,
             address: Vec<u8>,
