@@ -183,6 +183,7 @@ pub mod pallet {
 
         #[pallet::call_index(10)]
         #[pallet::weight(0)]
+
         pub fn add_global_params_proposal(
             origin: OriginFor<T>,
             data: GlobalParamsData<T>,
