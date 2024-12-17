@@ -1,15 +1,17 @@
-use crate::add_balance;
-use crate::remove_balance;
+use crate::frame::traits::ExistenceRequirement;
 use crate::BoundedBTreeSet;
 use crate::BoundedVec;
 use crate::DebugNoBound;
 use crate::TypeInfo;
 use crate::{
-    get_balance, transfer_balance, AccountIdOf, BalanceOf, Block, DaoTreasuryAddress, Error,
-    GlobalGovernanceConfig, Proposals, UnrewardedProposals,
+    AccountIdOf, BalanceOf, Block, DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
+    UnrewardedProposals,
 };
 use crate::{GovernanceConfiguration, NotDelegatingVotingPower};
 use codec::{Decode, Encode, MaxEncodedLen};
+use polkadot_sdk::frame_election_provider_support::Get;
+use polkadot_sdk::frame_support::traits::Currency;
+use polkadot_sdk::frame_support::traits::WithdrawReasons;
 use polkadot_sdk::sp_runtime::SaturatedConversion;
 use polkadot_sdk::sp_std::{collections::btree_set::BTreeSet, vec::Vec};
 use polkadot_sdk::{
@@ -19,6 +21,7 @@ use polkadot_sdk::{
     sp_runtime::{BoundedBTreeMap, DispatchError, Percent},
 };
 use substrate_fixed::types::I92F36;
+
 pub type ProposalId = u64;
 
 #[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
@@ -65,7 +68,8 @@ impl<T: crate::Config> Proposal<T> {
     }
 
     fn execute_proposal(self) -> DispatchResult {
-        add_balance::<T>(&self.proposer, self.proposal_cost);
+        let _ =
+            <T as crate::Config>::Currency::deposit_creating(&self.proposer, self.proposal_cost);
 
         match self.data {
             ProposalData::GlobalParams {
@@ -89,7 +93,13 @@ impl<T: crate::Config> Proposal<T> {
                 });
             }
             ProposalData::TransferDaoTreasury { account, amount } => {
-                transfer_balance::<T>(&DaoTreasuryAddress::<T>::get(), &account, amount)?;
+                <T as crate::Config>::Currency::transfer(
+                    &DaoTreasuryAddress::<T>::get(),
+                    &account,
+                    amount,
+                    ExistenceRequirement::KeepAlive,
+                )
+                .map_err(|_| crate::Error::<T>::InternalError)?;
             }
 
             _ => {}
@@ -207,6 +217,24 @@ pub fn add_global_params_proposal<T: crate::Config>(
     min_staking_fee: u8,
     metadata: Vec<u8>,
 ) -> DispatchResult {
+    ensure!(min_name_length > 1, crate::Error::<T>::InvalidMinNameLength);
+    ensure!(
+        (max_name_length as u32) < T::MaxAgentNameLengthConstraint::get(),
+        crate::Error::<T>::InvalidMaxNameLength
+    );
+    ensure!(
+        max_allowed_agents < 2000,
+        crate::Error::<T>::InvalidMaxAllowedAgents
+    );
+    ensure!(
+        max_allowed_weights < 2000,
+        crate::Error::<T>::InvalidMaxAllowedWeights
+    );
+    ensure!(
+        min_weight_control_fee > 10,
+        crate::Error::<T>::InvalidMaxAllowedWeights
+    );
+
     let data = ProposalData::<T>::GlobalParams {
         min_name_length,
         max_name_length,
@@ -246,10 +274,25 @@ fn add_proposal<T: crate::Config>(
     data: ProposalData<T>,
     metadata: Vec<u8>,
 ) -> DispatchResult {
+    ensure!(
+        !metadata.is_empty(),
+        crate::Error::<T>::ProposalDataTooSmall
+    );
+    ensure!(
+        metadata.len() <= 256,
+        crate::Error::<T>::ProposalDataTooLarge
+    );
+
     let config = GlobalGovernanceConfig::<T>::get();
 
     let cost = config.proposal_cost;
-    remove_balance::<T>(&proposer, cost)?;
+    let _ = <T as crate::Config>::Currency::withdraw(
+        &proposer,
+        cost,
+        WithdrawReasons::except(WithdrawReasons::TIP),
+        ExistenceRequirement::KeepAlive,
+    )
+    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToPropose)?;
 
     let proposal_id: u64 = crate::Proposals::<T>::iter()
         .count()
@@ -479,7 +522,7 @@ fn get_reward_allocation<T: crate::Config>(
     n: u16,
 ) -> Result<I92F36, DispatchError> {
     let treasury_address = DaoTreasuryAddress::<T>::get();
-    let treasury_balance = get_balance::<T>(&treasury_address);
+    let treasury_balance = <T as crate::Config>::Currency::free_balance(&treasury_address);
     let treasury_balance = I92F36::from_num(treasury_balance);
 
     let allocation_percentage = I92F36::from_num(
@@ -545,6 +588,13 @@ fn distribute_proposal_rewards<T: crate::Config>(
             .to_num();
 
         // Transfer the proposal reward to the accounts from treasury
-        let _ = transfer_balance::<T>(&dao_treasury_address, &acc_id, reward);
+        if let Err(err) = <T as crate::Config>::Currency::transfer(
+            &dao_treasury_address,
+            &acc_id,
+            reward,
+            ExistenceRequirement::KeepAlive,
+        ) {
+            log::error!("could not transfer proposal reward: {err:?}")
+        }
     }
 }

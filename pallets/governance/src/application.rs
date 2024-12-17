@@ -1,7 +1,10 @@
-use crate::{remove_balance, whitelist, AccountIdOf, BalanceOf, Block};
+use crate::frame::traits::ExistenceRequirement;
+use crate::{whitelist, AccountIdOf, BalanceOf, Block};
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::frame_support::dispatch::DispatchResult;
+use polkadot_sdk::frame_support::traits::Currency;
+use polkadot_sdk::frame_support::traits::WithdrawReasons;
 use polkadot_sdk::frame_support::DebugNoBound;
 use polkadot_sdk::sp_runtime::BoundedVec;
 use polkadot_sdk::sp_std::vec::Vec;
@@ -30,7 +33,13 @@ pub fn submit_application<T: crate::Config>(
     let config = crate::GlobalGovernanceConfig::<T>::get();
     let cost = config.agent_application_cost;
 
-    remove_balance::<T>(&payer, cost)?;
+    let _ = <T as crate::Config>::Currency::withdraw(
+        &payer,
+        cost,
+        WithdrawReasons::except(WithdrawReasons::TIP),
+        ExistenceRequirement::KeepAlive,
+    )
+    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToApply)?;
 
     let data_len: u32 = data
         .len()

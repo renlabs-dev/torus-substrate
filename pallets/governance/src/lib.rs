@@ -384,5 +384,15 @@ pub mod pallet {
         AgentNotFound,
         /// Invalid agent penalty percentage
         InvalidPenaltyPercentage,
+        /// Invalid minimum name length in proposal
+        InvalidMinNameLength,
+        /// Invalid maximum name length in proposal
+        InvalidMaxNameLength,
+        /// Invalid maximum allowed agents in proposal
+        InvalidMaxAllowedAgents,
+        /// Invalid maximum allowed weights in proposal
+        InvalidMaxAllowedWeights,
+        /// Invalid minimum weight control fee in proposal
+        InvalidMinWeightControlFee,
     }
 }
