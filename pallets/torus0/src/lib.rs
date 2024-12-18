@@ -2,15 +2,18 @@
 
 mod agent;
 mod balance;
+mod burn;
 mod ext;
 mod fee;
 pub mod stake;
 
 use crate::agent::Agent;
+use crate::burn::BurnConfiguration;
 use crate::fee::ValidatorFee;
 use crate::fee::ValidatorFeeConstraints;
 pub(crate) use ext::*;
 use frame::arithmetic::Percent;
+use frame::prelude::ensure_signed;
 pub use pallet::*;
 use polkadot_sdk::frame_support::{
     dispatch::DispatchResult,
@@ -77,7 +80,7 @@ pub mod pallet {
     pub type MinWeightStake<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     #[pallet::storage]
-    pub type RegistrationsPerBlock<T> = StorageValue<_, u16, ValueQuery>;
+    pub type RegistrationsThisBlock<T> = StorageValue<_, u16, ValueQuery>;
 
     #[pallet::storage]
     pub type MaxRegistrationsPerBlock<T: Config> =
@@ -104,12 +107,35 @@ pub mod pallet {
     #[pallet::storage]
     pub type Fee<T: Config> = StorageMap<_, Identity, T::AccountId, ValidatorFee<T>, ValueQuery>;
 
-    #[pallet::config]
+    #[pallet::storage]
+    pub type BurnConfig<T: Config> = StorageValue<_, BurnConfiguration<T>, ValueQuery>;
+
+    #[pallet_section]
+    pub mod hooks {
+        #[pallet::hooks]
+        impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+            fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
+                let current_block: u64 = block_number
+                    .try_into()
+                    .ok()
+                    .expect("blockchain won't pass 2 ^ 64 blocks");
+
+                burn::adjust_burn::<T>(current_block);
+
+                RegistrationsThisBlock::<T>::set(0);
+
+                Weight::default()
+            }
+        }
+    }
+
+    #[pallet::config(with_default)]
     pub trait Config: polkadot_sdk::frame_system::Config {
         #[pallet::constant]
         type DefaultMaxAllowedValidators: Get<u16>;
 
         #[pallet::constant]
+        #[pallet::no_default_bounds]
         type DefaultMinValidatorStake: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
@@ -131,6 +157,7 @@ pub mod pallet {
         type DefaultMaxRegistrationsPerBlock: Get<u16>;
 
         #[pallet::constant]
+        #[pallet::no_default_bounds]
         type DefaultMinimumAllowedStake: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
@@ -139,6 +166,28 @@ pub mod pallet {
         #[pallet::constant]
         type DefaultMinWeightControlFee: Get<u8>;
 
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type DefaultMinBurn: Get<BalanceOf<Self>>;
+
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type DefaultMaxBurn: Get<BalanceOf<Self>>;
+
+        #[pallet::constant]
+        type DefaultAdjustmentAlpha: Get<u64>;
+
+        #[pallet::constant]
+        type DefaultTargetRegistrationsInterval: Get<u64>;
+
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type DefaultTargetRegistrationsPerInterval: Get<u16>;
+
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type DefaultMaxRegistrationsPerInterval: Get<u16>;
+
         /// The storage MaxNameLength should be constrained to be no more than the value of this.
         /// This is needed on agent::Agent to set the `name` field BoundedVec max length.
         #[pallet::constant]
@@ -146,7 +195,14 @@ pub mod pallet {
 
         /// This is needed on agent::Agent to set the `address` field BoundedVec max length.
         #[pallet::constant]
-        type MaxAgentAddressLengthConstraint: Get<u32>;
+        type MaxAgentUrlLengthConstraint: Get<u32>;
+
+        #[pallet::constant]
+        type MaxAgentMetadataLengthConstraint: Get<u32>;
+
+        #[pallet::no_default_bounds]
+        type RuntimeEvent: From<Event<Self>>
+            + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
 
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
     }
@@ -163,7 +219,8 @@ pub mod pallet {
             agent_key: AccountIdOf<T>,
             amount: BalanceOf<T>,
         ) -> DispatchResult {
-            stake::add_stake::<T>(origin, agent_key, amount)
+            let key = ensure_signed(origin)?;
+            stake::add_stake::<T>(key, agent_key, amount)
         }
 
         #[pallet::call_index(1)]
@@ -173,7 +230,8 @@ pub mod pallet {
             agent_key: AccountIdOf<T>,
             amount: BalanceOf<T>,
         ) -> DispatchResult {
-            stake::remove_stake::<T>(origin, agent_key, amount)
+            let key = ensure_signed(origin)?;
+            stake::remove_stake::<T>(key, agent_key, amount)
         }
 
         #[pallet::call_index(2)]
@@ -184,7 +242,8 @@ pub mod pallet {
             new_agent_key: AccountIdOf<T>,
             amount: BalanceOf<T>,
         ) -> DispatchResult {
-            stake::transfer_stake::<T>(origin, agent_key, new_agent_key, amount)
+            let key = ensure_signed(origin)?;
+            stake::transfer_stake::<T>(key, agent_key, new_agent_key, amount)
         }
 
         #[pallet::call_index(3)]
@@ -194,25 +253,28 @@ pub mod pallet {
             destination: AccountIdOf<T>,
             amount: BalanceOf<T>,
         ) -> DispatchResult {
-            balance::transfer_balance_multiple::<T>(origin, destination, amount)
+            let key = ensure_signed(origin)?;
+            balance::transfer_balance::<T>(key, destination, amount)
         }
 
         #[pallet::call_index(4)]
         #[pallet::weight(0)]
         pub fn register_agent(
             origin: OriginFor<T>,
-            name: Vec<u8>,
-            address: Vec<u8>,
             agent_key: T::AccountId,
-            metadata: Option<Vec<u8>>,
+            name: Vec<u8>,
+            url: Vec<u8>,
+            metadata: Vec<u8>,
         ) -> DispatchResult {
-            agent::register::<T>(origin, name, address, agent_key, metadata)
+            ensure_signed(origin)?;
+            agent::register::<T>(agent_key, name, url, metadata)
         }
 
         #[pallet::call_index(5)]
         #[pallet::weight(0)]
-        pub fn deregister_agent(origin: OriginFor<T>) -> DispatchResult {
-            agent::deregister::<T>(origin)
+        pub fn unregister_agent(origin: OriginFor<T>) -> DispatchResult {
+            let agent_key = ensure_signed(origin)?;
+            agent::unregister::<T>(agent_key)
         }
 
         #[pallet::call_index(6)]
@@ -225,8 +287,9 @@ pub mod pallet {
             staking_fee: Option<Percent>,
             weight_control_fee: Option<Percent>,
         ) -> DispatchResult {
+            let agent_key = ensure_signed(origin)?;
             agent::update::<T>(
-                origin,
+                agent_key,
                 name,
                 address,
                 metadata,
@@ -236,18 +299,35 @@ pub mod pallet {
         }
     }
 
+    #[pallet::event]
+    #[pallet::generate_deposit(pub fn deposit_event)]
+    pub enum Event<T: Config> {
+        /// Event created when stake has been transferred from the coldkey account onto the key
+        /// staking account
+        StakeAdded(AccountIdOf<T>, AccountIdOf<T>, BalanceOf<T>),
+        /// Event created when stake has been removed from the key staking account onto the coldkey
+        /// account
+        StakeRemoved(AccountIdOf<T>, AccountIdOf<T>, BalanceOf<T>),
+        /// Event created when a new agent account has been registered to the chain
+        AgentRegistered(AccountIdOf<T>),
+        /// Event created when a agent account has been deregistered from the chain
+        AgentUnregistered(AccountIdOf<T>),
+        /// Event created when the agent's updated information is added to the network
+        AgentUpdated(AccountIdOf<T>),
+    }
+
     #[pallet::error]
     pub enum Error<T> {
-        /// The specified module does not exist.
+        /// The specified agent does not exist.
         AgentDoesNotExist,
         /// Insufficient stake to withdraw the requested amount.
         NotEnoughStakeToWithdraw,
         /// Insufficient balance in the cold key account to stake the requested amount.
         NotEnoughBalanceToStake,
         /// The number of agent registrations in this block exceeds the allowed limit.
-        TooManyAgentRegistrationsPerBlock,
+        TooManyAgentRegistrationsThisBlock,
         /// The number of agent registrations in this interval exceeds the allowed limit.
-        TooManyAgentRegistrationsPerInterval,
+        TooManyAgentRegistrationsThisInterval,
         /// The agent is already registered in the active set.
         AgentAlreadyRegistered,
         /// Failed to convert between u128 and T::Balance.
@@ -256,8 +336,6 @@ pub mod pallet {
         BalanceNotAdded,
         /// Failed to remove stake from the account.
         StakeNotRemoved,
-        /// The key is already registered.
-        KeyAlreadyRegistered,
         /// Invalid shares distribution.
         InvalidShares,
         /// Insufficient balance to register.
@@ -272,30 +350,34 @@ pub mod pallet {
         NotEnoughStakeToRegister,
         /// The entity is still registered and cannot be modified.
         StillRegistered,
-        /// Attempted to set max allowed modules to a value less than the current number of
-        /// registered modules.
-        MaxAllowedModules,
+        /// Attempted to set max allowed agents to a value less than the current number of
+        /// registered agents.
+        MaxAllowedAgents,
         /// Insufficient balance to transfer.
         NotEnoughBalanceToTransfer,
-        /// The module metadata is invalid.
+        /// The agent metadata is invalid.
         InvalidAgentMetadata,
-        /// The module metadata is too long.
+        /// The agent metadata is too long.
         AgentMetadataTooLong,
+        /// The agent metadata is too long.
+        AgentMetadataTooShort,
         /// The minimum burn value is invalid, likely too small.
         InvalidMinBurn,
         /// The maximum burn value is invalid.
         InvalidMaxBurn,
-        /// The module name is too long.
+        /// The agent name is too long.
         AgentNameTooLong,
-        /// The module name is too short.
+        /// The agent name is too short.
         AgentNameTooShort,
-        /// The module name is invalid. It must be a UTF-8 encoded string.
+        /// The agent name is invalid. It must be a UTF-8 encoded string.
         InvalidAgentName,
-        /// The module address is too long.
-        AgentAddressTooLong,
-        /// The module address is invalid.
-        InvalidAgentAddress,
-        /// A module with this name already exists in the subnet.
+        /// The agent url is too long.
+        AgentUrlTooLong,
+        /// The agent url is too short.
+        AgentUrlTooShort,
+        /// The agent ur; is invalid.
+        InvalidAgentUrl,
+        /// A agent with this name already exists in the subnet.
         AgentNameAlreadyExists,
         /// An arithmetic error occurred during calculation.
         ArithmeticError,
@@ -307,6 +389,12 @@ pub mod pallet {
         StakeTooSmall,
         /// Key is not present in Whitelist, it needs to be whitelisted by a Curator
         AgentKeyNotWhitelisted,
+        /// The amount given is 0
+        InvalidAmount,
+        /// The staking fee given is lower than the minimum fee
+        InvalidStakingFee,
+        /// The weight control fee given is lower than the minimum fee
+        InvalidWeightControlFee,
     }
 }
 

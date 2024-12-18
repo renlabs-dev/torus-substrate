@@ -9267,6 +9267,7 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",
+ "substrate-fixed",
  "test-utils",
 ]
 

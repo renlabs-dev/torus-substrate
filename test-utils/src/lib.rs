@@ -83,12 +83,28 @@ impl pallet_torus0::Config for Test {
 
     type DefaultMinWeightControlFee = ConstU8<4>;
 
+    type DefaultMinBurn = ConstU128<10_000_000_000>;
+
+    type DefaultMaxBurn = ConstU128<150_000_000_000>;
+
+    type DefaultAdjustmentAlpha = ConstU64<{ u64::MAX / 2 }>;
+
+    type DefaultTargetRegistrationsInterval = ConstU64<142>;
+
+    type DefaultTargetRegistrationsPerInterval = ConstU16<3>;
+
+    type DefaultMaxRegistrationsPerInterval = ConstU16<32>;
+
     #[doc = " The storage MaxNameLength should be constrained to be no more than the value of this."]
     #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
     type MaxAgentNameLengthConstraint = ConstU32<256>;
 
     #[doc = " This is needed on agent::Agent to set the `address` field BoundedVec max length."]
-    type MaxAgentAddressLengthConstraint = ConstU32<256>;
+    type MaxAgentUrlLengthConstraint = ConstU32<256>;
+
+    type MaxAgentMetadataLengthConstraint = ConstU32<256>;
+
+    type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
 }

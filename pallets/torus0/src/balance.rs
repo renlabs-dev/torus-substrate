@@ -1,13 +1,21 @@
-use polkadot_sdk::{
-    frame_support::dispatch::DispatchResult, polkadot_sdk_frame::prelude::OriginFor,
-};
-
 use crate::{AccountIdOf, BalanceOf};
+use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement};
+use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
 
-pub fn transfer_balance_multiple<T: crate::Config>(
-    _origin: OriginFor<T>,
-    _destination: AccountIdOf<T>,
-    _amount: BalanceOf<T>,
+pub fn transfer_balance<T: crate::Config>(
+    key: AccountIdOf<T>,
+    destination: AccountIdOf<T>,
+    amount: BalanceOf<T>,
 ) -> DispatchResult {
-    todo!()
+    ensure!(amount > 0, crate::Error::<T>::InvalidAmount);
+
+    <T as crate::Config>::Currency::transfer(
+        &key,
+        &destination,
+        amount,
+        ExistenceRequirement::KeepAlive,
+    )
+    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToTransfer)?;
+
+    Ok(())
 }
