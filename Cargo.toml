@@ -1,5 +1,12 @@
 [workspace]
-members = ["node", "runtime", "pallets/*", "test-utils", "xtask"]
+members = [
+    "node",
+    "runtime",
+    "pallets/*",
+    "pallets/**/api",
+    "test-utils",
+    "xtask",
+]
 resolver = "2"
 
 [workspace.package]
@@ -11,6 +18,7 @@ edition = "2021"
 torus-node = { path = "./node", default-features = false }
 torus-runtime = { path = "./runtime", default-features = false }
 pallet-governance = { path = "./pallets/governance", default-features = false }
+pallet-governance-api = { path = "./pallets/governance/api", default-features = false }
 pallet-torus0 = { path = "./pallets/torus0", default-features = false }
 
 test-utils.path = "./test-utils"

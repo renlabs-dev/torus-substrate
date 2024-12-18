@@ -1,13 +1,6 @@
 use crate::{proposal::ProposalStatus, AccountIdOf, Error, Event, Proposals};
-use crate::{GovernanceConfiguration, NotDelegatingVotingPower};
-use polkadot_sdk::sp_std::{collections::btree_set::BTreeSet, vec::Vec};
-use polkadot_sdk::{frame_support::traits::tokens::Balance, sp_runtime::SaturatedConversion};
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure},
-    polkadot_sdk_frame::prelude::OriginFor,
-};
-use polkadot_sdk::{
-    frame_support::{dispatch::DispatchResult, ensure, storage::with_storage_layer},
     polkadot_sdk_frame::prelude::OriginFor,
 };
 

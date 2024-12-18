@@ -79,6 +79,7 @@ pallet-evm-precompile-simple.workspace = true
 # Local dependencies
 pallet-torus0.workspace = true
 pallet-governance.workspace = true
+pallet-governance-api.workspace = true
 
 [build-dependencies]
 polkadot-sdk = { optional = true, workspace = true, features = [

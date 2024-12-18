@@ -1,6 +1,6 @@
 [package]
-name = "pallet-governance"
-description = "The chain's governance pallet."
+name = "pallet-governance-api"
+description = "The chain's governance pallet api."
 version = "0.1.0"
 license = "MIT-0"
 authors.workspace = true
@@ -15,6 +15,11 @@ try-runtime = ["polkadot-sdk/try-runtime"]
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
 pallet-torus0 = { workspace = true }
-polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
+polkadot-sdk = { workspace = true, features = [
+    "experimental",
+    "runtime",
+    "pallet-sudo",
+    "sc-telemetry",
+] }
 scale-info = { workspace = true, features = ["derive"] }
 substrate-fixed = { workspace = true }
