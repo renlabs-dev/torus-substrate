@@ -31,6 +31,8 @@ use polkadot_sdk::sp_std::vec::Vec;
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
 
+    use proposal::GlobalParamsData;
+
     use super::*;
 
     #[pallet::storage]
@@ -173,44 +175,31 @@ pub mod pallet {
         pub fn submit_application(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
-            data: Vec<u8>,
+            metadata: Vec<u8>,
         ) -> DispatchResult {
             let payer = ensure_signed(origin)?;
-            application::submit_application::<T>(payer, agent_key, data)
+            application::submit_application::<T>(payer, agent_key, metadata)
         }
 
         #[pallet::call_index(8)]
         #[pallet::weight(0)]
         pub fn add_global_params_proposal(
             origin: OriginFor<T>,
-            min_name_length: u16,
-            max_name_length: u16,
-            max_allowed_agents: u16,
-            max_allowed_weights: u16,
-            min_weight_stake: BalanceOf<T>,
-            min_weight_control_fee: u8,
-            min_staking_fee: u8,
-            data: Vec<u8>,
+            data: GlobalParamsData<T>,
+            metadata: Vec<u8>,
         ) -> DispatchResult {
             let proposer = ensure_signed(origin)?;
-            proposal::add_global_params_proposal::<T>(
-                proposer,
-                min_name_length,
-                max_name_length,
-                max_allowed_agents,
-                max_allowed_weights,
-                min_weight_stake,
-                min_weight_control_fee,
-                min_staking_fee,
-                data,
-            )
+            proposal::add_global_params_proposal::<T>(proposer, data, metadata)
         }
 
         #[pallet::call_index(9)]
         #[pallet::weight(0)]
-        pub fn add_global_custom_proposal(origin: OriginFor<T>, data: Vec<u8>) -> DispatchResult {
+        pub fn add_global_custom_proposal(
+            origin: OriginFor<T>,
+            metadata: Vec<u8>,
+        ) -> DispatchResult {
             let proposer = ensure_signed(origin)?;
-            proposal::add_global_custom_proposal::<T>(proposer, data)
+            proposal::add_global_custom_proposal::<T>(proposer, metadata)
         }
 
         #[pallet::call_index(10)]

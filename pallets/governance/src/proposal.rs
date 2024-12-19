@@ -72,15 +72,17 @@ impl<T: crate::Config> Proposal<T> {
             <T as crate::Config>::Currency::deposit_creating(&self.proposer, self.proposal_cost);
 
         match self.data {
-            ProposalData::GlobalParams {
-                min_name_length,
-                max_name_length,
-                max_allowed_agents,
-                max_allowed_weights,
-                min_weight_stake,
-                min_weight_control_fee,
-                min_staking_fee,
-            } => {
+            ProposalData::GlobalParams(data) => {
+                let GlobalParamsData {
+                    min_name_length,
+                    max_name_length,
+                    max_allowed_agents,
+                    max_allowed_weights,
+                    min_weight_stake,
+                    min_weight_control_fee,
+                    min_staking_fee,
+                } = data;
+
                 pallet_torus0::MinNameLength::<T>::set(min_name_length);
                 pallet_torus0::MaxNameLength::<T>::set(max_name_length);
                 pallet_torus0::MaxAllowedAgents::<T>::set(max_allowed_agents);
@@ -168,18 +170,49 @@ pub enum ProposalStatus<T: crate::Config> {
     Expired,
 }
 
+#[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
+#[scale_info(skip_type_params(T))]
+pub struct GlobalParamsData<T: crate::Config> {
+    pub min_name_length: u16,
+    pub max_name_length: u16,
+    pub max_allowed_agents: u16,
+    pub max_allowed_weights: u16,
+    pub min_weight_stake: BalanceOf<T>,
+    pub min_weight_control_fee: u8,
+    pub min_staking_fee: u8,
+}
+
+impl<T: crate::Config> GlobalParamsData<T> {
+    pub fn validate(&self) -> DispatchResult {
+        ensure!(
+            self.min_name_length > 1,
+            crate::Error::<T>::InvalidMinNameLength
+        );
+        ensure!(
+            (self.max_name_length as u32) < T::MaxAgentNameLengthConstraint::get(),
+            crate::Error::<T>::InvalidMaxNameLength
+        );
+        ensure!(
+            self.max_allowed_agents < 2000,
+            crate::Error::<T>::InvalidMaxAllowedAgents
+        );
+        ensure!(
+            self.max_allowed_weights < 2000,
+            crate::Error::<T>::InvalidMaxAllowedWeights
+        );
+        ensure!(
+            self.min_weight_control_fee > 10,
+            crate::Error::<T>::InvalidMaxAllowedWeights
+        );
+
+        Ok(())
+    }
+}
+
 #[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub enum ProposalData<T: crate::Config> {
-    GlobalParams {
-        min_name_length: u16,
-        max_name_length: u16,
-        max_allowed_agents: u16,
-        max_allowed_weights: u16,
-        min_weight_stake: BalanceOf<T>,
-        min_weight_control_fee: u8,
-        min_staking_fee: u8,
-    },
+    GlobalParams(GlobalParamsData<T>),
     GlobalCustom,
     TransferDaoTreasury {
         account: AccountIdOf<T>,
@@ -208,42 +241,10 @@ pub struct UnrewardedProposal<T: crate::Config> {
 #[allow(clippy::too_many_arguments)]
 pub fn add_global_params_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
-    min_name_length: u16,
-    max_name_length: u16,
-    max_allowed_agents: u16,
-    max_allowed_weights: u16,
-    min_weight_stake: BalanceOf<T>,
-    min_weight_control_fee: u8,
-    min_staking_fee: u8,
+    data: GlobalParamsData<T>,
     metadata: Vec<u8>,
 ) -> DispatchResult {
-    ensure!(min_name_length > 1, crate::Error::<T>::InvalidMinNameLength);
-    ensure!(
-        (max_name_length as u32) < T::MaxAgentNameLengthConstraint::get(),
-        crate::Error::<T>::InvalidMaxNameLength
-    );
-    ensure!(
-        max_allowed_agents < 2000,
-        crate::Error::<T>::InvalidMaxAllowedAgents
-    );
-    ensure!(
-        max_allowed_weights < 2000,
-        crate::Error::<T>::InvalidMaxAllowedWeights
-    );
-    ensure!(
-        min_weight_control_fee > 10,
-        crate::Error::<T>::InvalidMaxAllowedWeights
-    );
-
-    let data = ProposalData::<T>::GlobalParams {
-        min_name_length,
-        max_name_length,
-        max_allowed_agents,
-        max_allowed_weights,
-        min_weight_stake,
-        min_weight_control_fee,
-        min_staking_fee,
-    };
+    let data = ProposalData::<T>::GlobalParams(data);
 
     add_proposal::<T>(proposer, data, metadata)
 }
