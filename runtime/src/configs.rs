@@ -333,5 +333,15 @@ parameter_types! {
 impl pallet_governance::Config for Runtime {
     type PalletId = GovernancePalletId;
 
+    type MinApplicationDataLength = ConstU32<2>;
+
+    type MaxApplicationDataLength = ConstU32<256>;
+
+    type ApplicationExpiration = ConstU64<2000>;
+
+    type MaxPenaltyPercentage = ConstU8<20>;
+
+    type RuntimeEvent = RuntimeEvent;
+
     type Currency = Balances;
 }

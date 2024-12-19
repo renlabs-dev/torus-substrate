@@ -143,6 +143,9 @@ mod runtime {
 
     #[runtime::pallet_index(11)]
     pub type Torus0 = pallet_torus0::Pallet<Runtime>;
+
+    #[runtime::pallet_index(12)]
+    pub type Governance = pallet_governance::Pallet<Runtime>;
 }
 
 parameter_types! {
