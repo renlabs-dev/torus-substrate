@@ -64,7 +64,7 @@ impl frame_system::Config for Runtime {
     type AccountData = pallet_balances::AccountData<<Runtime as pallet_balances::Config>::Balance>;
     /// The SS58 prefix used to generate addresses for this chain
     /// Helps distinguish addresses between different chains
-    type SS58Prefix = ConstU16<42>;
+    type SS58Prefix = ConstU16<888>;
     /// Contains version information about the runtime
     /// Used for runtime upgrades and compatibility
     type Version = Version;

@@ -192,7 +192,12 @@ mod ops {
         }
 
         if node.validator {
-            cmd.args(["--validator", "--force-authoring"]);
+            cmd.args([
+                "--validator",
+                "--force-authoring",
+                "--consensus",
+                "manual-seal-8000",
+            ]);
         }
 
         if let Some(name) = &node.name {
