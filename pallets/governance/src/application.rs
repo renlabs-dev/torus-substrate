@@ -46,9 +46,8 @@ pub fn submit_application<T: crate::Config>(
         .try_into()
         .map_err(|_| crate::Error::<T>::InvalidApplicationDataLength)?;
 
-    if data_len < T::MinApplicationDataLength::get()
-        || data_len > T::MaxApplicationDataLength::get()
-    {
+    let data_range = T::MinApplicationDataLength::get()..T::MaxApplicationDataLength::get();
+    if !data_range.contains(&data_len) {
         return Err(crate::Error::<T>::InvalidApplicationDataLength.into());
     }
 
