@@ -1,6 +1,6 @@
 use crate::AccountIdOf;
 use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::sp_runtime::Percent;
+use polkadot_sdk::sp_runtime::{DispatchError, Percent};
 use polkadot_sdk::{
     frame_support::dispatch::DispatchResult, frame_system::ensure_signed,
     polkadot_sdk_frame::prelude::OriginFor,
@@ -32,13 +32,15 @@ pub fn penalize_agent<T: crate::Config>(
         return Err(crate::Error::<T>::InvalidPenaltyPercentage.into());
     }
 
-    let Some(mut agent) = pallet_torus0::Agents::<T>::get(&agent_key) else {
-        return Err(crate::Error::<T>::AgentNotFound.into());
-    };
+    pallet_torus0::Agents::<T>::try_mutate(&agent_key, |agent| {
+        let Some(agent) = agent else {
+            return Err(crate::Error::<T>::AgentNotFound.into());
+        };
 
-    agent.weight_factor = Percent::from_percent(100u8.saturating_sub(percentage));
+        agent.weight_factor = Percent::from_percent(100u8.saturating_sub(percentage));
 
-    pallet_torus0::Agents::<T>::insert(agent_key, agent);
+        Ok::<(), DispatchError>(())
+    })?;
 
     Ok(())
 }
