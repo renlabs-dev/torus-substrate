@@ -46,11 +46,14 @@ pub fn register<T: crate::Config>(
         crate::Error::<T>::TooManyAgentRegistrationsThisBlock
     );
 
+    ensure!(
+        <T as pallet_governance_api::GovernanceApi<T::AccountId>>::is_whitelisted(&agent_key),
+        crate::Error::<T>::AgentKeyNotWhitelisted
+    );
+
     validate_agent_name::<T>(&name[..])?;
     validate_agent_url::<T>(&url[..])?;
     validate_agent_metadata::<T>(&metadata[..])?;
-
-    // TODO: check if agent is on whitelist
 
     crate::Agents::<T>::insert(
         agent_key.clone(),

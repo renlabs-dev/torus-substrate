@@ -60,6 +60,16 @@ parameter_types! {
     pub const MaxReserves: u32 = 50;
 }
 
+impl pallet_governance_api::GovernanceApi<AccountId> for Test {
+    fn get_dao_treasury_address() -> AccountId {
+        todo!()
+    }
+
+    fn is_whitelisted(_key: &AccountId) -> bool {
+        todo!()
+    }
+}
+
 impl pallet_torus0::Config for Test {
     type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>;
 

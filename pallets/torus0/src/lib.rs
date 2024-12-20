@@ -130,7 +130,9 @@ pub mod pallet {
     }
 
     #[pallet::config(with_default)]
-    pub trait Config: polkadot_sdk::frame_system::Config {
+    pub trait Config:
+        polkadot_sdk::frame_system::Config + pallet_governance_api::GovernanceApi<Self::AccountId>
+    {
         #[pallet::constant]
         type DefaultMaxAllowedValidators: Get<u16>;
 

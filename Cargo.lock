@@ -8374,7 +8374,6 @@ dependencies = [
 name = "pallet-governance-api"
 version = "0.1.0"
 dependencies = [
- "pallet-torus0",
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",
@@ -9263,6 +9262,7 @@ dependencies = [
 name = "pallet-torus0"
 version = "0.1.0"
 dependencies = [
+ "pallet-governance-api",
  "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
@@ -16585,6 +16585,7 @@ version = "0.1.0"
 dependencies = [
  "pallet-emission0",
  "pallet-governance",
+ "pallet-governance-api",
  "pallet-torus0",
  "pallet-torus0-api",
  "parity-scale-codec",

@@ -4,9 +4,6 @@ use crate::agent;
 use crate::{AccountIdOf, BalanceOf};
 use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, WithdrawReasons};
 use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
-use polkadot_sdk::{
-    frame_support::dispatch::DispatchResult, polkadot_sdk_frame::prelude::OriginFor,
-};
 
 pub fn add_stake<T: crate::Config>(
     key: AccountIdOf<T>,
