@@ -20,6 +20,7 @@ use polkadot_sdk::frame_support::{
 };
 use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
 use polkadot_sdk::polkadot_sdk_frame as frame;
+use polkadot_sdk::sp_std;
 use scale_info::prelude::vec::Vec;
 
 #[frame::pallet(dev_mode)]
@@ -54,25 +55,10 @@ pub mod pallet {
     pub type ImmunityPeriod<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultImmunityPeriod>;
 
     #[pallet::storage]
-    pub type MinAllowedWeights<T: Config> =
-        StorageValue<_, u16, ValueQuery, T::DefaultMinAllowedWeights>;
-
-    #[pallet::storage]
-    pub type MaxWeightAge<T: Config> =
-        StorageValue<_, BlockAmount, ValueQuery, T::DefaultMaxWeightAge>;
-
-    #[pallet::storage]
-    pub type MaxAllowedWeights<T: Config> =
-        StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedWeights>;
-
-    #[pallet::storage]
-    pub type Tempo<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultTempo>;
+    pub type RewardInterval<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultRewardInterval>;
 
     #[pallet::storage]
     pub type Agents<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, Agent<T>>;
-
-    #[pallet::storage]
-    pub type LastUpdate<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, Block>;
 
     #[pallet::storage]
     pub type RegistrationBlock<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, Block>;
@@ -130,16 +116,7 @@ pub mod pallet {
         type DefaultImmunityPeriod: Get<u16>;
 
         #[pallet::constant]
-        type DefaultMinAllowedWeights: Get<u16>;
-
-        #[pallet::constant]
-        type DefaultMaxWeightAge: Get<BlockAmount>;
-
-        #[pallet::constant]
-        type DefaultMaxAllowedWeights: Get<u16>;
-
-        #[pallet::constant]
-        type DefaultTempo: Get<u16>;
+        type DefaultRewardInterval: Get<u16>;
 
         #[pallet::constant]
         type DefaultMinNameLength: Get<u16>;
@@ -330,5 +307,58 @@ pub mod pallet {
         StakeTooSmall,
         /// Key is not present in Whitelist, it needs to be whitelisted by a Curator
         AgentKeyNotWhitelisted,
+    }
+}
+
+// TODO: impl
+impl<T: Config>
+    pallet_torus0_api::Torus0Api<
+        T::AccountId,
+        <T::Currency as Currency<T::AccountId>>::Balance,
+        <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+    > for Pallet<T>
+{
+    fn reward_interval() -> u16 {
+        RewardInterval::<T>::get()
+    }
+
+    fn min_allowed_stake() -> u128 {
+        MinimumAllowedStake::<T>::get()
+    }
+
+    fn max_validators() -> u16 {
+        MaxAllowedValidators::<T>::get()
+    }
+
+    fn staking_fee(who: &T::AccountId) -> Percent {
+        Fee::<T>::get(who).staking_fee
+    }
+
+    fn stakes_on(
+        _who: &T::AccountId,
+    ) -> sp_std::vec::Vec<(
+        T::AccountId,
+        <T::Currency as Currency<T::AccountId>>::Balance,
+    )> {
+        todo!()
+    }
+
+    fn stake_to(
+        _staker: &T::AccountId,
+        _staked: &T::AccountId,
+        _amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+    ) -> Result<(), <T::Currency as Currency<T::AccountId>>::NegativeImbalance> {
+        todo!()
+    }
+
+    fn is_agent_registered(agent: &T::AccountId) -> bool {
+        Agents::<T>::contains_key(agent)
+    }
+
+    fn on_agent_registration(_agent: &T::AccountId) -> DispatchResult {
+        todo!()
+    }
+    fn on_agent_deregistration(_agent: &T::AccountId) -> DispatchResult {
+        todo!()
     }
 }

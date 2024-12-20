@@ -1,5 +1,7 @@
 #![allow(non_camel_case_types)]
 
+use std::num::NonZeroU128;
+
 use polkadot_sdk::{
     frame_support::{
         self, parameter_types,
@@ -9,8 +11,10 @@ use polkadot_sdk::{
     polkadot_sdk_frame::runtime::prelude::*,
     sp_core::H256,
     sp_io,
-    sp_runtime::traits::{BlakeTwo256, IdentityLookup},
-    sp_runtime::BuildStorage,
+    sp_runtime::{
+        traits::{BlakeTwo256, IdentityLookup},
+        BuildStorage,
+    },
     sp_tracing,
 };
 
@@ -61,13 +65,7 @@ impl pallet_torus0::Config for Test {
 
     type DefaultImmunityPeriod = ConstU16<0>;
 
-    type DefaultMinAllowedWeights = ConstU16<1>;
-
-    type DefaultMaxWeightAge = ConstU64<3_600>;
-
-    type DefaultMaxAllowedWeights = ConstU16<420>;
-
-    type DefaultTempo = ConstU16<100>;
+    type DefaultRewardInterval = ConstU16<100>;
 
     type DefaultMinNameLength = ConstU16<2>;
 
@@ -93,6 +91,27 @@ impl pallet_torus0::Config for Test {
     type MaxAgentAddressLengthConstraint = ConstU32<256>;
 
     type Currency = Balances;
+}
+
+parameter_types! {
+    pub const HalvingInterval: NonZeroU128 = unsafe { NonZeroU128::new_unchecked((to_nano(250_000) - 1) / 10800) };
+    pub const MaxSupply: NonZeroU128 = unsafe { NonZeroU128::new_unchecked((to_nano(250_000) - 1) / 10800) };
+}
+
+impl pallet_emission0::Config for Test {
+    type HalvingInterval = HalvingInterval;
+
+    type MaxSupply = MaxSupply;
+
+    type BlockEmission = ConstU128<{ (to_nano(250_000) - 1) / 10800 }>;
+
+    type DefaultMinAllowedWeights = ConstU16<1>;
+
+    type DefaultMaxAllowedWeights = ConstU16<420>;
+
+    type Currency = Balances;
+
+    type Torus = Torus0;
 }
 
 impl pallet_balances::Config for Test {

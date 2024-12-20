@@ -8230,9 +8230,11 @@ dependencies = [
 name = "pallet-emission0"
 version = "0.1.0"
 dependencies = [
+ "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",
+ "substrate-fixed",
 ]
 
 [[package]]
@@ -8360,6 +8362,7 @@ dependencies = [
 name = "pallet-governance"
 version = "0.1.0"
 dependencies = [
+ "pallet-emission0",
  "pallet-torus0",
  "parity-scale-codec",
  "polkadot-sdk",
@@ -8375,7 +8378,6 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",
- "substrate-fixed",
 ]
 
 [[package]]
@@ -9261,10 +9263,18 @@ dependencies = [
 name = "pallet-torus0"
 version = "0.1.0"
 dependencies = [
+ "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",
  "test-utils",
+]
+
+[[package]]
+name = "pallet-torus0-api"
+version = "0.1.0"
+dependencies = [
+ "polkadot-sdk",
 ]
 
 [[package]]
@@ -16307,7 +16317,7 @@ source = "git+https://github.com/paritytech/polkadot-sdk.git?branch=stable2409#9
 [[package]]
 name = "substrate-fixed"
 version = "0.5.9"
-source = "git+https://github.com/encointer/substrate-fixed#ddaa922892d1565f02c9c5702f0aacd17da53ce2"
+source = "git+https://github.com/encointer/substrate-fixed.git?branch=master#ddaa922892d1565f02c9c5702f0aacd17da53ce2"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -16572,7 +16582,10 @@ checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 name = "test-utils"
 version = "0.1.0"
 dependencies = [
+ "pallet-emission0",
+ "pallet-governance",
  "pallet-torus0",
+ "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",
@@ -16925,6 +16938,7 @@ dependencies = [
  "fp-self-contained",
  "pallet-base-fee",
  "pallet-dynamic-fee",
+ "pallet-emission0",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-chain-id",
@@ -16934,6 +16948,7 @@ dependencies = [
  "pallet-governance",
  "pallet-governance-api",
  "pallet-torus0",
+ "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",

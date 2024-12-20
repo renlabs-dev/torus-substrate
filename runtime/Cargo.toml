@@ -15,7 +15,10 @@ std = [
 
     "polkadot-sdk/std",
     "pallet-torus0/std",
+    "pallet-emission0/std",
     "pallet-governance/std",
+    "pallet-governance-api/std",
+    "pallet-torus0-api/std",
 
     # Frontier
     "fp-evm/std",
@@ -33,7 +36,10 @@ std = [
 runtime-benchmarks = [
     "polkadot-sdk/runtime-benchmarks",
     "pallet-torus0/runtime-benchmarks",
+    "pallet-emission0/runtime-benchmarks",
     "pallet-governance/runtime-benchmarks",
+    "pallet-governance-api/runtime-benchmarks",
+    "pallet-torus0-api/runtime-benchmarks",
 
     # Frontier
     "pallet-ethereum/runtime-benchmarks",
@@ -42,7 +48,10 @@ runtime-benchmarks = [
 try-runtime = [
     "polkadot-sdk/try-runtime",
     "pallet-torus0/try-runtime",
+    "pallet-emission0/try-runtime",
     "pallet-governance/try-runtime",
+    "pallet-governance-api/try-runtime",
+    "pallet-torus0-api/try-runtime",
 ]
 
 [dependencies]
@@ -78,7 +87,10 @@ pallet-evm-precompile-simple.workspace = true
 
 # Local dependencies
 pallet-torus0.workspace = true
+pallet-emission0.workspace = true
 pallet-governance.workspace = true
+
+pallet-torus0-api.workspace = true
 pallet-governance-api.workspace = true
 
 [build-dependencies]
