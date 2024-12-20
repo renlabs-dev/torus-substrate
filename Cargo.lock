@@ -8368,6 +8368,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-governance-api"
+version = "0.1.0"
+dependencies = [
+ "pallet-torus0",
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "scale-info",
+ "substrate-fixed",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "38.0.0"
 source = "git+https://github.com/paritytech/polkadot-sdk.git?branch=stable2409#981d6c0fa87a00b72bb3b6211d1e71deed21f0cc"
@@ -16921,6 +16932,7 @@ dependencies = [
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
  "pallet-governance",
+ "pallet-governance-api",
  "pallet-torus0",
  "parity-scale-codec",
  "polkadot-sdk",

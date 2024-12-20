@@ -463,4 +463,15 @@ impl_runtime_apis! {
             )
         }
     }
+
+
+    impl pallet_governance_api::GovernanceApi<Block, AccountId> for Runtime {
+        fn get_dao_treasury_address() -> AccountId {
+            pallet_governance::DaoTreasuryAddress::<Runtime>::get()
+        }
+
+        fn is_whitelisted(key: &AccountId) -> bool {
+            pallet_governance::whitelist::is_whitelisted::<Runtime>(key)
+        }
+    }
 }

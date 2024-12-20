@@ -6,7 +6,7 @@ mod curator;
 mod ext;
 mod proposal;
 mod voting;
-mod whitelist;
+pub mod whitelist;
 
 use crate::application::AgentApplication;
 use crate::config::GovernanceConfiguration;
