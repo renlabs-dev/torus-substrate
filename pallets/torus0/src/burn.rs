@@ -1,7 +1,8 @@
-use crate::{BalanceOf, BlockAmount};
+use crate::BalanceOf;
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::frame_support::DebugNoBound;
+use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
 use scale_info::prelude::marker::PhantomData;
 use scale_info::TypeInfo;
 use substrate_fixed::types::I110F18;
@@ -12,7 +13,7 @@ pub struct BurnConfiguration<T: crate::Config> {
     pub min_burn: BalanceOf<T>,
     pub max_burn: BalanceOf<T>,
     pub adjustment_alpha: u64,
-    pub target_registrations_interval: BlockAmount,
+    pub target_registrations_interval: BlockNumberFor<T>,
     pub target_registrations_per_interval: u16,
     pub max_registrations_per_interval: u16,
     pub _pd: PhantomData<T>,
@@ -46,6 +47,10 @@ pub fn adjust_burn<T: crate::Config>(current_block: u64) {
         ..
     } = crate::BurnConfig::<T>::get();
 
+    let target_registrations_interval: u64 = target_registrations_interval
+        .into()
+        .try_into()
+        .expect("block number is 64 bits long");
     let current_burn = crate::Burn::<T>::get();
     let registrations_this_interval = crate::RegistrationsThisInterval::<T>::get();
 

@@ -29,6 +29,8 @@ use scale_info::prelude::vec::Vec;
 #[frame::pallet(dev_mode)]
 pub mod pallet {
 
+    use frame::prelude::BlockNumberFor;
+
     use super::*;
 
     #[pallet::storage]
@@ -64,7 +66,8 @@ pub mod pallet {
     pub type Agents<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, Agent<T>>;
 
     #[pallet::storage]
-    pub type RegistrationBlock<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, Block>;
+    pub type RegistrationBlock<T: Config> =
+        StorageMap<_, Identity, AccountIdOf<T>, BlockNumberFor<T>>;
 
     #[pallet::storage]
     pub type MaxNameLength<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultMaxNameLength>;
@@ -180,7 +183,8 @@ pub mod pallet {
         type DefaultAdjustmentAlpha: Get<u64>;
 
         #[pallet::constant]
-        type DefaultTargetRegistrationsInterval: Get<u64>;
+        #[pallet::no_default_bounds]
+        type DefaultTargetRegistrationsInterval: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         #[pallet::no_default_bounds]
