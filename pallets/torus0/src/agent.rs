@@ -30,6 +30,7 @@ pub fn register<T: crate::Config>(
         crate::Error::<T>::AgentAlreadyRegistered
     );
 
+    // TODO: Take pruning scores into consideration
     ensure!(
         crate::Agents::<T>::iter().count() < crate::MaxAllowedAgents::<T>::get() as usize,
         crate::Error::<T>::MaxAllowedAgents
@@ -78,6 +79,7 @@ pub fn unregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult
     );
 
     crate::Agents::<T>::remove(&agent_key);
+    crate::stake::clear_key::<T>(&agent_key)?;
 
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::AgentUnregistered(agent_key));
 

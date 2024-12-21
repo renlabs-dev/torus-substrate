@@ -1,3 +1,4 @@
+use polkadot_sdk::sc_telemetry::log;
 use polkadot_sdk::sp_std::collections::btree_map::BTreeMap;
 
 use crate::agent;
@@ -86,6 +87,24 @@ pub fn transfer_stake<T: crate::Config>(
 ) -> DispatchResult {
     remove_stake::<T>(key.clone(), agent_key, amount)?;
     add_stake::<T>(key, new_agent_key, amount)?;
+    Ok(())
+}
+
+pub(crate) fn clear_key<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
+    for (staker, staked, amount) in crate::StakingTo::<T>::iter() {
+        if &staker == key || &staked == key {
+            crate::StakingTo::<T>::remove(&staker, &staked);
+            crate::StakedBy::<T>::remove(&staked, &staker);
+            if let Err(err) = remove_stake::<T>(staker.clone(), staked.clone(), amount) {
+                log::error!(
+                    "could not remove stake from {:?} to {:?}: {err:?}",
+                    staker,
+                    staked
+                )
+            }
+        }
+    }
+
     Ok(())
 }
 
