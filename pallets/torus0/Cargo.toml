@@ -32,7 +32,6 @@ codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 substrate-fixed = { workspace = true }
 polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
-pallet-governance-api = { workspace = true }
 
 pallet-governance-api = { workspace = true }
 pallet-torus0-api.workspace = true
