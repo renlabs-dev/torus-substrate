@@ -167,7 +167,7 @@ fn validate_agent_name<T: crate::Config>(bytes: &[u8]) -> DispatchResult {
     ensure!(
         len <= (crate::MaxNameLength::<T>::get() as u32)
             .min(T::MaxAgentNameLengthConstraint::get()),
-        crate::Error::<T>::AgentNameTooShort
+        crate::Error::<T>::AgentNameTooLong
     );
 
     ensure!(
