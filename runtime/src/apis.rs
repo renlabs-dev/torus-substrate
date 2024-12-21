@@ -264,7 +264,6 @@ impl_runtime_apis! {
     }
 
     // Frontier
-
     impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
         fn chain_id() -> u64 {
             <Runtime as pallet_evm::Config>::ChainId::get()
@@ -431,7 +430,7 @@ impl_runtime_apis! {
         }
 
         fn elasticity() -> Option<Permill> {
-            Some(pallet_base_fee::Elasticity::<Runtime>::get())
+                None
         }
 
         fn gas_limit_multiplier_support() {}

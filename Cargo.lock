@@ -7746,20 +7746,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-base-fee"
-version = "1.0.0"
-source = "git+https://github.com/paritytech/frontier.git?rev=b9b1c620c8b418bdeeadc79725f9cfa4703c0333#b9b1c620c8b418bdeeadc79725f9cfa4703c0333"
-dependencies = [
- "fp-evm",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
 name = "pallet-beefy"
 version = "39.0.0"
 source = "git+https://github.com/paritytech/polkadot-sdk.git?branch=stable2409#981d6c0fa87a00b72bb3b6211d1e71deed21f0cc"
@@ -8156,21 +8142,6 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
-]
-
-[[package]]
-name = "pallet-dynamic-fee"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/frontier.git?rev=b9b1c620c8b418bdeeadc79725f9cfa4703c0333#b9b1c620c8b418bdeeadc79725f9cfa4703c0333"
-dependencies = [
- "fp-dynamic-fee",
- "fp-evm",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-inherents",
 ]
 
 [[package]]
@@ -16935,8 +16906,6 @@ dependencies = [
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
- "pallet-base-fee",
- "pallet-dynamic-fee",
  "pallet-emission0",
  "pallet-ethereum",
  "pallet-evm",

@@ -138,9 +138,6 @@ mod runtime {
     #[runtime::pallet_index(9)]
     pub type EVM = pallet_evm::Pallet<Runtime>;
 
-    #[runtime::pallet_index(10)]
-    pub type BaseFee = pallet_base_fee::Pallet<Runtime>;
-
     #[runtime::pallet_index(11)]
     pub type Governance = pallet_governance::Pallet<Runtime>;
 
