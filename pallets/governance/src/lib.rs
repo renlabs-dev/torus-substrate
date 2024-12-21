@@ -73,7 +73,9 @@ pub mod pallet {
     pub type Curators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
     #[pallet::config(with_default)]
-    pub trait Config: polkadot_sdk::frame_system::Config + pallet_torus0::Config {
+    pub trait Config:
+        polkadot_sdk::frame_system::Config + pallet_torus0::Config + pallet_emission0::Config
+    {
         #[pallet::constant]
         type PalletId: Get<PalletId>;
 

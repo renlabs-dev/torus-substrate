@@ -142,10 +142,13 @@ mod runtime {
     pub type BaseFee = pallet_base_fee::Pallet<Runtime>;
 
     #[runtime::pallet_index(11)]
-    pub type Torus0 = pallet_torus0::Pallet<Runtime>;
+    pub type Governance = pallet_governance::Pallet<Runtime>;
 
     #[runtime::pallet_index(12)]
-    pub type Governance = pallet_governance::Pallet<Runtime>;
+    pub type Torus0 = pallet_torus0::Pallet<Runtime>;
+
+    #[runtime::pallet_index(13)]
+    pub type Emission0 = pallet_emission0::Pallet<Runtime>;
 }
 
 parameter_types! {

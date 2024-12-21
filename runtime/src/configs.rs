@@ -13,6 +13,7 @@ use polkadot_sdk::{
     pallet_aura::MinimumPeriodTimesTwo,
     sp_arithmetic::Perquintill,
     sp_consensus_aura::sr25519::AuthorityId as AuraId,
+    sp_std::num::NonZeroU128,
 };
 use sp_runtime::Perbill;
 
@@ -88,7 +89,7 @@ impl pallet_balances::Config for Runtime {
     /// The overarching event type
     type RuntimeEvent = RuntimeEvent;
     /// The type for recording an account's reason for being unable to withdraw funds
-    type RuntimeHoldReason = ();
+    type RuntimeHoldReason = RuntimeHoldReason;
     /// The type for recording an account's freezing reason
     type RuntimeFreezeReason = ();
     /// The type for recording account balances
@@ -294,13 +295,7 @@ impl pallet_torus0::Config for Runtime {
 
     type DefaultImmunityPeriod = ConstU16<0>;
 
-    type DefaultMinAllowedWeights = ConstU16<1>;
-
-    type DefaultMaxWeightAge = ConstU64<3_600>;
-
-    type DefaultMaxAllowedWeights = ConstU16<420>;
-
-    type DefaultTempo = ConstU16<100>;
+    type DefaultRewardInterval = ConstU16<100>;
 
     type DefaultMinNameLength = ConstU16<2>;
 
@@ -345,3 +340,30 @@ impl pallet_governance::Config for Runtime {
 
     type Currency = Balances;
 }
+
+parameter_types! {
+    pub HalvingInterval: NonZeroU128 = NonZeroU128::new((250_000 * 10u128.pow(TOKEN_DECIMALS) - 1) / 10800).unwrap();
+    pub MaxSupply: NonZeroU128 = NonZeroU128::new((250_000 * 10u128.pow(TOKEN_DECIMALS) - 1) / 10800).unwrap();
+}
+
+impl pallet_emission0::Config for Runtime {
+    type HalvingInterval = HalvingInterval;
+
+    type MaxSupply = MaxSupply;
+
+    type BlockEmission = ConstU128<{ (250_000 * 10u128.pow(TOKEN_DECIMALS) - 1) / 10800 }>;
+
+    type DefaultMinAllowedWeights = ConstU16<1>;
+
+    type DefaultMaxAllowedWeights = ConstU16<420>;
+
+    type Currency = Balances;
+
+    type Torus = Torus0;
+}
+
+// type DefaultMinAllowedWeights = ConstU16<1>;
+
+// type DefaultMaxWeightAge = ConstU64<3_600>;
+
+// type DefaultMaxAllowedWeights = ConstU16<420>;

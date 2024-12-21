@@ -1,0 +1,13 @@
+[package]
+name = "pallet-torus0-api"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["std"]
+std = ["polkadot-sdk/std"]
+runtime-benchmarks = ["polkadot-sdk/runtime-benchmarks"]
+try-runtime = ["polkadot-sdk/try-runtime"]
+
+[dependencies]
+polkadot-sdk = { workspace = true, features = ["sp-runtime"] }

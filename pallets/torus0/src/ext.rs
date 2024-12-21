@@ -7,5 +7,3 @@ pub(super) type BalanceOf<T> = <<T as crate::Config>::Currency as Currency<
 pub(super) type AccountIdOf<T> = <T as polkadot_sdk::frame_system::Config>::AccountId;
 
 pub(super) type Block = u64;
-
-pub(super) type BlockAmount = u64;

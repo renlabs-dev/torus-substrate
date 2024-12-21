@@ -86,7 +86,7 @@ impl<T: crate::Config> Proposal<T> {
                 pallet_torus0::MinNameLength::<T>::set(min_name_length);
                 pallet_torus0::MaxNameLength::<T>::set(max_name_length);
                 pallet_torus0::MaxAllowedAgents::<T>::set(max_allowed_agents);
-                pallet_torus0::MaxAllowedWeights::<T>::set(max_allowed_weights);
+                pallet_emission0::MaxAllowedWeights::<T>::set(max_allowed_weights);
                 pallet_torus0::MinWeightStake::<T>::set(min_weight_stake);
                 pallet_torus0::FeeConstraints::<T>::mutate(|constraints| {
                     constraints.min_weight_control_fee =
