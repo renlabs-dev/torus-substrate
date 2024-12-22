@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod agent;
+pub mod agent;
 mod balance;
 mod burn;
 mod ext;
@@ -15,6 +15,7 @@ pub(crate) use ext::*;
 use frame::arithmetic::Percent;
 use frame::prelude::ensure_signed;
 pub use pallet::*;
+use polkadot_sdk::frame_support::traits::Imbalance;
 use polkadot_sdk::frame_support::{
     dispatch::DispatchResult,
     pallet_prelude::{ValueQuery, *},
@@ -404,7 +405,6 @@ pub mod pallet {
     }
 }
 
-// TODO: impl
 impl<T: Config>
     pallet_torus0_api::Torus0Api<
         T::AccountId,
@@ -424,35 +424,36 @@ impl<T: Config>
         MaxAllowedValidators::<T>::get()
     }
 
+    fn weight_control_fee(who: &T::AccountId) -> Percent {
+        Fee::<T>::get(who).weight_control_fee
+    }
+
     fn staking_fee(who: &T::AccountId) -> Percent {
         Fee::<T>::get(who).staking_fee
     }
 
-    fn stakes_on(
-        _who: &T::AccountId,
+    fn staked_by(
+        staked: &T::AccountId,
     ) -> sp_std::vec::Vec<(
         T::AccountId,
         <T::Currency as Currency<T::AccountId>>::Balance,
     )> {
-        todo!()
+        stake::get_staked_by_vector::<T>(staked)
     }
 
     fn stake_to(
-        _staker: &T::AccountId,
-        _staked: &T::AccountId,
-        _amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+        staker: &T::AccountId,
+        staked: &T::AccountId,
+        amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
     ) -> Result<(), <T::Currency as Currency<T::AccountId>>::NegativeImbalance> {
-        todo!()
+        stake::add_stake::<T>(staker.clone(), staked.clone(), amount.peek()).map_err(|_| amount)
+    }
+
+    fn agent_ids() -> impl Iterator<Item = T::AccountId> {
+        Agents::<T>::iter_keys()
     }
 
     fn is_agent_registered(agent: &T::AccountId) -> bool {
         Agents::<T>::contains_key(agent)
-    }
-
-    fn on_agent_registration(_agent: &T::AccountId) -> DispatchResult {
-        todo!()
-    }
-    fn on_agent_deregistration(_agent: &T::AccountId) -> DispatchResult {
-        todo!()
     }
 }

@@ -55,6 +55,7 @@
             OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
             OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include";
             RUSTC_WRAPPER = "${pkgs.sccache}/bin/sccache";
+            RUST_BACKTRACE = "1";
           } // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux { JEMALLOC_OVERRIDE = "${pkgs.jemalloc}/lib/libjemalloc.so"; };
         };
       }

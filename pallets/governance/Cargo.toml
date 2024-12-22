@@ -35,7 +35,6 @@ polkadot-sdk = { workspace = true, features = [
     "experimental",
     "runtime",
     "pallet-sudo",
-    "sc-telemetry",
 ] }
 scale-info = { workspace = true, features = ["derive"] }
 substrate-fixed = { workspace = true }

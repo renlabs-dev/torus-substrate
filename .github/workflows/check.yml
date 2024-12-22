@@ -42,10 +42,11 @@ jobs:
         env:
           SKIP_WASM_BUILD: 1
         with:
-          args: --color=always -- -D warnings
+          args: --color=always --tests -- -D warnings
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run tests
         env:
+          RUST_BACKTRACE: 1
           SKIP_WASM_BUILD: 1
         run: cargo test

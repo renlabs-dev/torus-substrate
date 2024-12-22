@@ -1,6 +1,11 @@
+use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
-    frame_support::dispatch::DispatchResult, frame_system::ensure_signed,
-    polkadot_sdk_frame::prelude::OriginFor, sp_core::ConstU32, sp_runtime::BoundedVec, sp_std,
+    frame_support::{dispatch::DispatchResult, ensure},
+    frame_system::ensure_signed,
+    polkadot_sdk_frame::prelude::OriginFor,
+    sp_core::ConstU32,
+    sp_runtime::BoundedVec,
+    sp_std,
 };
 
 use crate::{ConsensusMember, ConsensusMembers};
@@ -11,8 +16,22 @@ pub fn set_weights<T: crate::Config>(
 ) -> DispatchResult {
     let acc_id = ensure_signed(origin)?;
 
-    // TODO: validate against self weight
-    // TODO: validate that targets exist
+    ensure!(
+        weights.len() <= crate::MaxAllowedWeights::<T>::get() as usize,
+        crate::Error::<T>::WeightSetTooLarge
+    );
+
+    for (target, _) in &weights {
+        ensure!(
+            &acc_id != target,
+            crate::Error::<T>::CannotSetWeightsForSelf
+        );
+
+        ensure!(
+            <T::Torus>::is_agent_registered(target),
+            crate::Error::<T>::AgentDoesNotExist
+        );
+    }
 
     let weights: BoundedVec<_, ConstU32<{ u32::MAX }>> =
         BoundedVec::try_from(weights).map_err(|_| crate::Error::<T>::WeightSetTooLarge)?;
@@ -22,16 +41,20 @@ pub fn set_weights<T: crate::Config>(
         member.update_weights(weights);
     });
 
-    todo!()
+    Ok(())
 }
 
 pub fn delegate_weight_control<T: crate::Config>(
-    _origin: OriginFor<T>,
-    _target: T::AccountId,
+    origin: OriginFor<T>,
+    target: T::AccountId,
 ) -> DispatchResult {
-    todo!()
+    let acc_id = ensure_signed(origin)?;
+    crate::WeightControlDelegation::<T>::set(acc_id, Some(target));
+    Ok(())
 }
 
-pub fn regain_weight_control<T: crate::Config>(_origin: OriginFor<T>) -> DispatchResult {
-    todo!()
+pub fn regain_weight_control<T: crate::Config>(origin: OriginFor<T>) -> DispatchResult {
+    let acc_id = ensure_signed(origin)?;
+    crate::WeightControlDelegation::<T>::remove(acc_id);
+    Ok(())
 }

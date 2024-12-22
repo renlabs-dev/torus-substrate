@@ -358,8 +358,8 @@ impl pallet_governance::Config for Runtime {
 }
 
 parameter_types! {
-    pub HalvingInterval: NonZeroU128 = NonZeroU128::new((250_000 * 10u128.pow(TOKEN_DECIMALS) - 1) / 10800).unwrap();
-    pub MaxSupply: NonZeroU128 = NonZeroU128::new((250_000 * 10u128.pow(TOKEN_DECIMALS) - 1) / 10800).unwrap();
+    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(250_000_000 * 10u128.pow(TOKEN_DECIMALS)).unwrap();
+    pub MaxSupply: NonZeroU128 = NonZeroU128::new(1_000_000_000 * 10u128.pow(TOKEN_DECIMALS)).unwrap();
 }
 
 impl pallet_emission0::Config for Runtime {

@@ -12,7 +12,8 @@ use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
 use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
 use polkadot_sdk::polkadot_sdk_frame::{self as frame, traits::Currency};
 
-mod distribute;
+#[doc(hidden)]
+pub mod distribute;
 
 #[frame::pallet(dev_mode)]
 pub mod pallet {
@@ -29,7 +30,7 @@ pub mod pallet {
 
     #[pallet::storage]
     pub type WeightControlDelegation<T: Config> =
-        StorageDoubleMap<_, Identity, u16, Identity, T::AccountId, T::AccountId>;
+        StorageMap<_, Identity, T::AccountId, T::AccountId>;
 
     #[pallet::storage]
     pub type MinAllowedWeights<T: Config> =
@@ -52,7 +53,6 @@ pub mod pallet {
         #[pallet::constant]
         type MaxSupply: Get<NonZeroU128>;
 
-        // TODO: add to config ConstU128<(250.000 * 10^18 - 1) / 10800>, where 18 is the number of decimals.
         /// Emissions per block in NANOs. Not taking into account halving and recycling.
         #[pallet::constant]
         type BlockEmission: Get<u128>;
@@ -88,6 +88,12 @@ pub mod pallet {
     pub enum Error<T> {
         /// Agent tried setting more than 2 ^ 32 weights.
         WeightSetTooLarge,
+
+        /// Tried setting weights for an agent that does not exist.
+        AgentDoesNotExist,
+
+        /// Tried setting weights for itself.
+        CannotSetWeightsForSelf,
     }
 
     #[pallet::call]
@@ -121,7 +127,7 @@ pub mod pallet {
 
 type Weights<T> = BoundedVec<(<T as frame_system::Config>::AccountId, u16), ConstU32<{ u32::MAX }>>;
 
-#[derive(DebugNoBound, DefaultNoBound, Decode, Encode, MaxEncodedLen, TypeInfo)]
+#[derive(CloneNoBound, DebugNoBound, DefaultNoBound, Decode, Encode, MaxEncodedLen, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 pub struct ConsensusMember<T: Config> {
     weights: Weights<T>,
