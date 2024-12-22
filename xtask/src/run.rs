@@ -184,7 +184,8 @@ mod ops {
             "--rpc-port", node.rpc_port.to_string(),
             "--allow-private-ipv4",
             "--discover-local",
-            "--rpc-max-response-size","100"
+            "--rpc-max-response-size","100",
+            "--state-pruning","archive"
         );
 
         if !bootnodes.is_empty() {
