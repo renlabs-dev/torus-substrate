@@ -242,13 +242,15 @@ pub mod pallet {
         #[pallet::call_index(13)]
         #[pallet::weight(0)]
         pub fn enable_vote_delegation(origin: OriginFor<T>) -> DispatchResult {
-            voting::enable_delegation::<T>(origin)
+            let delegator = ensure_signed(origin)?;
+            voting::enable_delegation::<T>(delegator)
         }
 
         #[pallet::call_index(14)]
         #[pallet::weight(0)]
         pub fn disable_vote_delegation(origin: OriginFor<T>) -> DispatchResult {
-            voting::disable_delegation::<T>(origin)
+            let delegator = ensure_signed(origin)?;
+            voting::disable_delegation::<T>(delegator)
         }
     }
 
