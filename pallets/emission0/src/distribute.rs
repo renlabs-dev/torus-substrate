@@ -111,22 +111,17 @@ impl<T: Config> ConsensusMemberInput<T> {
 
         let mut inputs: Vec<_> = crate::WeightControlDelegation::<T>::iter()
             .map(|(delegator, validator)| {
-                registered_agents.remove(&delegator);
+                let is_registered = registered_agents.remove(&delegator);
                 consensus_members.remove(&delegator);
 
                 let mut input = if let Some(validator_input) = consensus_members.get(&validator) {
-                    let mut input = Self::from_agent(
+                    Self::from_agent(
                         delegator.clone(),
                         validator_input.clone(),
                         min_allowed_stake,
-                    );
-
-                    input.registered =
-                        input.registered && <T::Torus>::is_agent_registered(&validator);
-
-                    input
+                    )
                 } else {
-                    Self::from_new_agent(delegator.clone(), false)
+                    Self::from_new_agent(delegator.clone(), is_registered)
                 };
 
                 input.delegating_to = Some(validator);
@@ -140,7 +135,7 @@ impl<T: Config> ConsensusMemberInput<T> {
                 .remove(&agent_id)
                 .map(|member| Self::from_agent(agent_id.clone(), member, min_allowed_stake))
                 .unwrap_or_else(|| Self::from_new_agent(agent_id.clone(), true));
-            (agent_id.clone(), input)
+            (agent_id, input)
         }));
 
         inputs.extend(consensus_members.into_iter().map(|(agent_id, member)| {
@@ -261,6 +256,7 @@ fn linear_rewards<T: Config>(
     mut emission: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
 ) -> <T::Currency as Currency<T::AccountId>>::NegativeImbalance {
     let inputs = ConsensusMemberInput::<T>::all_members();
+
     let id_to_idx: BTreeMap<_, _> = inputs
         .keys()
         .cloned()
@@ -327,20 +323,12 @@ fn linear_rewards<T: Config>(
         .zip(dividends)
         .zip(pruning_scores)
     {
-        let is_agent_registered = <T::Torus>::is_agent_registered(&input.agent_id);
-
-        let add_stake = |staker, amount| {
-            let amount = if is_agent_registered {
-                match <T::Torus>::stake_to(&staker, &input.agent_id, amount) {
-                    Ok(()) => return,
-                    Err(amount) => amount,
-                }
-            } else {
-                amount
+        let add_stake =
+            |staker, amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance| {
+                let raw_amount = amount.peek();
+                T::Currency::resolve_creating(&staker, amount);
+                let _ = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount);
             };
-
-            T::Currency::resolve_creating(&staker, amount);
-        };
 
         if dividend.peek() != 0 {
             if let Some(delegating_to) = &input.delegating_to {

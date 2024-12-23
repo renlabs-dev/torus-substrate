@@ -15,7 +15,6 @@ pub(crate) use ext::*;
 use frame::arithmetic::Percent;
 use frame::prelude::ensure_signed;
 pub use pallet::*;
-use polkadot_sdk::frame_support::traits::Imbalance;
 use polkadot_sdk::frame_support::{
     dispatch::DispatchResult,
     pallet_prelude::{ValueQuery, *},
@@ -444,9 +443,9 @@ impl<T: Config>
     fn stake_to(
         staker: &T::AccountId,
         staked: &T::AccountId,
-        amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
-    ) -> Result<(), <T::Currency as Currency<T::AccountId>>::NegativeImbalance> {
-        stake::add_stake::<T>(staker.clone(), staked.clone(), amount.peek()).map_err(|_| amount)
+        amount: <T::Currency as Currency<T::AccountId>>::Balance,
+    ) -> Result<(), <T::Currency as Currency<T::AccountId>>::Balance> {
+        stake::add_stake::<T>(staker.clone(), staked.clone(), amount).map_err(|_| amount)
     }
 
     fn agent_ids() -> impl Iterator<Item = T::AccountId> {

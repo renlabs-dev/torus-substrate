@@ -17,11 +17,7 @@ pub trait Torus0Api<AccountId, Balance, NegativeImbalance> {
     fn staking_fee(who: &AccountId) -> Percent;
 
     fn staked_by(staked: &AccountId) -> alloc::vec::Vec<(AccountId, Balance)>;
-    fn stake_to(
-        staker: &AccountId,
-        staked: &AccountId,
-        amount: NegativeImbalance,
-    ) -> Result<(), NegativeImbalance>;
+    fn stake_to(staker: &AccountId, staked: &AccountId, amount: Balance) -> Result<(), Balance>;
 
     fn agent_ids() -> impl Iterator<Item = AccountId>;
     fn is_agent_registered(agent: &AccountId) -> bool;
