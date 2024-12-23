@@ -1,34 +1,111 @@
+use polkadot_sdk::sc_telemetry::log;
 use polkadot_sdk::sp_std::collections::btree_map::BTreeMap;
 
-use polkadot_sdk::{
-    frame_support::dispatch::DispatchResult, polkadot_sdk_frame::prelude::OriginFor,
-};
-
+use crate::agent;
 use crate::{AccountIdOf, BalanceOf};
+use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, WithdrawReasons};
+use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
 
 pub fn add_stake<T: crate::Config>(
-    _origin: OriginFor<T>,
-    _agent_key: AccountIdOf<T>,
-    _amount: BalanceOf<T>,
+    key: AccountIdOf<T>,
+    agent_key: AccountIdOf<T>,
+    amount: BalanceOf<T>,
 ) -> DispatchResult {
-    todo!()
+    ensure!(
+        amount >= crate::MinimumAllowedStake::<T>::get(),
+        crate::Error::<T>::StakeTooSmall
+    );
+
+    ensure!(
+        agent::exists::<T>(&agent_key),
+        crate::Error::<T>::AgentDoesNotExist
+    );
+
+    let _ = <T as crate::Config>::Currency::withdraw(
+        &key,
+        amount,
+        WithdrawReasons::TRANSFER,
+        ExistenceRequirement::KeepAlive,
+    )
+    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToStake)?;
+
+    crate::StakingTo::<T>::mutate(&key, &agent_key, |stake| {
+        *stake = Some(stake.unwrap_or(0).saturating_add(amount))
+    });
+
+    crate::StakedBy::<T>::mutate(&agent_key, &key, |stake| {
+        *stake = Some(stake.unwrap_or(0).saturating_add(amount))
+    });
+
+    crate::TotalStake::<T>::mutate(|total_stake| *total_stake = total_stake.saturating_add(amount));
+
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeAdded(key, agent_key, amount));
+
+    Ok(())
 }
 
 pub fn remove_stake<T: crate::Config>(
-    _origin: OriginFor<T>,
-    _agent_key: AccountIdOf<T>,
-    _amount: BalanceOf<T>,
+    key: AccountIdOf<T>,
+    agent_key: AccountIdOf<T>,
+    amount: BalanceOf<T>,
 ) -> DispatchResult {
-    todo!()
+    ensure!(
+        amount >= crate::MinimumAllowedStake::<T>::get(),
+        crate::Error::<T>::StakeTooSmall
+    );
+
+    ensure!(
+        agent::exists::<T>(&agent_key),
+        crate::Error::<T>::AgentDoesNotExist
+    );
+
+    ensure!(
+        crate::StakingTo::<T>::get(&key, &agent_key).unwrap_or(0) >= amount,
+        crate::Error::<T>::NotEnoughStakeToWithdraw
+    );
+
+    crate::StakingTo::<T>::mutate(&key, &agent_key, |stake| {
+        *stake = Some(stake.unwrap_or(0).saturating_sub(amount))
+    });
+
+    crate::StakedBy::<T>::mutate(&agent_key, &key, |stake| {
+        *stake = Some(stake.unwrap_or(0).saturating_sub(amount))
+    });
+
+    crate::TotalStake::<T>::mutate(|total_stake| *total_stake = total_stake.saturating_sub(amount));
+
+    let _ = <T as crate::Config>::Currency::deposit_creating(&key, amount);
+
+    Ok(())
 }
 
 pub fn transfer_stake<T: crate::Config>(
-    _origin: OriginFor<T>,
-    _agent_key: AccountIdOf<T>,
-    _new_agent_key: AccountIdOf<T>,
-    _amount: BalanceOf<T>,
+    key: AccountIdOf<T>,
+    agent_key: AccountIdOf<T>,
+    new_agent_key: AccountIdOf<T>,
+    amount: BalanceOf<T>,
 ) -> DispatchResult {
-    todo!()
+    remove_stake::<T>(key.clone(), agent_key, amount)?;
+    add_stake::<T>(key, new_agent_key, amount)?;
+    Ok(())
+}
+
+pub(crate) fn clear_key<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
+    for (staker, staked, amount) in crate::StakingTo::<T>::iter() {
+        if &staker == key || &staked == key {
+            crate::StakingTo::<T>::remove(&staker, &staked);
+            crate::StakedBy::<T>::remove(&staked, &staker);
+            if let Err(err) = remove_stake::<T>(staker.clone(), staked.clone(), amount) {
+                log::error!(
+                    "could not remove stake from {:?} to {:?}: {err:?}",
+                    staker,
+                    staked
+                )
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[inline]
