@@ -1,3 +1,5 @@
+use std::array::from_fn;
+
 use pallet_emission0::{
     distribute::{get_total_emission_per_block, ConsensusMemberInput},
     Config, ConsensusMember, ConsensusMembers, PendingEmission, WeightControlDelegation,
@@ -5,7 +7,8 @@ use pallet_emission0::{
 use polkadot_sdk::{pallet_balances, sp_core::Get, sp_runtime::BoundedVec};
 use substrate_fixed::{traits::ToFixed, types::I96F32};
 use test_utils::{
-    pallet_torus0::{self, agent::Agent},
+    add_balance,
+    pallet_torus0::{self, agent::Agent, MaxAllowedValidators, StakedBy},
     step_block, Test,
 };
 
@@ -129,8 +132,8 @@ fn creates_member_input_correctly() {
         let input = ConsensusMemberInput::<Test>::from_agent(0, member.clone(), 0);
         assert!(input.registered);
 
-        pallet_torus0::StakedBy::<Test>::set(0, 1, Some(10));
-        pallet_torus0::StakedBy::<Test>::set(0, 2, Some(20));
+        StakedBy::<Test>::set(0, 1, Some(10));
+        StakedBy::<Test>::set(0, 2, Some(20));
 
         ConsensusMembers::<Test>::set(1, Some(Default::default()));
 
@@ -176,9 +179,9 @@ fn creates_list_of_all_member_inputs_for_rewards() {
         let mut member = ConsensusMember::<Test>::default();
         member.update_weights(BoundedVec::truncate_from(vec![(miner, 10)]));
         ConsensusMembers::<Test>::set(validator, Some(member));
-        pallet_torus0::StakedBy::<Test>::set(validator, staker, Some(stake * 3));
+        StakedBy::<Test>::set(validator, staker, Some(stake * 3));
 
-        pallet_torus0::StakedBy::<Test>::set(delegating_registered, staker, Some(stake));
+        StakedBy::<Test>::set(delegating_registered, staker, Some(stake));
 
         for id in [
             delegating_registered,
@@ -276,3 +279,126 @@ fn creates_list_of_all_member_inputs_for_rewards() {
         );
     });
 }
+
+#[test]
+fn validator_permits_are_capped() {
+    test_utils::new_test_ext().execute_with(|| {
+        let min_allowed_stake = pallet_torus0::MinimumAllowedStake::<Test>::get();
+
+        let validators: [u32; 5] = from_fn(|i| i as u32);
+
+        for (idx, &id) in validators.iter().rev().enumerate() {
+            let mut member = ConsensusMember::<Test>::default();
+            member.update_weights(BoundedVec::truncate_from(vec![(
+                (id + 1) % validators.len() as u32, // avoid self weights
+                10,
+            )]));
+            ConsensusMembers::<Test>::set(id, Some(member));
+            StakedBy::<Test>::set(id, id, Some(min_allowed_stake * idx as u128));
+        }
+
+        MaxAllowedValidators::<Test>::set(3);
+        let members = ConsensusMemberInput::<Test>::all_members();
+        assert_eq!(members.len(), 5);
+
+        for id in &validators[..3] {
+            let member = &members[id];
+            assert!(member.validator_permit);
+            assert!(!member.weights.is_empty());
+        }
+
+        for id in &validators[3..] {
+            let member = &members[id];
+            assert!(!member.validator_permit);
+            assert!(member.weights.is_empty());
+        }
+    });
+}
+
+#[test]
+fn deregister_old_agents_and_registers_new() {
+    test_utils::new_test_ext().execute_with(|| {
+        ConsensusMembers::<Test>::set(0, Some(Default::default()));
+        ConsensusMembers::<Test>::set(1, Some(Default::default()));
+
+        WeightControlDelegation::<Test>::set(1, Some(0));
+
+        for id in [1, 2] {
+            pallet_torus0::Agents::<Test>::set(
+                id,
+                Some(Agent {
+                    key: id,
+                    name: Default::default(),
+                    url: Default::default(),
+                    metadata: Default::default(),
+                    weight_factor: Default::default(),
+                }),
+            );
+        }
+
+        step_block(100);
+
+        assert!(!ConsensusMembers::<Test>::contains_key(0));
+
+        assert!(ConsensusMembers::<Test>::contains_key(1));
+        assert!(WeightControlDelegation::<Test>::contains_key(1));
+        assert!(ConsensusMembers::<Test>::contains_key(2));
+    });
+}
+
+#[test]
+fn pays_dividends_and_incentives() {
+    test_utils::new_test_ext().execute_with(|| {
+        let min_allowed_stake = pallet_torus0::MinimumAllowedStake::<Test>::get();
+
+        let mut member = ConsensusMember::<Test>::default();
+        member.update_weights(BoundedVec::truncate_from(vec![(1, 10), (2, 30)]));
+
+        ConsensusMembers::<Test>::set(0, Some(member));
+        ConsensusMembers::<Test>::set(1, Some(Default::default()));
+        ConsensusMembers::<Test>::set(2, Some(Default::default()));
+
+        add_balance(0, 1);
+        add_balance(1, 1);
+        add_balance(2, 1);
+
+        StakedBy::<Test>::set(0, 0, Some(min_allowed_stake));
+
+        for id in [0, 1, 2] {
+            pallet_torus0::Agents::<Test>::set(
+                id,
+                Some(Agent {
+                    key: id,
+                    name: Default::default(),
+                    url: Default::default(),
+                    metadata: Default::default(),
+                    weight_factor: Default::default(),
+                }),
+            );
+        }
+
+        step_block(100);
+
+        let mut sum = 0;
+        let total_emission = get_total_emission_per_block::<Test>() * 100;
+
+        let stake = StakedBy::<Test>::get(0, 0).unwrap_or_default();
+        assert_eq!(stake - min_allowed_stake, total_emission / 2);
+        sum += stake;
+
+        let stake = StakedBy::<Test>::get(1, 1).unwrap_or_default();
+        assert_eq!(stake, (total_emission / 2) / 4);
+        sum += stake;
+
+        let stake = StakedBy::<Test>::get(2, 2).unwrap_or_default();
+        assert_eq!(stake, ((total_emission / 2) / 4) * 3);
+        sum += stake;
+
+        sum -= min_allowed_stake;
+
+        assert_eq!(PendingEmission::<Test>::get(), 0);
+        assert_eq!(sum, get_total_emission_per_block::<Test>() * 100);
+    });
+}
+
+// TODO: test staking and weight control delegation
