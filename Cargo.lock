@@ -8230,11 +8230,13 @@ dependencies = [
 name = "pallet-emission0"
 version = "0.1.0"
 dependencies = [
+ "num-traits",
  "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",
  "substrate-fixed",
+ "test-utils",
 ]
 
 [[package]]
@@ -8373,11 +8375,6 @@ dependencies = [
 [[package]]
 name = "pallet-governance-api"
 version = "0.1.0"
-dependencies = [
- "parity-scale-codec",
- "polkadot-sdk",
- "scale-info",
-]
 
 [[package]]
 name = "pallet-grandpa"

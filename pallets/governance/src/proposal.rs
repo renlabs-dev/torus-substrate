@@ -16,9 +16,9 @@ use polkadot_sdk::sp_runtime::SaturatedConversion;
 use polkadot_sdk::sp_std::{collections::btree_set::BTreeSet, vec::Vec};
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure, storage::with_storage_layer},
-    sc_telemetry::log,
     sp_core::ConstU32,
     sp_runtime::{BoundedBTreeMap, DispatchError, Percent},
+    sp_tracing::error,
 };
 use substrate_fixed::types::I92F36;
 
@@ -339,7 +339,7 @@ pub fn tick_proposals<T: crate::Config>(block_number: Block) {
     for (id, proposal) in proposals {
         let res = with_storage_layer(|| tick_proposal(&not_delegating, block_number, proposal));
         if let Err(err) = res {
-            log::error!("failed to tick proposal {id}: {err:?}, skipping...");
+            error!("failed to tick proposal {id}: {err:?}, skipping...");
         }
     }
 }
@@ -503,7 +503,7 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
                 total_allocation = total_allocation.saturating_add(allocation);
             }
             Err(err) => {
-                log::error!("could not get reward allocation for proposal {proposal_id}: {err:?}");
+                error!("could not get reward allocation for proposal {proposal_id}: {err:?}");
                 continue;
             }
         }
@@ -564,7 +564,7 @@ fn distribute_proposal_rewards<T: crate::Config>(
 ) {
     // This is just a sanity check, making sure we can never allocate more than the max
     if total_allocation > I92F36::from_num(max_proposal_reward_treasury_allocation) {
-        log::error!("total allocation exceeds max proposal reward treasury allocation");
+        error!("total allocation exceeds max proposal reward treasury allocation");
         return;
     }
 
@@ -596,7 +596,7 @@ fn distribute_proposal_rewards<T: crate::Config>(
             reward,
             ExistenceRequirement::KeepAlive,
         ) {
-            log::error!("could not transfer proposal reward: {err:?}")
+            error!("could not transfer proposal reward: {err:?}")
         }
     }
 }

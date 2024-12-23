@@ -17,7 +17,6 @@ std = [
     "pallet-torus0/std",
     "pallet-emission0/std",
     "pallet-governance/std",
-    "pallet-governance-api/std",
     "pallet-torus0-api/std",
 
     # Frontier
@@ -38,7 +37,6 @@ runtime-benchmarks = [
     "pallet-torus0/runtime-benchmarks",
     "pallet-emission0/runtime-benchmarks",
     "pallet-governance/runtime-benchmarks",
-    "pallet-governance-api/runtime-benchmarks",
     "pallet-torus0-api/runtime-benchmarks",
 
     # Frontier
@@ -50,7 +48,6 @@ try-runtime = [
     "pallet-torus0/try-runtime",
     "pallet-emission0/try-runtime",
     "pallet-governance/try-runtime",
-    "pallet-governance-api/try-runtime",
     "pallet-torus0-api/try-runtime",
 ]
 

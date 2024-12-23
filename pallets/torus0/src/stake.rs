@@ -1,5 +1,5 @@
-use polkadot_sdk::sc_telemetry::log;
-use polkadot_sdk::sp_std::collections::btree_map::BTreeMap;
+use polkadot_sdk::sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use polkadot_sdk::sp_tracing::error;
 
 use crate::agent;
 use crate::{AccountIdOf, BalanceOf};
@@ -7,8 +7,8 @@ use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, Withdr
 use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
 
 pub fn add_stake<T: crate::Config>(
-    key: AccountIdOf<T>,
-    agent_key: AccountIdOf<T>,
+    staker: AccountIdOf<T>,
+    staked: AccountIdOf<T>,
     amount: BalanceOf<T>,
 ) -> DispatchResult {
     ensure!(
@@ -17,29 +17,29 @@ pub fn add_stake<T: crate::Config>(
     );
 
     ensure!(
-        agent::exists::<T>(&agent_key),
+        agent::exists::<T>(&staked),
         crate::Error::<T>::AgentDoesNotExist
     );
 
     let _ = <T as crate::Config>::Currency::withdraw(
-        &key,
+        &staker,
         amount,
         WithdrawReasons::TRANSFER,
         ExistenceRequirement::KeepAlive,
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToStake)?;
 
-    crate::StakingTo::<T>::mutate(&key, &agent_key, |stake| {
+    crate::StakingTo::<T>::mutate(&staker, &staked, |stake| {
         *stake = Some(stake.unwrap_or(0).saturating_add(amount))
     });
 
-    crate::StakedBy::<T>::mutate(&agent_key, &key, |stake| {
+    crate::StakedBy::<T>::mutate(&staked, &staker, |stake| {
         *stake = Some(stake.unwrap_or(0).saturating_add(amount))
     });
 
     crate::TotalStake::<T>::mutate(|total_stake| *total_stake = total_stake.saturating_add(amount));
 
-    crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeAdded(key, agent_key, amount));
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeAdded(staker, staked, amount));
 
     Ok(())
 }
@@ -80,13 +80,13 @@ pub fn remove_stake<T: crate::Config>(
 }
 
 pub fn transfer_stake<T: crate::Config>(
-    key: AccountIdOf<T>,
-    agent_key: AccountIdOf<T>,
-    new_agent_key: AccountIdOf<T>,
+    staker: AccountIdOf<T>,
+    old_staked: AccountIdOf<T>,
+    new_staked: AccountIdOf<T>,
     amount: BalanceOf<T>,
 ) -> DispatchResult {
-    remove_stake::<T>(key.clone(), agent_key, amount)?;
-    add_stake::<T>(key, new_agent_key, amount)?;
+    remove_stake::<T>(staker.clone(), old_staked, amount)?;
+    add_stake::<T>(staker, new_staked, amount)?;
     Ok(())
 }
 
@@ -96,10 +96,9 @@ pub(crate) fn clear_key<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResul
             crate::StakingTo::<T>::remove(&staker, &staked);
             crate::StakedBy::<T>::remove(&staked, &staker);
             if let Err(err) = remove_stake::<T>(staker.clone(), staked.clone(), amount) {
-                log::error!(
+                error!(
                     "could not remove stake from {:?} to {:?}: {err:?}",
-                    staker,
-                    staked
+                    staker, staked
                 )
             }
         }
@@ -118,6 +117,13 @@ pub fn get_staking_to_vector<T: crate::Config>(
     staker: &AccountIdOf<T>,
 ) -> BTreeMap<T::AccountId, BalanceOf<T>> {
     crate::StakingTo::<T>::iter_prefix(staker).collect()
+}
+
+#[inline]
+pub fn get_staked_by_vector<T: crate::Config>(
+    staked: &AccountIdOf<T>,
+) -> Vec<(T::AccountId, BalanceOf<T>)> {
+    crate::StakedBy::<T>::iter_prefix(staked).collect()
 }
 
 #[inline]

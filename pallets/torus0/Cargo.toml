@@ -14,18 +14,12 @@ std = [
     "scale-info/std",
     "substrate-fixed/std",
     "pallet-torus0-api/std",
-    "pallet-governance-api/std",
 ]
 runtime-benchmarks = [
     "polkadot-sdk/runtime-benchmarks",
     "pallet-torus0-api/runtime-benchmarks",
-    "pallet-governance-api/runtime-benchmarks",
 ]
-try-runtime = [
-    "polkadot-sdk/try-runtime",
-    "pallet-torus0-api/try-runtime",
-    "pallet-governance-api/try-runtime",
-]
+try-runtime = ["polkadot-sdk/try-runtime", "pallet-torus0-api/try-runtime"]
 
 [dependencies]
 codec = { workspace = true, features = ["derive"] }

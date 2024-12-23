@@ -3,7 +3,7 @@
 extern crate alloc;
 extern crate polkadot_sdk;
 
-use polkadot_sdk::{frame_support::dispatch::DispatchResult, sp_runtime::Percent};
+use polkadot_sdk::sp_runtime::Percent;
 
 /// The Torus0 pallet API.
 pub trait Torus0Api<AccountId, Balance, NegativeImbalance> {
@@ -12,17 +12,17 @@ pub trait Torus0Api<AccountId, Balance, NegativeImbalance> {
 
     fn min_allowed_stake() -> Balance;
     fn max_validators() -> u16;
+
+    fn weight_control_fee(who: &AccountId) -> Percent;
     fn staking_fee(who: &AccountId) -> Percent;
 
-    fn stakes_on(who: &AccountId) -> alloc::vec::Vec<(AccountId, Balance)>;
+    fn staked_by(staked: &AccountId) -> alloc::vec::Vec<(AccountId, Balance)>;
     fn stake_to(
         staker: &AccountId,
         staked: &AccountId,
         amount: NegativeImbalance,
     ) -> Result<(), NegativeImbalance>;
 
+    fn agent_ids() -> impl Iterator<Item = AccountId>;
     fn is_agent_registered(agent: &AccountId) -> bool;
-
-    fn on_agent_registration(agent: &AccountId) -> DispatchResult;
-    fn on_agent_deregistration(agent: &AccountId) -> DispatchResult;
 }

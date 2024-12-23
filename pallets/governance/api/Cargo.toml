@@ -6,18 +6,4 @@ license = "MIT-0"
 authors.workspace = true
 edition.workspace = true
 
-[features]
-default = ["std"]
-std = ["codec/std", "polkadot-sdk/std", "scale-info/std"]
-runtime-benchmarks = ["polkadot-sdk/runtime-benchmarks"]
-try-runtime = ["polkadot-sdk/try-runtime"]
-
 [dependencies]
-codec = { workspace = true, features = ["derive"] }
-polkadot-sdk = { workspace = true, features = [
-    "experimental",
-    "runtime",
-    "pallet-sudo",
-    "sc-telemetry",
-] }
-scale-info = { workspace = true, features = ["derive"] }

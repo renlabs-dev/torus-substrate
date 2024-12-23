@@ -6,6 +6,7 @@ use polkadot_sdk::{
     frame_support::{
         self, parameter_types,
         traits::{Currency, Everything, Hooks},
+        PalletId,
     },
     frame_system, pallet_balances,
     polkadot_sdk_frame::runtime::prelude::*,
@@ -17,6 +18,8 @@ use polkadot_sdk::{
     },
     sp_tracing,
 };
+
+pub use {pallet_emission0, pallet_governance, pallet_torus0};
 
 #[frame_construct_runtime]
 mod runtime {
@@ -32,6 +35,12 @@ mod runtime {
 
     #[runtime::pallet_index(2)]
     pub type Torus0 = pallet_torus0::Pallet<Runtime>;
+
+    #[runtime::pallet_index(3)]
+    pub type Emission0 = pallet_emission0::Pallet<Runtime>;
+
+    #[runtime::pallet_index(4)]
+    pub type Governance = pallet_governance::Pallet<Runtime>;
 }
 
 pub type Block = frame_system::mocking::MockBlock<Test>;
@@ -120,8 +129,8 @@ impl pallet_torus0::Config for Test {
 }
 
 parameter_types! {
-    pub const HalvingInterval: NonZeroU128 = unsafe { NonZeroU128::new_unchecked((to_nano(250_000) - 1) / 10800) };
-    pub const MaxSupply: NonZeroU128 = unsafe { NonZeroU128::new_unchecked((to_nano(250_000) - 1) / 10800) };
+    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(to_nano(250_000_000)).unwrap();
+    pub MaxSupply: NonZeroU128 = NonZeroU128::new(to_nano(1_000_000_000)).unwrap();
 }
 
 impl pallet_emission0::Config for Test {
@@ -138,6 +147,26 @@ impl pallet_emission0::Config for Test {
     type Currency = Balances;
 
     type Torus = Torus0;
+}
+
+parameter_types! {
+    pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
+}
+
+impl pallet_governance::Config for Test {
+    type PalletId = GovernancePalletId;
+
+    type MinApplicationDataLength = ConstU32<2>;
+
+    type MaxApplicationDataLength = ConstU32<256>;
+
+    type ApplicationExpiration = ConstU64<2000>;
+
+    type MaxPenaltyPercentage = ConstU8<20>;
+
+    type RuntimeEvent = RuntimeEvent;
+
+    type Currency = Balances;
 }
 
 impl pallet_balances::Config for Test {
@@ -195,7 +224,7 @@ impl frame_system::Config for Test {
 const TOKEN_DECIMALS: u32 = 18;
 
 pub const fn to_nano(x: Balance) -> Balance {
-    x.saturating_add((10 as Balance).pow(TOKEN_DECIMALS))
+    x.saturating_mul((10 as Balance).pow(TOKEN_DECIMALS))
 }
 
 pub const fn from_nano(x: Balance) -> Balance {
@@ -230,9 +259,11 @@ pub fn step_block(count: BlockNumber) {
     let current = System::block_number();
     for block in current..current + count {
         Torus0::on_finalize(block);
+        Emission0::on_finalize(block);
         System::on_finalize(block);
         System::set_block_number(block + 1);
         System::on_initialize(block + 1);
+        Emission0::on_initialize(block + 1);
         Torus0::on_initialize(block + 1);
     }
 }
