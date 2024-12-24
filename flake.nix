@@ -35,8 +35,6 @@
           pkgs.just
           # Run Github actions locally
           pkgs.act
-          # Rust Analyzer binary
-          pkgs.rust-analyzer
         ];
       in
       {
