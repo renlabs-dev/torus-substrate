@@ -27,7 +27,7 @@
           if pkgs.stdenv.isLinux
           then generalBuildInputs ++ [ pkgs.jemalloc pkgs.pkgsi686Linux.glibc ]
           else generalBuildInputs ++ [ pkgs.darwin.apple_sdk.frameworks.SystemConfiguration ];
-        nativeBuildInputs = with pkgs; [ git rust clang protobuf sccache rust-analyzer ];
+        nativeBuildInputs = with pkgs; [ git rust clang protobuf sccache ];
 
         shellPkgs = [
           pkgs.bashInteractive
@@ -35,6 +35,8 @@
           pkgs.just
           # Run Github actions locally
           pkgs.act
+          # Rust Analyzer binary
+          pkgs.rust-analyzer
         ];
       in
       {
