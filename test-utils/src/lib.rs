@@ -75,7 +75,7 @@ impl pallet_governance_api::GovernanceApi<AccountId> for Test {
     }
 
     fn is_whitelisted(_key: &AccountId) -> bool {
-        todo!()
+        true
     }
 }
 
