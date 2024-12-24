@@ -1,6 +1,9 @@
 use pallet_torus0::{Config, Error, Pallet};
-use polkadot_sdk::{frame_support::traits::Currency, frame_system::RawOrigin};
-use test_utils::{Balances, Test};
+use polkadot_sdk::{
+    frame_support::{assert_err, traits::Currency},
+    frame_system::RawOrigin,
+};
+use test_utils::{assert_ok, Balances, Test};
 
 #[test]
 fn test_balance_with_amount_greater_than_0() {
@@ -13,10 +16,11 @@ fn test_balance_with_amount_greater_than_0() {
         assert_eq!(Balances::total_balance(&from), 2000);
         assert_eq!(Balances::total_balance(&to), 0);
 
-        assert_eq!(
-            Pallet::<Test>::transfer_balance(RawOrigin::Signed(from).into(), to, 1000),
-            Ok(())
-        );
+        assert_ok!(Pallet::<Test>::transfer_balance(
+            RawOrigin::Signed(from).into(),
+            to,
+            1000
+        ));
 
         assert_eq!(Balances::total_balance(&from), 1000);
         assert_eq!(Balances::total_balance(&to), 1000);
@@ -34,9 +38,9 @@ fn test_balance_with_amount_0() {
         assert_eq!(Balances::total_balance(&from), 2000);
         assert_eq!(Balances::total_balance(&to), 0);
 
-        assert_eq!(
+        assert_err!(
             Pallet::<Test>::transfer_balance(RawOrigin::Signed(from).into(), to, 0),
-            Err(Error::<Test>::InvalidAmount.into())
+            Error::<Test>::InvalidAmount,
         );
 
         assert_eq!(Balances::total_balance(&from), 2000);
@@ -53,9 +57,9 @@ fn test_balance_with_amount_0_without_balance() {
         assert_eq!(Balances::total_balance(&from), 0);
         assert_eq!(Balances::total_balance(&to), 0);
 
-        assert_eq!(
+        assert_err!(
             Pallet::<Test>::transfer_balance(RawOrigin::Signed(from).into(), to, 0),
-            Err(Error::<Test>::InvalidAmount.into())
+            Error::<Test>::InvalidAmount,
         );
 
         assert_eq!(Balances::total_balance(&from), 0);
@@ -72,9 +76,9 @@ fn test_balance_with_amount_greater_than_0_without_balance() {
         assert_eq!(Balances::total_balance(&from), 0);
         assert_eq!(Balances::total_balance(&to), 0);
 
-        assert_eq!(
+        assert_err!(
             Pallet::<Test>::transfer_balance(RawOrigin::Signed(from).into(), to, 1000),
-            Err(Error::<Test>::NotEnoughBalanceToTransfer.into())
+            Error::<Test>::NotEnoughBalanceToTransfer,
         );
 
         assert_eq!(Balances::total_balance(&from), 0);
