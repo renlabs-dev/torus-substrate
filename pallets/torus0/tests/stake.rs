@@ -1,7 +1,6 @@
-use pallet_torus0::{Config, Error, Pallet, StakedBy, StakingTo, TotalStake};
+use pallet_torus0::{Config, Error, StakedBy, StakingTo, TotalStake};
 use polkadot_sdk::{
     frame_support::{assert_err, traits::Currency},
-    frame_system::RawOrigin,
     sp_core::Get,
 };
 use test_utils::{assert_ok, Balances, Test};
@@ -13,8 +12,7 @@ fn test_add_stake_correctly() {
         let to = 1;
         let minimum_stake = <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
 
-        assert_ok!(Pallet::<Test>::register_agent(
-            RawOrigin::Signed(to).into(),
+        assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
             "to".as_bytes().to_vec(),
             "to://idk".as_bytes().to_vec(),
@@ -26,8 +24,8 @@ fn test_add_stake_correctly() {
         assert_eq!(Balances::total_balance(&from), minimum_stake * 2);
         assert_eq!(Balances::total_balance(&to), 0);
 
-        assert_ok!(Pallet::<Test>::add_stake(
-            RawOrigin::Signed(from).into(),
+        assert_ok!(pallet_torus0::stake::add_stake::<Test>(
+            from,
             to,
             minimum_stake
         ));
@@ -52,7 +50,7 @@ fn test_add_stake_without_registering_the_agent() {
         assert_eq!(Balances::total_balance(&to), 0);
 
         assert_err!(
-            Pallet::<Test>::add_stake(RawOrigin::Signed(from).into(), to, minimum_stake),
+            pallet_torus0::stake::add_stake::<Test>(from, to, minimum_stake),
             Error::<Test>::AgentDoesNotExist
         );
 
@@ -76,7 +74,7 @@ fn test_add_stake_without_the_minimum_stake() {
         assert_eq!(Balances::total_balance(&to), 0);
 
         assert_err!(
-            Pallet::<Test>::add_stake(RawOrigin::Signed(from).into(), to, minimum_stake - 1),
+            pallet_torus0::stake::add_stake::<Test>(from, to, minimum_stake - 1),
             Error::<Test>::StakeTooSmall
         );
 
@@ -94,8 +92,7 @@ fn test_remove_stake_correctly() {
         let to = 1;
         let minimum_stake = <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
 
-        assert_ok!(Pallet::<Test>::register_agent(
-            RawOrigin::Signed(to).into(),
+        assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
             "to".as_bytes().to_vec(),
             "to://idk".as_bytes().to_vec(),
@@ -112,8 +109,8 @@ fn test_remove_stake_correctly() {
             minimum_stake
         ));
 
-        assert_ok!(Pallet::<Test>::remove_stake(
-            RawOrigin::Signed(from).into(),
+        assert_ok!(pallet_torus0::stake::remove_stake::<Test>(
+            from,
             to,
             minimum_stake
         ));
@@ -132,8 +129,7 @@ fn test_remove_stake_with_less_than_required_amount() {
         let to = 1;
         let minimum_stake = <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
 
-        assert_ok!(Pallet::<Test>::register_agent(
-            RawOrigin::Signed(to).into(),
+        assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
             "to".as_bytes().to_vec(),
             "to://idk".as_bytes().to_vec(),
@@ -151,7 +147,7 @@ fn test_remove_stake_with_less_than_required_amount() {
         ));
 
         assert_err!(
-            Pallet::<Test>::remove_stake(RawOrigin::Signed(from).into(), to, minimum_stake - 1),
+            pallet_torus0::stake::remove_stake::<Test>(from, to, minimum_stake - 1),
             Error::<Test>::StakeTooSmall,
         );
 
@@ -169,8 +165,7 @@ fn test_remove_stake_with_unregistered_agent() {
         let to = 1;
         let minimum_stake = <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
 
-        assert_ok!(Pallet::<Test>::register_agent(
-            RawOrigin::Signed(to).into(),
+        assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
             "to".as_bytes().to_vec(),
             "to://idk".as_bytes().to_vec(),
@@ -189,7 +184,7 @@ fn test_remove_stake_with_unregistered_agent() {
         assert_ok!(pallet_torus0::agent::unregister::<Test>(to));
 
         assert_err!(
-            Pallet::<Test>::remove_stake(RawOrigin::Signed(from).into(), to, minimum_stake),
+            pallet_torus0::stake::remove_stake::<Test>(from, to, minimum_stake),
             Error::<Test>::AgentDoesNotExist,
         );
 

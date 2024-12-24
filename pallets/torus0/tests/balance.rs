@@ -1,4 +1,4 @@
-use pallet_torus0::{Config, Error, Pallet};
+use pallet_torus0::{Error, Pallet};
 use polkadot_sdk::{
     frame_support::{assert_err, traits::Currency},
     frame_system::RawOrigin,
