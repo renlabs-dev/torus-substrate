@@ -41,7 +41,7 @@ jobs:
             SCCACHE_ENDPOINT=${{ secrets.SCCACHE_ENDPOINT }}
             SCCACHE_REGION=auto
           push: true
-          file: .dockerfiles/FullNode.dockerfile
+          file: docker/fullNode.dockerfile
           tags: |
             ghcr.io/renlabs-dev/torus-substrate:${{ steps.commit.outputs.short }}
             ghcr.io/renlabs-dev/torus-substrate:${{ github.ref_name }}
