@@ -1,0 +1,37 @@
+name: Building
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [github-ci-test]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04-32core-karl
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Rust toolchain
+        run: |
+          rustup set profile minimal
+          rustup show
+          rustc --version
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          version: 3.20.1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run build
+        env:
+          SKIP_WASM_BUILD: 1
+        run: cargo build

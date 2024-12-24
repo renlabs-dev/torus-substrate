@@ -18,8 +18,6 @@
         rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
         generalBuildInputs = with pkgs; [
-          bashInteractive
-          just
           pkg-config
           openssl.dev
           rocksdb
@@ -30,6 +28,14 @@
           then generalBuildInputs ++ [ pkgs.jemalloc pkgs.pkgsi686Linux.glibc ]
           else generalBuildInputs ++ [ pkgs.darwin.apple_sdk.frameworks.SystemConfiguration ];
         nativeBuildInputs = with pkgs; [ git rust clang protobuf sccache ];
+
+        shellPkgs = [
+          pkgs.bashInteractive
+          # Run project-specific commands
+          pkgs.just
+          # Run Github actions locally
+          pkgs.act
+        ];
       in
       {
         checks = pkgs.mkShell {
@@ -45,6 +51,7 @@
           inherit (self.checks.${system}.pre-commit-check) shellHook;
           buildInputs = buildInputs;
           nativeBuildInputs = nativeBuildInputs;
+          packages = shellPkgs;
 
           env = {
             LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
