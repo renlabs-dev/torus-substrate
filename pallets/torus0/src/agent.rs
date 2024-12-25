@@ -37,11 +37,6 @@ pub fn register<T: crate::Config>(
     );
 
     ensure!(
-        crate::Agents::<T>::iter().count() < crate::MaxAllowedAgents::<T>::get() as usize,
-        crate::Error::<T>::MaxAllowedAgents
-    );
-
-    ensure!(
         crate::RegistrationsThisBlock::<T>::get() < crate::MaxRegistrationsPerBlock::<T>::get(),
         crate::Error::<T>::TooManyAgentRegistrationsThisBlock
     );
