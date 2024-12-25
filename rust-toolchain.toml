@@ -6,6 +6,6 @@
 # but we use the oxalica overlay, which does not fix this yet.
 # Should be fixed by https://github.com/rust-lang/rust/issues/123151.
 channel = "1.82.0"
-components = ["clippy", "rustfmt", "rust-src"]
+components = ["clippy", "rustfmt", "rust-src", "rust-analyzer"]
 targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 profile = "minimal"
