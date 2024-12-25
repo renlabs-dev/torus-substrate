@@ -121,6 +121,31 @@ fn test_unregister_correctly() {
 }
 
 #[test]
+fn test_unregister_twice() {
+    test_utils::new_test_ext().execute_with(|| {
+        let agent = 0;
+        let name = "agent".as_bytes().to_vec();
+        let url = "idk://agent".as_bytes().to_vec();
+        let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            agent,
+            name.clone(),
+            url.clone(),
+            metadata.clone(),
+        ));
+
+        assert_ok!(pallet_torus0::agent::unregister::<Test>(agent));
+        assert_err!(
+            pallet_torus0::agent::unregister::<Test>(agent),
+            Error::<Test>::AgentDoesNotExist
+        );
+
+        assert!(pallet_torus0::Agents::<Test>::get(agent).is_none());
+    });
+}
+
+#[test]
 fn test_update_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
