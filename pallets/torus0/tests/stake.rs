@@ -33,8 +33,8 @@ fn add_stake_correctly() {
         ));
 
         assert_eq!(Balances::total_balance(&from), balance_after);
-        assert_eq!(StakingTo::<Test>::get(&from, &to), Some(stake_to_add));
-        assert_eq!(StakedBy::<Test>::get(&to, &from), Some(stake_to_add));
+        assert_eq!(StakingTo::<Test>::get(from, to), Some(stake_to_add));
+        assert_eq!(StakedBy::<Test>::get(to, from), Some(stake_to_add));
         assert_eq!(TotalStake::<Test>::get(), stake_to_add);
     });
 }
@@ -58,8 +58,8 @@ fn add_stake_without_registering_the_agent() {
         );
 
         assert_eq!(Balances::total_balance(&from), total_balance);
-        assert_eq!(StakingTo::<Test>::get(&from, &to), None);
-        assert_eq!(StakedBy::<Test>::get(&to, &from), None);
+        assert_eq!(StakingTo::<Test>::get(from, to), None);
+        assert_eq!(StakedBy::<Test>::get(to, from), None);
         assert_eq!(TotalStake::<Test>::get(), 0);
     });
 }
@@ -83,8 +83,8 @@ fn add_stake_without_the_minimum_stake() {
         );
 
         assert_eq!(Balances::total_balance(&from), total_balance);
-        assert_eq!(StakingTo::<Test>::get(&from, &to), None);
-        assert_eq!(StakedBy::<Test>::get(&to, &from), None);
+        assert_eq!(StakingTo::<Test>::get(from, to), None);
+        assert_eq!(StakedBy::<Test>::get(to, from), None);
         assert_eq!(TotalStake::<Test>::get(), 0);
     });
 }
@@ -121,8 +121,8 @@ fn remove_stake_correctly() {
         ));
 
         assert_eq!(Balances::total_balance(&from), total_balance);
-        assert_eq!(StakingTo::<Test>::get(&from, &to), Some(0));
-        assert_eq!(StakedBy::<Test>::get(&to, &from), Some(0));
+        assert_eq!(StakingTo::<Test>::get(from, to), Some(0));
+        assert_eq!(StakedBy::<Test>::get(to, from), Some(0));
         assert_eq!(TotalStake::<Test>::get(), 0);
     });
 }
@@ -159,11 +159,11 @@ fn remove_stake_with_less_than_required_amount() {
 
         assert_eq!(Balances::total_balance(&from), stake_to_add_and_remove);
         assert_eq!(
-            StakingTo::<Test>::get(&from, &to),
+            StakingTo::<Test>::get(from, to),
             Some(stake_to_add_and_remove)
         );
         assert_eq!(
-            StakedBy::<Test>::get(&to, &from),
+            StakedBy::<Test>::get(to, from),
             Some(stake_to_add_and_remove)
         );
         assert_eq!(TotalStake::<Test>::get(), stake_to_add_and_remove);
@@ -202,8 +202,8 @@ fn remove_stake_with_unregistered_agent() {
         );
 
         assert_eq!(Balances::total_balance(&from), stake_to_add_and_remove);
-        assert_eq!(StakingTo::<Test>::get(&from, &to), None);
-        assert_eq!(StakedBy::<Test>::get(&to, &from), None);
+        assert_eq!(StakingTo::<Test>::get(from, to), None);
+        assert_eq!(StakedBy::<Test>::get(to, from), None);
         assert_eq!(TotalStake::<Test>::get(), stake_to_add_and_remove);
     });
 }

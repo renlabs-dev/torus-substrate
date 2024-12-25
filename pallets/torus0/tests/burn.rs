@@ -1,4 +1,4 @@
-use test_utils::{assert_ok, Test};
+use test_utils::Test;
 
 #[test]
 fn burn_with_reached_interval() {
