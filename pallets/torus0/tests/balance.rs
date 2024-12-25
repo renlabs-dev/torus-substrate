@@ -6,7 +6,7 @@ use polkadot_sdk::{
 use test_utils::{assert_ok, Balances, Test};
 
 #[test]
-fn test_balance_with_amount_greater_than_0() {
+fn balance_with_amount_greater_than_0() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -16,10 +16,8 @@ fn test_balance_with_amount_greater_than_0() {
         assert_eq!(Balances::total_balance(&from), 2000);
         assert_eq!(Balances::total_balance(&to), 0);
 
-        assert_ok!(Pallet::<Test>::transfer_balance(
-            RawOrigin::Signed(from).into(),
-            to,
-            1000
+        assert_ok!(pallet_torus0::balance::transfer_balance::<Test>(
+            from, to, 1000
         ));
 
         assert_eq!(Balances::total_balance(&from), 1000);
@@ -28,7 +26,7 @@ fn test_balance_with_amount_greater_than_0() {
 }
 
 #[test]
-fn test_balance_with_amount_0() {
+fn balance_with_amount_0() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -39,7 +37,7 @@ fn test_balance_with_amount_0() {
         assert_eq!(Balances::total_balance(&to), 0);
 
         assert_err!(
-            Pallet::<Test>::transfer_balance(RawOrigin::Signed(from).into(), to, 0),
+            pallet_torus0::balance::transfer_balance::<Test>(from, to, 0),
             Error::<Test>::InvalidAmount,
         );
 
@@ -49,7 +47,7 @@ fn test_balance_with_amount_0() {
 }
 
 #[test]
-fn test_balance_with_amount_0_without_balance() {
+fn balance_with_amount_0_without_balance() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -58,7 +56,7 @@ fn test_balance_with_amount_0_without_balance() {
         assert_eq!(Balances::total_balance(&to), 0);
 
         assert_err!(
-            Pallet::<Test>::transfer_balance(RawOrigin::Signed(from).into(), to, 0),
+            pallet_torus0::balance::transfer_balance::<Test>(from, to, 0),
             Error::<Test>::InvalidAmount,
         );
 
@@ -68,7 +66,7 @@ fn test_balance_with_amount_0_without_balance() {
 }
 
 #[test]
-fn test_balance_with_amount_greater_than_0_without_balance() {
+fn balance_with_amount_greater_than_0_without_balance() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -77,7 +75,7 @@ fn test_balance_with_amount_greater_than_0_without_balance() {
         assert_eq!(Balances::total_balance(&to), 0);
 
         assert_err!(
-            Pallet::<Test>::transfer_balance(RawOrigin::Signed(from).into(), to, 1000),
+            pallet_torus0::balance::transfer_balance::<Test>(from, to, 1000),
             Error::<Test>::NotEnoughBalanceToTransfer,
         );
 

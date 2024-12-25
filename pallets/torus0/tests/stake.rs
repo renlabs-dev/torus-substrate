@@ -6,7 +6,7 @@ use polkadot_sdk::{
 use test_utils::{assert_ok, Balances, Test};
 
 #[test]
-fn test_add_stake_correctly() {
+fn add_stake_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -40,7 +40,7 @@ fn test_add_stake_correctly() {
 }
 
 #[test]
-fn test_add_stake_without_registering_the_agent() {
+fn add_stake_without_registering_the_agent() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -65,7 +65,7 @@ fn test_add_stake_without_registering_the_agent() {
 }
 
 #[test]
-fn test_add_stake_without_the_minimum_stake() {
+fn add_stake_without_the_minimum_stake() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -90,7 +90,7 @@ fn test_add_stake_without_the_minimum_stake() {
 }
 
 #[test]
-fn test_remove_stake_correctly() {
+fn remove_stake_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -128,7 +128,7 @@ fn test_remove_stake_correctly() {
 }
 
 #[test]
-fn test_remove_stake_with_less_than_required_amount() {
+fn remove_stake_with_less_than_required_amount() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -171,7 +171,7 @@ fn test_remove_stake_with_less_than_required_amount() {
 }
 
 #[test]
-fn test_remove_stake_with_unregistered_agent() {
+fn remove_stake_with_unregistered_agent() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;

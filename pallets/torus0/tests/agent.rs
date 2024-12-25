@@ -3,7 +3,7 @@ use polkadot_sdk::{frame_support::assert_err, sp_runtime::Percent};
 use test_utils::{assert_ok, Test};
 
 #[test]
-fn test_register_correctly() {
+fn register_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
@@ -26,7 +26,7 @@ fn test_register_correctly() {
 }
 
 #[test]
-fn test_register_more_than_max_allowed_agents() {
+fn register_more_than_max_allowed_agents() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
@@ -50,7 +50,7 @@ fn test_register_more_than_max_allowed_agents() {
 }
 
 #[test]
-fn test_register_more_than_allowed_registrations_per_block() {
+fn register_more_than_allowed_registrations_per_block() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
@@ -74,7 +74,7 @@ fn test_register_more_than_allowed_registrations_per_block() {
 }
 
 #[test]
-fn test_register_more_than_registrations_per_interval() {
+fn register_more_than_registrations_per_interval() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
@@ -100,7 +100,7 @@ fn test_register_more_than_registrations_per_interval() {
 }
 
 #[test]
-fn test_unregister_correctly() {
+fn unregister_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
@@ -121,7 +121,7 @@ fn test_unregister_correctly() {
 }
 
 #[test]
-fn test_unregister_twice() {
+fn unregister_twice() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
@@ -146,7 +146,7 @@ fn test_unregister_twice() {
 }
 
 #[test]
-fn test_update_correctly() {
+fn update_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
@@ -186,7 +186,7 @@ fn test_update_correctly() {
 }
 
 #[test]
-fn test_update_with_zero_staking_fee() {
+fn update_with_zero_staking_fee() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
@@ -229,7 +229,7 @@ fn test_update_with_zero_staking_fee() {
 }
 
 #[test]
-fn test_update_with_zero_weight_control_fee() {
+fn update_with_zero_weight_control_fee() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
