@@ -1,8 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod agent;
-mod balance;
-mod burn;
+pub mod balance;
+pub mod burn;
 mod ext;
 mod fee;
 pub mod stake;
