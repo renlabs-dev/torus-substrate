@@ -1,8 +1,5 @@
-use pallet_torus0::{Error, Pallet};
-use polkadot_sdk::{
-    frame_support::{assert_err, traits::Currency},
-    frame_system::RawOrigin,
-};
+use pallet_torus0::Error;
+use polkadot_sdk::frame_support::{assert_err, traits::Currency};
 use test_utils::{assert_ok, Balances, Test};
 
 #[test]

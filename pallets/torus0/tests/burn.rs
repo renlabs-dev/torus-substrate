@@ -1,5 +1,3 @@
-use pallet_torus0::Error;
-use polkadot_sdk::frame_support::assert_err;
 use test_utils::{assert_ok, Test};
 
 #[test]
