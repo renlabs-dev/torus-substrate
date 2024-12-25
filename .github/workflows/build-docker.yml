@@ -30,22 +30,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sanitize Ref Name
-        id: sanitize_ref
-        run: echo "SANITIZED_REF=$(echo "${GITHUB_REF##*/}" | tr '/' '-')" >> $GITHUB_ENV
+      - name: Prepare build
+        id: prepare
+        run: |
+          echo "SANITIZED_REF=$(echo "${GITHUB_REF##*/}" | tr '/' '-')" >> $GITHUB_ENV
+          echo "AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          file: docker/node.dockerfile
+          secret-envs: |
+            aws-key-id=AWS_ACCESS_KEY_ID
+            aws-secret-key=AWS_SECRET_ACCESS_KEY
           build-args: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             SCCACHE_BUCKET=torus-substrate-cache
             SCCACHE_ENDPOINT=${{ secrets.SCCACHE_ENDPOINT }}
             SCCACHE_REGION=auto
-          file: docker/node.dockerfile
           tags: |
             ghcr.io/renlabs-dev/torus-substrate:${{ steps.commit.outputs.short }}
             ghcr.io/renlabs-dev/torus-substrate:${{ env.SANITIZED_REF }}
