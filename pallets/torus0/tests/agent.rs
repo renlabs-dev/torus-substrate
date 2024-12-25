@@ -50,6 +50,30 @@ fn test_register_more_than_max_allowed_agents() {
 }
 
 #[test]
+fn test_register_more_than_allowed_registrations_per_block() {
+    test_utils::new_test_ext().execute_with(|| {
+        let agent = 0;
+        let name = "agent".as_bytes().to_vec();
+        let url = "idk://agent".as_bytes().to_vec();
+        let metadata = "idk://agent".as_bytes().to_vec();
+
+        pallet_torus0::MaxRegistrationsPerBlock::<Test>::set(0);
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                url.clone(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::TooManyAgentRegistrationsThisBlock,
+        );
+
+        assert!(pallet_torus0::Agents::<Test>::get(agent).is_none());
+    });
+}
+
+#[test]
 fn test_unregister_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
