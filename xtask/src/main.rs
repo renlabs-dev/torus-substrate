@@ -1,4 +1,4 @@
-use std::{borrow::Cow, net::IpAddr};
+use std::{borrow::Cow, net::IpAddr, path::Path};
 
 use polkadot_sdk::sp_keyring;
 
@@ -9,6 +9,72 @@ fn main() {
     let cmd = flags::Xtask::from_env_or_exit();
     match cmd.subcommand {
         flags::XtaskCmd::Run(run) => run::run(run),
+        flags::XtaskCmd::GenerateSpec(cmd) => {
+            let chain_spec = cmd
+                .base_chain_spec
+                .unwrap_or_else(|| Path::new("dev").to_path_buf());
+
+            let out = torus_node!("build-spec", "--chain", chain_spec)
+                .output()
+                .expect("failed to run torus node");
+
+            let out = if !cmd.aura.is_empty()
+                || !cmd.gran.is_empty()
+                || !cmd.balance.is_empty()
+                || cmd.sudo.is_some()
+            {
+                use serde_json::{Number, Value};
+
+                let mut json: Value =
+                    serde_json::from_slice(&out.stdout).expect("failed to parse spec file");
+
+                let patch = &mut json["genesis"]["runtimeGenesis"]["patch"];
+
+                if !cmd.aura.is_empty() {
+                    let aura_keys = &mut patch["aura"]["authorities"]
+                        .as_array_mut()
+                        .expect("missing aura keys");
+                    aura_keys.clear();
+
+                    for aura in cmd.aura {
+                        aura_keys.push(aura.into());
+                    }
+                }
+
+                if !cmd.gran.is_empty() {
+                    let gran_keys = patch["grandpa"]["authorities"]
+                        .as_array_mut()
+                        .expect("missing grandpa keys");
+                    gran_keys.clear();
+
+                    for gran in cmd.gran {
+                        gran_keys.push([Value::from(gran), 1i32.into()].into());
+                    }
+                }
+
+                for balance in cmd.balance {
+                    let (account, amount) = balance
+                        .split_once('=')
+                        .expect("malformed balance entry, format: <account>=<amount>");
+                    let amount: u128 = amount.parse().expect("balance amount must be a number");
+
+                    patch["balances"]["balances"]
+                        .as_array_mut()
+                        .expect("missing grandpa keys")
+                        .push([Value::from(account), Number::from_u128(amount).into()].into());
+                }
+
+                if let Some(sudo) = cmd.sudo {
+                    patch["sudo"]["key"] = sudo.into();
+                }
+
+                serde_json::to_vec(&json).expect("failed to generate spec file")
+            } else {
+                out.stdout
+            };
+
+            std::fs::write(cmd.out, out).expect("failed to write resulting ");
+        }
     }
 }
 

@@ -54,7 +54,7 @@ const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 /// Maximum weight per block
 pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND, u64::MAX)
     .saturating_mul(2)
-    .set_proof_size(MAX_POV_SIZE as u64);
+    .set_proof_size(MAX_POV_SIZE);
 
 parameter_types! {
     pub BlockGasLimit: U256

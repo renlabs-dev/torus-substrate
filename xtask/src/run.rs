@@ -75,7 +75,7 @@ pub(super) fn run(mut r: flags::Run) {
 }
 
 #[allow(dead_code)]
-mod ops {
+pub mod ops {
     use super::*;
     use std::{
         ffi::OsStr,
@@ -83,9 +83,10 @@ mod ops {
         process::{Command, Stdio},
     };
 
+    #[macro_export]
     macro_rules! torus_node {
         ($($arg:expr),*) => {{
-            let mut cmd = Command::new("cargo");
+            let mut cmd = std::process::Command::new("cargo");
             cmd.args(["run", "--release", "--package", "torus-node", "--"]);
             $(cmd.arg($arg);)*
             cmd

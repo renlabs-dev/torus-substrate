@@ -44,6 +44,23 @@ xflags::xflags! {
                 optional --account-suri account_suri: String
             }
         }
+
+        /// Generates a new spec file for the test net.
+        cmd generate-spec {
+            /// The base chain spec to use. Default dev will be used when empty.
+            optional -c, --base-chain-spec base_chain_spec: PathBuf
+
+            /// Output file for the chain spec.
+            required -o, --out output: PathBuf
+
+            repeated --gran gran_keys: String
+
+            repeated --aura gran_keys: String
+
+            repeated --balance balances: String
+
+            optional --sudo sudo_key: String
+        }
     }
 }
 
@@ -58,6 +75,7 @@ pub struct Xtask {
 #[derive(Debug)]
 pub enum XtaskCmd {
     Run(Run),
+    GenerateSpec(GenerateSpec),
 }
 
 #[derive(Debug)]
@@ -84,6 +102,16 @@ pub enum RunCmd {
 pub struct Local {
     pub chain_spec: Option<PathBuf>,
     pub account_suri: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct GenerateSpec {
+    pub base_chain_spec: Option<PathBuf>,
+    pub out: PathBuf,
+    pub gran: Vec<String>,
+    pub aura: Vec<String>,
+    pub balance: Vec<String>,
+    pub sudo: Option<String>,
 }
 
 impl Xtask {

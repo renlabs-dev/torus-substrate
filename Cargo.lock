@@ -18521,6 +18521,7 @@ name = "xtask"
 version = "0.1.0"
 dependencies = [
  "polkadot-sdk",
+ "serde_json",
  "tempfile",
  "xflags",
 ]

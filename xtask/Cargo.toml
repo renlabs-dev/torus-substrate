@@ -7,3 +7,4 @@ edition = "2021"
 xflags = "0.3.2"
 polkadot-sdk = { workspace = true, features = ["std", "sp-keyring"] }
 tempfile = "3.14.0"
+serde_json = "1"
