@@ -12,7 +12,7 @@ pub fn add_stake<T: crate::Config>(
     amount: BalanceOf<T>,
 ) -> DispatchResult {
     ensure!(
-        amount >= crate::MinimumAllowedStake::<T>::get(),
+        amount >= crate::MinAllowedStake::<T>::get(),
         crate::Error::<T>::StakeTooSmall
     );
 
@@ -50,7 +50,7 @@ pub fn remove_stake<T: crate::Config>(
     amount: BalanceOf<T>,
 ) -> DispatchResult {
     ensure!(
-        amount >= crate::MinimumAllowedStake::<T>::get(),
+        amount >= crate::MinAllowedStake::<T>::get(),
         crate::Error::<T>::StakeTooSmall
     );
 

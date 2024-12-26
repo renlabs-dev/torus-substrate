@@ -363,6 +363,8 @@ parameter_types! {
 }
 
 impl pallet_emission0::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+
     type HalvingInterval = HalvingInterval;
 
     type MaxSupply = MaxSupply;

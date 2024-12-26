@@ -4,7 +4,7 @@ pub mod agent;
 mod balance;
 mod burn;
 mod ext;
-mod fee;
+pub mod fee;
 pub mod stake;
 
 use crate::agent::Agent;
@@ -41,12 +41,6 @@ pub mod pallet {
     pub type Burn<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     #[pallet::storage]
-    pub type MaximumSetWeightCallsPerEpoch<T: Config> = StorageValue<_, u16>;
-
-    #[pallet::storage]
-    pub type SetWeightCallsPerEpoch<T: Config> = StorageMap<_, Identity, T::AccountId, u16>;
-
-    #[pallet::storage]
     pub type IncentiveRatio<T: Config> = StorageValue<_, u16, ValueQuery>;
 
     #[pallet::storage]
@@ -80,9 +74,6 @@ pub mod pallet {
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedAgents>;
 
     #[pallet::storage]
-    pub type MinWeightStake<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
-    #[pallet::storage]
     pub type RegistrationsThisBlock<T> = StorageValue<_, u16, ValueQuery>;
 
     #[pallet::storage]
@@ -101,7 +92,7 @@ pub mod pallet {
     pub type TotalStake<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     #[pallet::storage]
-    pub type MinimumAllowedStake<T: Config> =
+    pub type MinAllowedStake<T: Config> =
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinimumAllowedStake>;
 
     #[pallet::storage]
@@ -416,7 +407,7 @@ impl<T: Config>
     }
 
     fn min_allowed_stake() -> u128 {
-        MinimumAllowedStake::<T>::get()
+        MinAllowedStake::<T>::get()
     }
 
     fn max_validators() -> u16 {
