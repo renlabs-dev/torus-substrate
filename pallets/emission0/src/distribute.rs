@@ -8,7 +8,7 @@ use polkadot_sdk::{
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
     sp_core::Get,
-    sp_runtime::{traits::Saturating, ArithmeticError, DispatchError, Perquintill},
+    sp_runtime::{traits::Saturating, ArithmeticError, DispatchError, Percent, Perquintill},
     sp_std::{
         borrow::Cow,
         collections::{btree_map::BTreeMap, btree_set::BTreeSet},
@@ -176,10 +176,14 @@ impl<T: Config> ConsensusMemberInput<T> {
         member: ConsensusMember<T>,
         min_allowed_stake: u128,
     ) -> ConsensusMemberInput<T> {
+        let weight_factor = Percent::one() - <T::Torus>::weight_penalty_factor(&agent_id);
+
         let mut total_stake = 0;
         let stakes = <T::Torus>::staked_by(&agent_id)
             .into_iter()
             .map(|(id, stake)| {
+                let stake = weight_factor.mul_floor(stake);
+
                 total_stake = total_stake.saturating_add(stake);
                 (id, stake)
             })

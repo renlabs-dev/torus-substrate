@@ -15,7 +15,7 @@ use polkadot_sdk::{
     sp_consensus_aura::sr25519::AuthorityId as AuraId,
     sp_std::num::NonZeroU128,
 };
-use sp_runtime::Perbill;
+use sp_runtime::{Perbill, Percent};
 
 pub mod eth;
 
@@ -339,6 +339,7 @@ impl pallet_torus0::Config for Runtime {
 
 parameter_types! {
     pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
+    pub const DefaultTreasuryEmissionFee: Percent = Percent::from_percent(10);
 }
 
 impl pallet_governance::Config for Runtime {
@@ -351,6 +352,8 @@ impl pallet_governance::Config for Runtime {
     type ApplicationExpiration = ConstU64<2000>;
 
     type MaxPenaltyPercentage = ConstU8<20>;
+
+    type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
     type RuntimeEvent = RuntimeEvent;
 

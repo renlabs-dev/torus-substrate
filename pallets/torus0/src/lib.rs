@@ -418,6 +418,12 @@ impl<T: Config>
         Fee::<T>::get(who).weight_control_fee
     }
 
+    fn weight_penalty_factor(who: &T::AccountId) -> Percent {
+        Agents::<T>::get(who)
+            .map(|agent| agent.weight_penalty_factor)
+            .unwrap_or_default()
+    }
+
     fn staking_fee(who: &T::AccountId) -> Percent {
         Fee::<T>::get(who).staking_fee
     }

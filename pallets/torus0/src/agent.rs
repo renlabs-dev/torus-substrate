@@ -16,7 +16,7 @@ pub struct Agent<T: crate::Config> {
     pub name: BoundedVec<u8, T::MaxAgentNameLengthConstraint>,
     pub url: BoundedVec<u8, T::MaxAgentUrlLengthConstraint>,
     pub metadata: BoundedVec<u8, T::MaxAgentMetadataLengthConstraint>,
-    pub weight_factor: Percent,
+    pub weight_penalty_factor: Percent,
 }
 
 pub fn register<T: crate::Config>(
@@ -68,7 +68,7 @@ pub fn register<T: crate::Config>(
             name: BoundedVec::truncate_from(name),
             url: BoundedVec::truncate_from(url),
             metadata: BoundedVec::truncate_from(metadata),
-            weight_factor: Percent::from_percent(100),
+            weight_penalty_factor: Percent::from_percent(100),
         },
     );
 

@@ -301,7 +301,7 @@ pub fn register_empty_agent(key: AccountId) {
             name: Default::default(),
             url: Default::default(),
             metadata: Default::default(),
-            weight_factor: Default::default(),
+            weight_penalty_factor: Default::default(),
         }),
     );
 }
