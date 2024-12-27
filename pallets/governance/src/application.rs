@@ -86,6 +86,10 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
     crate::AgentApplications::<T>::remove(application.id);
 
     whitelist::add_to_whitelist::<T>(application.agent_key.clone())?;
+
+    let _ =
+        <T as crate::Config>::Currency::deposit_creating(&application.payer_key, application.cost);
+
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationAccepted(application.id));
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::WhitelistAdded(application.agent_key));
 

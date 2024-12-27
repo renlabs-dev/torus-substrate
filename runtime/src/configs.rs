@@ -368,6 +368,8 @@ impl pallet_governance::Config for Runtime {
 
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
+    type DefaultProposalCost = ConstU128<10_000_000_000_000_000_000_000>;
+
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;

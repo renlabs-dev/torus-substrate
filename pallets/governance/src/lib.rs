@@ -1,11 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod application;
-mod config;
-mod curator;
-mod ext;
-mod proposal;
-mod voting;
+pub mod application;
+pub mod config;
+pub mod curator;
+pub mod ext;
+pub mod proposal;
+pub mod voting;
 pub mod whitelist;
 
 use crate::application::AgentApplication;
@@ -98,6 +98,10 @@ pub mod pallet {
 
         #[pallet::constant]
         type DefaultTreasuryEmissionFee: Get<Percent>;
+
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type DefaultProposalCost: Get<BalanceOf<Self>>;
 
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>

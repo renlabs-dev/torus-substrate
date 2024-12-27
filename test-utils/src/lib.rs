@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 
-use std::num::NonZeroU128;
+use std::{cell::RefCell, num::NonZeroU128};
 
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
@@ -11,7 +11,7 @@ use polkadot_sdk::{
     },
     frame_system, pallet_balances,
     polkadot_sdk_frame::runtime::prelude::*,
-    sp_core::H256,
+    sp_core::{Get, H256},
     sp_io,
     sp_runtime::{
         traits::{BlakeTwo256, IdentityLookup},
@@ -58,6 +58,18 @@ parameter_types! {
     pub const SS58Prefix: u16 = 42;
 }
 
+thread_local! {
+    static DEFAULT_MIN_BURN: RefCell<u128> = const { RefCell::new(to_nano(10)) };
+}
+
+pub struct MinBurnConfig;
+
+impl Get<u128> for MinBurnConfig {
+    fn get() -> u128 {
+        DEFAULT_MIN_BURN.with(|v| *v.borrow())
+    }
+}
+
 // Balance of an account.
 pub type Balance = u128;
 
@@ -69,6 +81,20 @@ parameter_types! {
     pub const MaxLocks: u32 = 50;
     pub const MaxReserves: u32 = 50;
     pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
+}
+
+impl pallet_governance_api::GovernanceApi<AccountId> for Test {
+    fn dao_treasury_address() -> AccountId {
+        pallet_governance::DaoTreasuryAddress::<Test>::get()
+    }
+
+    fn treasury_emission_fee() -> Percent {
+        pallet_governance::TreasuryEmissionFee::<Test>::get()
+    }
+
+    fn is_whitelisted(key: &AccountId) -> bool {
+        pallet_governance::Whitelist::<Test>::contains_key(key)
+    }
 }
 
 impl pallet_torus0::Config for Test {
@@ -92,9 +118,9 @@ impl pallet_torus0::Config for Test {
 
     type DefaultMinStakingFee = ConstU8<5>;
 
-    type DefaultMinWeightControlFee = ConstU8<4>;
+    type DefaultMinWeightControlFee = ConstU8<5>;
 
-    type DefaultMinBurn = ConstU128<10_000_000_000_000_000_000>;
+    type DefaultMinBurn = MinBurnConfig;
 
     type DefaultMaxBurn = ConstU128<150_000_000_000_000_000_000>;
 
@@ -171,6 +197,8 @@ impl pallet_governance::Config for Test {
     type MaxPenaltyPercentage = ConstU8<20>;
 
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
+
+    type DefaultProposalCost = ConstU128<10_000_000_000_000_000_000_000>;
 
     type RuntimeEvent = RuntimeEvent;
 
@@ -284,8 +312,10 @@ pub fn step_block(count: BlockNumber) {
     for block in current..current + count {
         Torus0::on_finalize(block);
         Emission0::on_finalize(block);
+        Governance::on_finalize(block);
         System::on_finalize(block);
         System::set_block_number(block + 1);
+        Governance::on_initialize(block + 1);
         System::on_initialize(block + 1);
         Emission0::on_initialize(block + 1);
         Torus0::on_initialize(block + 1);
@@ -324,6 +354,10 @@ pub fn round_first_five(num: u64) -> u64 {
     } else {
         (first_five / 10) * place_value * 10
     }
+}
+
+pub fn zero_min_burn() {
+    DEFAULT_MIN_BURN.set(0);
 }
 
 #[macro_export]

@@ -81,10 +81,12 @@ pub mod pallet {
     pub type MaxRegistrationsPerBlock<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxRegistrationsPerBlock>;
 
+    // StakeTo
     #[pallet::storage]
     pub type StakingTo<T: Config> =
         StorageDoubleMap<_, Identity, T::AccountId, Identity, T::AccountId, BalanceOf<T>>;
 
+    // StakeFrom
     #[pallet::storage]
     pub type StakedBy<T: Config> =
         StorageDoubleMap<_, Identity, T::AccountId, Identity, T::AccountId, BalanceOf<T>>;

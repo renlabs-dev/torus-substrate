@@ -8365,6 +8365,7 @@ dependencies = [
  "polkadot-sdk",
  "scale-info",
  "substrate-fixed",
+ "test-utils",
 ]
 
 [[package]]
