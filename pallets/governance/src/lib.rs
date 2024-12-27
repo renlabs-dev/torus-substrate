@@ -19,6 +19,7 @@ pub use pallet::*;
 use polkadot_sdk::frame_support::{
     dispatch::DispatchResult,
     pallet_prelude::{ValueQuery, *},
+    sp_runtime::Percent,
     traits::Currency,
     Identity, PalletId,
 };
@@ -72,6 +73,10 @@ pub mod pallet {
     #[pallet::storage]
     pub type Curators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
+    #[pallet::storage]
+    pub type TreasuryEmissionFee<T: Config> =
+        StorageValue<_, Percent, ValueQuery, T::DefaultTreasuryEmissionFee>;
+
     #[pallet::config(with_default)]
     pub trait Config:
         polkadot_sdk::frame_system::Config + pallet_torus0::Config + pallet_emission0::Config
@@ -90,6 +95,9 @@ pub mod pallet {
 
         #[pallet::constant]
         type MaxPenaltyPercentage: Get<u8>;
+
+        #[pallet::constant]
+        type DefaultTreasuryEmissionFee: Get<Percent>;
 
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
@@ -366,5 +374,19 @@ pub mod pallet {
         InvalidMaxAllowedWeights,
         /// Invalid minimum weight control fee in proposal
         InvalidMinWeightControlFee,
+    }
+}
+
+impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T> {
+    fn dao_treasury_address() -> T::AccountId {
+        DaoTreasuryAddress::<T>::get()
+    }
+
+    fn treasury_emission_fee() -> Percent {
+        TreasuryEmissionFee::<T>::get()
+    }
+
+    fn is_whitelisted(key: &T::AccountId) -> bool {
+        whitelist::is_whitelisted::<T>(key)
     }
 }

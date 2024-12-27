@@ -14,6 +14,7 @@ pub trait Torus0Api<AccountId, Balance, NegativeImbalance> {
     fn max_validators() -> u16;
 
     fn weight_control_fee(who: &AccountId) -> Percent;
+    fn weight_penalty_factor(who: &AccountId) -> Percent;
     fn staking_fee(who: &AccountId) -> Percent;
 
     fn staked_by(staked: &AccountId) -> alloc::vec::Vec<(AccountId, Balance)>;

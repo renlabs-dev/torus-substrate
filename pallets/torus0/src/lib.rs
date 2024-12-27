@@ -30,6 +30,7 @@ use scale_info::prelude::vec::Vec;
 pub mod pallet {
 
     use frame::prelude::BlockNumberFor;
+    use pallet_governance_api::GovernanceApi;
 
     use super::*;
 
@@ -124,9 +125,7 @@ pub mod pallet {
     }
 
     #[pallet::config(with_default)]
-    pub trait Config:
-        polkadot_sdk::frame_system::Config + pallet_governance_api::GovernanceApi<Self::AccountId>
-    {
+    pub trait Config: polkadot_sdk::frame_system::Config {
         #[pallet::constant]
         type DefaultMaxAllowedValidators: Get<u16>;
 
@@ -202,6 +201,8 @@ pub mod pallet {
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
 
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
+
+        type Governance: GovernanceApi<Self::AccountId>;
     }
 
     #[pallet::pallet]
@@ -416,6 +417,12 @@ impl<T: Config>
 
     fn weight_control_fee(who: &T::AccountId) -> Percent {
         Fee::<T>::get(who).weight_control_fee
+    }
+
+    fn weight_penalty_factor(who: &T::AccountId) -> Percent {
+        Agents::<T>::get(who)
+            .map(|agent| agent.weight_penalty_factor)
+            .unwrap_or_default()
     }
 
     fn staking_fee(who: &T::AccountId) -> Percent {

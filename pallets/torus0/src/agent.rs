@@ -1,5 +1,6 @@
 use crate::AccountIdOf;
 use codec::{Decode, Encode, MaxEncodedLen};
+use pallet_governance_api::GovernanceApi;
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::sp_runtime::DispatchError;
 use polkadot_sdk::{
@@ -16,7 +17,7 @@ pub struct Agent<T: crate::Config> {
     pub name: BoundedVec<u8, T::MaxAgentNameLengthConstraint>,
     pub url: BoundedVec<u8, T::MaxAgentUrlLengthConstraint>,
     pub metadata: BoundedVec<u8, T::MaxAgentMetadataLengthConstraint>,
-    pub weight_factor: Percent,
+    pub weight_penalty_factor: Percent,
 }
 
 pub fn register<T: crate::Config>(
@@ -53,7 +54,7 @@ pub fn register<T: crate::Config>(
     );
 
     ensure!(
-        <T as pallet_governance_api::GovernanceApi<T::AccountId>>::is_whitelisted(&agent_key),
+        <T::Governance>::is_whitelisted(&agent_key),
         crate::Error::<T>::AgentKeyNotWhitelisted
     );
 
@@ -68,7 +69,7 @@ pub fn register<T: crate::Config>(
             name: BoundedVec::truncate_from(name),
             url: BoundedVec::truncate_from(url),
             metadata: BoundedVec::truncate_from(metadata),
-            weight_factor: Percent::from_percent(100),
+            weight_penalty_factor: Percent::from_percent(100),
         },
     );
 

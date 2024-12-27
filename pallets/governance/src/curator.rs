@@ -37,7 +37,7 @@ pub fn penalize_agent<T: crate::Config>(
             return Err(crate::Error::<T>::AgentNotFound.into());
         };
 
-        agent.weight_factor = Percent::from_percent(100u8.saturating_sub(percentage));
+        agent.weight_penalty_factor = Percent::from_percent(100u8.saturating_sub(percentage));
 
         Ok::<(), DispatchError>(())
     })?;

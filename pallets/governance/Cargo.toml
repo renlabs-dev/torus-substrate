@@ -29,8 +29,6 @@ try-runtime = [
 
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
-pallet-torus0 = { workspace = true }
-pallet-emission0 = { workspace = true }
 polkadot-sdk = { workspace = true, features = [
     "experimental",
     "runtime",
@@ -38,3 +36,8 @@ polkadot-sdk = { workspace = true, features = [
 ] }
 scale-info = { workspace = true, features = ["derive"] }
 substrate-fixed = { workspace = true }
+
+pallet-torus0 = { workspace = true }
+pallet-emission0 = { workspace = true }
+
+pallet-governance-api.workspace = true

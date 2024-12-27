@@ -1,3 +1,4 @@
+use pallet_governance_api::GovernanceApi;
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_support::{
@@ -8,7 +9,7 @@ use polkadot_sdk::{
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
     sp_core::Get,
-    sp_runtime::{traits::Saturating, ArithmeticError, DispatchError, Perquintill},
+    sp_runtime::{traits::Saturating, ArithmeticError, DispatchError, Percent, Perquintill},
     sp_std::{
         borrow::Cow,
         collections::{btree_map::BTreeMap, btree_set::BTreeSet},
@@ -72,7 +73,10 @@ pub fn get_total_emission_per_block<T: Config>() -> BalanceOf<T> {
 
     let interval = T::HalvingInterval::get();
     let halving_count = total_issuance.saturating_div(interval.get());
-    T::BlockEmission::get() >> halving_count
+    let emission = T::BlockEmission::get() >> halving_count;
+
+    let not_recycled = Percent::one() - crate::EmissionRecyclingPercentage::<T>::get();
+    not_recycled.mul_floor(emission)
 }
 
 #[doc(hidden)]
@@ -176,10 +180,14 @@ impl<T: Config> ConsensusMemberInput<T> {
         member: ConsensusMember<T>,
         min_allowed_stake: u128,
     ) -> ConsensusMemberInput<T> {
+        let weight_factor = Percent::one() - <T::Torus>::weight_penalty_factor(&agent_id);
+
         let mut total_stake = 0;
         let stakes = <T::Torus>::staked_by(&agent_id)
             .into_iter()
             .map(|(id, stake)| {
+                let stake = weight_factor.mul_floor(stake);
+
                 total_stake = total_stake.saturating_add(stake);
                 (id, stake)
             })
@@ -247,6 +255,13 @@ impl<T: Config> ConsensusMemberInput<T> {
 fn linear_rewards<T: Config>(
     mut emission: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
 ) -> <T::Currency as Currency<T::AccountId>>::NegativeImbalance {
+    let treasury_fee = <T::Governance>::treasury_emission_fee();
+    if !treasury_fee.is_zero() {
+        let treasury_fee = treasury_fee.mul_floor(emission.peek());
+        let treasury_fee = emission.extract(treasury_fee);
+        T::Currency::resolve_creating(&<T::Governance>::dao_treasury_address(), treasury_fee);
+    }
+
     let inputs = ConsensusMemberInput::<T>::all_members();
 
     let id_to_idx: BTreeMap<_, _> = inputs

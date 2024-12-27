@@ -15,7 +15,7 @@ use polkadot_sdk::{
     sp_consensus_aura::sr25519::AuthorityId as AuraId,
     sp_std::num::NonZeroU128,
 };
-use sp_runtime::Perbill;
+use sp_runtime::{Perbill, Percent};
 
 pub mod eth;
 
@@ -335,10 +335,13 @@ impl pallet_torus0::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+
+    type Governance = Governance;
 }
 
 parameter_types! {
     pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
+    pub const DefaultTreasuryEmissionFee: Percent = Percent::from_percent(20);
 }
 
 impl pallet_governance::Config for Runtime {
@@ -352,6 +355,8 @@ impl pallet_governance::Config for Runtime {
 
     type MaxPenaltyPercentage = ConstU8<20>;
 
+    type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
+
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
@@ -360,6 +365,7 @@ impl pallet_governance::Config for Runtime {
 parameter_types! {
     pub HalvingInterval: NonZeroU128 = NonZeroU128::new(250_000_000 * 10u128.pow(TOKEN_DECIMALS)).unwrap();
     pub MaxSupply: NonZeroU128 = NonZeroU128::new(1_000_000_000 * 10u128.pow(TOKEN_DECIMALS)).unwrap();
+    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_percent(70);
 }
 
 impl pallet_emission0::Config for Runtime {
@@ -375,9 +381,13 @@ impl pallet_emission0::Config for Runtime {
 
     type DefaultMaxAllowedWeights = ConstU16<420>;
 
+    type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
+
     type Currency = Balances;
 
     type Torus = Torus0;
+
+    type Governance = Governance;
 }
 
 // type DefaultMinAllowedWeights = ConstU16<1>;

@@ -10,6 +10,7 @@ use polkadot_sdk::frame_system;
 use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
 use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
 use polkadot_sdk::polkadot_sdk_frame::{self as frame, traits::Currency};
+use polkadot_sdk::sp_runtime::Percent;
 
 #[doc(hidden)]
 pub mod distribute;
@@ -21,6 +22,7 @@ pub mod pallet {
     use core::num::NonZeroU128;
 
     use frame::prelude::BlockNumberFor;
+    use pallet_governance_api::GovernanceApi;
     use pallet_torus0_api::Torus0Api;
     use polkadot_sdk::sp_std;
 
@@ -44,6 +46,10 @@ pub mod pallet {
 
     #[pallet::storage]
     pub type MinStakePerWeight<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
+    #[pallet::storage]
+    pub type EmissionRecyclingPercentage<T: Config> =
+        StorageValue<_, Percent, ValueQuery, T::DefaultEmissionRecyclingPercentage>;
 
     #[pallet::storage]
     pub type PendingEmission<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
@@ -71,6 +77,9 @@ pub mod pallet {
         #[pallet::constant]
         type DefaultMaxAllowedWeights: Get<u16>;
 
+        #[pallet::constant]
+        type DefaultEmissionRecyclingPercentage: Get<Percent>;
+
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
 
         type Torus: Torus0Api<
@@ -78,6 +87,8 @@ pub mod pallet {
             <Self::Currency as Currency<Self::AccountId>>::Balance,
             <Self::Currency as Currency<Self::AccountId>>::NegativeImbalance,
         >;
+
+        type Governance: GovernanceApi<Self::AccountId>;
     }
 
     #[pallet::pallet]
