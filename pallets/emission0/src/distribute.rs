@@ -1,3 +1,4 @@
+use pallet_governance_api::GovernanceApi;
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_support::{
@@ -72,7 +73,10 @@ pub fn get_total_emission_per_block<T: Config>() -> BalanceOf<T> {
 
     let interval = T::HalvingInterval::get();
     let halving_count = total_issuance.saturating_div(interval.get());
-    T::BlockEmission::get() >> halving_count
+    let emission = T::BlockEmission::get() >> halving_count;
+
+    let not_recycled = Percent::one() - crate::EmissionRecyclingPercentage::<T>::get();
+    not_recycled.mul_floor(emission)
 }
 
 #[doc(hidden)]
@@ -251,6 +255,13 @@ impl<T: Config> ConsensusMemberInput<T> {
 fn linear_rewards<T: Config>(
     mut emission: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
 ) -> <T::Currency as Currency<T::AccountId>>::NegativeImbalance {
+    let treasury_fee = <T::Governance>::treasury_emission_fee();
+    if !treasury_fee.is_zero() {
+        let treasury_fee = treasury_fee.mul_floor(emission.peek());
+        let treasury_fee = emission.extract(treasury_fee);
+        T::Currency::resolve_creating(&<T::Governance>::dao_treasury_address(), treasury_fee);
+    }
+
     let inputs = ConsensusMemberInput::<T>::all_members();
 
     let id_to_idx: BTreeMap<_, _> = inputs

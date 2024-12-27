@@ -15,7 +15,7 @@ use polkadot_sdk::{
     sp_io,
     sp_runtime::{
         traits::{BlakeTwo256, IdentityLookup},
-        BuildStorage,
+        BuildStorage, Percent,
     },
     sp_tracing,
 };
@@ -70,16 +70,6 @@ parameter_types! {
     pub const MaxReserves: u32 = 50;
 }
 
-impl pallet_governance_api::GovernanceApi<AccountId> for Test {
-    fn get_dao_treasury_address() -> AccountId {
-        todo!()
-    }
-
-    fn is_whitelisted(_key: &AccountId) -> bool {
-        todo!()
-    }
-}
-
 impl pallet_torus0::Config for Test {
     type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>;
 
@@ -127,11 +117,14 @@ impl pallet_torus0::Config for Test {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+
+    type Governance = Governance;
 }
 
 parameter_types! {
     pub HalvingInterval: NonZeroU128 = NonZeroU128::new(to_nano(250_000_000)).unwrap();
     pub MaxSupply: NonZeroU128 = NonZeroU128::new(to_nano(1_000_000_000)).unwrap();
+    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_percent(70);
 }
 
 impl pallet_emission0::Config for Test {
@@ -147,13 +140,18 @@ impl pallet_emission0::Config for Test {
 
     type DefaultMaxAllowedWeights = ConstU16<420>;
 
+    type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
+
     type Currency = Balances;
 
     type Torus = Torus0;
+
+    type Governance = Governance;
 }
 
 parameter_types! {
     pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
+    pub const DefaultTreasuryEmissionFee: Percent = Percent::from_percent(20);
 }
 
 impl pallet_governance::Config for Test {
@@ -166,6 +164,8 @@ impl pallet_governance::Config for Test {
     type ApplicationExpiration = ConstU64<2000>;
 
     type MaxPenaltyPercentage = ConstU8<20>;
+
+    type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
     type RuntimeEvent = RuntimeEvent;
 

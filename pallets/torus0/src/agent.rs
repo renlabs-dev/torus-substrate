@@ -1,5 +1,6 @@
 use crate::AccountIdOf;
 use codec::{Decode, Encode, MaxEncodedLen};
+use pallet_governance_api::GovernanceApi;
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::sp_runtime::DispatchError;
 use polkadot_sdk::{
@@ -53,7 +54,7 @@ pub fn register<T: crate::Config>(
     );
 
     ensure!(
-        <T as pallet_governance_api::GovernanceApi<T::AccountId>>::is_whitelisted(&agent_key),
+        <T::Governance>::is_whitelisted(&agent_key),
         crate::Error::<T>::AgentKeyNotWhitelisted
     );
 

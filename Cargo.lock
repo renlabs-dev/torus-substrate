@@ -8337,6 +8337,7 @@ name = "pallet-governance"
 version = "0.1.0"
 dependencies = [
  "pallet-emission0",
+ "pallet-governance-api",
  "pallet-torus0",
  "parity-scale-codec",
  "polkadot-sdk",
@@ -8347,6 +8348,9 @@ dependencies = [
 [[package]]
 name = "pallet-governance-api"
 version = "0.1.0"
+dependencies = [
+ "polkadot-sdk",
+]
 
 [[package]]
 name = "pallet-grandpa"

@@ -2,7 +2,8 @@ use std::array::from_fn;
 
 use pallet_emission0::{
     distribute::{get_total_emission_per_block, ConsensusMemberInput},
-    Config, ConsensusMember, ConsensusMembers, PendingEmission, WeightControlDelegation,
+    Config, ConsensusMember, ConsensusMembers, EmissionRecyclingPercentage, PendingEmission,
+    WeightControlDelegation,
 };
 use polkadot_sdk::{
     pallet_balances,
@@ -12,6 +13,7 @@ use polkadot_sdk::{
 use substrate_fixed::{traits::ToFixed, types::I96F32};
 use test_utils::{
     add_balance, add_stake, get_balance,
+    pallet_governance::TreasuryEmissionFee,
     pallet_torus0::{fee::ValidatorFee, Fee, MaxAllowedValidators, MinAllowedStake, StakedBy},
     register_empty_agent, step_block, Test,
 };
@@ -23,20 +25,26 @@ fn total_emission_per_block_does_halving() {
         let halving_interval = <<Test as Config>::HalvingInterval as Get<u128>>::get();
         let max_supply = <<Test as Config>::MaxSupply as Get<u128>>::get();
 
+        let recycling_percentage = EmissionRecyclingPercentage::<Test>::get();
+        let halving_emission = |halving: u128| {
+            let block_emission = block_emission >> halving;
+            block_emission - recycling_percentage.mul_ceil(block_emission)
+        };
+
         let emissions = get_total_emission_per_block::<Test>();
-        assert_eq!(emissions, block_emission);
+        assert_eq!(emissions, halving_emission(0));
 
         pallet_balances::TotalIssuance::<Test>::set(halving_interval - 1);
         let emissions = get_total_emission_per_block::<Test>();
-        assert_eq!(emissions, block_emission);
+        assert_eq!(emissions, halving_emission(0));
 
         pallet_balances::TotalIssuance::<Test>::set(halving_interval);
         let emissions = get_total_emission_per_block::<Test>();
-        assert_eq!(emissions, block_emission >> 1);
+        assert_eq!(emissions, halving_emission(1));
 
         pallet_balances::TotalIssuance::<Test>::set(halving_interval * 2);
         let emissions = get_total_emission_per_block::<Test>();
-        assert_eq!(emissions, block_emission >> 2);
+        assert_eq!(emissions, halving_emission(2));
 
         pallet_balances::TotalIssuance::<Test>::set(max_supply);
         let emissions = get_total_emission_per_block::<Test>();
@@ -47,22 +55,23 @@ fn total_emission_per_block_does_halving() {
 #[test]
 fn pending_emission_accumulates_and_returns_when_network_is_empty() {
     test_utils::new_test_ext().execute_with(|| {
+        EmissionRecyclingPercentage::<Test>::set(Percent::zero());
+
         assert_eq!(PendingEmission::<Test>::get(), 0);
 
-        step_block(1);
-
         let emissions = get_total_emission_per_block::<Test>();
+
+        step_block(1);
         assert_eq!(PendingEmission::<Test>::get(), emissions);
 
         step_block(1);
-
-        let emissions = get_total_emission_per_block::<Test>();
         assert_eq!(PendingEmission::<Test>::get(), emissions * 2);
 
-        step_block(98);
+        let after_treasury_fee = Percent::one() - TreasuryEmissionFee::<Test>::get();
+        let emissions = after_treasury_fee.mul_floor(emissions * 100);
 
-        let emissions = get_total_emission_per_block::<Test>();
-        assert_eq!(PendingEmission::<Test>::get(), emissions * 100);
+        step_block(98);
+        assert_eq!(PendingEmission::<Test>::get(), emissions);
     });
 }
 
@@ -317,6 +326,9 @@ fn deregister_old_agents_and_registers_new() {
 #[test]
 fn pays_dividends_and_incentives() {
     test_utils::new_test_ext().execute_with(|| {
+        EmissionRecyclingPercentage::<Test>::set(Percent::zero());
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+
         let min_allowed_stake = MinAllowedStake::<Test>::get();
 
         let mut member = ConsensusMember::<Test>::default();
@@ -361,6 +373,9 @@ fn pays_dividends_and_incentives() {
 #[test]
 fn pays_dividends_to_stakers() {
     test_utils::new_test_ext().execute_with(|| {
+        EmissionRecyclingPercentage::<Test>::set(Percent::zero());
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+
         let min_allowed_stake = 1;
         MinAllowedStake::<Test>::set(min_allowed_stake);
 
@@ -442,5 +457,3 @@ fn pays_dividends_to_stakers() {
         assert_eq!(sum, get_total_emission_per_block::<Test>() * 100);
     });
 }
-
-// TODO: test staking and weight control delegation

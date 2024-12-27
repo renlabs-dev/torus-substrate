@@ -74,7 +74,7 @@ pub mod pallet {
     pub type Curators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
     #[pallet::storage]
-    pub type TreasuryEmissionFee<T> =
+    pub type TreasuryEmissionFee<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultTreasuryEmissionFee>;
 
     #[pallet::config(with_default)]
@@ -372,5 +372,19 @@ pub mod pallet {
         InvalidMaxAllowedWeights,
         /// Invalid minimum weight control fee in proposal
         InvalidMinWeightControlFee,
+    }
+}
+
+impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T> {
+    fn dao_treasury_address() -> T::AccountId {
+        DaoTreasuryAddress::<T>::get()
+    }
+
+    fn treasury_emission_fee() -> Percent {
+        TreasuryEmissionFee::<T>::get()
+    }
+
+    fn is_whitelisted(key: &T::AccountId) -> bool {
+        whitelist::is_whitelisted::<T>(key)
     }
 }
