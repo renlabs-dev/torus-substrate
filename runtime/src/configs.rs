@@ -76,6 +76,8 @@ impl frame_system::Config for Runtime {
     /// Specifies how many recent block hashes to keep in storage
     /// Older block hashes are pruned when this limit is reached
     type BlockHashCount = ConstU64<2400>;
+    /// The prefix used in the SS58 address format for this chain.
+    type SS58Prefix = ConstU16<42>;
 }
 
 // --- Balances ---
