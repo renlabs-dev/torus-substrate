@@ -24,8 +24,10 @@ ENV PATH=/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbi
 RUN curl https://sh.rustup.rs -sSf | \
     sh -s -- -y --profile=minimal --default-toolchain=1.82.0
 
-RUN --mount=type=secret,id=aws-key-id,env=AWS_ACCESS_KEY_ID \
-    --mount=type=secret,id=aws-secret-key,env=AWS_SECRET_ACCESS_KEY \
+RUN --mount=type=secret,id=aws-key-id \
+    --mount=type=secret,id=aws-secret-key \
+    export AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws-key-id) && \
+    export AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws-secret-key) && \
     if [ -n "$AWS_ACCESS_KEY_ID" ]; then \
         curl https://github.com/mozilla/sccache/releases/download/v0.9.0/sccache-v0.9.0-x86_64-unknown-linux-musl.tar.gz \
             -Lo sccache-v0.9.0-x86_64-unknown-linux-musl.tar.gz; \
@@ -38,7 +40,8 @@ RUN --mount=type=secret,id=aws-key-id,env=AWS_ACCESS_KEY_ID \
     fi; \
     cargo build -p torus-node --release --locked
 
-RUN --mount=type=secret,id=aws-key-id,env=AWS_ACCESS_KEY_ID \
+RUN --mount=type=secret,id=aws-key-id \
+    export AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws-key-id) && \
     if [ -n "$AWS_ACCESS_KEY_ID" ]; then \
         ./sccache --show-stats; \
     fi

@@ -34,8 +34,10 @@ jobs:
         id: prepare
         run: |
           echo "SANITIZED_REF=$(echo "${GITHUB_REF##*/}" | tr '/' '-')" >> $GITHUB_ENV
-          echo "AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "${{ secrets.AWS_ACCESS_KEY_ID }}"     > "$HOME/aws-key-id.txt"
+          echo "${{ secrets.AWS_SECRET_ACCESS_KEY }}" > "$HOME/aws-secret-key.txt"
+          echo "AWS_ACCESS_KEY_ID_PATH=$HOME/aws-key-id.txt"         >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY_PATH=$HOME/aws-secret-key.txt" >> $GITHUB_ENV
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -43,9 +45,9 @@ jobs:
           context: .
           push: true
           file: docker/node.dockerfile
-          secret-envs: |
-            aws-key-id=AWS_ACCESS_KEY_ID
-            aws-secret-key=AWS_SECRET_ACCESS_KEY
+          secret-files: |
+            aws-key-id=${{ env.AWS_ACCESS_KEY_ID_PATH }}
+            aws-secret-key=${{ env.AWS_SECRET_ACCESS_KEY_PATH }}
           build-args: |
             SCCACHE_BUCKET=torus-substrate-cache
             SCCACHE_ENDPOINT=${{ secrets.SCCACHE_ENDPOINT }}
