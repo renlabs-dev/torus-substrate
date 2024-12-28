@@ -289,7 +289,7 @@ impl pallet_grandpa::Config for Runtime {
 // --- Torus ---
 
 impl pallet_torus0::Config for Runtime {
-    type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>;
+    type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>; // FIXME: decimals
 
     type DefaultImmunityPeriod = ConstU16<0>;
 
@@ -305,15 +305,15 @@ impl pallet_torus0::Config for Runtime {
 
     type DefaultMaxRegistrationsPerBlock = ConstU16<10>;
 
-    type DefaultMinimumAllowedStake = ConstU128<500000000>;
+    type DefaultMinimumAllowedStake = ConstU128<500_000_000>; // FIXME: decimals
 
     type DefaultMinStakingFee = ConstU8<5>;
 
     type DefaultMinWeightControlFee = ConstU8<4>;
 
-    type DefaultMinBurn = ConstU128<10_000_000_000>;
+    type DefaultMinBurn = ConstU128<10_000_000_000>; // FIXME: decimals
 
-    type DefaultMaxBurn = ConstU128<150_000_000_000>;
+    type DefaultMaxBurn = ConstU128<150_000_000_000>; // FIXME: decimals
 
     type DefaultAdjustmentAlpha = ConstU64<{ u64::MAX / 2 }>;
 

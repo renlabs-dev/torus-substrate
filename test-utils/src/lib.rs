@@ -71,7 +71,7 @@ parameter_types! {
 }
 
 impl pallet_torus0::Config for Test {
-    type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>;
+    type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>; // FIXME: decimals
 
     type DefaultImmunityPeriod = ConstU16<0>;
 
@@ -93,9 +93,9 @@ impl pallet_torus0::Config for Test {
 
     type DefaultMinWeightControlFee = ConstU8<4>;
 
-    type DefaultMinBurn = ConstU128<10_000_000_000>;
+    type DefaultMinBurn = ConstU128<10_000_000_000>; // FIXME: decimals
 
-    type DefaultMaxBurn = ConstU128<150_000_000_000>;
+    type DefaultMaxBurn = ConstU128<150_000_000_000>; // FIXME: decimals
 
     type DefaultAdjustmentAlpha = ConstU64<{ u64::MAX / 2 }>;
 
