@@ -311,7 +311,7 @@ fn linear_rewards<T: Config>(
     };
 
     let Emissions {
-        dividends,
+        mut dividends,
         incentives,
         normalized_emissions,
     } = compute_emissions::<T>(
@@ -323,6 +323,32 @@ fn linear_rewards<T: Config>(
     );
 
     let pruning_scores = math::vec_max_upscale_to_u16(&normalized_emissions);
+
+    for (idx, input) in inputs.values().enumerate() {
+        let Some(delegating_to) = &input.delegating_to else {
+            continue;
+        };
+
+        let Some(dividend) = dividends
+            .get_mut(idx)
+            .filter(|dividend| dividend.peek() > 0)
+        else {
+            continue;
+        };
+
+        let control_fee = <T::Torus>::weight_control_fee(delegating_to);
+        let control_fee = control_fee.mul_floor(dividend.peek());
+        let stake = dividend.extract(control_fee);
+
+        if let Some(delegated_dividend) = id_to_idx
+            .get(delegating_to)
+            .and_then(|idx| dividends.get_mut(*idx))
+        {
+            delegated_dividend.subsume(stake);
+        } else {
+            T::Currency::resolve_creating(delegating_to, stake);
+        }
+    }
 
     for (((input, incentive), mut dividend), pruning_score) in inputs
         .values()
@@ -338,13 +364,6 @@ fn linear_rewards<T: Config>(
             };
 
         if dividend.peek() != 0 {
-            if let Some(delegating_to) = &input.delegating_to {
-                let control_fee = <T::Torus>::weight_control_fee(delegating_to);
-                let control_fee = control_fee.mul_floor(dividend.peek());
-                let stake = dividend.extract(control_fee);
-                T::Currency::resolve_creating(delegating_to, stake);
-            }
-
             let fixed_dividend = dividend.peek();
 
             let stakers = input.normalized_stakers();

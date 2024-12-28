@@ -33,9 +33,11 @@ pub struct ValidatorFee<T: crate::Config> {
 
 impl<T: crate::Config> Default for ValidatorFee<T> {
     fn default() -> Self {
+        let fee_constraints = crate::FeeConstraints::<T>::get();
+
         Self {
-            staking_fee: Percent::from_percent(T::DefaultMinStakingFee::get()),
-            weight_control_fee: Percent::from_percent(T::DefaultMinWeightControlFee::get()),
+            staking_fee: fee_constraints.min_staking_fee,
+            weight_control_fee: fee_constraints.min_weight_control_fee,
             _pd: PhantomData,
         }
     }

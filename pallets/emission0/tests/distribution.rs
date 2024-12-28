@@ -12,9 +12,11 @@ use polkadot_sdk::{
 };
 use substrate_fixed::{traits::ToFixed, types::I96F32};
 use test_utils::{
-    add_balance, add_stake, get_balance,
+    add_balance, add_stake, get_balance, get_origin,
     pallet_governance::TreasuryEmissionFee,
-    pallet_torus0::{fee::ValidatorFee, Fee, MaxAllowedValidators, MinAllowedStake, StakedBy},
+    pallet_torus0::{
+        fee::ValidatorFee, Fee, FeeConstraints, MaxAllowedValidators, MinAllowedStake, StakedBy,
+    },
     register_empty_agent, step_block, Test,
 };
 
@@ -348,8 +350,8 @@ fn pays_dividends_and_incentives() {
 
         step_block(100);
 
-        let mut sum = 0;
         let total_emission = get_total_emission_per_block::<Test>() * 100;
+        let mut sum = 0;
 
         let stake = StakedBy::<Test>::get(0, 0).unwrap_or_default();
         assert_eq!(stake - min_allowed_stake, total_emission / 2);
@@ -410,8 +412,8 @@ fn pays_dividends_to_stakers() {
 
         step_block(100);
 
-        let mut sum = 0;
         let total_emission = get_total_emission_per_block::<Test>() * 100;
+        let mut sum = 0;
 
         let dividends = total_emission / 2;
         let incentives = total_emission / 2;
@@ -455,5 +457,68 @@ fn pays_dividends_to_stakers() {
 
         assert_eq!(PendingEmission::<Test>::get(), 0);
         assert_eq!(sum, get_total_emission_per_block::<Test>() * 100);
+    });
+}
+
+#[test]
+fn pays_weight_control_fee_and_dividends_to_stakers() {
+    test_utils::new_test_ext().execute_with(|| {
+        EmissionRecyclingPercentage::<Test>::set(Percent::zero());
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+
+        let weight_control_fee = Percent::from_parts(25);
+        FeeConstraints::<Test>::mutate(|constraints| {
+            constraints.min_staking_fee = Percent::zero();
+            constraints.min_weight_control_fee = weight_control_fee;
+        });
+
+        let min_allowed_stake = 1;
+        MinAllowedStake::<Test>::set(min_allowed_stake);
+
+        let val_1 = 0;
+        let val_2 = 1;
+
+        let miner = 2;
+
+        let mut member = ConsensusMember::<Test>::default();
+        member.update_weights(BoundedVec::truncate_from(vec![(miner, 1)]));
+
+        ConsensusMembers::<Test>::set(val_1, Some(member));
+        ConsensusMembers::<Test>::set(val_2, Some(Default::default()));
+        ConsensusMembers::<Test>::set(miner, Some(Default::default()));
+
+        for id in [val_1, val_2, miner] {
+            register_empty_agent(id);
+        }
+
+        pallet_emission0::weights::delegate_weight_control::<Test>(get_origin(val_2), val_1)
+            .expect("failed to delegate weight control");
+
+        let val_1_staker = 3;
+        add_stake(val_1_staker, val_1, min_allowed_stake);
+
+        let val_2_staker = 4;
+        add_stake(val_2_staker, val_2, min_allowed_stake);
+
+        step_block(100);
+
+        let total_dividends = (get_total_emission_per_block::<Test>() * 100) / 2;
+
+        let mut val_1_stake = total_dividends / 2;
+        let mut val_2_stake = total_dividends / 2;
+
+        let val_2_weight_control_fee = weight_control_fee.mul_floor(val_2_stake);
+
+        val_1_stake += val_2_weight_control_fee;
+        val_2_stake -= val_2_weight_control_fee;
+
+        assert_eq!(
+            StakedBy::<Test>::get(val_1, val_1_staker).unwrap_or_default() - min_allowed_stake,
+            val_1_stake
+        );
+        assert_eq!(
+            StakedBy::<Test>::get(val_2, val_2_staker).unwrap_or_default() - min_allowed_stake,
+            val_2_stake
+        );
     });
 }
