@@ -184,12 +184,12 @@ fn validate_agent_url<T: crate::Config>(bytes: &[u8]) -> DispatchResult {
         .try_into()
         .map_err(|_| crate::Error::<T>::AgentUrlTooLong)?;
 
-    ensure!(len > 0, crate::Error::<T>::AgentNameTooShort);
+    ensure!(len > 0, crate::Error::<T>::AgentUrlTooShort);
 
     ensure!(
         len <= (crate::MaxNameLength::<T>::get() as u32)
             .min(T::MaxAgentNameLengthConstraint::get()),
-        crate::Error::<T>::AgentUrlTooShort
+        crate::Error::<T>::AgentUrlTooLong
     );
 
     ensure!(

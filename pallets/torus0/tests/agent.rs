@@ -1,5 +1,5 @@
 use pallet_torus0::Error;
-use polkadot_sdk::{frame_support::assert_err, sp_runtime::Percent};
+use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
 use test_utils::{assert_ok, Test};
 
 #[test]
@@ -22,6 +22,161 @@ fn register_correctly() {
         assert_eq!(agent.name.to_vec(), name);
         assert_eq!(agent.url.to_vec(), url);
         assert_eq!(agent.metadata.to_vec(), metadata);
+    });
+}
+
+#[test]
+fn register_fail_name_validation() {
+    test_utils::new_test_ext().execute_with(|| {
+        let agent = 0;
+        let url = "idk://agent".as_bytes().to_vec();
+        let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                "".as_bytes().to_vec(),
+                url.clone(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::AgentNameTooShort
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                " ".repeat(u32::MAX as usize + 1).as_bytes().to_vec(),
+                url.clone(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::AgentNameTooLong
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                " ".repeat(pallet_torus0::MaxNameLength::<Test>::get() as usize + 1)
+                    .as_bytes()
+                    .to_vec(),
+                url.clone(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::AgentNameTooLong
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                vec![249u8, 9u8, 42u8],
+                url.clone(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::InvalidAgentName
+        );
+    });
+}
+
+#[test]
+fn register_fail_url_validation() {
+    test_utils::new_test_ext().execute_with(|| {
+        let agent = 0;
+        let name = "agent".as_bytes().to_vec();
+        let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                "".as_bytes().to_vec(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::AgentUrlTooShort
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                " ".repeat(u32::MAX as usize + 1).as_bytes().to_vec(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::AgentUrlTooLong
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                " ".repeat(pallet_torus0::MaxNameLength::<Test>::get() as usize + 1)
+                    .as_bytes()
+                    .to_vec(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::AgentUrlTooLong
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                vec![249u8, 9u8, 42u8],
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::InvalidAgentUrl
+        );
+    });
+}
+
+#[test]
+fn register_fail_metadata_validation() {
+    test_utils::new_test_ext().execute_with(|| {
+        let agent = 0;
+        let name = "agent".as_bytes().to_vec();
+        let url = "idk://agent".as_bytes().to_vec();
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                url.clone(),
+                "".as_bytes().to_vec(),
+            ),
+            pallet_torus0::Error::<Test>::AgentMetadataTooShort
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                url.clone(),
+                " ".repeat(u32::MAX as usize + 1).as_bytes().to_vec(),
+            ),
+            pallet_torus0::Error::<Test>::AgentMetadataTooLong
+        );
+
+        let max_metadata_length =
+            <<Test as pallet_torus0::Config>::MaxAgentMetadataLengthConstraint as Get<u32>>::get()
+                as usize;
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                url.clone(),
+                " ".repeat(max_metadata_length + 1).as_bytes().to_vec(),
+            ),
+            pallet_torus0::Error::<Test>::AgentMetadataTooLong
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                url.clone(),
+                vec![249u8, 9u8, 42u8],
+            ),
+            pallet_torus0::Error::<Test>::InvalidAgentMetadata
+        );
     });
 }
 
