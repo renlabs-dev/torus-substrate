@@ -92,7 +92,7 @@ fn register_more_than_registrations_per_interval() {
                 url.clone(),
                 metadata.clone(),
             ),
-            pallet_torus0::Error::<Test>::TooManyAgentRegistrationsThisBlock,
+            pallet_torus0::Error::<Test>::TooManyAgentRegistrationsThisInterval,
         );
 
         assert!(pallet_torus0::Agents::<Test>::get(agent).is_none());

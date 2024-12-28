@@ -44,7 +44,7 @@ pub fn register<T: crate::Config>(
     let burn_config = crate::BurnConfig::<T>::get();
     ensure!(
         crate::RegistrationsThisInterval::<T>::get() < burn_config.max_registrations_per_interval,
-        crate::Error::<T>::TooManyAgentRegistrationsThisBlock
+        crate::Error::<T>::TooManyAgentRegistrationsThisInterval
     );
 
     ensure!(
