@@ -14,6 +14,8 @@ fn add_stake_correctly() {
         let total_balance = stake_to_add * 2;
         let balance_after = stake_to_add;
 
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
+
         assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
             "to".as_bytes().to_vec(),
@@ -98,6 +100,8 @@ fn remove_stake_correctly() {
             <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
         let total_balance = stake_to_add_and_remove * 2;
 
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
+
         assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
             "to".as_bytes().to_vec(),
@@ -136,6 +140,7 @@ fn remove_stake_with_less_than_required_amount() {
             <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
         let total_balance = stake_to_add_and_remove * 2;
 
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
         assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
             "to".as_bytes().to_vec(),
@@ -179,6 +184,7 @@ fn remove_stake_with_unregistered_agent() {
             <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
         let total_balance = stake_to_add_and_remove * 2;
 
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
         assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
             "to".as_bytes().to_vec(),

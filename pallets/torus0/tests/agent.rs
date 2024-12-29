@@ -10,6 +10,10 @@ fn register_correctly() {
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
 
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
+
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent,
             name.clone(),
@@ -26,6 +30,28 @@ fn register_correctly() {
 }
 
 #[test]
+fn register_without_being_whitelisted() {
+    test_utils::new_test_ext().execute_with(|| {
+        let agent = 0;
+        let name = "agent".as_bytes().to_vec();
+        let url = "idk://agent".as_bytes().to_vec();
+        let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                url.clone(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::AgentKeyNotWhitelisted
+        );
+
+        assert!(pallet_torus0::Agents::<Test>::get(agent).is_none());
+    });
+}
+
+#[test]
 fn register_without_enough_balance() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
@@ -34,6 +60,10 @@ fn register_without_enough_balance() {
         let metadata = "idk://agent".as_bytes().to_vec();
 
         Burn::<Test>::set(100);
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
@@ -55,6 +85,10 @@ fn register_fail_name_validation() {
         let agent = 0;
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
@@ -107,6 +141,10 @@ fn register_fail_url_validation() {
         let name = "agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
 
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
+
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
@@ -157,6 +195,10 @@ fn register_fail_metadata_validation() {
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
@@ -214,6 +256,10 @@ fn register_more_than_max_allowed_agents() {
 
         pallet_torus0::MaxAllowedAgents::<Test>::set(0);
 
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
+
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
@@ -237,6 +283,10 @@ fn register_more_than_allowed_registrations_per_block() {
         let metadata = "idk://agent".as_bytes().to_vec();
 
         pallet_torus0::MaxRegistrationsPerBlock::<Test>::set(0);
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
@@ -264,6 +314,10 @@ fn register_more_than_registrations_per_interval() {
             config.max_registrations_per_interval = 0;
         });
 
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
+
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
@@ -286,6 +340,10 @@ fn unregister_correctly() {
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
 
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
+
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent,
             name.clone(),
@@ -306,6 +364,10 @@ fn unregister_twice() {
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent,
@@ -331,6 +393,10 @@ fn update_correctly() {
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent, name, url, metadata,
@@ -371,6 +437,10 @@ fn update_with_zero_staking_fee() {
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent, name, url, metadata,
@@ -414,6 +484,10 @@ fn update_with_zero_weight_control_fee() {
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent, name, url, metadata,
