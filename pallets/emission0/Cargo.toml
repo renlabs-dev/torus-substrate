@@ -28,6 +28,7 @@ substrate-fixed.workspace = true
 num-traits.workspace = true
 
 pallet-torus0-api.workspace = true
+pallet-governance-api.workspace = true
 
 [dev-dependencies]
 test-utils.workspace = true

@@ -1,8 +1,5 @@
 use crate::{proposal::ProposalStatus, AccountIdOf, Error, Event, Proposals};
-use polkadot_sdk::{
-    frame_support::{dispatch::DispatchResult, ensure},
-    polkadot_sdk_frame::prelude::OriginFor,
-};
+use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
 
 pub fn add_vote<T: crate::Config>(
     voter: AccountIdOf<T>,
@@ -79,10 +76,19 @@ pub fn remove_vote<T: crate::Config>(voter: AccountIdOf<T>, proposal_id: u64) ->
     Ok(())
 }
 
-pub fn enable_delegation<T: crate::Config>(_origin: OriginFor<T>) -> DispatchResult {
-    todo!()
+pub fn enable_delegation<T: crate::Config>(delegator: AccountIdOf<T>) -> DispatchResult {
+    crate::NotDelegatingVotingPower::<T>::mutate(|delegators| {
+        delegators
+            .try_insert(delegator.clone())
+            .map(|_| ())
+            .map_err(|_| Error::<T>::InternalError.into())
+    })
 }
 
-pub fn disable_delegation<T: crate::Config>(_origin: OriginFor<T>) -> DispatchResult {
-    todo!()
+pub fn disable_delegation<T: crate::Config>(delegator: AccountIdOf<T>) -> DispatchResult {
+    crate::NotDelegatingVotingPower::<T>::mutate(|delegators| {
+        delegators.remove(&delegator);
+    });
+
+    Ok(())
 }

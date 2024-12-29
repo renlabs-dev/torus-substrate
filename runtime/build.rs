@@ -18,6 +18,8 @@
 fn main() {
     #[cfg(feature = "std")]
     {
-        polkadot_sdk::substrate_wasm_builder::WasmBuilder::build_using_defaults();
+        substrate_wasm_builder::WasmBuilder::init_with_defaults()
+            .enable_metadata_hash("TOR", 18)
+            .build();
     }
 }

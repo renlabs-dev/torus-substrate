@@ -73,6 +73,8 @@ type SignedExtra = (
     // Ensures that the sender has enough funds to pay for the transaction
     // and deducts the fee from the sender's account.
     pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+    // Enables support for wallets requiring runtime metadata.
+    frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
 );
 
 /// All migrations of the runtime, aside from the ones declared in the pallets.
@@ -137,9 +139,6 @@ mod runtime {
 
     #[runtime::pallet_index(9)]
     pub type EVM = pallet_evm::Pallet<Runtime>;
-
-    #[runtime::pallet_index(10)]
-    pub type BaseFee = pallet_base_fee::Pallet<Runtime>;
 
     #[runtime::pallet_index(11)]
     pub type Governance = pallet_governance::Pallet<Runtime>;

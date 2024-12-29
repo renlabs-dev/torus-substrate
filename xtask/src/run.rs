@@ -75,7 +75,7 @@ pub(super) fn run(mut r: flags::Run) {
 }
 
 #[allow(dead_code)]
-mod ops {
+pub mod ops {
     use super::*;
     use std::{
         ffi::OsStr,
@@ -83,9 +83,10 @@ mod ops {
         process::{Command, Stdio},
     };
 
+    #[macro_export]
     macro_rules! torus_node {
         ($($arg:expr),*) => {{
-            let mut cmd = Command::new("cargo");
+            let mut cmd = std::process::Command::new("cargo");
             cmd.args(["run", "--release", "--package", "torus-node", "--"]);
             $(cmd.arg($arg);)*
             cmd
@@ -184,7 +185,8 @@ mod ops {
             "--rpc-port", node.rpc_port.to_string(),
             "--allow-private-ipv4",
             "--discover-local",
-            "--rpc-max-response-size","100"
+            "--rpc-max-response-size","100",
+            "--state-pruning","archive"
         );
 
         if !bootnodes.is_empty() {
@@ -192,7 +194,12 @@ mod ops {
         }
 
         if node.validator {
-            cmd.args(["--validator", "--force-authoring"]);
+            cmd.args([
+                "--validator",
+                "--force-authoring",
+                "--consensus",
+                "manual-seal-8000",
+            ]);
         }
 
         if let Some(name) = &node.name {

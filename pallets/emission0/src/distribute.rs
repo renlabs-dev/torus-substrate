@@ -1,3 +1,4 @@
+use pallet_governance_api::GovernanceApi;
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_support::{
@@ -8,16 +9,16 @@ use polkadot_sdk::{
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
     sp_core::Get,
-    sp_runtime::{ArithmeticError, DispatchError},
+    sp_runtime::{traits::Saturating, ArithmeticError, DispatchError, Percent, Perquintill},
     sp_std::{
         borrow::Cow,
         collections::{btree_map::BTreeMap, btree_set::BTreeSet},
         vec,
         vec::Vec,
     },
-    sp_tracing::{error, info, warn},
+    sp_tracing::{error, info},
 };
-use substrate_fixed::{traits::FromFixed, types::I96F32};
+use substrate_fixed::types::I96F32;
 
 use crate::{BalanceOf, Config, ConsensusMember};
 
@@ -72,7 +73,10 @@ pub fn get_total_emission_per_block<T: Config>() -> BalanceOf<T> {
 
     let interval = T::HalvingInterval::get();
     let halving_count = total_issuance.saturating_div(interval.get());
-    T::BlockEmission::get() >> halving_count
+    let emission = T::BlockEmission::get() >> halving_count;
+
+    let not_recycled = Percent::one() - crate::EmissionRecyclingPercentage::<T>::get();
+    not_recycled.mul_floor(emission)
 }
 
 #[doc(hidden)]
@@ -81,8 +85,8 @@ pub struct ConsensusMemberInput<T: Config> {
     pub agent_id: T::AccountId,
     pub validator_permit: bool,
     pub weights: Vec<(T::AccountId, I96F32)>,
-    pub stakes: Vec<(T::AccountId, I96F32)>,
-    pub total_stake: I96F32,
+    pub stakes: Vec<(T::AccountId, u128)>,
+    pub total_stake: u128,
     pub normalized_stake: I96F32,
     pub delegating_to: Option<T::AccountId>,
     pub registered: bool,
@@ -143,7 +147,8 @@ impl<T: Config> ConsensusMemberInput<T> {
             (agent_id, input)
         }));
 
-        let total_network_stake: I96F32 = inputs.iter().map(|(_, member)| member.total_stake).sum();
+        let total_network_stake: I96F32 =
+            I96F32::from_num::<u128>(inputs.iter().map(|(_, member)| member.total_stake).sum());
 
         inputs.sort_unstable_by(|(_, a), (_, b)| {
             b.validator_permit
@@ -159,7 +164,8 @@ impl<T: Config> ConsensusMemberInput<T> {
             }
 
             if total_network_stake != I96F32::from_num(0) {
-                input.normalized_stake = input.total_stake.saturating_div(total_network_stake)
+                input.normalized_stake =
+                    I96F32::from_num(input.total_stake).saturating_div(total_network_stake)
             }
         }
 
@@ -174,11 +180,14 @@ impl<T: Config> ConsensusMemberInput<T> {
         member: ConsensusMember<T>,
         min_allowed_stake: u128,
     ) -> ConsensusMemberInput<T> {
-        let mut total_stake = I96F32::default();
+        let weight_factor = Percent::one() - <T::Torus>::weight_penalty_factor(&agent_id);
+
+        let mut total_stake = 0;
         let stakes = <T::Torus>::staked_by(&agent_id)
             .into_iter()
             .map(|(id, stake)| {
-                let stake = I96F32::from_num(stake);
+                let stake = weight_factor.mul_floor(stake);
+
                 total_stake = total_stake.saturating_add(stake);
                 (id, stake)
             })
@@ -234,20 +243,11 @@ impl<T: Config> ConsensusMemberInput<T> {
     }
 
     /// Normalizes the list of stakers to the agent, and adds the agent itself in case no stake was given.
-    pub fn normalized_stakers(&self) -> Vec<(T::AccountId, I96F32)> {
-        if self.total_stake == I96F32::default() {
-            vec![(self.agent_id.clone(), I96F32::default())]
-        } else {
-            self.stakes
-                .iter()
-                .map(|(k, v)| {
-                    (
-                        k.clone(),
-                        v.checked_div(self.total_stake).unwrap_or_default(),
-                    )
-                })
-                .collect()
-        }
+    pub fn normalized_stakers(&self) -> Vec<(T::AccountId, Perquintill)> {
+        self.stakes
+            .iter()
+            .map(|(k, v)| (k.clone(), Perquintill::from_rational(*v, self.total_stake)))
+            .collect()
     }
 }
 
@@ -255,6 +255,13 @@ impl<T: Config> ConsensusMemberInput<T> {
 fn linear_rewards<T: Config>(
     mut emission: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
 ) -> <T::Currency as Currency<T::AccountId>>::NegativeImbalance {
+    let treasury_fee = <T::Governance>::treasury_emission_fee();
+    if !treasury_fee.is_zero() {
+        let treasury_fee = treasury_fee.mul_floor(emission.peek());
+        let treasury_fee = emission.extract(treasury_fee);
+        T::Currency::resolve_creating(&<T::Governance>::dao_treasury_address(), treasury_fee);
+    }
+
     let inputs = ConsensusMemberInput::<T>::all_members();
 
     let id_to_idx: BTreeMap<_, _> = inputs
@@ -293,7 +300,7 @@ fn linear_rewards<T: Config>(
             .values()
             .map(|input| {
                 if input.validator_permit {
-                    input.total_stake
+                    I96F32::from_num(input.total_stake)
                 } else {
                     I96F32::default()
                 }
@@ -304,7 +311,7 @@ fn linear_rewards<T: Config>(
     };
 
     let Emissions {
-        dividends,
+        mut dividends,
         incentives,
         normalized_emissions,
     } = compute_emissions::<T>(
@@ -316,6 +323,32 @@ fn linear_rewards<T: Config>(
     );
 
     let pruning_scores = math::vec_max_upscale_to_u16(&normalized_emissions);
+
+    for (idx, input) in inputs.values().enumerate() {
+        let Some(delegating_to) = &input.delegating_to else {
+            continue;
+        };
+
+        let Some(dividend) = dividends
+            .get_mut(idx)
+            .filter(|dividend| dividend.peek() > 0)
+        else {
+            continue;
+        };
+
+        let control_fee = <T::Torus>::weight_control_fee(delegating_to);
+        let control_fee = control_fee.mul_floor(dividend.peek());
+        let stake = dividend.extract(control_fee);
+
+        if let Some(delegated_dividend) = id_to_idx
+            .get(delegating_to)
+            .and_then(|idx| dividends.get_mut(*idx))
+        {
+            delegated_dividend.subsume(stake);
+        } else {
+            T::Currency::resolve_creating(delegating_to, stake);
+        }
+    }
 
     for (((input, incentive), mut dividend), pruning_score) in inputs
         .values()
@@ -331,33 +364,14 @@ fn linear_rewards<T: Config>(
             };
 
         if dividend.peek() != 0 {
-            if let Some(delegating_to) = &input.delegating_to {
-                let control_fee = <T::Torus>::weight_control_fee(delegating_to);
-                let control_fee = control_fee.mul_floor(dividend.peek());
-                let stake = dividend.extract(control_fee);
-                T::Currency::resolve_creating(delegating_to, stake);
-            }
-
-            let fixed_dividend = I96F32::from_num(dividend.peek());
+            let fixed_dividend = dividend.peek();
 
             let stakers = input.normalized_stakers();
             let delegation_fee = <T::Torus>::staking_fee(&input.agent_id);
             for (staker, ratio) in stakers {
-                if staker == input.agent_id {
-                    continue;
-                }
-
-                let Some(staker_dividend) = fixed_dividend.checked_mul(ratio).map(u128::from_fixed)
-                else {
-                    warn!(
-                        "failed to calculate dividend for {:?} on {:?}",
-                        staker, input.agent_id
-                    );
-
-                    continue;
-                };
-
+                let staker_dividend = ratio.mul_floor(fixed_dividend);
                 let stake_fee = delegation_fee.mul_floor(staker_dividend);
+
                 let stake = dividend.extract(staker_dividend.saturating_sub(stake_fee));
 
                 add_stake(staker, stake);

@@ -15,7 +15,7 @@ use polkadot_sdk::{
     sp_consensus_aura::sr25519::AuthorityId as AuraId,
     sp_std::num::NonZeroU128,
 };
-use sp_runtime::Perbill;
+use sp_runtime::{Perbill, Percent};
 
 pub mod eth;
 
@@ -62,9 +62,6 @@ impl frame_system::Config for Runtime {
     /// Defines the data structure stored in each account
     /// Uses the Balance type from pallet_balances
     type AccountData = pallet_balances::AccountData<<Runtime as pallet_balances::Config>::Balance>;
-    /// The SS58 prefix used to generate addresses for this chain
-    /// Helps distinguish addresses between different chains
-    type SS58Prefix = ConstU16<42>;
     /// Contains version information about the runtime
     /// Used for runtime upgrades and compatibility
     type Version = Version;
@@ -79,6 +76,8 @@ impl frame_system::Config for Runtime {
     /// Specifies how many recent block hashes to keep in storage
     /// Older block hashes are pruned when this limit is reached
     type BlockHashCount = ConstU64<2400>;
+    /// The prefix used in the SS58 address format for this chain.
+    type SS58Prefix = ConstU16<42>;
 }
 
 // --- Balances ---
@@ -335,10 +334,13 @@ impl pallet_torus0::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+
+    type Governance = Governance;
 }
 
 parameter_types! {
     pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
+    pub const DefaultTreasuryEmissionFee: Percent = Percent::from_percent(20);
 }
 
 impl pallet_governance::Config for Runtime {
@@ -352,6 +354,8 @@ impl pallet_governance::Config for Runtime {
 
     type MaxPenaltyPercentage = ConstU8<20>;
 
+    type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
+
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
@@ -360,9 +364,12 @@ impl pallet_governance::Config for Runtime {
 parameter_types! {
     pub HalvingInterval: NonZeroU128 = NonZeroU128::new(250_000_000 * 10u128.pow(TOKEN_DECIMALS)).unwrap();
     pub MaxSupply: NonZeroU128 = NonZeroU128::new(1_000_000_000 * 10u128.pow(TOKEN_DECIMALS)).unwrap();
+    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_percent(70);
 }
 
 impl pallet_emission0::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+
     type HalvingInterval = HalvingInterval;
 
     type MaxSupply = MaxSupply;
@@ -373,9 +380,13 @@ impl pallet_emission0::Config for Runtime {
 
     type DefaultMaxAllowedWeights = ConstU16<420>;
 
+    type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
+
     type Currency = Balances;
 
     type Torus = Torus0;
+
+    type Governance = Governance;
 }
 
 // type DefaultMinAllowedWeights = ConstU16<1>;

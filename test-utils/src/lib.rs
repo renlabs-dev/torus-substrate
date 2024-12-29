@@ -2,6 +2,7 @@
 
 use std::num::NonZeroU128;
 
+use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
         self, parameter_types,
@@ -14,7 +15,7 @@ use polkadot_sdk::{
     sp_io,
     sp_runtime::{
         traits::{BlakeTwo256, IdentityLookup},
-        BuildStorage,
+        BuildStorage, Percent,
     },
     sp_tracing,
 };
@@ -54,7 +55,7 @@ pub type TestRuntimeCall = frame_system::Call<Test>;
 
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
-    pub const SS58Prefix: u16 = 888;
+    pub const SS58Prefix: u16 = 42;
 }
 
 // Balance of an account.
@@ -67,16 +68,6 @@ parameter_types! {
     pub const ExistentialDeposit: Balance = 1;
     pub const MaxLocks: u32 = 50;
     pub const MaxReserves: u32 = 50;
-}
-
-impl pallet_governance_api::GovernanceApi<AccountId> for Test {
-    fn get_dao_treasury_address() -> AccountId {
-        todo!()
-    }
-
-    fn is_whitelisted(_key: &AccountId) -> bool {
-        true
-    }
 }
 
 impl pallet_torus0::Config for Test {
@@ -126,14 +117,19 @@ impl pallet_torus0::Config for Test {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+
+    type Governance = Governance;
 }
 
 parameter_types! {
     pub HalvingInterval: NonZeroU128 = NonZeroU128::new(to_nano(250_000_000)).unwrap();
     pub MaxSupply: NonZeroU128 = NonZeroU128::new(to_nano(1_000_000_000)).unwrap();
+    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_percent(70);
 }
 
 impl pallet_emission0::Config for Test {
+    type RuntimeEvent = RuntimeEvent;
+
     type HalvingInterval = HalvingInterval;
 
     type MaxSupply = MaxSupply;
@@ -144,13 +140,18 @@ impl pallet_emission0::Config for Test {
 
     type DefaultMaxAllowedWeights = ConstU16<420>;
 
+    type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
+
     type Currency = Balances;
 
     type Torus = Torus0;
+
+    type Governance = Governance;
 }
 
 parameter_types! {
     pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
+    pub const DefaultTreasuryEmissionFee: Percent = Percent::from_percent(20);
 }
 
 impl pallet_governance::Config for Test {
@@ -163,6 +164,8 @@ impl pallet_governance::Config for Test {
     type ApplicationExpiration = ConstU64<2000>;
 
     type MaxPenaltyPercentage = ConstU8<20>;
+
+    type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
     type RuntimeEvent = RuntimeEvent;
 
@@ -237,6 +240,20 @@ pub fn add_balance(key: AccountId, amount: Balance) {
     ));
 }
 
+pub fn add_stake(staker: AccountId, staked: AccountId, amount: Balance) {
+    let amount = MinAllowedStake::<Test>::get().max(amount);
+    let existential = ExistentialDeposit::get().saturating_sub(get_balance(staker));
+
+    drop(<Balances as Currency<AccountId>>::deposit_creating(
+        &staker,
+        amount + existential,
+    ));
+
+    register_empty_agent(staked);
+
+    pallet_torus0::stake::add_stake::<Test>(staker, staked, amount).expect("failed to add stake");
+}
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
     new_test_ext_with_block(0)
 }
@@ -274,6 +291,19 @@ pub fn run_to_block(target: BlockNumber) {
 
 pub fn get_balance(key: AccountId) -> Balance {
     <Balances as Currency<AccountId>>::free_balance(&key)
+}
+
+pub fn register_empty_agent(key: AccountId) {
+    pallet_torus0::Agents::<Test>::set(
+        key,
+        Some(pallet_torus0::agent::Agent {
+            key,
+            name: Default::default(),
+            url: Default::default(),
+            metadata: Default::default(),
+            weight_penalty_factor: Default::default(),
+        }),
+    );
 }
 
 pub fn round_first_five(num: u64) -> u64 {

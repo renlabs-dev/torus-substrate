@@ -4,7 +4,7 @@ pub mod agent;
 pub mod balance;
 pub mod burn;
 mod ext;
-mod fee;
+pub mod fee;
 pub mod stake;
 
 use crate::agent::Agent;
@@ -30,6 +30,7 @@ use scale_info::prelude::vec::Vec;
 pub mod pallet {
 
     use frame::prelude::BlockNumberFor;
+    use pallet_governance_api::GovernanceApi;
 
     use super::*;
 
@@ -39,12 +40,6 @@ pub mod pallet {
 
     #[pallet::storage]
     pub type Burn<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
-    #[pallet::storage]
-    pub type MaximumSetWeightCallsPerEpoch<T: Config> = StorageValue<_, u16>;
-
-    #[pallet::storage]
-    pub type SetWeightCallsPerEpoch<T: Config> = StorageMap<_, Identity, T::AccountId, u16>;
 
     #[pallet::storage]
     pub type IncentiveRatio<T: Config> = StorageValue<_, u16, ValueQuery>;
@@ -80,9 +75,6 @@ pub mod pallet {
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedAgents>;
 
     #[pallet::storage]
-    pub type MinWeightStake<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
-    #[pallet::storage]
     pub type RegistrationsThisBlock<T> = StorageValue<_, u16, ValueQuery>;
 
     #[pallet::storage]
@@ -101,7 +93,7 @@ pub mod pallet {
     pub type TotalStake<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     #[pallet::storage]
-    pub type MinimumAllowedStake<T: Config> =
+    pub type MinAllowedStake<T: Config> =
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinimumAllowedStake>;
 
     #[pallet::storage]
@@ -133,9 +125,7 @@ pub mod pallet {
     }
 
     #[pallet::config(with_default)]
-    pub trait Config:
-        polkadot_sdk::frame_system::Config + pallet_governance_api::GovernanceApi<Self::AccountId>
-    {
+    pub trait Config: polkadot_sdk::frame_system::Config {
         #[pallet::constant]
         type DefaultMaxAllowedValidators: Get<u16>;
 
@@ -211,6 +201,8 @@ pub mod pallet {
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
 
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
+
+        type Governance: GovernanceApi<Self::AccountId>;
     }
 
     #[pallet::pallet]
@@ -416,7 +408,7 @@ impl<T: Config>
     }
 
     fn min_allowed_stake() -> u128 {
-        MinimumAllowedStake::<T>::get()
+        MinAllowedStake::<T>::get()
     }
 
     fn max_validators() -> u16 {
@@ -425,6 +417,12 @@ impl<T: Config>
 
     fn weight_control_fee(who: &T::AccountId) -> Percent {
         Fee::<T>::get(who).weight_control_fee
+    }
+
+    fn weight_penalty_factor(who: &T::AccountId) -> Percent {
+        Agents::<T>::get(who)
+            .map(|agent| agent.weight_penalty_factor)
+            .unwrap_or_default()
     }
 
     fn staking_fee(who: &T::AccountId) -> Percent {
