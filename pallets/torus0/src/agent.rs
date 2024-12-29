@@ -1,6 +1,7 @@
 use crate::AccountIdOf;
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
+use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, WithdrawReasons};
 use polkadot_sdk::sp_runtime::DispatchError;
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure, CloneNoBound},
@@ -55,6 +56,16 @@ pub fn register<T: crate::Config>(
     validate_agent_name::<T>(&name[..])?;
     validate_agent_url::<T>(&url[..])?;
     validate_agent_metadata::<T>(&metadata[..])?;
+
+    let burn = crate::Burn::<T>::get();
+
+    <T as crate::Config>::Currency::withdraw(
+        &agent_key,
+        burn,
+        WithdrawReasons::except(WithdrawReasons::TIP),
+        ExistenceRequirement::AllowDeath,
+    )
+    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToRegisterAgent)?;
 
     crate::Agents::<T>::insert(
         agent_key.clone(),

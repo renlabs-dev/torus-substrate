@@ -1,6 +1,10 @@
-use pallet_torus0::Error;
-use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
-use test_utils::{assert_ok, Test};
+use pallet_torus0::{Burn, Error};
+use polkadot_sdk::{
+    frame_support::{assert_err, traits::Currency},
+    sp_core::Get,
+    sp_runtime::Percent,
+};
+use test_utils::{assert_ok, Balances, Test};
 
 #[test]
 fn register_correctly() {
@@ -22,6 +26,30 @@ fn register_correctly() {
         assert_eq!(agent.name.to_vec(), name);
         assert_eq!(agent.url.to_vec(), url);
         assert_eq!(agent.metadata.to_vec(), metadata);
+    });
+}
+
+#[test]
+fn register_without_enough_balance() {
+    test_utils::new_test_ext().execute_with(|| {
+        let agent = 0;
+        let name = "agent".as_bytes().to_vec();
+        let url = "idk://agent".as_bytes().to_vec();
+        let metadata = "idk://agent".as_bytes().to_vec();
+
+        Burn::<Test>::set(100);
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent,
+                name.clone(),
+                url.clone(),
+                metadata.clone(),
+            ),
+            pallet_torus0::Error::<Test>::NotEnoughBalanceToRegisterAgent
+        );
+
+        assert!(pallet_torus0::Agents::<Test>::get(agent).is_none());
     });
 }
 
