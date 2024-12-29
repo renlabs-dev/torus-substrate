@@ -13,6 +13,8 @@ std = [
     "scale-info/std",
     "serde_json/std",
 
+    "substrate-wasm-builder",
+
     "polkadot-sdk/std",
     "pallet-torus0/std",
     "pallet-emission0/std",
@@ -65,6 +67,7 @@ polkadot-sdk = { workspace = true, features = [
     "pallet-timestamp",
     "pallet-transaction-payment",
     "pallet-transaction-payment-rpc-runtime-api",
+    "frame-metadata-hash-extension",
 ] }
 
 # Frontier
@@ -87,7 +90,6 @@ pallet-torus0-api.workspace = true
 pallet-governance-api.workspace = true
 
 [build-dependencies]
-polkadot-sdk = { optional = true, workspace = true, features = [
-    "std",
-    "substrate-wasm-builder",
+substrate-wasm-builder = { optional = true, workspace = true, features = [
+    "metadata-hash",
 ] }
