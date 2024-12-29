@@ -59,7 +59,7 @@ pub fn register<T: crate::Config>(
 
     let burn = crate::Burn::<T>::get();
 
-    <T as crate::Config>::Currency::withdraw(
+    let _ = <T as crate::Config>::Currency::withdraw(
         &agent_key,
         burn,
         WithdrawReasons::except(WithdrawReasons::TIP),
