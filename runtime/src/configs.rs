@@ -62,9 +62,6 @@ impl frame_system::Config for Runtime {
     /// Defines the data structure stored in each account
     /// Uses the Balance type from pallet_balances
     type AccountData = pallet_balances::AccountData<<Runtime as pallet_balances::Config>::Balance>;
-    /// The SS58 prefix used to generate addresses for this chain
-    /// Helps distinguish addresses between different chains
-    type SS58Prefix = ConstU16<888>;
     /// Contains version information about the runtime
     /// Used for runtime upgrades and compatibility
     type Version = Version;
@@ -79,6 +76,8 @@ impl frame_system::Config for Runtime {
     /// Specifies how many recent block hashes to keep in storage
     /// Older block hashes are pruned when this limit is reached
     type BlockHashCount = ConstU64<2400>;
+    /// The prefix used in the SS58 address format for this chain.
+    type SS58Prefix = ConstU16<42>;
 }
 
 // --- Balances ---

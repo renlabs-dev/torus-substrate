@@ -55,7 +55,7 @@ pub type TestRuntimeCall = frame_system::Call<Test>;
 
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
-    pub const SS58Prefix: u16 = 888;
+    pub const SS58Prefix: u16 = 42;
 }
 
 // Balance of an account.
