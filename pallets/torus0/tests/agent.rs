@@ -1,10 +1,6 @@
 use pallet_torus0::{Burn, Error};
-use polkadot_sdk::{
-    frame_support::{assert_err, traits::Currency},
-    sp_core::Get,
-    sp_runtime::Percent,
-};
-use test_utils::{assert_ok, Balances, Test};
+use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
+use test_utils::{assert_ok, Test};
 
 #[test]
 fn register_correctly() {
