@@ -28,7 +28,7 @@ use polkadot_sdk::polkadot_sdk_frame::traits::AccountIdConversion;
 use polkadot_sdk::polkadot_sdk_frame::{self as frame};
 use polkadot_sdk::sp_std::vec::Vec;
 
-#[frame::pallet(dev_mode)]
+#[frame::pallet]
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
 

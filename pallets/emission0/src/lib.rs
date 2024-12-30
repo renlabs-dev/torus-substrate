@@ -4,11 +4,11 @@ mod ext;
 
 pub(crate) use ext::*;
 pub use pallet::*;
+use pallet_emission0_api::Emission0Api;
 use polkadot_sdk::frame_support::dispatch::DispatchResult;
 use polkadot_sdk::frame_support::{pallet_prelude::*, DefaultNoBound};
 use polkadot_sdk::frame_system;
 use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
-use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
 use polkadot_sdk::polkadot_sdk_frame::{self as frame, traits::Currency};
 use polkadot_sdk::sp_runtime::Percent;
 
@@ -17,7 +17,7 @@ pub mod distribute;
 #[doc(hidden)]
 pub mod weights;
 
-#[frame::pallet(dev_mode)]
+#[frame::pallet]
 pub mod pallet {
     use core::num::NonZeroU128;
 
@@ -169,13 +169,25 @@ pub type Weights<T> =
 #[scale_info(skip_type_params(T))]
 pub struct ConsensusMember<T: Config> {
     pub weights: Weights<T>,
-    pub weights_last_updated_at: BlockNumberFor<T>,
-    pub pruning_score: u16,
+    pub last_incentives: u16,
+    pub last_dividends: u16,
 }
 
 impl<T: Config> ConsensusMember<T> {
     pub fn update_weights(&mut self, weights: Weights<T>) {
         self.weights = weights;
-        self.weights_last_updated_at = <frame_system::Pallet<T>>::block_number();
+    }
+}
+
+impl<T: Config> Emission0Api<T::AccountId> for Pallet<T> {
+    fn consensus_stats(
+        member: &T::AccountId,
+    ) -> Option<pallet_emission0_api::ConsensusMemberStats> {
+        ConsensusMembers::<T>::get(member).map(|member| {
+            pallet_emission0_api::ConsensusMemberStats {
+                dividends: member.last_dividends,
+                incentives: member.last_incentives,
+            }
+        })
     }
 }
