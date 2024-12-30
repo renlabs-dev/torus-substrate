@@ -19,12 +19,12 @@ pub struct GovernanceConfiguration<T: crate::Config> {
 impl<T: crate::Config> Default for GovernanceConfiguration<T> {
     fn default() -> Self {
         Self {
-            proposal_cost: 10_000_000_000_000,
+            proposal_cost: 10_000_000_000_000_000_000_000,
             proposal_expiration: 130_000,
-            agent_application_cost: 1_000_000_000_000,
+            agent_application_cost: 1_000_000_000_000_000_000_000,
             agent_application_expiration: 2_000,
             proposal_reward_treasury_allocation: Percent::from_percent(2),
-            max_proposal_reward_treasury_allocation: 10_000_000_000_000,
+            max_proposal_reward_treasury_allocation: 10_000_000_000_000_000_000_000,
             proposal_reward_interval: 75_600,
         }
     }

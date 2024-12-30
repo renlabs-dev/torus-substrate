@@ -94,7 +94,7 @@ pub mod pallet {
 
     #[pallet::storage]
     pub type MinAllowedStake<T: Config> =
-        StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinimumAllowedStake>;
+        StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinAllowedStake>;
 
     #[pallet::storage]
     pub type DividendsParticipationWeight<T: Config> =
@@ -154,7 +154,7 @@ pub mod pallet {
 
         #[pallet::constant]
         #[pallet::no_default_bounds]
-        type DefaultMinimumAllowedStake: Get<BalanceOf<Self>>;
+        type DefaultMinAllowedStake: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
         type DefaultMinStakingFee: Get<u8>;
@@ -413,8 +413,8 @@ impl<T: Config>
         RewardInterval::<T>::get()
     }
 
-    fn min_allowed_stake() -> u128 {
-        MinAllowedStake::<T>::get()
+    fn min_validator_stake() -> u128 {
+        MinValidatorStake::<T>::get()
     }
 
     fn max_validators() -> u16 {

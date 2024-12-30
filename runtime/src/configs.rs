@@ -287,12 +287,16 @@ impl pallet_grandpa::Config for Runtime {
 
 // --- Torus ---
 
+const fn as_tors(val: u128) -> u128 {
+    val * 10u128.pow(TOKEN_DECIMALS)
+}
+
 parameter_types! {
     pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
 }
 
 impl pallet_torus0::Config for Runtime {
-    type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>;
+    type DefaultMinValidatorStake = ConstU128<{ as_tors(50_000) }>;
 
     type DefaultImmunityPeriod = ConstU16<0>;
 
@@ -308,15 +312,15 @@ impl pallet_torus0::Config for Runtime {
 
     type DefaultMaxRegistrationsPerBlock = ConstU16<10>;
 
-    type DefaultMinimumAllowedStake = ConstU128<500000000>;
+    type DefaultMinAllowedStake = ConstU128<{ as_tors(5) / 10 }>;
 
     type DefaultMinStakingFee = ConstU8<5>;
 
     type DefaultMinWeightControlFee = ConstU8<4>;
 
-    type DefaultMinBurn = ConstU128<10_000_000_000>;
+    type DefaultMinBurn = ConstU128<{ as_tors(10) }>;
 
-    type DefaultMaxBurn = ConstU128<150_000_000_000>;
+    type DefaultMaxBurn = ConstU128<{ as_tors(150) }>;
 
     type DefaultAdjustmentAlpha = ConstU64<{ u64::MAX / 2 }>;
 
@@ -370,8 +374,8 @@ impl pallet_governance::Config for Runtime {
 }
 
 parameter_types! {
-    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(250_000_000 * 10u128.pow(TOKEN_DECIMALS)).unwrap();
-    pub MaxSupply: NonZeroU128 = NonZeroU128::new(1_000_000_000 * 10u128.pow(TOKEN_DECIMALS)).unwrap();
+    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(250_000_000)).unwrap();
+    pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(1_000_000_000)).unwrap();
     pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_percent(70);
 }
 

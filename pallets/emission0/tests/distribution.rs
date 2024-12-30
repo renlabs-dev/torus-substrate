@@ -14,7 +14,9 @@ use substrate_fixed::{traits::ToFixed, types::I96F32};
 use test_utils::{
     add_balance, add_stake, get_balance, get_origin,
     pallet_governance::TreasuryEmissionFee,
-    pallet_torus0::{Agents, FeeConstraints, MaxAllowedValidators, MinAllowedStake, StakedBy},
+    pallet_torus0::{
+        Agents, FeeConstraints, MaxAllowedValidators, MinAllowedStake, MinValidatorStake, StakedBy,
+    },
     register_empty_agent, step_block, Test,
 };
 
@@ -152,7 +154,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
         let miner = 5;
         let staker = 6;
 
-        let stake = MinAllowedStake::<Test>::get();
+        let stake = MinValidatorStake::<Test>::get();
 
         for id in [validator, new, miner, delegating_registered] {
             register_empty_agent(id);
@@ -269,7 +271,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
 #[test]
 fn validator_permits_are_capped() {
     test_utils::new_test_ext().execute_with(|| {
-        let min_allowed_stake = MinAllowedStake::<Test>::get();
+        let min_validator_stake = MinValidatorStake::<Test>::get();
 
         let validators: [u32; 5] = from_fn(|i| i as u32);
 
@@ -280,7 +282,7 @@ fn validator_permits_are_capped() {
                 10,
             )]));
             ConsensusMembers::<Test>::set(id, Some(member));
-            StakedBy::<Test>::set(id, id, Some(min_allowed_stake * idx as u128));
+            StakedBy::<Test>::set(id, id, Some(min_validator_stake * idx as u128));
         }
 
         MaxAllowedValidators::<Test>::set(3);
@@ -329,7 +331,8 @@ fn pays_dividends_and_incentives() {
         EmissionRecyclingPercentage::<Test>::set(Percent::zero());
         TreasuryEmissionFee::<Test>::set(Percent::zero());
 
-        let min_allowed_stake = MinAllowedStake::<Test>::get();
+        let min_stake = MinAllowedStake::<Test>::get();
+        MinValidatorStake::<Test>::set(min_stake);
 
         let mut member = ConsensusMember::<Test>::default();
         member.update_weights(BoundedVec::truncate_from(vec![(1, 10), (2, 30)]));
@@ -352,7 +355,7 @@ fn pays_dividends_and_incentives() {
         let mut sum = 0;
 
         let stake = StakedBy::<Test>::get(0, 0).unwrap_or_default();
-        assert_eq!(stake - min_allowed_stake, total_emission / 2);
+        assert_eq!(stake - min_stake, total_emission / 2);
         sum += stake;
 
         let stake = StakedBy::<Test>::get(1, 1).unwrap_or_default();
@@ -363,7 +366,7 @@ fn pays_dividends_and_incentives() {
         assert_eq!(stake, ((total_emission / 2) / 4) * 3);
         sum += stake;
 
-        sum -= min_allowed_stake;
+        sum -= min_stake;
 
         assert_eq!(PendingEmission::<Test>::get(), 0);
         assert_eq!(sum, get_total_emission_per_block::<Test>() * 100);
@@ -376,8 +379,9 @@ fn pays_dividends_to_stakers() {
         EmissionRecyclingPercentage::<Test>::set(Percent::zero());
         TreasuryEmissionFee::<Test>::set(Percent::zero());
 
-        let min_allowed_stake = 1;
-        MinAllowedStake::<Test>::set(min_allowed_stake);
+        let min_validator_stake = 1;
+        MinValidatorStake::<Test>::set(min_validator_stake);
+        MinAllowedStake::<Test>::set(min_validator_stake);
 
         let validator = 0;
         let miner = 1;
@@ -398,7 +402,7 @@ fn pays_dividends_to_stakers() {
 
         let stakers = [validator, 2, 3, 4];
         for (idx, id) in stakers.iter().enumerate() {
-            let stake = (idx + 1) as u128 * min_allowed_stake;
+            let stake = (idx + 1) as u128 * min_validator_stake;
             add_stake(*id, validator, stake);
         }
 
@@ -422,7 +426,7 @@ fn pays_dividends_to_stakers() {
 
         for (idx, id) in stakers.iter().enumerate() {
             let stake_parts = (idx + 1) as u128;
-            let pre_staked = stake_parts * min_allowed_stake;
+            let pre_staked = stake_parts * min_validator_stake;
 
             let dividend = StakedBy::<Test>::get(validator, id).unwrap_or_default() - pre_staked;
             let expected_dividend = stake_parts * stake_part_value;
@@ -464,8 +468,9 @@ fn pays_weight_control_fee_and_dividends_to_stakers() {
             constraints.min_weight_control_fee = weight_control_fee;
         });
 
-        let min_allowed_stake = 1;
-        MinAllowedStake::<Test>::set(min_allowed_stake);
+        let min_validator_stake = 1;
+        MinValidatorStake::<Test>::set(min_validator_stake);
+        MinAllowedStake::<Test>::set(min_validator_stake);
 
         let val_1 = 0;
         let val_2 = 1;
@@ -487,10 +492,10 @@ fn pays_weight_control_fee_and_dividends_to_stakers() {
             .expect("failed to delegate weight control");
 
         let val_1_staker = 3;
-        add_stake(val_1_staker, val_1, min_allowed_stake);
+        add_stake(val_1_staker, val_1, min_validator_stake);
 
         let val_2_staker = 4;
-        add_stake(val_2_staker, val_2, min_allowed_stake);
+        add_stake(val_2_staker, val_2, min_validator_stake);
 
         step_block(100);
 
@@ -505,11 +510,11 @@ fn pays_weight_control_fee_and_dividends_to_stakers() {
         val_2_stake -= val_2_weight_control_fee;
 
         assert_eq!(
-            StakedBy::<Test>::get(val_1, val_1_staker).unwrap_or_default() - min_allowed_stake,
+            StakedBy::<Test>::get(val_1, val_1_staker).unwrap_or_default() - min_validator_stake,
             val_1_stake
         );
         assert_eq!(
-            StakedBy::<Test>::get(val_2, val_2_staker).unwrap_or_default() - min_allowed_stake,
+            StakedBy::<Test>::get(val_2, val_2_staker).unwrap_or_default() - min_validator_stake,
             val_2_stake
         );
     });
