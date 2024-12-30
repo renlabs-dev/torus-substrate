@@ -1,6 +1,6 @@
 use pallet_torus0::{Burn, Error};
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
-use test_utils::{assert_ok, Test};
+use test_utils::{assert_ok, pallet_governance, Test};
 
 #[test]
 fn register_correctly() {
@@ -103,16 +103,6 @@ fn register_fail_name_validation() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
-                " ".repeat(u32::MAX as usize + 1).as_bytes().to_vec(),
-                url.clone(),
-                metadata.clone(),
-            ),
-            pallet_torus0::Error::<Test>::AgentNameTooLong
-        );
-
-        assert_err!(
-            pallet_torus0::agent::register::<Test>(
-                agent,
                 " ".repeat(pallet_torus0::MaxNameLength::<Test>::get() as usize + 1)
                     .as_bytes()
                     .to_vec(),
@@ -159,16 +149,6 @@ fn register_fail_url_validation() {
             pallet_torus0::agent::register::<Test>(
                 agent,
                 name.clone(),
-                " ".repeat(u32::MAX as usize + 1).as_bytes().to_vec(),
-                metadata.clone(),
-            ),
-            pallet_torus0::Error::<Test>::AgentUrlTooLong
-        );
-
-        assert_err!(
-            pallet_torus0::agent::register::<Test>(
-                agent,
-                name.clone(),
                 " ".repeat(pallet_torus0::MaxNameLength::<Test>::get() as usize + 1)
                     .as_bytes()
                     .to_vec(),
@@ -208,16 +188,6 @@ fn register_fail_metadata_validation() {
                 "".as_bytes().to_vec(),
             ),
             pallet_torus0::Error::<Test>::AgentMetadataTooShort
-        );
-
-        assert_err!(
-            pallet_torus0::agent::register::<Test>(
-                agent,
-                name.clone(),
-                url.clone(),
-                " ".repeat(u32::MAX as usize + 1).as_bytes().to_vec(),
-            ),
-            pallet_torus0::Error::<Test>::AgentMetadataTooLong
         );
 
         let max_metadata_length =

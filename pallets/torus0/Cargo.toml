@@ -31,5 +31,4 @@ pallet-governance-api = { workspace = true }
 pallet-torus0-api.workspace = true
 
 [dev-dependencies]
-pallet-governance.workspace = true
 test-utils.workspace = true

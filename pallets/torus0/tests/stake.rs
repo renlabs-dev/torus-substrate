@@ -1,16 +1,13 @@
-use pallet_torus0::{Config, Error, StakedBy, StakingTo, TotalStake};
-use polkadot_sdk::{
-    frame_support::{assert_err, traits::Currency},
-    sp_core::Get,
-};
-use test_utils::{assert_ok, Balances, Test};
+use pallet_torus0::{Error, MinAllowedStake, StakedBy, StakingTo, TotalStake};
+use polkadot_sdk::frame_support::{assert_err, traits::Currency};
+use test_utils::{assert_ok, pallet_governance, Balances, Test};
 
 #[test]
 fn add_stake_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
-        let stake_to_add = <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
+        let stake_to_add = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add * 2;
         let balance_after = stake_to_add;
 
@@ -46,7 +43,7 @@ fn add_stake_without_registering_the_agent() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
-        let stake_to_add = <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
+        let stake_to_add = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add * 2;
 
         let _ = Balances::deposit_creating(&from, total_balance);
@@ -71,7 +68,7 @@ fn add_stake_without_the_minimum_stake() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
-        let stake_to_add = <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
+        let stake_to_add = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add * 2;
 
         let _ = Balances::deposit_creating(&from, total_balance);
@@ -96,8 +93,7 @@ fn remove_stake_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
-        let stake_to_add_and_remove =
-            <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
+        let stake_to_add_and_remove = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add_and_remove * 2;
 
         assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
@@ -136,8 +132,7 @@ fn remove_stake_with_less_than_required_amount() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
-        let stake_to_add_and_remove =
-            <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
+        let stake_to_add_and_remove = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add_and_remove * 2;
 
         assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
@@ -180,8 +175,7 @@ fn remove_stake_with_unregistered_agent() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
-        let stake_to_add_and_remove =
-            <<Test as Config>::DefaultMinimumAllowedStake as Get<u128>>::get();
+        let stake_to_add_and_remove = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add_and_remove * 2;
 
         assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
