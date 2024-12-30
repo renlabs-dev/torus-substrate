@@ -19,16 +19,36 @@ pub struct AgentApplication<T: crate::Config> {
     pub data: BoundedVec<u8, T::MaxApplicationDataLength>,
     pub cost: BalanceOf<T>,
     pub expires_at: Block,
+    pub action: ApplicationAction,
+    pub status: ApplicationStatus,
+}
+
+#[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
+pub enum ApplicationAction {
+    Add,
+    Remove,
+}
+
+#[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
+pub enum ApplicationStatus {
+    Open,
+    Resolved { accepted: bool },
+    Expired,
 }
 
 pub fn submit_application<T: crate::Config>(
     payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
     data: Vec<u8>,
+    removing: bool,
 ) -> DispatchResult {
-    if whitelist::is_whitelisted::<T>(&agent_key) {
+    if !removing && whitelist::is_whitelisted::<T>(&agent_key) {
         return Err(crate::Error::<T>::AlreadyWhitelisted.into());
+    } else if whitelist::is_whitelisted::<T>(&agent_key) {
+        return Err(crate::Error::<T>::NotWhitelisted.into());
     }
+
+    // TODO: check if there is an application for the agent key already?
 
     let config = crate::GlobalGovernanceConfig::<T>::get();
     let cost = config.agent_application_cost;
@@ -58,23 +78,31 @@ pub fn submit_application<T: crate::Config>(
 
     let expires_at = current_block + config.agent_application_expiration;
 
-    let application_id: u32 = crate::AgentApplicationId::<T>::mutate(|id| {
+    let next_id: u32 = crate::AgentApplicationId::<T>::mutate(|id| {
         let last_id = *id;
         *id = id.saturating_add(1);
         last_id
     });
 
+    let action = if removing {
+        ApplicationAction::Remove
+    } else {
+        ApplicationAction::Add
+    };
+
     let application = AgentApplication::<T> {
-        id: application_id,
+        id: next_id,
         payer_key: payer,
         agent_key,
         data: BoundedVec::truncate_from(data),
         cost,
         expires_at,
+        status: ApplicationStatus::Open,
+        action,
     };
 
-    crate::AgentApplications::<T>::insert(application_id, application);
-    crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationCreated(application_id));
+    crate::AgentApplications::<T>::insert(next_id, application);
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationCreated(next_id));
 
     Ok(())
 }
@@ -83,10 +111,22 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
 
-    crate::AgentApplications::<T>::remove(application.id);
+    match application.action {
+        ApplicationAction::Add => {
+            whitelist::add_to_whitelist::<T>(application.agent_key.clone())?;
+        }
+        ApplicationAction::Remove => {
+            whitelist::remove_from_whitelist::<T>(application.agent_key.clone())?;
+        }
+    }
 
-    whitelist::add_to_whitelist::<T>(application.agent_key.clone())?;
+    crate::AgentApplications::<T>::mutate(application_id, |application| {
+        if let Some(app) = application {
+            app.status = ApplicationStatus::Resolved { accepted: true };
+        }
+    });
 
+    // Pay the application cost back to the applicant
     let _ =
         <T as crate::Config>::Currency::deposit_creating(&application.payer_key, application.cost);
 
@@ -100,19 +140,29 @@ pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
 
-    crate::AgentApplications::<T>::remove(application.id);
+    crate::AgentApplications::<T>::mutate(application_id, |application| {
+        if let Some(app) = application {
+            app.status = ApplicationStatus::Resolved { accepted: false };
+        }
+    });
+
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationDenied(application.id));
 
     Ok(())
 }
 
-pub(crate) fn remove_expired_applications<T: crate::Config>(current_block: Block) {
+pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Block) {
     for application in crate::AgentApplications::<T>::iter_values() {
         if current_block < application.expires_at {
             continue;
         }
 
-        crate::AgentApplications::<T>::remove(application.id);
+        crate::AgentApplications::<T>::mutate(application.id, |application| {
+            if let Some(app) = application {
+                app.status = ApplicationStatus::Expired;
+            }
+        });
+
         crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationExpired(application.id));
     }
 }

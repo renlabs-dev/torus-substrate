@@ -150,7 +150,7 @@ pub mod pallet {
                 .ok()
                 .expect("blockchain won't pass 2 ^ 64 blocks");
 
-            application::remove_expired_applications::<T>(current_block);
+            application::resolve_expired_applications::<T>(current_block);
             proposal::tick_proposals::<T>(current_block);
             proposal::tick_proposal_rewards::<T>(current_block);
 
@@ -233,9 +233,10 @@ pub mod pallet {
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
             metadata: Vec<u8>,
+            removing: bool,
         ) -> DispatchResult {
             let payer = ensure_signed(origin)?;
-            application::submit_application::<T>(payer, agent_key, metadata)
+            application::submit_application::<T>(payer, agent_key, metadata, removing)
         }
 
         #[pallet::call_index(10)]

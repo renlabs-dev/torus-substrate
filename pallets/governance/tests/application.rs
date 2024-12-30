@@ -22,6 +22,7 @@ fn whitelist_executes_application_correctly() {
             get_origin(key),
             adding_key,
             data.clone(),
+            false,
         ));
 
         let balance_after = get_balance(key);
@@ -66,6 +67,7 @@ fn application_denied_doesnt_add_to_whitelist() {
             get_origin(key),
             adding_key,
             data.clone(),
+            false,
         ));
 
         let balance_after = get_balance(key);
