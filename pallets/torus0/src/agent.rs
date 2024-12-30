@@ -2,6 +2,7 @@ use crate::AccountIdOf;
 use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_governance_api::GovernanceApi;
 use polkadot_sdk::frame_election_provider_support::Get;
+use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, WithdrawReasons};
 use polkadot_sdk::sp_runtime::DispatchError;
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure, CloneNoBound},
@@ -38,11 +39,6 @@ pub fn register<T: crate::Config>(
     );
 
     ensure!(
-        crate::Agents::<T>::iter().count() < crate::MaxAllowedAgents::<T>::get() as usize,
-        crate::Error::<T>::MaxAllowedAgents
-    );
-
-    ensure!(
         crate::RegistrationsThisBlock::<T>::get() < crate::MaxRegistrationsPerBlock::<T>::get(),
         crate::Error::<T>::TooManyAgentRegistrationsThisBlock
     );
@@ -50,7 +46,7 @@ pub fn register<T: crate::Config>(
     let burn_config = crate::BurnConfig::<T>::get();
     ensure!(
         crate::RegistrationsThisInterval::<T>::get() < burn_config.max_registrations_per_interval,
-        crate::Error::<T>::TooManyAgentRegistrationsThisBlock
+        crate::Error::<T>::TooManyAgentRegistrationsThisInterval
     );
 
     ensure!(
@@ -61,6 +57,16 @@ pub fn register<T: crate::Config>(
     validate_agent_name::<T>(&name[..])?;
     validate_agent_url::<T>(&url[..])?;
     validate_agent_metadata::<T>(&metadata[..])?;
+
+    let burn = crate::Burn::<T>::get();
+
+    let _ = <T as crate::Config>::Currency::withdraw(
+        &agent_key,
+        burn,
+        WithdrawReasons::except(WithdrawReasons::TIP),
+        ExistenceRequirement::AllowDeath,
+    )
+    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToRegisterAgent)?;
 
     crate::Agents::<T>::insert(
         agent_key.clone(),
@@ -190,12 +196,12 @@ fn validate_agent_url<T: crate::Config>(bytes: &[u8]) -> DispatchResult {
         .try_into()
         .map_err(|_| crate::Error::<T>::AgentUrlTooLong)?;
 
-    ensure!(len > 0, crate::Error::<T>::AgentNameTooShort);
+    ensure!(len > 0, crate::Error::<T>::AgentUrlTooShort);
 
     ensure!(
         len <= (crate::MaxNameLength::<T>::get() as u32)
             .min(T::MaxAgentNameLengthConstraint::get()),
-        crate::Error::<T>::AgentUrlTooShort
+        crate::Error::<T>::AgentUrlTooLong
     );
 
     ensure!(
