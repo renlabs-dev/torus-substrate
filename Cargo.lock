@@ -8216,6 +8216,7 @@ name = "pallet-emission0"
 version = "0.1.0"
 dependencies = [
  "num-traits",
+ "pallet-emission0-api",
  "pallet-governance-api",
  "pallet-torus0-api",
  "parity-scale-codec",
@@ -8223,6 +8224,13 @@ dependencies = [
  "scale-info",
  "substrate-fixed",
  "test-utils",
+]
+
+[[package]]
+name = "pallet-emission0-api"
+version = "0.1.0"
+dependencies = [
+ "polkadot-sdk",
 ]
 
 [[package]]
@@ -9249,6 +9257,7 @@ dependencies = [
 name = "pallet-torus0"
 version = "0.1.0"
 dependencies = [
+ "pallet-emission0-api",
  "pallet-governance-api",
  "pallet-torus0-api",
  "parity-scale-codec",

@@ -313,7 +313,6 @@ fn linear_rewards<T: Config>(
     let Emissions {
         mut dividends,
         incentives,
-        normalized_emissions,
     } = compute_emissions::<T>(
         &mut emission,
         calculate_active_stake,
@@ -321,8 +320,6 @@ fn linear_rewards<T: Config>(
         incentives,
         dividends,
     );
-
-    let pruning_scores = math::vec_max_upscale_to_u16(&normalized_emissions);
 
     for (idx, input) in inputs.values().enumerate() {
         let Some(delegating_to) = &input.delegating_to else {
@@ -350,11 +347,23 @@ fn linear_rewards<T: Config>(
         }
     }
 
-    for (((input, incentive), mut dividend), pruning_score) in inputs
+    let upscaled_incentives: Vec<_> = incentives
+        .iter()
+        .map(|i| I96F32::from_num(i.peek()))
+        .collect();
+    let upscaled_incentives = math::vec_max_upscale_to_u16(&upscaled_incentives);
+    let upscaled_dividends: Vec<_> = dividends
+        .iter()
+        .map(|i| I96F32::from_num(i.peek()))
+        .collect();
+    let upscaled_dividends = math::vec_max_upscale_to_u16(&upscaled_dividends);
+
+    for ((((input, incentive), mut dividend), upscaled_incentives), upscaled_dividends) in inputs
         .values()
         .zip(incentives)
         .zip(dividends)
-        .zip(pruning_scores)
+        .zip(upscaled_incentives)
+        .zip(upscaled_dividends)
     {
         let add_stake =
             |staker, amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance| {
@@ -388,7 +397,8 @@ fn linear_rewards<T: Config>(
                 &input.agent_id,
                 |member: &mut Option<ConsensusMember<T>>| {
                     let member = member.get_or_insert_with(Default::default);
-                    member.pruning_score = pruning_score;
+                    member.last_incentives = upscaled_incentives;
+                    member.last_dividends = upscaled_dividends;
                 },
             );
         } else {
@@ -403,7 +413,6 @@ fn linear_rewards<T: Config>(
 struct Emissions<T: Config> {
     dividends: Vec<<T::Currency as Currency<T::AccountId>>::NegativeImbalance>,
     incentives: Vec<<T::Currency as Currency<T::AccountId>>::NegativeImbalance>,
-    normalized_emissions: Vec<I96F32>,
 }
 
 fn compute_emissions<'a, T: Config>(
@@ -425,31 +434,18 @@ fn compute_emissions<'a, T: Config>(
 
     let to_be_emitted = I96F32::from_num(emission.peek());
 
-    // Only used to track emission in storage.
-    let combined_emissions;
-    let calculate_normalized_emissions = |emissions: &[I96F32]| {
-        emissions
-            .iter()
-            .map(|combined| combined.checked_mul(to_be_emitted).unwrap_or_default())
-            .collect()
-    };
-
     // If emission is zero, replace emission with normalized stake.
     if emission_sum == I96F32::from_num(0) {
         let active_stake = compute_active_stake();
 
         if math::is_zero(&active_stake) {
-            combined_emissions = calculate_normalized_emissions(stake);
             normalized_dividends = Cow::Borrowed(stake);
         } else {
-            combined_emissions = calculate_normalized_emissions(&active_stake);
             normalized_dividends = Cow::Owned(active_stake);
         }
     } else {
         let dividends_emission = math::normalize_with_sum(dividends, emission_sum);
         normalized_dividends = Cow::Owned(dividends_emission);
-
-        combined_emissions = calculate_normalized_emissions(&math::normalize(combined_emission));
     }
 
     let mut calculate_emissions = |v: &[I96F32]| {
@@ -465,6 +461,5 @@ fn compute_emissions<'a, T: Config>(
     Emissions {
         dividends,
         incentives,
-        normalized_emissions: math::normalize(combined_emissions),
     }
 }

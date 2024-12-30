@@ -37,7 +37,7 @@ polkadot-sdk = { workspace = true, features = [
 scale-info = { workspace = true, features = ["derive"] }
 substrate-fixed = { workspace = true }
 
-pallet-torus0 = { workspace = true }
-pallet-emission0 = { workspace = true }
+pallet-torus0.workspace = true
+pallet-emission0.workspace = true
 
 pallet-governance-api.workspace = true

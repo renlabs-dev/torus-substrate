@@ -68,6 +68,7 @@ parameter_types! {
     pub const ExistentialDeposit: Balance = 1;
     pub const MaxLocks: u32 = 50;
     pub const MaxReserves: u32 = 50;
+    pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
 }
 
 impl pallet_torus0::Config for Test {
@@ -114,11 +115,15 @@ impl pallet_torus0::Config for Test {
 
     type MaxAgentMetadataLengthConstraint = ConstU32<256>;
 
+    type DefaultDividendsParticipationWeight = DefaultDividendsParticipationWeight;
+
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
 
     type Governance = Governance;
+
+    type Emission = Emission0;
 }
 
 parameter_types! {
@@ -249,7 +254,9 @@ pub fn add_stake(staker: AccountId, staked: AccountId, amount: Balance) {
         amount + existential,
     ));
 
-    register_empty_agent(staked);
+    if !pallet_torus0::Agents::<Test>::contains_key(staked) {
+        register_empty_agent(staked);
+    }
 
     pallet_torus0::stake::add_stake::<Test>(staker, staked, amount).expect("failed to add stake");
 }
@@ -302,6 +309,8 @@ pub fn register_empty_agent(key: AccountId) {
             url: Default::default(),
             metadata: Default::default(),
             weight_penalty_factor: Default::default(),
+            registration_block: <polkadot_sdk::frame_system::Pallet<Test>>::block_number(),
+            fees: Default::default(),
         }),
     );
 }

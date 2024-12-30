@@ -709,44 +709,39 @@ pub fn mat_ema_sparse(
 /// Max-upscale vector and convert to u16 so max_value = u16::MAX. Assumes non-negative normalized
 /// input.
 pub fn vec_max_upscale_to_u16(vec: &[I96F32]) -> Vec<u16> {
-    let u16_max: I96F32 = I96F32::from_num(u16::MAX);
-    let threshold: I96F32 = I96F32::from_num(32768);
-    let max_value: Option<&I96F32> = vec.iter().max();
+    let u16_max = I96F32::from_num(u16::MAX);
+    let threshold = I96F32::from_num(32768);
+    let max_value = vec.iter().max();
+
     match max_value {
         Some(val) => {
             if *val == I96F32::from_num(0) {
-                return vec
-                    .iter()
-                    .map(|e: &I96F32| e.saturating_mul(u16_max).to_num::<u16>())
-                    .collect();
-            }
-            if *val > threshold {
-                return vec
-                    .iter()
-                    .map(|e: &I96F32| {
+                vec.iter()
+                    .map(|e| e.saturating_mul(u16_max).to_num())
+                    .collect()
+            } else if *val > threshold {
+                vec.iter()
+                    .map(|e| {
                         e.saturating_mul(u16_max.saturating_div(*val))
                             .round()
-                            .to_num::<u16>()
+                            .to_num()
                     })
-                    .collect();
+                    .collect()
+            } else {
+                vec.iter()
+                    .map(|e| {
+                        e.saturating_mul(u16_max)
+                            .saturating_div(*val)
+                            .round()
+                            .to_num()
+                    })
+                    .collect()
             }
-            vec.iter()
-                .map(|e: &I96F32| {
-                    e.saturating_mul(u16_max)
-                        .saturating_div(*val)
-                        .round()
-                        .to_num::<u16>()
-                })
-                .collect()
         }
         None => {
             let sum: I96F32 = vec.iter().sum();
             vec.iter()
-                .map(|e: &I96F32| {
-                    e.saturating_mul(u16_max)
-                        .saturating_div(sum)
-                        .to_num::<u16>()
-                })
+                .map(|e| e.saturating_mul(u16_max).saturating_div(sum).to_num())
                 .collect()
         }
     }

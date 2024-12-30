@@ -14,9 +14,7 @@ use substrate_fixed::{traits::ToFixed, types::I96F32};
 use test_utils::{
     add_balance, add_stake, get_balance, get_origin,
     pallet_governance::TreasuryEmissionFee,
-    pallet_torus0::{
-        fee::ValidatorFee, Fee, FeeConstraints, MaxAllowedValidators, MinAllowedStake, StakedBy,
-    },
+    pallet_torus0::{Agents, FeeConstraints, MaxAllowedValidators, MinAllowedStake, StakedBy},
     register_empty_agent, step_block, Test,
 };
 
@@ -386,14 +384,6 @@ fn pays_dividends_to_stakers() {
 
         let staking_fee = Percent::from_float(0.25);
 
-        Fee::<Test>::set(
-            validator,
-            ValidatorFee {
-                staking_fee,
-                ..Default::default()
-            },
-        );
-
         let mut member = ConsensusMember::<Test>::default();
         member.update_weights(BoundedVec::truncate_from(vec![(miner, 1)]));
 
@@ -403,6 +393,8 @@ fn pays_dividends_to_stakers() {
         for id in [validator, miner] {
             register_empty_agent(id);
         }
+
+        Agents::<Test>::mutate_extant(validator, |agent| agent.fees.staking_fee = staking_fee);
 
         let stakers = [validator, 2, 3, 4];
         for (idx, id) in stakers.iter().enumerate() {

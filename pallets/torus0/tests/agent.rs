@@ -389,14 +389,13 @@ fn update_correctly() {
             Some(weight_control_fee),
         ));
 
-        let fee = pallet_torus0::Fee::<Test>::get(agent);
         let agent = pallet_torus0::Agents::<Test>::get(agent).expect("it should exists");
 
         assert_eq!(agent.name.to_vec(), new_name);
         assert_eq!(agent.url.to_vec(), new_url);
         assert_eq!(agent.metadata.to_vec(), new_metadata);
-        assert_eq!(fee.staking_fee, staking_fee);
-        assert_eq!(fee.weight_control_fee, weight_control_fee);
+        assert_eq!(agent.fees.staking_fee, staking_fee);
+        assert_eq!(agent.fees.weight_control_fee, weight_control_fee);
     });
 }
 
@@ -413,7 +412,10 @@ fn update_with_zero_staking_fee() {
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
-            agent, name, url, metadata,
+            agent,
+            name.clone(),
+            url.clone(),
+            metadata.clone(),
         ));
 
         let new_name = "new-agent".as_bytes().to_vec();
@@ -436,14 +438,13 @@ fn update_with_zero_staking_fee() {
             Error::<Test>::InvalidStakingFee,
         );
 
-        let fee = pallet_torus0::Fee::<Test>::get(agent);
         let agent = pallet_torus0::Agents::<Test>::get(agent).expect("it should exists");
 
-        assert_eq!(agent.name.to_vec(), new_name);
-        assert_eq!(agent.url.to_vec(), new_url);
-        assert_eq!(agent.metadata.to_vec(), new_metadata);
-        assert_eq!(fee.staking_fee, staking_fee);
-        assert_eq!(fee.weight_control_fee, weight_control_fee);
+        assert_eq!(agent.name.to_vec(), name);
+        assert_eq!(agent.url.to_vec(), url);
+        assert_eq!(agent.metadata.to_vec(), metadata);
+        assert_eq!(agent.fees.staking_fee, staking_fee);
+        assert_eq!(agent.fees.weight_control_fee, weight_control_fee);
     });
 }
 
@@ -460,7 +461,10 @@ fn update_with_zero_weight_control_fee() {
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
-            agent, name, url, metadata,
+            agent,
+            name.clone(),
+            url.clone(),
+            metadata.clone(),
         ));
 
         let new_name = "new-agent".as_bytes().to_vec();
@@ -483,13 +487,12 @@ fn update_with_zero_weight_control_fee() {
             Error::<Test>::InvalidWeightControlFee,
         );
 
-        let fee = pallet_torus0::Fee::<Test>::get(agent);
         let agent = pallet_torus0::Agents::<Test>::get(agent).expect("it should exists");
 
-        assert_eq!(agent.name.to_vec(), new_name);
-        assert_eq!(agent.url.to_vec(), new_url);
-        assert_eq!(agent.metadata.to_vec(), new_metadata);
-        assert_eq!(fee.staking_fee, staking_fee);
-        assert_eq!(fee.weight_control_fee, weight_control_fee);
+        assert_eq!(agent.name.to_vec(), name);
+        assert_eq!(agent.url.to_vec(), url);
+        assert_eq!(agent.metadata.to_vec(), metadata);
+        assert_eq!(agent.fees.staking_fee, staking_fee);
+        assert_eq!(agent.fees.weight_control_fee, weight_control_fee);
     });
 }

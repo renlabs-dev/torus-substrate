@@ -9,7 +9,6 @@ pub mod stake;
 
 use crate::agent::Agent;
 use crate::burn::BurnConfiguration;
-use crate::fee::ValidatorFee;
 use crate::fee::ValidatorFeeConstraints;
 pub(crate) use ext::*;
 use frame::arithmetic::Percent;
@@ -26,10 +25,11 @@ use polkadot_sdk::polkadot_sdk_frame as frame;
 use polkadot_sdk::sp_std;
 use scale_info::prelude::vec::Vec;
 
-#[frame::pallet(dev_mode)]
+#[frame::pallet]
 pub mod pallet {
 
     use frame::prelude::BlockNumberFor;
+    use pallet_emission0_api::Emission0Api;
     use pallet_governance_api::GovernanceApi;
 
     use super::*;
@@ -97,10 +97,11 @@ pub mod pallet {
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinimumAllowedStake>;
 
     #[pallet::storage]
-    pub type FeeConstraints<T: Config> = StorageValue<_, ValidatorFeeConstraints<T>, ValueQuery>;
+    pub type DividendsParticipationWeight<T: Config> =
+        StorageValue<_, Percent, ValueQuery, T::DefaultDividendsParticipationWeight>;
 
     #[pallet::storage]
-    pub type Fee<T: Config> = StorageMap<_, Identity, T::AccountId, ValidatorFee<T>, ValueQuery>;
+    pub type FeeConstraints<T: Config> = StorageValue<_, ValidatorFeeConstraints<T>, ValueQuery>;
 
     #[pallet::storage]
     pub type BurnConfig<T: Config> = StorageValue<_, BurnConfiguration<T>, ValueQuery>;
@@ -196,6 +197,9 @@ pub mod pallet {
         #[pallet::constant]
         type MaxAgentMetadataLengthConstraint: Get<u32>;
 
+        #[pallet::constant]
+        type DefaultDividendsParticipationWeight: Get<Percent>;
+
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
@@ -203,6 +207,8 @@ pub mod pallet {
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
 
         type Governance: GovernanceApi<Self::AccountId>;
+
+        type Emission: Emission0Api<Self::AccountId>;
     }
 
     #[pallet::pallet]
@@ -211,7 +217,7 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
@@ -222,7 +228,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
@@ -233,7 +239,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(2)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn transfer_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
@@ -245,7 +251,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(3)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn transfer_balance(
             origin: OriginFor<T>,
             destination: AccountIdOf<T>,
@@ -256,7 +262,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(4)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn register_agent(
             origin: OriginFor<T>,
             agent_key: T::AccountId,
@@ -269,14 +275,14 @@ pub mod pallet {
         }
 
         #[pallet::call_index(5)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn unregister_agent(origin: OriginFor<T>) -> DispatchResult {
             let agent_key = ensure_signed(origin)?;
             agent::unregister::<T>(agent_key)
         }
 
         #[pallet::call_index(6)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn update_agent(
             origin: OriginFor<T>,
             name: Vec<u8>,
@@ -416,7 +422,9 @@ impl<T: Config>
     }
 
     fn weight_control_fee(who: &T::AccountId) -> Percent {
-        Fee::<T>::get(who).weight_control_fee
+        Agents::<T>::get(who)
+            .map(|agent| agent.fees.weight_control_fee)
+            .unwrap_or_else(|| FeeConstraints::<T>::get().min_weight_control_fee)
     }
 
     fn weight_penalty_factor(who: &T::AccountId) -> Percent {
@@ -426,7 +434,9 @@ impl<T: Config>
     }
 
     fn staking_fee(who: &T::AccountId) -> Percent {
-        Fee::<T>::get(who).staking_fee
+        Agents::<T>::get(who)
+            .map(|agent| agent.fees.staking_fee)
+            .unwrap_or_else(|| FeeConstraints::<T>::get().min_staking_fee)
     }
 
     fn staked_by(

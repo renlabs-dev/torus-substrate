@@ -81,18 +81,23 @@ impl<T: crate::Config> Proposal<T> {
                     min_weight_stake,
                     min_weight_control_fee,
                     min_staking_fee,
+                    dividends_participation_weight,
                 } = data;
 
                 pallet_torus0::MinNameLength::<T>::set(min_name_length);
                 pallet_torus0::MaxNameLength::<T>::set(max_name_length);
                 pallet_torus0::MaxAllowedAgents::<T>::set(max_allowed_agents);
-                pallet_emission0::MaxAllowedWeights::<T>::set(max_allowed_weights);
-                pallet_emission0::MinStakePerWeight::<T>::set(min_weight_stake);
+                pallet_torus0::DividendsParticipationWeight::<T>::set(
+                    dividends_participation_weight,
+                );
                 pallet_torus0::FeeConstraints::<T>::mutate(|constraints| {
                     constraints.min_weight_control_fee =
                         Percent::from_percent(min_weight_control_fee);
                     constraints.min_staking_fee = Percent::from_percent(min_staking_fee);
                 });
+
+                pallet_emission0::MaxAllowedWeights::<T>::set(max_allowed_weights);
+                pallet_emission0::MinStakePerWeight::<T>::set(min_weight_stake);
             }
             ProposalData::TransferDaoTreasury { account, amount } => {
                 <T as crate::Config>::Currency::transfer(
@@ -180,6 +185,7 @@ pub struct GlobalParamsData<T: crate::Config> {
     pub min_weight_stake: BalanceOf<T>,
     pub min_weight_control_fee: u8,
     pub min_staking_fee: u8,
+    pub dividends_participation_weight: Percent,
 }
 
 impl<T: crate::Config> GlobalParamsData<T> {

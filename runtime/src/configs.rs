@@ -287,6 +287,10 @@ impl pallet_grandpa::Config for Runtime {
 
 // --- Torus ---
 
+parameter_types! {
+    pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
+}
+
 impl pallet_torus0::Config for Runtime {
     type DefaultMinValidatorStake = ConstU128<50_000_000_000_000>;
 
@@ -331,11 +335,15 @@ impl pallet_torus0::Config for Runtime {
 
     type MaxAgentMetadataLengthConstraint = ConstU32<256>;
 
+    type DefaultDividendsParticipationWeight = DefaultDividendsParticipationWeight;
+
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
 
     type Governance = Governance;
+
+    type Emission = Emission0;
 }
 
 parameter_types! {
@@ -388,9 +396,3 @@ impl pallet_emission0::Config for Runtime {
 
     type Governance = Governance;
 }
-
-// type DefaultMinAllowedWeights = ConstU16<1>;
-
-// type DefaultMaxWeightAge = ConstU64<3_600>;
-
-// type DefaultMaxAllowedWeights = ConstU16<420>;
