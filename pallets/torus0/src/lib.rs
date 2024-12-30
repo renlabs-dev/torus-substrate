@@ -217,7 +217,7 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
@@ -228,7 +228,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
@@ -239,7 +239,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(2)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn transfer_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
@@ -251,7 +251,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(3)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn transfer_balance(
             origin: OriginFor<T>,
             destination: AccountIdOf<T>,
@@ -262,7 +262,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(4)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn register_agent(
             origin: OriginFor<T>,
             agent_key: T::AccountId,
@@ -275,14 +275,14 @@ pub mod pallet {
         }
 
         #[pallet::call_index(5)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn unregister_agent(origin: OriginFor<T>) -> DispatchResult {
             let agent_key = ensure_signed(origin)?;
             agent::unregister::<T>(agent_key)
         }
 
         #[pallet::call_index(6)]
-        #[pallet::weight(0)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn update_agent(
             origin: OriginFor<T>,
             name: Vec<u8>,
