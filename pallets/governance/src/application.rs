@@ -37,7 +37,7 @@ pub fn submit_application<T: crate::Config>(
         &payer,
         cost,
         WithdrawReasons::except(WithdrawReasons::TIP),
-        ExistenceRequirement::KeepAlive,
+        ExistenceRequirement::AllowDeath,
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToApply)?;
 

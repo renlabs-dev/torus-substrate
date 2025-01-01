@@ -25,7 +25,7 @@ pub fn add_stake<T: crate::Config>(
         &staker,
         amount,
         WithdrawReasons::TRANSFER,
-        ExistenceRequirement::KeepAlive,
+        ExistenceRequirement::AllowDeath,
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToStake)?;
 

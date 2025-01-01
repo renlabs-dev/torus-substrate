@@ -104,7 +104,7 @@ impl<T: crate::Config> Proposal<T> {
                     &DaoTreasuryAddress::<T>::get(),
                     &account,
                     amount,
-                    ExistenceRequirement::KeepAlive,
+                    ExistenceRequirement::AllowDeath,
                 )
                 .map_err(|_| crate::Error::<T>::InternalError)?;
             }
@@ -298,7 +298,7 @@ fn add_proposal<T: crate::Config>(
         &proposer,
         cost,
         WithdrawReasons::except(WithdrawReasons::TIP),
-        ExistenceRequirement::KeepAlive,
+        ExistenceRequirement::AllowDeath,
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToPropose)?;
 
@@ -600,7 +600,7 @@ fn distribute_proposal_rewards<T: crate::Config>(
             &dao_treasury_address,
             &acc_id,
             reward,
-            ExistenceRequirement::KeepAlive,
+            ExistenceRequirement::AllowDeath,
         ) {
             error!("could not transfer proposal reward: {err:?}")
         }
