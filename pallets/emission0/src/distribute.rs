@@ -108,7 +108,7 @@ impl<T: Config> ConsensusMemberInput<T> {
 
     /// Creates a set of params for every agent registered to the network.
     pub fn all_members() -> BTreeMap<T::AccountId, ConsensusMemberInput<T>> {
-        let min_allowed_stake = <T::Torus>::min_allowed_stake();
+        let min_validator_stake = <T::Torus>::min_validator_stake();
 
         let mut registered_agents: BTreeSet<_> = <T::Torus>::agent_ids().collect();
         let mut consensus_members: BTreeMap<_, _> = crate::ConsensusMembers::<T>::iter().collect();
@@ -122,7 +122,7 @@ impl<T: Config> ConsensusMemberInput<T> {
                     Self::from_agent(
                         delegator.clone(),
                         validator_input.clone(),
-                        min_allowed_stake,
+                        min_validator_stake,
                     )
                 } else {
                     Self::from_new_agent(delegator.clone(), is_registered)
@@ -137,13 +137,13 @@ impl<T: Config> ConsensusMemberInput<T> {
         inputs.extend(registered_agents.into_iter().map(|agent_id| {
             let input = consensus_members
                 .remove(&agent_id)
-                .map(|member| Self::from_agent(agent_id.clone(), member, min_allowed_stake))
+                .map(|member| Self::from_agent(agent_id.clone(), member, min_validator_stake))
                 .unwrap_or_else(|| Self::from_new_agent(agent_id.clone(), true));
             (agent_id, input)
         }));
 
         inputs.extend(consensus_members.into_iter().map(|(agent_id, member)| {
-            let input = Self::from_agent(agent_id.clone(), member, min_allowed_stake);
+            let input = Self::from_agent(agent_id.clone(), member, min_validator_stake);
             (agent_id, input)
         }));
 
@@ -178,7 +178,7 @@ impl<T: Config> ConsensusMemberInput<T> {
     pub fn from_agent(
         agent_id: T::AccountId,
         member: ConsensusMember<T>,
-        min_allowed_stake: u128,
+        min_validator_stake: u128,
     ) -> ConsensusMemberInput<T> {
         let weight_factor = Percent::one() - <T::Torus>::weight_penalty_factor(&agent_id);
 
@@ -193,7 +193,7 @@ impl<T: Config> ConsensusMemberInput<T> {
             })
             .collect();
 
-        let validator_permit = total_stake >= min_allowed_stake && !member.weights.is_empty();
+        let validator_permit = total_stake >= min_validator_stake && !member.weights.is_empty();
 
         let weights = validator_permit
             .then(|| Self::prepare_weights(member, &agent_id))

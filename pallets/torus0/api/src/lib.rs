@@ -10,7 +10,7 @@ pub trait Torus0Api<AccountId, Balance, NegativeImbalance> {
     /// Interval of blocks in which rewards are distributed.
     fn reward_interval() -> u16;
 
-    fn min_allowed_stake() -> Balance;
+    fn min_validator_stake() -> Balance;
     fn max_validators() -> u16;
 
     fn weight_control_fee(who: &AccountId) -> Percent;
