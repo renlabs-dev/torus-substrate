@@ -286,7 +286,7 @@ pub mod pallet {
         pub fn update_agent(
             origin: OriginFor<T>,
             name: Vec<u8>,
-            address: Vec<u8>,
+            url: Vec<u8>,
             metadata: Option<Vec<u8>>,
             staking_fee: Option<Percent>,
             weight_control_fee: Option<Percent>,
@@ -295,7 +295,7 @@ pub mod pallet {
             agent::update::<T>(
                 agent_key,
                 name,
-                address,
+                url,
                 metadata,
                 staking_fee,
                 weight_control_fee,
