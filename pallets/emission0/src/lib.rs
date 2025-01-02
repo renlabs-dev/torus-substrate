@@ -88,7 +88,7 @@ pub mod pallet {
             <Self::Currency as Currency<Self::AccountId>>::NegativeImbalance,
         >;
 
-        type Governance: GovernanceApi<Self::AccountId>;
+        type Governance: GovernanceApi<Self::AccountId, OriginFor<Self>>;
     }
 
     #[pallet::pallet]
@@ -113,6 +113,9 @@ pub mod pallet {
 
         /// Tried setting weights for itself.
         CannotSetWeightsForSelf,
+
+        /// Tried setting weights while delegating weight control.
+        CannotSetWeightsWhileDelegating,
 
         /// Tried delegating weight control to itself.
         CannotDelegateWeightControlToSelf,
@@ -145,19 +148,13 @@ pub mod pallet {
             weights::set_weights::<T>(origin, weights)
         }
 
-        #[pallet::call_index(2)]
+        #[pallet::call_index(1)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn delegate_weight_control(
             origin: OriginFor<T>,
             target: AccountIdOf<T>,
         ) -> DispatchResult {
             weights::delegate_weight_control::<T>(origin, target)
-        }
-
-        #[pallet::call_index(3)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
-        pub fn regain_weight_control(origin: OriginFor<T>) -> DispatchResult {
-            weights::regain_weight_control::<T>(origin)
         }
     }
 }

@@ -2,9 +2,9 @@
 
 mod application;
 mod config;
-mod curator;
 mod ext;
 mod proposal;
+mod roles;
 mod voting;
 pub mod whitelist;
 
@@ -31,7 +31,6 @@ use polkadot_sdk::sp_std::vec::Vec;
 #[frame::pallet]
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
-
     use proposal::GlobalParamsData;
 
     use super::*;
@@ -72,6 +71,9 @@ pub mod pallet {
 
     #[pallet::storage]
     pub type Curators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
+
+    #[pallet::storage]
+    pub type Allocators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
     #[pallet::storage]
     pub type TreasuryEmissionFee<T: Config> =
@@ -131,56 +133,70 @@ pub mod pallet {
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             ensure_root(origin)?;
-            curator::add_curator::<T>(key)
+            roles::manage_role::<T, Curators<T>>(key, true, Error::<T>::AlreadyCurator)
         }
 
         #[pallet::call_index(1)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             ensure_root(origin)?;
-            curator::remove_curator::<T>(key)
+            roles::manage_role::<T, Curators<T>>(key, false, Error::<T>::NotAllocator)
         }
 
         #[pallet::call_index(2)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
-        pub fn add_to_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            curator::ensure_curator::<T>(origin)?;
-            whitelist::add_to_whitelist::<T>(key)
+        pub fn add_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
+            ensure_root(origin)?;
+            roles::manage_role::<T, Allocators<T>>(key, true, Error::<T>::AlreadyAllocator)
         }
 
         #[pallet::call_index(3)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
-        pub fn remove_from_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            curator::ensure_curator::<T>(origin)?;
-            whitelist::remove_from_whitelist::<T>(key)
+        pub fn remove_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
+            ensure_root(origin)?;
+            roles::manage_role::<T, Allocators<T>>(key, false, Error::<T>::NotAllocator)
         }
 
         #[pallet::call_index(4)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
-        pub fn accept_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
-            curator::ensure_curator::<T>(origin)?;
-            application::accept_application::<T>(application_id)
+        pub fn add_to_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
+            roles::ensure_curator::<T>(origin)?;
+            whitelist::add_to_whitelist::<T>(key)
         }
 
         #[pallet::call_index(5)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
-        pub fn deny_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
-            curator::ensure_curator::<T>(origin)?;
-            application::deny_application::<T>(application_id)
+        pub fn remove_from_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
+            roles::ensure_curator::<T>(origin)?;
+            whitelist::remove_from_whitelist::<T>(key)
         }
 
         #[pallet::call_index(6)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        pub fn accept_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
+            roles::ensure_curator::<T>(origin)?;
+            application::accept_application::<T>(application_id)
+        }
+
+        #[pallet::call_index(7)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        pub fn deny_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
+            roles::ensure_curator::<T>(origin)?;
+            application::deny_application::<T>(application_id)
+        }
+
+        #[pallet::call_index(8)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn penalize_agent(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
             percentage: u8,
         ) -> DispatchResult {
-            curator::ensure_curator::<T>(origin)?;
-            curator::penalize_agent::<T>(agent_key, percentage)
+            roles::ensure_curator::<T>(origin)?;
+            roles::penalize_agent::<T>(agent_key, percentage)
         }
 
-        #[pallet::call_index(7)]
+        #[pallet::call_index(9)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn submit_application(
             origin: OriginFor<T>,
@@ -191,7 +207,7 @@ pub mod pallet {
             application::submit_application::<T>(payer, agent_key, metadata)
         }
 
-        #[pallet::call_index(8)]
+        #[pallet::call_index(10)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_global_params_proposal(
             origin: OriginFor<T>,
@@ -202,7 +218,7 @@ pub mod pallet {
             proposal::add_global_params_proposal::<T>(proposer, data, metadata)
         }
 
-        #[pallet::call_index(9)]
+        #[pallet::call_index(11)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_global_custom_proposal(
             origin: OriginFor<T>,
@@ -212,7 +228,7 @@ pub mod pallet {
             proposal::add_global_custom_proposal::<T>(proposer, metadata)
         }
 
-        #[pallet::call_index(10)]
+        #[pallet::call_index(12)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_dao_treasury_transfer_proposal(
             origin: OriginFor<T>,
@@ -229,7 +245,7 @@ pub mod pallet {
             )
         }
 
-        #[pallet::call_index(11)]
+        #[pallet::call_index(13)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn vote_proposal(
             origin: OriginFor<T>,
@@ -240,21 +256,21 @@ pub mod pallet {
             voting::add_vote::<T>(voter, proposal_id, agree)
         }
 
-        #[pallet::call_index(12)]
+        #[pallet::call_index(14)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_vote_proposal(origin: OriginFor<T>, proposal_id: u64) -> DispatchResult {
             let voter = ensure_signed(origin)?;
             voting::remove_vote::<T>(voter, proposal_id)
         }
 
-        #[pallet::call_index(13)]
+        #[pallet::call_index(15)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn enable_vote_delegation(origin: OriginFor<T>) -> DispatchResult {
             let delegator = ensure_signed(origin)?;
             voting::enable_delegation::<T>(delegator)
         }
 
-        #[pallet::call_index(14)]
+        #[pallet::call_index(16)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn disable_vote_delegation(origin: OriginFor<T>) -> DispatchResult {
             let delegator = ensure_signed(origin)?;
@@ -360,6 +376,10 @@ pub mod pallet {
         InvalidAgentPenaltyPercentage,
         /// The key is already a curator.
         AlreadyCurator,
+        /// The key is already an allocator.
+        AlreadyAllocator,
+        /// The key is not an allocator.
+        NotAllocator,
         /// Agent not found
         AgentNotFound,
         /// Invalid agent penalty percentage
@@ -377,7 +397,7 @@ pub mod pallet {
     }
 }
 
-impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T> {
+impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId, OriginFor<T>> for Pallet<T> {
     fn dao_treasury_address() -> T::AccountId {
         DaoTreasuryAddress::<T>::get()
     }
@@ -388,5 +408,9 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
 
     fn is_whitelisted(key: &T::AccountId) -> bool {
         whitelist::is_whitelisted::<T>(key)
+    }
+
+    fn ensure_allocator(origin: OriginFor<T>) -> DispatchResult {
+        crate::roles::ensure_allocator::<T>(origin)
     }
 }
