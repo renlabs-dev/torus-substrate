@@ -88,7 +88,7 @@ pub mod pallet {
             <Self::Currency as Currency<Self::AccountId>>::NegativeImbalance,
         >;
 
-        type Governance: GovernanceApi<Self::AccountId, OriginFor<Self>>;
+        type Governance: GovernanceApi<Self::AccountId>;
     }
 
     #[pallet::pallet]

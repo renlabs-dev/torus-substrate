@@ -48,8 +48,7 @@ pub fn ensure_curator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
     Ok(())
 }
 
-pub fn ensure_allocator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
-    let key: AccountIdOf<T> = ensure_signed(origin)?;
+pub fn ensure_allocator<T: Config>(key: &AccountIdOf<T>) -> DispatchResult {
     if !crate::Allocators::<T>::contains_key(key) {
         return Err(Error::<T>::NotAllocator.into());
     }

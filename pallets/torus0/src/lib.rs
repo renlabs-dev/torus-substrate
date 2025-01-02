@@ -205,7 +205,7 @@ pub mod pallet {
 
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
 
-        type Governance: GovernanceApi<Self::AccountId, Self::RuntimeOrigin>;
+        type Governance: GovernanceApi<Self::AccountId>;
 
         type Emission: Emission0Api<Self::AccountId>;
     }

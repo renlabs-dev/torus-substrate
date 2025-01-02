@@ -14,9 +14,9 @@ pub fn set_weights<T: crate::Config>(
     origin: OriginFor<T>,
     mut weights: sp_std::vec::Vec<(T::AccountId, u16)>,
 ) -> DispatchResult {
-    let acc_id = ensure_signed(origin.clone())?;
+    let acc_id = ensure_signed(origin)?;
 
-    <T::Governance>::ensure_allocator(origin)?;
+    <T::Governance>::ensure_allocator(&acc_id)?;
 
     ensure!(
         !crate::WeightControlDelegation::<T>::contains_key(&acc_id),
@@ -24,13 +24,13 @@ pub fn set_weights<T: crate::Config>(
     );
 
     ensure!(
-        <T::Torus>::is_agent_registered(&acc_id),
-        crate::Error::<T>::AgentIsNotRegistered
+        weights.len() <= crate::MaxAllowedWeights::<T>::get() as usize,
+        crate::Error::<T>::WeightSetTooLarge
     );
 
     ensure!(
-        weights.len() <= crate::MaxAllowedWeights::<T>::get() as usize,
-        crate::Error::<T>::WeightSetTooLarge
+        <T::Torus>::is_agent_registered(&acc_id),
+        crate::Error::<T>::AgentIsNotRegistered
     );
 
     let total_stake: u128 = <T::Torus>::staked_by(&acc_id)

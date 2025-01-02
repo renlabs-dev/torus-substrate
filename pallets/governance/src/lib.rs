@@ -397,7 +397,7 @@ pub mod pallet {
     }
 }
 
-impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId, OriginFor<T>> for Pallet<T> {
+impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T> {
     fn dao_treasury_address() -> T::AccountId {
         DaoTreasuryAddress::<T>::get()
     }
@@ -410,7 +410,7 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId, OriginFor<T>>
         whitelist::is_whitelisted::<T>(key)
     }
 
-    fn ensure_allocator(origin: OriginFor<T>) -> DispatchResult {
-        crate::roles::ensure_allocator::<T>(origin)
+    fn ensure_allocator(key: &T::AccountId) -> DispatchResult {
+        crate::roles::ensure_allocator::<T>(key)
     }
 }
