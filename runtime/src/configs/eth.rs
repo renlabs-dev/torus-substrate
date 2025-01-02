@@ -18,7 +18,7 @@ use polkadot_sdk::{
 };
 
 use super::{
-    precompiles::FrontierPrecompiles, Aura, Balances, Block, Runtime, RuntimeCall, RuntimeEvent,
+    precompiles::FrontierPrecompiles, Aura, Balances, Runtime, RuntimeCall, RuntimeEvent,
     RuntimeOrigin, Timestamp, UncheckedExtrinsic, NORMAL_DISPATCH_RATIO,
 };
 
@@ -193,18 +193,20 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 }
 
 #[derive(Clone)]
-pub struct TransactionConverter;
+pub struct TransactionConverter<B>(core::marker::PhantomData<B>);
 
-impl fp_rpc::ConvertTransaction<<Block as BlockT>::Extrinsic> for TransactionConverter {
-    fn convert_transaction(
-        &self,
-        transaction: pallet_ethereum::Transaction,
-    ) -> <Block as BlockT>::Extrinsic {
+impl<B> Default for TransactionConverter<B> {
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
+
+impl<Block: BlockT> fp_rpc::ConvertTransaction<Block::Extrinsic> for TransactionConverter<Block> {
+    fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> Block::Extrinsic {
         let extrinsic = UncheckedExtrinsic::new_unsigned(
             pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
         );
         let encoded = extrinsic.encode();
-        <Block as BlockT>::Extrinsic::decode(&mut &encoded[..])
-            .expect("Encoded extrinsic is always valid")
+        Block::Extrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
     }
 }

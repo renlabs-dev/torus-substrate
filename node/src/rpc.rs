@@ -39,7 +39,7 @@ use polkadot_sdk::{
     substrate_frame_rpc_system::{System, SystemApiServer},
 };
 use std::sync::Arc;
-use torus_runtime::interface::{Block, Hash};
+use torus_runtime::{interface::Hash, opaque::Block};
 
 use crate::service::FullClient;
 

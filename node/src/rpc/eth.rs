@@ -16,7 +16,7 @@ pub use fc_rpc::EthBlockDataCacheTask;
 pub use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
 use fc_storage::StorageOverride;
 use fp_rpc::ConvertTransaction;
-use torus_runtime::interface::Block;
+use torus_runtime::opaque::Block;
 
 use crate::service::{FullBackend, FullClient};
 
