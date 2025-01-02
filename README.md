@@ -30,30 +30,38 @@ docker run --rm -ti -p 9944:9944 -p 9933:9933 ghcr.io/renlabs-dev/torus-substrat
 #### Using Nix (recommended)
 
 1. **Install Nix**
+
    ```sh
    curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
    ```
 
 2. **Install Direnv**
    - Install [Direnv](https://direnv.net/docs/installation.html):
+
      ```sh
      nix profile install nixpkgs#direnv
      ```
+
    - Add to your `$HOME/.zshrc` if using zsh:
+
      ```sh
      eval "$(direnv hook zsh)"
      ```
+
    - Run in project directory:
+
      ```sh
      direnv allow
      ```
 
 3. **Build the node**
+
    ```sh
    cargo build --release
    ```
 
 4. **Connect to mainnet**
+
    ```sh
    ./target/release/torus-node --chain=main
    ```
@@ -63,11 +71,13 @@ docker run --rm -ti -p 9944:9944 -p 9933:9933 ghcr.io/renlabs-dev/torus-substrat
 Use the `--chain=test` flag
 
 **Using Docker:**
+
 ```sh
 docker run --rm -ti -p 9944:9944 -p 9933:9933 ghcr.io/renlabs-dev/torus-substrate:latest --chain=test
 ```
 
 **Using Source:**
+
 ```sh
 ./target/release/torus-node --chain=test
 ```
@@ -78,9 +88,11 @@ docker run --rm -ti -p 9944:9944 -p 9933:9933 ghcr.io/renlabs-dev/torus-substrat
 cargo xtask run local --alice --node-validator true
 ```
 
-> Note: Without specifying a chain spec, `--dev` will be used automatically (sudo account defaults to alice)
+> [!NOTE]
+> Without specifying a chain spec, `--dev` will be used automatically (sudo account defaults to alice)
 
 With custom chain spec:
+
 ```sh
 cargo xtask run local -c main.json --alice --node-validator true
 ```
@@ -108,9 +120,13 @@ You can then edit this file, such as modify balances, sudo key, or aura and gran
 
 ## Testing
 
+Run all tests with:
+
 ```bash
 cargo test
 ```
+
+Common testing utilities and test imports can be found in the `test-utils` directory. This directory contains shared test fixtures, mock data, and helper functions used across test suites.
 
 ## Node Types & Requirements
 
@@ -128,11 +144,13 @@ Archive Nodes:
 ### Node Types
 
 **Full Node**
+
 ```sh
 ./target/release/torus-node --chain=main
 ```
 
 **Archive Node**
+
 ```sh
 ./target/release/torus-node --chain=main --pruning=archive
 ```
@@ -148,6 +166,7 @@ Archive Nodes:
 ### Telemetry
 
 Connect to mainnet telemetry:
+
 ```sh
 ./target/release/torus-node --chain=main --telemetry-url 'ws://telemetry.torus.network:8001/submit 0'
 ```
