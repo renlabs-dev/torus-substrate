@@ -1,6 +1,6 @@
 [package]
 name = "pallet-torus0"
-description = "The torus initial pallet."
+description = "Torus initial pallet."
 version = "0.1.0"
 license = "MIT-0"
 authors.workspace = true
@@ -21,15 +21,17 @@ runtime-benchmarks = [
 ]
 try-runtime = ["polkadot-sdk/try-runtime", "pallet-torus0-api/try-runtime"]
 
+
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
-substrate-fixed = { workspace = true }
 polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
+substrate-fixed = { workspace = true }
 
 pallet-torus0-api.workspace = true
 pallet-emission0-api.workspace = true
 pallet-governance-api.workspace = true
+
 
 [dev-dependencies]
 test-utils.workspace = true

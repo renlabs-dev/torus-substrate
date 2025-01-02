@@ -1,6 +1,6 @@
 [package]
 name = "pallet-emission0-api"
-description = "The chain's emission pallet API."
+description = "Torus emission pallet API."
 version = "0.1.0"
 license = "MIT-0"
 authors.workspace = true

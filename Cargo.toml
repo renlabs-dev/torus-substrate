@@ -10,21 +10,20 @@ members = [
 resolver = "2"
 
 [workspace.package]
-authors = ["Luiz Carvalho <luizcmpc@gmail.com>"]
+authors = ["Renlabs <contact@renlabs.dev>"]
 edition = "2021"
 
 [workspace.dependencies]
+
 # Local
 torus-node = { path = "./node", default-features = false }
 torus-runtime = { path = "./runtime", default-features = false }
 pallet-governance = { path = "./pallets/governance", default-features = false }
-pallet-torus0 = { path = "./pallets/torus0", default-features = false }
-pallet-emission0 = { path = "./pallets/emission0", default-features = false }
-
-pallet-torus0-api = { path = "./pallets/torus0/api", default-features = false }
-pallet-emission0-api = { path = "./pallets/emission0/api", default-features = false }
 pallet-governance-api = { path = "./pallets/governance/api", default-features = false }
-
+pallet-emission0 = { path = "./pallets/emission0", default-features = false }
+pallet-emission0-api = { path = "./pallets/emission0/api", default-features = false }
+pallet-torus0 = { path = "./pallets/torus0", default-features = false }
+pallet-torus0-api = { path = "./pallets/torus0/api", default-features = false }
 test-utils.path = "./test-utils"
 
 # Substrate
@@ -34,11 +33,12 @@ polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk.git", branch 
 substrate-wasm-builder = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "stable2409", default-features = false }
 substrate-fixed = { git = "https://github.com/encointer/substrate-fixed.git", branch = "master", default-features = false }
 
+# Utils
 num-traits = { version = "0.2.19", default-features = false, features = [
     "libm",
 ] }
 
-# Frontier
+# Frontier / EVM
 fc-api = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
 fc-cli = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
 fc-consensus = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
@@ -59,13 +59,13 @@ pallet-evm-precompile-modexp = { git = "https://github.com/paritytech/frontier.g
 pallet-evm-precompile-sha3fips = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
 pallet-evm-precompile-simple = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
 
-# CLI-specific dependencies
+# CLI
 clap = { version = "4.5.22", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 
-# RPC-specific dependencies
+# RPC
 jsonrpsee = { version = "0.24", features = ["server"] }
 
-# Async stuff
+# Async
 futures = "0.3"
 futures-timer = "3"

@@ -1,6 +1,6 @@
 [package]
 name = "torus-runtime"
-description = "The torus blockchain runtime."
+description = "Torus blockchain runtime."
 version = "0.1.0"
 license = "MIT-0"
 authors.workspace = true
@@ -48,12 +48,14 @@ try-runtime = [
     "pallet-governance/try-runtime",
 ]
 
+
 [dependencies]
-codec = { workspace = true, features = ["derive"] }
-scale-info = { features = ["derive", "serde"], workspace = true }
+
 serde_json = { workspace = true, features = ["alloc"] }
 
-# Polkadot SDK
+# Substrate
+codec = { workspace = true, features = ["derive"] }
+scale-info = { features = ["derive", "serde"], workspace = true }
 polkadot-sdk = { workspace = true, features = [
     "runtime",
     "pallet-balances",
@@ -67,7 +69,7 @@ polkadot-sdk = { workspace = true, features = [
     "frame-metadata-hash-extension",
 ] }
 
-# Frontier
+# Frontier / EVM
 fp-evm = { workspace = true, features = ["serde"] }
 fp-rpc.workspace = true
 fp-self-contained = { workspace = true, features = ["serde"] }
@@ -78,10 +80,14 @@ pallet-evm-precompile-modexp.workspace = true
 pallet-evm-precompile-sha3fips.workspace = true
 pallet-evm-precompile-simple.workspace = true
 
-# Local dependencies
+# Local
 pallet-torus0.workspace = true
 pallet-emission0.workspace = true
 pallet-governance.workspace = true
+
+pallet-torus0-api.workspace = true
+pallet-governance-api.workspace = true
+
 
 [build-dependencies]
 substrate-wasm-builder = { optional = true, workspace = true, features = [
