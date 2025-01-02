@@ -15,6 +15,10 @@ use polkadot_sdk::sp_runtime::Percent;
 #[doc(hidden)]
 pub mod distribute;
 #[doc(hidden)]
+pub mod weight_control;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarks;
 pub mod weights;
 
 #[frame::pallet]
@@ -25,6 +29,7 @@ pub mod pallet {
     use pallet_governance_api::GovernanceApi;
     use pallet_torus0_api::Torus0Api;
     use polkadot_sdk::sp_std;
+    use weights::WeightInfo;
 
     use super::*;
 
@@ -89,6 +94,8 @@ pub mod pallet {
         >;
 
         type Governance: GovernanceApi<Self::AccountId>;
+
+        type WeightInfo: WeightInfo;
     }
 
     #[pallet::pallet]
@@ -137,27 +144,27 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         // TODO: configure price
         #[pallet::call_index(0)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::set_weights(), DispatchClass::Normal, Pays::Yes))]
         pub fn set_weights(
             origin: OriginFor<T>,
             weights: sp_std::vec::Vec<(AccountIdOf<T>, u16)>,
         ) -> DispatchResult {
-            weights::set_weights::<T>(origin, weights)
+            weight_control::set_weights::<T>(origin, weights)
         }
 
         #[pallet::call_index(2)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::delegate_weight_control(), DispatchClass::Normal, Pays::Yes))]
         pub fn delegate_weight_control(
             origin: OriginFor<T>,
             target: AccountIdOf<T>,
         ) -> DispatchResult {
-            weights::delegate_weight_control::<T>(origin, target)
+            weight_control::delegate_weight_control::<T>(origin, target)
         }
 
         #[pallet::call_index(3)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::regain_weight_control(), DispatchClass::Normal, Pays::Yes))]
         pub fn regain_weight_control(origin: OriginFor<T>) -> DispatchResult {
-            weights::regain_weight_control::<T>(origin)
+            weight_control::regain_weight_control::<T>(origin)
         }
     }
 }

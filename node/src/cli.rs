@@ -59,6 +59,7 @@ pub struct Cli {
 }
 
 #[derive(Debug, clap::Subcommand)]
+#[allow(clippy::large_enum_variant)]
 pub enum Subcommand {
     /// Key management cli utilities
     #[command(subcommand)]
@@ -87,4 +88,8 @@ pub enum Subcommand {
 
     /// Db meta columns information.
     ChainInfo(sc_cli::ChainInfoCmd),
+
+    /// Sub-commands concerned with benchmarking.
+    #[command(subcommand)]
+    Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 }

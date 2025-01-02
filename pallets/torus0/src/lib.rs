@@ -463,4 +463,33 @@ impl<T: Config>
     fn is_agent_registered(agent: &T::AccountId) -> bool {
         Agents::<T>::contains_key(agent)
     }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_register_agent(
+        id: &T::AccountId,
+        name: Vec<u8>,
+        url: Vec<u8>,
+        metadata: Vec<u8>,
+    ) -> DispatchResult {
+        crate::Agents::<T>::set(
+            id,
+            Some(Agent {
+                key: id.clone(),
+                name: name
+                    .try_into()
+                    .map_err(|_| DispatchError::Other("failed to trim fields"))?,
+                url: url
+                    .try_into()
+                    .map_err(|_| DispatchError::Other("failed to trim fields"))?,
+                metadata: metadata
+                    .try_into()
+                    .map_err(|_| DispatchError::Other("failed to trim fields"))?,
+                weight_penalty_factor: Default::default(),
+                registration_block: Default::default(),
+                fees: Default::default(),
+            }),
+        );
+
+        Ok(())
+    }
 }

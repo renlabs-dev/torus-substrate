@@ -16,7 +16,10 @@ std = [
     "pallet-torus0-api/std",
     "num-traits/std",
 ]
-runtime-benchmarks = ["polkadot-sdk/runtime-benchmarks"]
+runtime-benchmarks = [
+    "polkadot-sdk/runtime-benchmarks",
+    "pallet-torus0-api/runtime-benchmarks",
+]
 try-runtime = ["polkadot-sdk/try-runtime"]
 
 [dependencies]

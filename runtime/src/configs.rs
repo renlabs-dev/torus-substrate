@@ -42,6 +42,10 @@ parameter_types! {
         ::max_with_normal_ratio(10 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 }
 
+parameter_types! {
+    pub const BlockHashCount: BlockNumber = 2400;
+}
+
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig)]
 impl frame_system::Config for Runtime {
     /// The default identifier used to distinguish between accounts.
@@ -75,12 +79,14 @@ impl frame_system::Config for Runtime {
     type DbWeight = RocksDbWeight;
     /// Specifies how many recent block hashes to keep in storage
     /// Older block hashes are pruned when this limit is reached
-    type BlockHashCount = ConstU64<2400>;
+    type BlockHashCount = BlockHashCount;
     /// The prefix used in the SS58 address format for this chain.
     type SS58Prefix = ConstU16<42>;
 }
 
 // --- Balances ---
+
+pub const EXISTENTIAL_DEPOSIT: u128 = 10_u128.pow(TOKEN_DECIMALS) / 10;
 
 impl pallet_balances::Config for Runtime {
     /// The means of storing the balances of an account
@@ -95,7 +101,7 @@ impl pallet_balances::Config for Runtime {
     type Balance = u128;
     /// The minimum amount required to keep an account open
     /// 0.1 Unit
-    type ExistentialDeposit = ConstU128<{ 10_u128.pow(TOKEN_DECIMALS) / 10 }>;
+    type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
     /// The identifier for reserved tokens
     type ReserveIdentifier = ();
     /// The identifier for frozen tokens
@@ -399,4 +405,6 @@ impl pallet_emission0::Config for Runtime {
     type Torus = Torus0;
 
     type Governance = Governance;
+
+    type WeightInfo = pallet_emission0::weights::SubstrateWeight<Runtime>;
 }

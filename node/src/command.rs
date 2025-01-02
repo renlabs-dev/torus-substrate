@@ -20,8 +20,13 @@ use crate::{
     cli::{Cli, Subcommand},
     service,
 };
+use benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
+use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::TryFutureExt;
 use polkadot_sdk::{sc_cli::SubstrateCli, sc_service::PartialComponents, *};
+use torus_runtime::interface::Block;
+
+mod benchmarking;
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -136,6 +141,80 @@ pub fn run() -> sc_cli::Result<()> {
         Some(Subcommand::ChainInfo(cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run::<torus_runtime::interface::Block>(&config))
+        }
+        Some(Subcommand::Benchmark(cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+
+            runner.sync_run(|config| {
+                // This switch needs to be in the client, since the client decides
+                // which sub-commands it wants to support.
+                match cmd {
+                    BenchmarkCmd::Pallet(cmd) => {
+                        if !cfg!(feature = "runtime-benchmarks") {
+                            return Err(
+                                "Runtime benchmarking wasn't enabled when building the node. \
+							You can enable it with `--features runtime-benchmarks`."
+                                    .into(),
+                            );
+                        }
+
+                        cmd.run_with_spec::<sp_runtime::traits::HashingFor<Block>, ()>(Some(
+                            config.chain_spec,
+                        ))
+                    }
+                    BenchmarkCmd::Block(cmd) => {
+                        let PartialComponents { client, .. } =
+                            service::new_partial(&config, &cli.eth, cli.consensus)?;
+                        cmd.run(client)
+                    }
+                    #[cfg(not(feature = "runtime-benchmarks"))]
+                    BenchmarkCmd::Storage(_) => Err(
+                        "Storage benchmarking can be enabled with `--features runtime-benchmarks`."
+                            .into(),
+                    ),
+                    #[cfg(feature = "runtime-benchmarks")]
+                    BenchmarkCmd::Storage(cmd) => {
+                        let PartialComponents {
+                            client, backend, ..
+                        } = service::new_partial(&config, &cli.eth, cli.consensus)?;
+                        let db = backend.expose_db();
+                        let storage = backend.expose_storage();
+
+                        cmd.run(config, client, db, storage)
+                    }
+                    BenchmarkCmd::Overhead(cmd) => {
+                        let PartialComponents { client, .. } =
+                            service::new_partial(&config, &cli.eth, cli.consensus)?;
+                        let ext_builder = RemarkBuilder::new(client.clone());
+
+                        cmd.run(
+                            config,
+                            client,
+                            inherent_benchmark_data()?,
+                            Vec::new(),
+                            &ext_builder,
+                        )
+                    }
+                    BenchmarkCmd::Extrinsic(cmd) => {
+                        let PartialComponents { client, .. } =
+                            service::new_partial(&config, &cli.eth, cli.consensus)?;
+                        // Register the *Remark* and *TKA* builders.
+                        let ext_factory = ExtrinsicFactory(vec![
+                            Box::new(RemarkBuilder::new(client.clone())),
+                            Box::new(TransferKeepAliveBuilder::new(
+                                client.clone(),
+                                sp_keyring::Sr25519Keyring::Alice.to_account_id(),
+                                torus_runtime::configs::EXISTENTIAL_DEPOSIT,
+                            )),
+                        ]);
+
+                        cmd.run(client, inherent_benchmark_data()?, Vec::new(), &ext_factory)
+                    }
+                    BenchmarkCmd::Machine(cmd) => {
+                        cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())
+                    }
+                }
+            })
         }
         None => {
             let runner = cli.create_runner(&cli.run)?;

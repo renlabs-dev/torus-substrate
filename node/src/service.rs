@@ -29,7 +29,7 @@ use polkadot_sdk::{
     *,
 };
 use std::{pin::Pin, sync::Arc, time::Duration};
-use torus_runtime::{apis::RuntimeApi, configs::eth::TransactionConverter, interface::Block};
+use torus_runtime::{apis::RuntimeApi, configs::eth::TransactionConverter, opaque::Block};
 
 use crate::cli::{
     eth::{
@@ -531,7 +531,7 @@ pub async fn new_full<Network: sc_network::NetworkBackend<Block, <Block as Block
                 client: client.clone(),
                 pool: pool.clone(),
                 graph: pool.pool().clone(),
-                converter: Some(TransactionConverter),
+                converter: Some(TransactionConverter::<Block>::default()),
                 is_authority: config.role.is_authority(),
                 enable_dev_signer: eth_config.enable_dev_signer,
                 network: network.clone(),

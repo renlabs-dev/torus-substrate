@@ -22,4 +22,13 @@ pub trait Torus0Api<AccountId, Balance, NegativeImbalance> {
 
     fn agent_ids() -> impl Iterator<Item = AccountId>;
     fn is_agent_registered(agent: &AccountId) -> bool;
+
+    #[doc(hidden)]
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_register_agent(
+        id: &AccountId,
+        name: alloc::vec::Vec<u8>,
+        url: alloc::vec::Vec<u8>,
+        metadata: alloc::vec::Vec<u8>,
+    ) -> polkadot_sdk::frame_support::dispatch::DispatchResult;
 }
