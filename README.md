@@ -5,6 +5,7 @@
 Node implementation of a Substrate-based protocol manifesting autonomous monetary networks through recursive stake delegation and emergent multi-graph interactions.
 
 ♓︎ Built using the [Polkadot-SDK](https://github.com/paritytech/polkadot-sdk)
+
 ♓︎ Website: [torus.network](https://torus.network/)
 
 ## Prerequisites
