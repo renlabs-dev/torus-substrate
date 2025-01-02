@@ -78,7 +78,7 @@ impl<T: crate::Config> Proposal<T> {
                     max_name_length,
                     max_allowed_agents,
                     max_allowed_weights,
-                    min_weight_stake,
+                    min_stake_per_weight,
                     min_weight_control_fee,
                     min_staking_fee,
                     dividends_participation_weight,
@@ -97,7 +97,7 @@ impl<T: crate::Config> Proposal<T> {
                 });
 
                 pallet_emission0::MaxAllowedWeights::<T>::set(max_allowed_weights);
-                pallet_emission0::MinStakePerWeight::<T>::set(min_weight_stake);
+                pallet_emission0::MinStakePerWeight::<T>::set(min_stake_per_weight);
             }
             ProposalData::TransferDaoTreasury { account, amount } => {
                 <T as crate::Config>::Currency::transfer(
@@ -182,7 +182,7 @@ pub struct GlobalParamsData<T: crate::Config> {
     pub max_name_length: u16,
     pub max_allowed_agents: u16,
     pub max_allowed_weights: u16,
-    pub min_weight_stake: BalanceOf<T>,
+    pub min_stake_per_weight: BalanceOf<T>,
     pub min_weight_control_fee: u8,
     pub min_staking_fee: u8,
     pub dividends_participation_weight: Percent,

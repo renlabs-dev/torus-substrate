@@ -37,6 +37,11 @@ pub fn register<T: crate::Config>(
     let _guard = span.enter();
 
     ensure!(
+        <T::Governance>::is_whitelisted(&agent_key),
+        crate::Error::<T>::AgentKeyNotWhitelisted
+    );
+
+    ensure!(
         !exists::<T>(&agent_key),
         crate::Error::<T>::AgentAlreadyRegistered
     );
@@ -50,11 +55,6 @@ pub fn register<T: crate::Config>(
     ensure!(
         crate::RegistrationsThisInterval::<T>::get() < burn_config.max_registrations_per_interval,
         crate::Error::<T>::TooManyAgentRegistrationsThisInterval
-    );
-
-    ensure!(
-        <T::Governance>::is_whitelisted(&agent_key),
-        crate::Error::<T>::AgentKeyNotWhitelisted
     );
 
     let agents_count = crate::Agents::<T>::iter().count();
