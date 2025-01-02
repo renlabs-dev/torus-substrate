@@ -138,7 +138,7 @@ pub mod pallet {
         // TODO: configure price
         #[pallet::call_index(0)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
-        pub fn set_weights_extrinsic(
+        pub fn set_weights(
             origin: OriginFor<T>,
             weights: sp_std::vec::Vec<(AccountIdOf<T>, u16)>,
         ) -> DispatchResult {
@@ -147,7 +147,7 @@ pub mod pallet {
 
         #[pallet::call_index(2)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
-        pub fn delegate_weight_control_extrinsic(
+        pub fn delegate_weight_control(
             origin: OriginFor<T>,
             target: AccountIdOf<T>,
         ) -> DispatchResult {
@@ -156,7 +156,7 @@ pub mod pallet {
 
         #[pallet::call_index(3)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
-        pub fn regain_weight_control_extrinsic(origin: OriginFor<T>) -> DispatchResult {
+        pub fn regain_weight_control(origin: OriginFor<T>) -> DispatchResult {
             weights::regain_weight_control::<T>(origin)
         }
     }
