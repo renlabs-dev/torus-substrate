@@ -9,6 +9,10 @@ edition.workspace = true
 [features]
 default = ["std"]
 std = ["torus-runtime/std", "polkadot-sdk/std"]
+runtime-benchmarks = [
+    "torus-runtime/runtime-benchmarks",
+    "polkadot-sdk/runtime-benchmarks",
+]
 
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
@@ -19,6 +23,7 @@ serde_json = { workspace = true, default-features = true }
 
 polkadot-sdk = { workspace = true, features = [
     "std",
+    "frame-benchmarking-cli",
     "sc-allocator",
     "sc-authority-discovery",
     "sc-basic-authorship",

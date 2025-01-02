@@ -55,7 +55,7 @@ pub fn native_version() -> NativeVersion {
 }
 
 /// The signed extensions that are added to the runtime.
-type SignedExtra = (
+pub type SignedExtra = (
     // Checks that the sender is not the zero address.
     frame_system::CheckNonZeroSender<Runtime>,
     // Checks that the runtime version is correct.
@@ -76,6 +76,8 @@ type SignedExtra = (
     // Enables support for wallets requiring runtime metadata.
     frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
 );
+
+pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedExtra>;
 
 /// All migrations of the runtime, aside from the ones declared in the pallets.
 ///
@@ -169,6 +171,10 @@ pub mod interface {
         sp_runtime::{self, generic, traits::BlakeTwo256, MultiSignature},
     };
 
+    pub use polkadot_sdk::{
+        frame_system::Call as SystemCall, pallet_balances::Call as BalancesCall,
+    };
+
     pub type BlockNumber = u64;
 
     pub type Signature = MultiSignature;
@@ -188,4 +194,24 @@ pub mod interface {
     pub type Hash = <Runtime as frame_system::Config>::Hash;
     pub type Balance = <Runtime as pallet_balances::Config>::Balance;
     pub type MinimumBalance = <Runtime as pallet_balances::Config>::ExistentialDeposit;
+}
+
+// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
+// the specifics of the runtime. They can then be made to be agnostic over specific formats
+// of data like extrinsics, allowing for them to continue syncing the network through upgrades
+// to even the core data structures.
+pub mod opaque {
+    use super::*;
+
+    use frame::traits::BlakeTwo256;
+    use sp_runtime::generic;
+
+    pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+
+    /// Opaque block header type.
+    pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+    /// Opaque block type.
+    pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+    /// Opaque block identifier type.
+    pub type BlockId = generic::BlockId<Block>;
 }

@@ -488,7 +488,7 @@ fn pays_weight_control_fee_and_dividends_to_stakers() {
             register_empty_agent(id);
         }
 
-        pallet_emission0::weights::delegate_weight_control::<Test>(get_origin(val_2), val_1)
+        pallet_emission0::weight_control::delegate_weight_control::<Test>(get_origin(val_2), val_1)
             .expect("failed to delegate weight control");
 
         let val_1_staker = 3;

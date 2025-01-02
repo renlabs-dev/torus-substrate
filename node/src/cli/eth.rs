@@ -14,7 +14,7 @@ use polkadot_sdk::{
     sc_network_sync::SyncingService,
     sc_service::{error::Error as ServiceError, Configuration, TaskManager},
 };
-use torus_runtime::interface::Block;
+use torus_runtime::opaque::Block;
 
 use crate::service::{FullBackend, FullClient};
 
