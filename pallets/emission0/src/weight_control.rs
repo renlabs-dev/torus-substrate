@@ -94,12 +94,3 @@ pub fn delegate_weight_control<T: crate::Config>(
 
     Ok(())
 }
-
-pub fn regain_weight_control<T: crate::Config>(origin: OriginFor<T>) -> DispatchResult {
-    let acc_id = ensure_signed(origin)?;
-
-    crate::WeightControlDelegation::<T>::mutate(acc_id, |val| match val.take() {
-        Some(_) => Ok(()),
-        None => Err(crate::Error::<T>::AgentIsNotDelegating.into()),
-    })
-}
