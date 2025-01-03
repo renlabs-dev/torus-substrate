@@ -82,6 +82,7 @@ impl<T: crate::Config> Proposal<T> {
                     min_weight_control_fee,
                     min_staking_fee,
                     dividends_participation_weight,
+                    proposal_cost,
                 } = data;
 
                 pallet_torus0::MinNameLength::<T>::set(min_name_length);
@@ -95,9 +96,11 @@ impl<T: crate::Config> Proposal<T> {
                         Percent::from_percent(min_weight_control_fee);
                     constraints.min_staking_fee = Percent::from_percent(min_staking_fee);
                 });
-
                 pallet_emission0::MaxAllowedWeights::<T>::set(max_allowed_weights);
                 pallet_emission0::MinStakePerWeight::<T>::set(min_weight_stake);
+                crate::GlobalGovernanceConfig::<T>::mutate(|config| {
+                    config.proposal_cost = proposal_cost;
+                });
             }
             ProposalData::TransferDaoTreasury { account, amount } => {
                 <T as crate::Config>::Currency::transfer(
@@ -186,6 +189,24 @@ pub struct GlobalParamsData<T: crate::Config> {
     pub min_weight_control_fee: u8,
     pub min_staking_fee: u8,
     pub dividends_participation_weight: Percent,
+    pub proposal_cost: BalanceOf<T>,
+}
+
+impl<T: crate::Config> Default for GlobalParamsData<T> {
+    fn default() -> Self {
+        Self {
+            min_name_length: T::DefaultMinNameLength::get(),
+            max_name_length: T::DefaultMaxNameLength::get(),
+            max_allowed_agents: T::DefaultMaxAllowedAgents::get(),
+            max_allowed_weights: T::DefaultMaxAllowedWeights::get(),
+            min_weight_stake: 0,
+            min_weight_control_fee: T::DefaultMinWeightControlFee::get(),
+            min_staking_fee: T::DefaultMinStakingFee::get(),
+            dividends_participation_weight:
+                <T as pallet_torus0::Config>::DefaultDividendsParticipationWeight::get(),
+            proposal_cost: T::DefaultProposalCost::get(),
+        }
+    }
 }
 
 impl<T: crate::Config> GlobalParamsData<T> {
@@ -199,16 +220,21 @@ impl<T: crate::Config> GlobalParamsData<T> {
             crate::Error::<T>::InvalidMaxNameLength
         );
         ensure!(
-            self.max_allowed_agents < 2000,
+            self.max_allowed_agents <= 50000,
             crate::Error::<T>::InvalidMaxAllowedAgents
         );
         ensure!(
-            self.max_allowed_weights < 2000,
+            self.max_allowed_weights <= 2000,
             crate::Error::<T>::InvalidMaxAllowedWeights
         );
         ensure!(
-            self.min_weight_control_fee > 10,
-            crate::Error::<T>::InvalidMaxAllowedWeights
+            self.min_weight_control_fee >= 5,
+            crate::Error::<T>::InvalidMinWeightControlFee
+        );
+
+        ensure!(
+            self.proposal_cost <= 50_000_000_000_000_000_000_000,
+            crate::Error::<T>::InvalidProposalCost
         );
 
         Ok(())
@@ -464,7 +490,7 @@ fn calc_stake<T: crate::Config>(
         pallet_torus0::stake::sum_staking_to::<T>(voter)
     };
 
-    let delegated_stake = pallet_torus0::stake::get_staking_to_vector::<T>(voter)
+    let delegated_stake = pallet_torus0::stake::get_staked_by_vector::<T>(voter)
         .into_iter()
         .filter(|(staker, _)| !not_delegating.contains(staker))
         .map(|(_, stake)| stake)
@@ -525,7 +551,7 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
     );
 }
 
-fn get_reward_allocation<T: crate::Config>(
+pub fn get_reward_allocation<T: crate::Config>(
     governance_config: &GovernanceConfiguration<T>,
     n: u16,
 ) -> Result<I92F36, DispatchError> {
