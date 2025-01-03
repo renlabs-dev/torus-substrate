@@ -5,4 +5,5 @@ polkadot_sdk::frame_benchmarking::define_benchmarks!(
     [pallet_timestamp, Timestamp]
     [pallet_sudo, Sudo]
     [pallet_emission0, Emission0]
+    [pallet_governance, Governance]
 );

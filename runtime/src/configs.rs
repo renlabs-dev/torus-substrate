@@ -393,6 +393,8 @@ impl pallet_governance::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+
+    type WeightInfo = pallet_governance::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {

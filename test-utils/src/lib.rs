@@ -225,6 +225,8 @@ impl pallet_governance::Config for Test {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+
+    type WeightInfo = pallet_governance::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_balances::Config for Test {

@@ -20,6 +20,8 @@ runtime-benchmarks = [
     "polkadot-sdk/runtime-benchmarks",
     "pallet-torus0/runtime-benchmarks",
     "pallet-emission0/runtime-benchmarks",
+
+    "pallet-torus0-api/runtime-benchmarks",
 ]
 try-runtime = [
     "polkadot-sdk/try-runtime",
@@ -42,6 +44,7 @@ pallet-torus0.workspace = true
 pallet-emission0.workspace = true
 
 pallet-governance-api.workspace = true
+pallet-torus0-api.workspace = true
 
 [dev-dependencies]
 test-utils.workspace = true
