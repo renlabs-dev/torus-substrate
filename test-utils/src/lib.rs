@@ -192,6 +192,7 @@ parameter_types! {
     pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
     pub const DefaultTreasuryEmissionFee: Percent = Percent::from_percent(20);
     pub const MaxPenaltyPercentage: Percent = Percent::one();
+    pub const DefaultProposalRewardTreasuryAllocation: Percent = Percent::from_percent(2);
 }
 
 impl pallet_governance::Config for Test {
@@ -208,6 +209,18 @@ impl pallet_governance::Config for Test {
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
     type DefaultProposalCost = ConstU128<10_000_000_000_000_000_000_000>;
+
+    type DefaultProposalExpiration = ConstU64<130_000>;
+
+    type DefaultAgentApplicationCost = ConstU128<1_000_000_000_000_000_000_000>;
+
+    type DefaultAgentApplicationExpiration = ConstU64<2_000>;
+
+    type DefaultProposalRewardTreasuryAllocation = DefaultProposalRewardTreasuryAllocation;
+
+    type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<10_000_000_000_000_000_000_000>;
+
+    type DefaultProposalRewardInterval = ConstU64<75_600>;
 
     type RuntimeEvent = RuntimeEvent;
 
