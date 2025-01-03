@@ -30,6 +30,14 @@ gen-spec-file env: gen-base-spec
   
   @echo "Spec file generated at: tmp/spec/{{env}}.json"
 
+run-benchmarks:
+  cargo build -r --features runtime-benchmarks
+  . /target/release/node-subspace build-spec --disable-default-bootnode --chain local > specs/benchmarks.json
+  ./target/release/node-subspace benchmark pallet --chain specs/local.json --pallet pallet_torus0  --extrinsic "*" --steps 50 --repeat 20 --output pallets/torus0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
+  ./target/release/node-subspace benchmark pallet --chain specs/local.json --pallet pallet_governance  --extrinsic "*" --steps 50 --repeat 20 --output pallets/governance/src/weights.rs --template=./.maintain/frame-weight-template.hbs
+  ./target/release/node-subspace benchmark pallet --chain specs/local.json --pallet pallet_emission0  --extrinsic "*" --steps 50 --repeat 20 --output pallets/emission0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
+
+
 # Github Actions
 
 run-workflows:
@@ -37,3 +45,4 @@ run-workflows:
     -P 'ubuntu-24.04-8core-bakunin=ghcr.io/catthehacker/act-ubuntu:24.04' \
     -P 'ubuntu-24.04-16core-friedrich=ghcr.io/catthehacker/act-ubuntu:24.04' \
     -P 'ubuntu-22.04-32core-karl=ghcr.io/catthehacker/ubuntu:act-22.04'
+
