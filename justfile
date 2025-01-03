@@ -21,10 +21,13 @@ gen-base-spec:
 gen-spec-file env: gen-base-spec
   mkdir -p tmp/spec
 
-  node_version=$(cargo run -p torus-node -- --version) \
+  node_version=$(cargo run -p torus-node --release -- --version) \
   && scripts/adjust-spec-file.py "{{env}}" "{{base_spec_path}}" \
       --balances-file data/torus-genesis-balances.json \
       --merge-balances \
+      --aura-list-file "data/{{env}}/aura.pub.json" \
+      --gran-list-file "data/{{env}}/gran.pub.json" \
+      --bootnodes-file "data/{{env}}/bootnodes.json" \
       --name "Torus {{env}} $node_version" \
       > "tmp/spec/{{env}}.json"
   
@@ -45,3 +48,10 @@ run-workflows:
     -P 'ubuntu-24.04-16core-friedrich=ghcr.io/catthehacker/act-ubuntu:24.04' \
     -P 'ubuntu-22.04-32core-karl=ghcr.io/catthehacker/ubuntu:act-22.04'
 
+try-runtime-upgrade-testnet:
+    cargo build --release --features try-runtime
+    RUST_BACKTRACE=1 RUST_LOG=info try-runtime --runtime target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 8000 live --uri wss://api.testnet.torus.network
+
+try-runtime-upgrade-mainnet:
+    cargo build --release --features try-runtime
+    RUST_BACKTRACE=1 RUST_LOG=info try-runtime --runtime target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 8000 live --uri wss://api.torus.network
