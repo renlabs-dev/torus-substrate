@@ -19,7 +19,7 @@ fn main() {
     #[cfg(feature = "std")]
     {
         substrate_wasm_builder::WasmBuilder::init_with_defaults()
-            .enable_metadata_hash("TOR", 18) // TODO: disable on dev/local? this increases build times 100%+
+            .enable_metadata_hash("TORUS", 18) // TODO: disable on dev/local? this increases build times 100%+
             .build();
     }
 }
