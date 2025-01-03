@@ -35,6 +35,8 @@
           pkgs.just
           # Run Github actions locally
           pkgs.act
+          # Python
+          pkgs.python310
         ];
       in
       {
