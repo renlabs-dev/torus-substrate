@@ -46,6 +46,9 @@ try-runtime = [
     "pallet-torus0/try-runtime",
     "pallet-emission0/try-runtime",
     "pallet-governance/try-runtime",
+
+    # Frontier
+    "fp-self-contained/try-runtime",
 ]
 
 
