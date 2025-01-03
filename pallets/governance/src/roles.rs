@@ -22,6 +22,7 @@ pub(super) fn manage_role<T: Config, M: StorageMap<AccountIdOf<T>, ()>>(
 }
 
 pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> DispatchResult {
+    let percentage = Percent::from_parts(percentage);
     if percentage > T::MaxPenaltyPercentage::get() {
         return Err(Error::<T>::InvalidPenaltyPercentage.into());
     }
@@ -31,7 +32,7 @@ pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> D
             return Err(Error::<T>::AgentNotFound.into());
         };
 
-        agent.weight_penalty_factor = Percent::from_percent(percentage);
+        agent.weight_penalty_factor = percentage;
 
         Ok::<(), DispatchError>(())
     })?;

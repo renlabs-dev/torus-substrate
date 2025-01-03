@@ -1,3 +1,4 @@
+use pallet_governance_api::GovernanceApi;
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure},
@@ -15,10 +16,16 @@ pub fn set_weights<T: crate::Config>(
     mut weights: sp_std::vec::Vec<(T::AccountId, u16)>,
 ) -> DispatchResult {
     let acc_id = ensure_signed(origin)?;
+    <T::Governance>::ensure_allocator(&acc_id)?;
 
     ensure!(
         weights.len() <= crate::MaxAllowedWeights::<T>::get() as usize,
         crate::Error::<T>::WeightSetTooLarge
+    );
+
+    ensure!(
+        !crate::WeightControlDelegation::<T>::contains_key(&acc_id),
+        crate::Error::<T>::CannotSetWeightsWhileDelegating,
     );
 
     ensure!(
@@ -93,4 +100,13 @@ pub fn delegate_weight_control<T: crate::Config>(
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::DelegatedWeightControl(acc_id, target));
 
     Ok(())
+}
+
+pub fn regain_weight_control<T: crate::Config>(origin: OriginFor<T>) -> DispatchResult {
+    let acc_id = ensure_signed(origin)?;
+
+    crate::WeightControlDelegation::<T>::mutate(acc_id, |val| match val.take() {
+        Some(_) => Ok(()),
+        None => Err(crate::Error::<T>::AgentIsNotDelegating.into()),
+    })
 }

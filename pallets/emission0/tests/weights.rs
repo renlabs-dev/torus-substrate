@@ -1,5 +1,5 @@
 use pallet_emission0::{
-    weight_control::{delegate_weight_control, set_weights},
+    weight_control::{delegate_weight_control, regain_weight_control, set_weights},
     ConsensusMembers, Error, MaxAllowedWeights, MinStakePerWeight, WeightControlDelegation,
     Weights,
 };
@@ -23,6 +23,11 @@ fn delegates_and_regains_weight_control() {
             Err(Error::<Test>::AgentIsNotRegistered.into())
         );
 
+        assert_eq!(
+            regain_weight_control::<Test>(get_origin(delegator)),
+            Err(Error::<Test>::AgentIsNotDelegating.into())
+        );
+
         register_empty_agent(delegator);
 
         assert_eq!(
@@ -38,6 +43,9 @@ fn delegates_and_regains_weight_control() {
         );
 
         assert!(WeightControlDelegation::<Test>::contains_key(delegator));
+
+        assert_eq!(regain_weight_control::<Test>(get_origin(delegator)), Ok(()));
+        assert!(!WeightControlDelegation::<Test>::contains_key(delegator));
     });
 }
 
@@ -48,6 +56,11 @@ fn sets_weights_correctly() {
         MinStakePerWeight::<Test>::set(1);
 
         let validator = 0;
+
+        assert_eq!(
+            set_weights::<Test>(get_origin(validator), vec![(0, 0); 5]),
+            Err(test_utils::pallet_governance::Error::<Test>::NotAllocator.into()),
+        );
 
         Allocators::<Test>::insert(0, ());
 
@@ -82,6 +95,17 @@ fn sets_weights_correctly() {
 
         register_empty_agent(1);
         register_empty_agent(2);
+
+        delegate_weight_control::<Test>(get_origin(validator), 1)
+            .expect("failed to delegate weight control");
+
+        assert_eq!(
+            set_weights::<Test>(get_origin(validator), vec![(1, 0); 5]),
+            Err(Error::<Test>::CannotSetWeightsWhileDelegating.into()),
+        );
+
+        regain_weight_control::<Test>(get_origin(validator))
+            .expect("failed to regain weight control");
 
         assert_eq!(
             set_weights::<Test>(get_origin(validator), vec![(1, 0), (1, 0), (2, 0)]),

@@ -359,6 +359,7 @@ impl pallet_torus0::Config for Runtime {
 parameter_types! {
     pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
     pub const DefaultTreasuryEmissionFee: Percent = Percent::from_percent(20);
+    pub const MaxPenaltyPercentage: Percent = Percent::one();
 }
 
 impl pallet_governance::Config for Runtime {
@@ -370,11 +371,11 @@ impl pallet_governance::Config for Runtime {
 
     type ApplicationExpiration = ConstU64<2000>;
 
-    type MaxPenaltyPercentage = ConstU8<20>;
+    type MaxPenaltyPercentage = MaxPenaltyPercentage;
 
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
-    type DefaultProposalCost = ConstU128<10_000_000_000_000_000_000_000>;
+    type DefaultProposalCost = ConstU128<{ as_tors(10_000) }>;
 
     type RuntimeEvent = RuntimeEvent;
 
@@ -382,9 +383,9 @@ impl pallet_governance::Config for Runtime {
 }
 
 parameter_types! {
-    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(250_000_000)).unwrap();
-    pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(1_000_000_000)).unwrap();
-    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_percent(70);
+    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
+    pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
+    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::one();
 }
 
 impl pallet_emission0::Config for Runtime {
@@ -394,7 +395,7 @@ impl pallet_emission0::Config for Runtime {
 
     type MaxSupply = MaxSupply;
 
-    type BlockEmission = ConstU128<{ (250_000 * 10u128.pow(TOKEN_DECIMALS) - 1) / 10800 }>;
+    type BlockEmission = ConstU128<{ as_tors(64_000) / 10800 }>;
 
     type DefaultMinAllowedWeights = ConstU16<1>;
 

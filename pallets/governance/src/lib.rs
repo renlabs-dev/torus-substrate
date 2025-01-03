@@ -96,7 +96,7 @@ pub mod pallet {
         type ApplicationExpiration: Get<BlockAmount>;
 
         #[pallet::constant]
-        type MaxPenaltyPercentage: Get<u8>;
+        type MaxPenaltyPercentage: Get<Percent>;
 
         #[pallet::constant]
         type DefaultTreasuryEmissionFee: Get<Percent>;
