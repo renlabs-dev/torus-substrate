@@ -9,7 +9,7 @@
   "protocolId": "torus",
   "properties": {
     "tokenDecimals": 18,
-    "tokenSymbol": "TOR"
+    "tokenSymbol": "TORUS"
   },
   "codeSubstitutes": {},
   "genesis": {
