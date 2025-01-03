@@ -1,6 +1,6 @@
 [package]
 name = "torus-node"
-description = "The Torus substrate node implementation"
+description = "Torus Substrate Node"
 version = "0.1.0"
 license = "MIT-0"
 authors.workspace = true
@@ -14,13 +14,16 @@ runtime-benchmarks = [
     "polkadot-sdk/runtime-benchmarks",
 ]
 
+
 [dependencies]
+
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 futures-timer.workspace = true
 jsonrpsee = { workspace = true, features = ["server"] }
 serde_json = { workspace = true, default-features = true }
 
+# Substrate
 polkadot-sdk = { workspace = true, features = [
     "std",
     "frame-benchmarking-cli",
@@ -87,7 +90,7 @@ polkadot-sdk = { workspace = true, features = [
     "substrate-rpc-client",
 ] }
 
-# Frontier
+# Frontier / EVM
 fc-api.workspace = true
 fc-cli.workspace = true
 fc-consensus.workspace = true
@@ -101,7 +104,9 @@ fp-dynamic-fee = { workspace = true, features = ["default"] }
 fp-evm = { workspace = true, features = ["default"] }
 fp-rpc = { workspace = true, features = ["default"] }
 
+# Local
 torus-runtime.workspace = true
+
 
 [build-dependencies]
 polkadot-sdk = { workspace = true, features = ["substrate-build-script-utils"] }

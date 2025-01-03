@@ -1,7 +1,10 @@
 [package]
 name = "pallet-torus0-api"
+description = "Torus initial pallet API."
 version = "0.1.0"
-edition = "2021"
+license = "MIT-0"
+authors.workspace = true
+edition.workspace = true
 
 [features]
 default = ["std"]
