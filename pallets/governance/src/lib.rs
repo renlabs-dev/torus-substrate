@@ -464,7 +464,13 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
         crate::roles::ensure_allocator::<T>(key)
     }
 
+    #[cfg(feature = "runtime-benchmarks")]
     fn set_allocator(key: &T::AccountId) {
         crate::Allocators::<T>::insert(key, ());
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn set_whitelisted(key: &T::AccountId) {
+        crate::Whitelist::<T>::insert(key, ())
     }
 }

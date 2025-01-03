@@ -11,5 +11,11 @@ pub trait GovernanceApi<AccountId> {
 
     fn ensure_allocator(key: &AccountId) -> DispatchResult;
 
+    #[doc(hidden)]
+    #[cfg(feature = "runtime-benchmarks")]
     fn set_allocator(key: &AccountId);
+
+    #[doc(hidden)]
+    #[cfg(feature = "runtime-benchmarks")]
+    fn set_whitelisted(key: &AccountId);
 }
