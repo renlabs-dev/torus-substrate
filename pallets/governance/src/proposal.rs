@@ -215,21 +215,20 @@ impl<T: crate::Config> GlobalParamsData<T> {
             self.min_name_length > 1,
             crate::Error::<T>::InvalidMinNameLength
         );
+
         ensure!(
             (self.max_name_length as u32) < T::MaxAgentNameLengthConstraint::get(),
             crate::Error::<T>::InvalidMaxNameLength
         );
+
         ensure!(
             self.max_allowed_agents <= 50000,
             crate::Error::<T>::InvalidMaxAllowedAgents
         );
+
         ensure!(
             self.max_allowed_weights <= 2000,
             crate::Error::<T>::InvalidMaxAllowedWeights
-        );
-        ensure!(
-            self.min_weight_control_fee >= 5,
-            crate::Error::<T>::InvalidMinWeightControlFee
         );
 
         ensure!(
