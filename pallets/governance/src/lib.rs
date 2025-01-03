@@ -398,6 +398,8 @@ pub mod pallet {
         InvalidMaxAllowedWeights,
         /// Invalid minimum weight control fee in proposal
         InvalidMinWeightControlFee,
+        /// Invalid minimum staking fee in proposal
+        InvalidMinStakingFee,
     }
 }
 
