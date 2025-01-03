@@ -380,13 +380,13 @@ impl pallet_governance::Config for Runtime {
 
     type DefaultProposalExpiration = ConstU64<130_000>;
 
-    type DefaultAgentApplicationCost = ConstU128<1_000_000_000_000_000_000_000>;
+    type DefaultAgentApplicationCost = ConstU128<{ as_tors(1_000) }>;
 
     type DefaultAgentApplicationExpiration = ConstU64<2_000>;
 
     type DefaultProposalRewardTreasuryAllocation = DefaultProposalRewardTreasuryAllocation;
 
-    type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<10_000_000_000_000_000_000_000>;
+    type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<{ as_tors(10_000) }>;
 
     type DefaultProposalRewardInterval = ConstU64<75_600>;
 
