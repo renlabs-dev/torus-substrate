@@ -13,7 +13,7 @@ pub fn transfer_balance<T: crate::Config>(
         &key,
         &destination,
         amount,
-        ExistenceRequirement::KeepAlive,
+        ExistenceRequirement::AllowDeath,
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToTransfer)?;
 
