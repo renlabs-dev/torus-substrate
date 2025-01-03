@@ -232,6 +232,16 @@ impl<T: crate::Config> GlobalParamsData<T> {
         );
 
         ensure!(
+            self.min_weight_control_fee <= 100,
+            crate::Error::<T>::InvalidMinWeightControlFee
+        );
+
+        ensure!(
+            self.min_staking_fee <= 100,
+            crate::Error::<T>::InvalidMinStakingFee
+        );
+
+        ensure!(
             self.proposal_cost <= 50_000_000_000_000_000_000_000,
             crate::Error::<T>::InvalidProposalCost
         );

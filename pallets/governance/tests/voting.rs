@@ -117,11 +117,20 @@ fn global_governance_config_validates_parameters_correctly() {
 
         assert_err!(
             GlobalParamsData::<Test> {
-                min_weight_control_fee: 2,
+                min_weight_control_fee: 101,
                 ..GlobalParamsData::default()
             }
             .validate(),
             Error::<Test>::InvalidMinWeightControlFee
+        );
+
+        assert_err!(
+            GlobalParamsData::<Test> {
+                min_staking_fee: 101,
+                ..GlobalParamsData::default()
+            }
+            .validate(),
+            Error::<Test>::InvalidMinStakingFee
         );
     });
 }
