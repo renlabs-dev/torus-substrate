@@ -10,4 +10,6 @@ pub trait GovernanceApi<AccountId> {
     fn is_whitelisted(key: &AccountId) -> bool;
 
     fn ensure_allocator(key: &AccountId) -> DispatchResult;
+
+    fn set_allocator(key: &AccountId);
 }

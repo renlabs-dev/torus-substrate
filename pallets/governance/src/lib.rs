@@ -307,7 +307,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(17)]
-        #[pallet::weight(0)]
+        #[pallet::weight((<T as Config>::WeightInfo::add_emission_proposal(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_emission_proposal(
             origin: OriginFor<T>,
             recycling_percentage: Percent,
@@ -462,5 +462,9 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
 
     fn ensure_allocator(key: &T::AccountId) -> DispatchResult {
         crate::roles::ensure_allocator::<T>(key)
+    }
+
+    fn set_allocator(key: &T::AccountId) {
+        crate::Allocators::<T>::insert(key, ());
     }
 }

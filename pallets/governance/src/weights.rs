@@ -4,17 +4,17 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 43.0.0
 //! DATE: 2025-01-03, STEPS: `50`, REPEAT: `20`, LOW RANGE: `[]`, HIGH RANGE: `[]`
 //! WORST CASE MAP SIZE: `1000000`
-//! HOSTNAME: `Luizs-MacBook-Pro.local`, CPU: `<UNKNOWN>`
+//! HOSTNAME: `MacBook-Pro-de-Joao.local`, CPU: `<UNKNOWN>`
 //! WASM-EXECUTION: `Compiled`, CHAIN: `Some("dev")`, DB CACHE: `1024`
 
 // Executed Command:
-// target/release/torus-node
+// ./target/release/torus-node
 // benchmark
 // pallet
-// --chain
-// dev
 // --pallet
 // pallet_governance
+// --chain
+// dev
 // --extrinsic
 // *
 // --steps
@@ -55,6 +55,7 @@ pub trait WeightInfo {
 	fn remove_vote_proposal() -> Weight;
 	fn enable_vote_delegation() -> Weight;
 	fn disable_vote_delegation() -> Weight;
+	fn add_emission_proposal() -> Weight;
 }
 
 /// Weights for `pallet_governance` using the Substrate node and recommended hardware.
@@ -66,8 +67,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `3497`
-		// Minimum execution time: 4_000_000 picoseconds.
-		Weight::from_parts(5_000_000, 3497)
+		// Minimum execution time: 6_000_000 picoseconds.
+		Weight::from_parts(7_000_000, 3497)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -77,8 +78,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `60`
 		//  Estimated: `3497`
-		// Minimum execution time: 6_000_000 picoseconds.
-		Weight::from_parts(6_000_000, 3497)
+		// Minimum execution time: 8_000_000 picoseconds.
+		Weight::from_parts(9_000_000, 3497)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -88,8 +89,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `3497`
-		// Minimum execution time: 4_000_000 picoseconds.
-		Weight::from_parts(5_000_000, 3497)
+		// Minimum execution time: 6_000_000 picoseconds.
+		Weight::from_parts(7_000_000, 3497)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -99,8 +100,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `62`
 		//  Estimated: `3497`
-		// Minimum execution time: 6_000_000 picoseconds.
-		Weight::from_parts(6_000_000, 3497)
+		// Minimum execution time: 8_000_000 picoseconds.
+		Weight::from_parts(9_000_000, 3497)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -108,76 +109,78 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: `Governance::Curators` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::Whitelist` (r:1 w:1)
 	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::AgentApplications` (r:1 w:0)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	fn add_to_whitelist() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `60`
-		//  Estimated: `3497`
-		// Minimum execution time: 9_000_000 picoseconds.
-		Weight::from_parts(10_000_000, 3497)
-			.saturating_add(T::DbWeight::get().reads(2_u64))
+		//  Measured:  `66`
+		//  Estimated: `3822`
+		// Minimum execution time: 17_000_000 picoseconds.
+		Weight::from_parts(18_000_000, 3822)
+			.saturating_add(T::DbWeight::get().reads(3_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	/// Storage: `Governance::Curators` (r:1 w:0)
 	/// Proof: `Governance::Curators` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::Whitelist` (r:1 w:1)
 	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::AgentApplications` (r:1 w:0)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	/// Storage: `Torus0::Agents` (r:1 w:0)
 	/// Proof: `Torus0::Agents` (`max_values`: None, `max_size`: Some(849), added: 3324, mode: `MaxEncodedLen`)
 	fn remove_from_whitelist() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `124`
+		//  Measured:  `130`
 		//  Estimated: `4314`
-		// Minimum execution time: 14_000_000 picoseconds.
-		Weight::from_parts(14_000_000, 4314)
-			.saturating_add(T::DbWeight::get().reads(3_u64))
+		// Minimum execution time: 23_000_000 picoseconds.
+		Weight::from_parts(24_000_000, 4314)
+			.saturating_add(T::DbWeight::get().reads(4_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	/// Storage: `Governance::Whitelist` (r:1 w:0)
 	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::AgentApplications` (r:1 w:1)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::GlobalGovernanceConfig` (r:1 w:0)
 	/// Proof: `Governance::GlobalGovernanceConfig` (`max_values`: Some(1), `max_size`: Some(73), added: 568, mode: `MaxEncodedLen`)
 	/// Storage: `System::Account` (r:1 w:1)
 	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-	/// Storage: `Governance::AgentApplicationId` (r:1 w:1)
-	/// Proof: `Governance::AgentApplicationId` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
-	/// Storage: `Governance::AgentApplications` (r:0 w:1)
-	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(354), added: 2829, mode: `MaxEncodedLen`)
 	fn submit_application() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `146`
-		//  Estimated: `3593`
-		// Minimum execution time: 29_000_000 picoseconds.
-		Weight::from_parts(30_000_000, 3593)
+		//  Measured:  `152`
+		//  Estimated: `3822`
+		// Minimum execution time: 45_000_000 picoseconds.
+		Weight::from_parts(46_000_000, 3822)
 			.saturating_add(T::DbWeight::get().reads(4_u64))
-			.saturating_add(T::DbWeight::get().writes(3_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	/// Storage: `Governance::Curators` (r:1 w:0)
 	/// Proof: `Governance::Curators` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::AgentApplications` (r:1 w:1)
-	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(354), added: 2829, mode: `MaxEncodedLen`)
-	/// Storage: `Governance::Whitelist` (r:1 w:1)
-	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	/// Storage: `System::Account` (r:1 w:1)
 	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::Whitelist` (r:0 w:1)
+	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	fn accept_application() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `262`
-		//  Estimated: `3819`
-		// Minimum execution time: 37_000_000 picoseconds.
-		Weight::from_parts(38_000_000, 3819)
-			.saturating_add(T::DbWeight::get().reads(4_u64))
+		//  Measured:  `241`
+		//  Estimated: `3822`
+		// Minimum execution time: 46_000_000 picoseconds.
+		Weight::from_parts(48_000_000, 3822)
+			.saturating_add(T::DbWeight::get().reads(3_u64))
 			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 	/// Storage: `Governance::Curators` (r:1 w:0)
 	/// Proof: `Governance::Curators` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::AgentApplications` (r:1 w:1)
-	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(354), added: 2829, mode: `MaxEncodedLen`)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	fn deny_application() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `210`
-		//  Estimated: `3819`
-		// Minimum execution time: 13_000_000 picoseconds.
-		Weight::from_parts(14_000_000, 3819)
+		//  Measured:  `189`
+		//  Estimated: `3822`
+		// Minimum execution time: 18_000_000 picoseconds.
+		Weight::from_parts(19_000_000, 3822)
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -189,8 +192,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `170`
 		//  Estimated: `4314`
-		// Minimum execution time: 10_000_000 picoseconds.
-		Weight::from_parts(11_000_000, 4314)
+		// Minimum execution time: 15_000_000 picoseconds.
+		Weight::from_parts(15_000_000, 4314)
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -204,8 +207,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `152`
 		//  Estimated: `3593`
-		// Minimum execution time: 27_000_000 picoseconds.
-		Weight::from_parts(28_000_000, 3593)
+		// Minimum execution time: 38_000_000 picoseconds.
+		Weight::from_parts(40_000_000, 3593)
 			.saturating_add(T::DbWeight::get().reads(3_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
@@ -219,8 +222,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `152`
 		//  Estimated: `3593`
-		// Minimum execution time: 27_000_000 picoseconds.
-		Weight::from_parts(28_000_000, 3593)
+		// Minimum execution time: 38_000_000 picoseconds.
+		Weight::from_parts(39_000_000, 3593)
 			.saturating_add(T::DbWeight::get().reads(3_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
@@ -234,8 +237,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `152`
 		//  Estimated: `3593`
-		// Minimum execution time: 27_000_000 picoseconds.
-		Weight::from_parts(29_000_000, 3593)
+		// Minimum execution time: 38_000_000 picoseconds.
+		Weight::from_parts(39_000_000, 3593)
 			.saturating_add(T::DbWeight::get().reads(3_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
@@ -251,8 +254,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `316`
 		//  Estimated: `6100`
-		// Minimum execution time: 22_000_000 picoseconds.
-		Weight::from_parts(23_000_000, 6100)
+		// Minimum execution time: 31_000_000 picoseconds.
+		Weight::from_parts(33_000_000, 6100)
 			.saturating_add(T::DbWeight::get().reads(5_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -262,8 +265,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `216`
 		//  Estimated: `3464`
-		// Minimum execution time: 10_000_000 picoseconds.
-		Weight::from_parts(11_000_000, 3464)
+		// Minimum execution time: 15_000_000 picoseconds.
+		Weight::from_parts(15_000_000, 3464)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -273,8 +276,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `1484`
-		// Minimum execution time: 3_000_000 picoseconds.
-		Weight::from_parts(4_000_000, 1484)
+		// Minimum execution time: 5_000_000 picoseconds.
+		Weight::from_parts(5_000_000, 1484)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -284,10 +287,25 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `1484`
-		// Minimum execution time: 4_000_000 picoseconds.
-		Weight::from_parts(4_000_000, 1484)
+		// Minimum execution time: 5_000_000 picoseconds.
+		Weight::from_parts(5_000_000, 1484)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
+	}
+	/// Storage: `Governance::GlobalGovernanceConfig` (r:1 w:0)
+	/// Proof: `Governance::GlobalGovernanceConfig` (`max_values`: Some(1), `max_size`: Some(73), added: 568, mode: `MaxEncodedLen`)
+	/// Storage: `System::Account` (r:1 w:1)
+	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::Proposals` (r:1 w:1)
+	/// Proof: `Governance::Proposals` (`max_values`: None, `max_size`: Some(4294967295), added: 2474, mode: `MaxEncodedLen`)
+	fn add_emission_proposal() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `152`
+		//  Estimated: `3593`
+		// Minimum execution time: 37_000_000 picoseconds.
+		Weight::from_parts(38_000_000, 3593)
+			.saturating_add(T::DbWeight::get().reads(3_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 }
 
@@ -299,8 +317,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `3497`
-		// Minimum execution time: 4_000_000 picoseconds.
-		Weight::from_parts(5_000_000, 3497)
+		// Minimum execution time: 6_000_000 picoseconds.
+		Weight::from_parts(7_000_000, 3497)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -310,8 +328,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `60`
 		//  Estimated: `3497`
-		// Minimum execution time: 6_000_000 picoseconds.
-		Weight::from_parts(6_000_000, 3497)
+		// Minimum execution time: 8_000_000 picoseconds.
+		Weight::from_parts(9_000_000, 3497)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -321,8 +339,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `3497`
-		// Minimum execution time: 4_000_000 picoseconds.
-		Weight::from_parts(5_000_000, 3497)
+		// Minimum execution time: 6_000_000 picoseconds.
+		Weight::from_parts(7_000_000, 3497)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -332,8 +350,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `62`
 		//  Estimated: `3497`
-		// Minimum execution time: 6_000_000 picoseconds.
-		Weight::from_parts(6_000_000, 3497)
+		// Minimum execution time: 8_000_000 picoseconds.
+		Weight::from_parts(9_000_000, 3497)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -341,76 +359,78 @@ impl WeightInfo for () {
 	/// Proof: `Governance::Curators` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::Whitelist` (r:1 w:1)
 	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::AgentApplications` (r:1 w:0)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	fn add_to_whitelist() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `60`
-		//  Estimated: `3497`
-		// Minimum execution time: 9_000_000 picoseconds.
-		Weight::from_parts(10_000_000, 3497)
-			.saturating_add(RocksDbWeight::get().reads(2_u64))
+		//  Measured:  `66`
+		//  Estimated: `3822`
+		// Minimum execution time: 17_000_000 picoseconds.
+		Weight::from_parts(18_000_000, 3822)
+			.saturating_add(RocksDbWeight::get().reads(3_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 	/// Storage: `Governance::Curators` (r:1 w:0)
 	/// Proof: `Governance::Curators` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::Whitelist` (r:1 w:1)
 	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::AgentApplications` (r:1 w:0)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	/// Storage: `Torus0::Agents` (r:1 w:0)
 	/// Proof: `Torus0::Agents` (`max_values`: None, `max_size`: Some(849), added: 3324, mode: `MaxEncodedLen`)
 	fn remove_from_whitelist() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `124`
+		//  Measured:  `130`
 		//  Estimated: `4314`
-		// Minimum execution time: 14_000_000 picoseconds.
-		Weight::from_parts(14_000_000, 4314)
-			.saturating_add(RocksDbWeight::get().reads(3_u64))
+		// Minimum execution time: 23_000_000 picoseconds.
+		Weight::from_parts(24_000_000, 4314)
+			.saturating_add(RocksDbWeight::get().reads(4_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 	/// Storage: `Governance::Whitelist` (r:1 w:0)
 	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::AgentApplications` (r:1 w:1)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::GlobalGovernanceConfig` (r:1 w:0)
 	/// Proof: `Governance::GlobalGovernanceConfig` (`max_values`: Some(1), `max_size`: Some(73), added: 568, mode: `MaxEncodedLen`)
 	/// Storage: `System::Account` (r:1 w:1)
 	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-	/// Storage: `Governance::AgentApplicationId` (r:1 w:1)
-	/// Proof: `Governance::AgentApplicationId` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
-	/// Storage: `Governance::AgentApplications` (r:0 w:1)
-	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(354), added: 2829, mode: `MaxEncodedLen`)
 	fn submit_application() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `146`
-		//  Estimated: `3593`
-		// Minimum execution time: 29_000_000 picoseconds.
-		Weight::from_parts(30_000_000, 3593)
+		//  Measured:  `152`
+		//  Estimated: `3822`
+		// Minimum execution time: 45_000_000 picoseconds.
+		Weight::from_parts(46_000_000, 3822)
 			.saturating_add(RocksDbWeight::get().reads(4_u64))
-			.saturating_add(RocksDbWeight::get().writes(3_u64))
+			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
 	/// Storage: `Governance::Curators` (r:1 w:0)
 	/// Proof: `Governance::Curators` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::AgentApplications` (r:1 w:1)
-	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(354), added: 2829, mode: `MaxEncodedLen`)
-	/// Storage: `Governance::Whitelist` (r:1 w:1)
-	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	/// Storage: `System::Account` (r:1 w:1)
 	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::Whitelist` (r:0 w:1)
+	/// Proof: `Governance::Whitelist` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	fn accept_application() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `262`
-		//  Estimated: `3819`
-		// Minimum execution time: 37_000_000 picoseconds.
-		Weight::from_parts(38_000_000, 3819)
-			.saturating_add(RocksDbWeight::get().reads(4_u64))
+		//  Measured:  `241`
+		//  Estimated: `3822`
+		// Minimum execution time: 46_000_000 picoseconds.
+		Weight::from_parts(48_000_000, 3822)
+			.saturating_add(RocksDbWeight::get().reads(3_u64))
 			.saturating_add(RocksDbWeight::get().writes(3_u64))
 	}
 	/// Storage: `Governance::Curators` (r:1 w:0)
 	/// Proof: `Governance::Curators` (`max_values`: None, `max_size`: Some(32), added: 2507, mode: `MaxEncodedLen`)
 	/// Storage: `Governance::AgentApplications` (r:1 w:1)
-	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(354), added: 2829, mode: `MaxEncodedLen`)
+	/// Proof: `Governance::AgentApplications` (`max_values`: None, `max_size`: Some(357), added: 2832, mode: `MaxEncodedLen`)
 	fn deny_application() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `210`
-		//  Estimated: `3819`
-		// Minimum execution time: 13_000_000 picoseconds.
-		Weight::from_parts(14_000_000, 3819)
+		//  Measured:  `189`
+		//  Estimated: `3822`
+		// Minimum execution time: 18_000_000 picoseconds.
+		Weight::from_parts(19_000_000, 3822)
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -422,8 +442,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `170`
 		//  Estimated: `4314`
-		// Minimum execution time: 10_000_000 picoseconds.
-		Weight::from_parts(11_000_000, 4314)
+		// Minimum execution time: 15_000_000 picoseconds.
+		Weight::from_parts(15_000_000, 4314)
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -437,8 +457,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `152`
 		//  Estimated: `3593`
-		// Minimum execution time: 27_000_000 picoseconds.
-		Weight::from_parts(28_000_000, 3593)
+		// Minimum execution time: 38_000_000 picoseconds.
+		Weight::from_parts(40_000_000, 3593)
 			.saturating_add(RocksDbWeight::get().reads(3_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
@@ -452,8 +472,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `152`
 		//  Estimated: `3593`
-		// Minimum execution time: 27_000_000 picoseconds.
-		Weight::from_parts(28_000_000, 3593)
+		// Minimum execution time: 38_000_000 picoseconds.
+		Weight::from_parts(39_000_000, 3593)
 			.saturating_add(RocksDbWeight::get().reads(3_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
@@ -467,8 +487,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `152`
 		//  Estimated: `3593`
-		// Minimum execution time: 27_000_000 picoseconds.
-		Weight::from_parts(29_000_000, 3593)
+		// Minimum execution time: 38_000_000 picoseconds.
+		Weight::from_parts(39_000_000, 3593)
 			.saturating_add(RocksDbWeight::get().reads(3_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
@@ -484,8 +504,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `316`
 		//  Estimated: `6100`
-		// Minimum execution time: 22_000_000 picoseconds.
-		Weight::from_parts(23_000_000, 6100)
+		// Minimum execution time: 31_000_000 picoseconds.
+		Weight::from_parts(33_000_000, 6100)
 			.saturating_add(RocksDbWeight::get().reads(5_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -495,8 +515,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `216`
 		//  Estimated: `3464`
-		// Minimum execution time: 10_000_000 picoseconds.
-		Weight::from_parts(11_000_000, 3464)
+		// Minimum execution time: 15_000_000 picoseconds.
+		Weight::from_parts(15_000_000, 3464)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -506,8 +526,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `1484`
-		// Minimum execution time: 3_000_000 picoseconds.
-		Weight::from_parts(4_000_000, 1484)
+		// Minimum execution time: 5_000_000 picoseconds.
+		Weight::from_parts(5_000_000, 1484)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -517,9 +537,24 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `1484`
-		// Minimum execution time: 4_000_000 picoseconds.
-		Weight::from_parts(4_000_000, 1484)
+		// Minimum execution time: 5_000_000 picoseconds.
+		Weight::from_parts(5_000_000, 1484)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
+	}
+	/// Storage: `Governance::GlobalGovernanceConfig` (r:1 w:0)
+	/// Proof: `Governance::GlobalGovernanceConfig` (`max_values`: Some(1), `max_size`: Some(73), added: 568, mode: `MaxEncodedLen`)
+	/// Storage: `System::Account` (r:1 w:1)
+	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+	/// Storage: `Governance::Proposals` (r:1 w:1)
+	/// Proof: `Governance::Proposals` (`max_values`: None, `max_size`: Some(4294967295), added: 2474, mode: `MaxEncodedLen`)
+	fn add_emission_proposal() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `152`
+		//  Estimated: `3593`
+		// Minimum execution time: 37_000_000 picoseconds.
+		Weight::from_parts(38_000_000, 3593)
+			.saturating_add(RocksDbWeight::get().reads(3_u64))
+			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
 }

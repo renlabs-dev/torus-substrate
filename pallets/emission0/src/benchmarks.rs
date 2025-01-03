@@ -1,3 +1,4 @@
+use pallet_governance_api::GovernanceApi;
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_benchmarking::{account, benchmarks},
@@ -11,6 +12,8 @@ benchmarks! {
     set_weights {
         let module_key: T::AccountId = account("ModuleKey", 0, 2);
         let module_key2: T::AccountId = account("ModuleKey2", 0, 3);
+
+        <T::Governance>::set_allocator(&module_key2);
 
         <T::Torus>::force_register_agent(&module_key, vec![], vec![], vec![])?;
         <T::Torus>::force_register_agent(&module_key2, vec![], vec![], vec![])?;

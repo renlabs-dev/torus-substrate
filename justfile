@@ -32,10 +32,9 @@ gen-spec-file env: gen-base-spec
 
 run-benchmarks:
   cargo build -r --features runtime-benchmarks
-  . /target/release/node-subspace build-spec --disable-default-bootnode --chain local > specs/benchmarks.json
-  ./target/release/node-subspace benchmark pallet --chain specs/local.json --pallet pallet_torus0  --extrinsic "*" --steps 50 --repeat 20 --output pallets/torus0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
-  ./target/release/node-subspace benchmark pallet --chain specs/local.json --pallet pallet_governance  --extrinsic "*" --steps 50 --repeat 20 --output pallets/governance/src/weights.rs --template=./.maintain/frame-weight-template.hbs
-  ./target/release/node-subspace benchmark pallet --chain specs/local.json --pallet pallet_emission0  --extrinsic "*" --steps 50 --repeat 20 --output pallets/emission0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
+  # ./target/release/torus-node benchmark pallet --pallet pallet_torus0 --chain dev --extrinsic "*" --steps 50 --repeat 20 --output pallets/torus0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
+  ./target/release/torus-node benchmark pallet --pallet pallet_governance --chain dev --extrinsic "*" --steps 50 --repeat 20 --output pallets/governance/src/weights.rs --template=./.maintain/frame-weight-template.hbs
+  ./target/release/torus-node benchmark pallet --pallet pallet_emission0 --chain dev --extrinsic "*" --steps 50 --repeat 20 --output pallets/emission0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
 
 
 # Github Actions
