@@ -121,6 +121,9 @@ pub mod pallet {
         /// Tried setting weights for itself.
         CannotSetWeightsForSelf,
 
+        /// Tried setting weights while delegating weight control.
+        CannotSetWeightsWhileDelegating,
+
         /// Tried delegating weight control to itself.
         CannotDelegateWeightControlToSelf,
 
@@ -159,12 +162,6 @@ pub mod pallet {
             target: AccountIdOf<T>,
         ) -> DispatchResult {
             weight_control::delegate_weight_control::<T>(origin, target)
-        }
-
-        #[pallet::call_index(3)]
-        #[pallet::weight((T::WeightInfo::regain_weight_control(), DispatchClass::Normal, Pays::Yes))]
-        pub fn regain_weight_control(origin: OriginFor<T>) -> DispatchResult {
-            weight_control::regain_weight_control::<T>(origin)
         }
     }
 }

@@ -5,7 +5,9 @@ use std::{cell::RefCell, num::NonZeroU128};
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
-        self, parameter_types,
+        self,
+        pallet_prelude::DispatchResult,
+        parameter_types,
         traits::{Currency, Everything, Hooks},
         PalletId,
     },
@@ -94,6 +96,10 @@ impl pallet_governance_api::GovernanceApi<AccountId> for Test {
 
     fn is_whitelisted(key: &AccountId) -> bool {
         pallet_governance::Whitelist::<Test>::contains_key(key)
+    }
+
+    fn ensure_allocator(key: &AccountId) -> DispatchResult {
+        pallet_governance::roles::ensure_allocator::<Test>(key)
     }
 }
 

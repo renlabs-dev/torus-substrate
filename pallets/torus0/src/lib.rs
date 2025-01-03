@@ -1,7 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod agent;
-pub mod balance;
 pub mod burn;
 mod ext;
 pub mod fee;
@@ -254,17 +253,6 @@ pub mod pallet {
 
         #[pallet::call_index(3)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
-        pub fn transfer_balance(
-            origin: OriginFor<T>,
-            destination: AccountIdOf<T>,
-            amount: BalanceOf<T>,
-        ) -> DispatchResult {
-            let key = ensure_signed(origin)?;
-            balance::transfer_balance::<T>(key, destination, amount)
-        }
-
-        #[pallet::call_index(4)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn register_agent(
             origin: OriginFor<T>,
             agent_key: T::AccountId,
@@ -276,14 +264,14 @@ pub mod pallet {
             agent::register::<T>(agent_key, name, url, metadata)
         }
 
-        #[pallet::call_index(5)]
+        #[pallet::call_index(4)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn unregister_agent(origin: OriginFor<T>) -> DispatchResult {
             let agent_key = ensure_signed(origin)?;
             agent::unregister::<T>(agent_key)
         }
 
-        #[pallet::call_index(6)]
+        #[pallet::call_index(5)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn update_agent(
             origin: OriginFor<T>,

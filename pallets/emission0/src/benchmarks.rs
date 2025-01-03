@@ -28,15 +28,4 @@ benchmarks! {
         <T::Torus>::force_register_agent(&module_key2, vec![], vec![], vec![])?;
 
     }: _(RawOrigin::Signed(module_key), module_key2.clone())
-
-    regain_weight_control {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
-        let module_key2: T::AccountId = account("ModuleKey2", 0, 3);
-
-        <T::Torus>::force_register_agent(&module_key, vec![], vec![], vec![])?;
-        <T::Torus>::force_register_agent(&module_key2, vec![], vec![], vec![])?;
-
-        Pallet::<T>::delegate_weight_control(RawOrigin::Signed(module_key.clone()).into(), module_key2.clone())?;
-
-    }: _(RawOrigin::Signed(module_key))
 }

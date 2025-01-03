@@ -40,7 +40,6 @@ use core::marker::PhantomData;
 pub trait WeightInfo {
 	fn set_weights() -> Weight;
 	fn delegate_weight_control() -> Weight;
-	fn regain_weight_control() -> Weight;
 }
 
 /// Weights for `pallet_emission0` using the Substrate node and recommended hardware.
@@ -78,17 +77,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
-	/// Storage: `Emission0::WeightControlDelegation` (r:1 w:1)
-	/// Proof: `Emission0::WeightControlDelegation` (`max_values`: None, `max_size`: Some(64), added: 2539, mode: `MaxEncodedLen`)
-	fn regain_weight_control() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `199`
-		//  Estimated: `3529`
-		// Minimum execution time: 7_000_000 picoseconds.
-		Weight::from_parts(8_000_000, 3529)
-			.saturating_add(T::DbWeight::get().reads(1_u64))
-			.saturating_add(T::DbWeight::get().writes(1_u64))
-	}
 }
 
 // For backwards compatibility and tests.
@@ -123,17 +111,6 @@ impl WeightInfo for () {
 		// Minimum execution time: 12_000_000 picoseconds.
 		Weight::from_parts(13_000_000, 7638)
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
-			.saturating_add(RocksDbWeight::get().writes(1_u64))
-	}
-	/// Storage: `Emission0::WeightControlDelegation` (r:1 w:1)
-	/// Proof: `Emission0::WeightControlDelegation` (`max_values`: None, `max_size`: Some(64), added: 2539, mode: `MaxEncodedLen`)
-	fn regain_weight_control() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `199`
-		//  Estimated: `3529`
-		// Minimum execution time: 7_000_000 picoseconds.
-		Weight::from_parts(8_000_000, 3529)
-			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 }
