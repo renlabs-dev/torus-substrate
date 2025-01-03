@@ -21,10 +21,13 @@ gen-base-spec:
 gen-spec-file env: gen-base-spec
   mkdir -p tmp/spec
 
-  node_version=$(cargo run -p torus-node -- --version) \
+  node_version=$(cargo run -p torus-node --release -- --version) \
   && scripts/adjust-spec-file.py "{{env}}" "{{base_spec_path}}" \
       --balances-file data/torus-genesis-balances.json \
       --merge-balances \
+      --aura-list-file "data/{{env}}/aura.pub.json" \
+      --gran-list-file "data/{{env}}/gran.pub.json" \
+      --bootnodes-file "data/{{env}}/bootnodes.json" \
       --name "Torus {{env}} $node_version" \
       > "tmp/spec/{{env}}.json"
   
