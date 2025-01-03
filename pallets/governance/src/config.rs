@@ -1,4 +1,5 @@
 use codec::{Decode, Encode, MaxEncodedLen};
+use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::{frame_support::DebugNoBound, sp_runtime::Percent};
 use scale_info::TypeInfo;
 
@@ -19,13 +20,14 @@ pub struct GovernanceConfiguration<T: crate::Config> {
 impl<T: crate::Config> Default for GovernanceConfiguration<T> {
     fn default() -> Self {
         Self {
-            proposal_cost: 10_000_000_000_000_000_000_000,
-            proposal_expiration: 130_000,
-            agent_application_cost: 1_000_000_000_000_000_000_000,
-            agent_application_expiration: 2_000,
-            proposal_reward_treasury_allocation: Percent::from_percent(2),
-            max_proposal_reward_treasury_allocation: 10_000_000_000_000_000_000_000,
-            proposal_reward_interval: 75_600,
+            proposal_cost: T::DefaultProposalCost::get(),
+            proposal_expiration: T::DefaultProposalExpiration::get(), //130_000,
+            agent_application_cost: T::DefaultAgentApplicationCost::get(), //1_000_000_000_000_000_000_000,
+            agent_application_expiration: T::DefaultAgentApplicationExpiration::get(), //2_000,
+            proposal_reward_treasury_allocation: T::DefaultProposalRewardTreasuryAllocation::get(), //Percent::from_percent(2),
+            max_proposal_reward_treasury_allocation:
+                T::DefaultMaxProposalRewardTreasuryAllocation::get(), //10_000_000_000_000_000_000_000,
+            proposal_reward_interval: T::DefaultProposalRewardInterval::get(), //75_600,
         }
     }
 }

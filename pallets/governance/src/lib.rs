@@ -105,6 +105,26 @@ pub mod pallet {
         #[pallet::no_default_bounds]
         type DefaultProposalCost: Get<BalanceOf<Self>>;
 
+        #[pallet::constant]
+        type DefaultProposalExpiration: Get<BlockAmount>;
+
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type DefaultAgentApplicationCost: Get<BalanceOf<Self>>;
+
+        #[pallet::constant]
+        type DefaultAgentApplicationExpiration: Get<BlockAmount>;
+
+        #[pallet::constant]
+        type DefaultProposalRewardTreasuryAllocation: Get<Percent>;
+
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type DefaultMaxProposalRewardTreasuryAllocation: Get<BalanceOf<Self>>;
+
+        #[pallet::constant]
+        type DefaultProposalRewardInterval: Get<BlockAmount>;
+
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
