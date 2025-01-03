@@ -1,11 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod application;
-mod config;
-mod ext;
-mod proposal;
-mod roles;
-mod voting;
+pub mod application;
+pub mod config;
+pub mod ext;
+pub mod proposal;
+pub mod roles;
+pub mod voting;
 pub mod whitelist;
 
 use crate::application::AgentApplication;

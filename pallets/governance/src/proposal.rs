@@ -199,7 +199,7 @@ impl<T: crate::Config> Default for GlobalParamsData<T> {
             max_name_length: T::DefaultMaxNameLength::get(),
             max_allowed_agents: T::DefaultMaxAllowedAgents::get(),
             max_allowed_weights: T::DefaultMaxAllowedWeights::get(),
-            min_weight_stake: 0,
+            min_stake_per_weight: 0,
             min_weight_control_fee: T::DefaultMinWeightControlFee::get(),
             min_staking_fee: T::DefaultMinStakingFee::get(),
             dividends_participation_weight:
