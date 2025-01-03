@@ -111,7 +111,7 @@ To generate a chain spec, use the following command:
 You can then edit this file, such as modify balances, sudo key, or aura and grandpa authorities.
 
 > [!TIP]
-> Convert the chain spec to raw format before using it with the node.
+> You can convert your chain spec to raw format using the following command:
 
 ```sh
 # here we build the raw spec based on the main.json file generated above
