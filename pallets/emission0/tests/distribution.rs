@@ -12,10 +12,11 @@ use polkadot_sdk::{
 };
 use substrate_fixed::{traits::ToFixed, types::I96F32};
 use test_utils::{
-    add_balance, add_stake, get_balance, get_origin,
+    add_balance, add_stake, get_origin,
     pallet_governance::TreasuryEmissionFee,
     pallet_torus0::{
-        Agents, FeeConstraints, MaxAllowedValidators, MinAllowedStake, MinValidatorStake, StakedBy,
+        stake::sum_staked_by, Agents, FeeConstraints, MaxAllowedValidators, MinAllowedStake,
+        MinValidatorStake, StakedBy,
     },
     register_empty_agent, step_block, Test,
 };
@@ -414,7 +415,7 @@ fn pays_dividends_to_stakers() {
         let dividends = total_emission / 2;
         let incentives = total_emission / 2;
 
-        assert_eq!(get_balance(miner), incentives);
+        assert_eq!(sum_staked_by::<Test>(&miner), incentives);
         sum += incentives;
 
         let stake_parts = (stakers.len() * (stakers.len() + 1) / 2) as u128;

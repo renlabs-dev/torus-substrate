@@ -1,6 +1,6 @@
 [package]
 name = "pallet-governance-api"
-description = "The chain's governance pallet api."
+description = "Torus governance pallet api."
 version = "0.1.0"
 license = "MIT-0"
 authors.workspace = true

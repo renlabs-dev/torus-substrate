@@ -78,17 +78,17 @@ pub fn remove_vote<T: crate::Config>(voter: AccountIdOf<T>, proposal_id: u64) ->
 
 pub fn enable_delegation<T: crate::Config>(delegator: AccountIdOf<T>) -> DispatchResult {
     crate::NotDelegatingVotingPower::<T>::mutate(|delegators| {
+        delegators.remove(&delegator);
+    });
+
+    Ok(())
+}
+
+pub fn disable_delegation<T: crate::Config>(delegator: AccountIdOf<T>) -> DispatchResult {
+    crate::NotDelegatingVotingPower::<T>::mutate(|delegators| {
         delegators
             .try_insert(delegator.clone())
             .map(|_| ())
             .map_err(|_| Error::<T>::InternalError.into())
     })
-}
-
-pub fn disable_delegation<T: crate::Config>(delegator: AccountIdOf<T>) -> DispatchResult {
-    crate::NotDelegatingVotingPower::<T>::mutate(|delegators| {
-        delegators.remove(&delegator);
-    });
-
-    Ok(())
 }

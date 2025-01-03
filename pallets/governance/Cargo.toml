@@ -1,6 +1,6 @@
 [package]
 name = "pallet-governance"
-description = "The chain's governance pallet."
+description = "Torus governance pallet."
 version = "0.1.0"
 license = "MIT-0"
 authors.workspace = true
@@ -27,17 +27,21 @@ try-runtime = [
     "pallet-emission0/try-runtime",
 ]
 
+
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive"] }
 polkadot-sdk = { workspace = true, features = [
     "experimental",
     "runtime",
     "pallet-sudo",
 ] }
-scale-info = { workspace = true, features = ["derive"] }
 substrate-fixed = { workspace = true }
 
 pallet-torus0.workspace = true
 pallet-emission0.workspace = true
 
 pallet-governance-api.workspace = true
+
+[dev-dependencies]
+test-utils.workspace = true

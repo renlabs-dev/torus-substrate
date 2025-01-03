@@ -8365,6 +8365,7 @@ dependencies = [
  "polkadot-sdk",
  "scale-info",
  "substrate-fixed",
+ "test-utils",
 ]
 
 [[package]]
@@ -16979,7 +16980,9 @@ dependencies = [
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
  "pallet-governance",
+ "pallet-governance-api",
  "pallet-torus0",
+ "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",

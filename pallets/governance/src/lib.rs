@@ -101,6 +101,10 @@ pub mod pallet {
         #[pallet::constant]
         type DefaultTreasuryEmissionFee: Get<Percent>;
 
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type DefaultProposalCost: Get<BalanceOf<Self>>;
+
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;

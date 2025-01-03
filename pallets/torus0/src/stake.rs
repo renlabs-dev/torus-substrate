@@ -25,15 +25,15 @@ pub fn add_stake<T: crate::Config>(
         &staker,
         amount,
         WithdrawReasons::TRANSFER,
-        ExistenceRequirement::KeepAlive,
+        ExistenceRequirement::AllowDeath,
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToStake)?;
 
-    crate::StakingTo::<T>::mutate(&staker, &staked, |stake| {
+    crate::StakedBy::<T>::mutate(&staked, &staker, |stake| {
         *stake = Some(stake.unwrap_or(0).saturating_add(amount))
     });
 
-    crate::StakedBy::<T>::mutate(&staked, &staker, |stake| {
+    crate::StakingTo::<T>::mutate(&staker, &staked, |stake| {
         *stake = Some(stake.unwrap_or(0).saturating_add(amount))
     });
 
