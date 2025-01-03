@@ -16,7 +16,7 @@ run-localnode profile="--alice":
 base_spec_path := "node/specs/base.json"
 
 gen-base-spec:
-  cargo run -p torus-node -- build-spec --chain dev > "{{base_spec_path}}"
+  cargo run -p torus-node --release -- build-spec --chain dev > "{{base_spec_path}}"
 
 gen-spec-file env: gen-base-spec
   mkdir -p tmp/spec
@@ -26,7 +26,9 @@ gen-spec-file env: gen-base-spec
       --balances-file data/torus-genesis-balances.json \
       --merge-balances \
       --name "Torus {{env}} $node_version" \
-      > tmp/spec/{{env}}.json
+      > "tmp/spec/{{env}}.json"
+  
+  @echo "Spec file generated at: tmp/spec/{{env}}.json"
 
 # Github Actions
 
