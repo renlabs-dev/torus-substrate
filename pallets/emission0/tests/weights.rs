@@ -1,5 +1,5 @@
 use pallet_emission0::{
-    weights::{delegate_weight_control, set_weights},
+    weight_control::{delegate_weight_control, set_weights},
     ConsensusMembers, Error, MaxAllowedWeights, MinStakePerWeight, WeightControlDelegation,
     Weights,
 };

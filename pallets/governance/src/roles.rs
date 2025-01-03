@@ -31,7 +31,7 @@ pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> D
             return Err(Error::<T>::AgentNotFound.into());
         };
 
-        agent.weight_penalty_factor = Percent::from_percent(100u8.saturating_sub(percentage));
+        agent.weight_penalty_factor = Percent::from_percent(percentage);
 
         Ok::<(), DispatchError>(())
     })?;

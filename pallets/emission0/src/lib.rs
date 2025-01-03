@@ -155,8 +155,8 @@ pub mod pallet {
             weight_control::set_weights::<T>(origin, weights)
         }
 
-        #[pallet::call_index(1)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::call_index(2)]
+        #[pallet::weight((T::WeightInfo::delegate_weight_control(), DispatchClass::Normal, Pays::Yes))]
         pub fn delegate_weight_control(
             origin: OriginFor<T>,
             target: AccountIdOf<T>,
