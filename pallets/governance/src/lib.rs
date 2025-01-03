@@ -69,9 +69,6 @@ pub mod pallet {
     pub type AgentApplications<T: Config> = StorageMap<_, Identity, u32, AgentApplication<T>>;
 
     #[pallet::storage]
-    pub type AgentApplicationId<T: Config> = StorageValue<_, u32, ValueQuery>;
-
-    #[pallet::storage]
     pub type Whitelist<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
     #[pallet::storage]

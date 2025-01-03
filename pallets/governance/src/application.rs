@@ -1,5 +1,5 @@
 use crate::frame::traits::ExistenceRequirement;
-use crate::{whitelist, AccountIdOf, BalanceOf, Block};
+use crate::{whitelist, AccountIdOf, AgentApplications, BalanceOf, Block};
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::frame_support::dispatch::DispatchResult;
@@ -44,11 +44,19 @@ pub fn submit_application<T: crate::Config>(
 ) -> DispatchResult {
     if !removing && whitelist::is_whitelisted::<T>(&agent_key) {
         return Err(crate::Error::<T>::AlreadyWhitelisted.into());
-    } else if whitelist::is_whitelisted::<T>(&agent_key) {
+    } else if removing && !whitelist::is_whitelisted::<T>(&agent_key) {
         return Err(crate::Error::<T>::NotWhitelisted.into());
     }
 
-    // TODO: check if there is an application for the agent key already?
+    let action = if removing {
+        ApplicationAction::Remove
+    } else {
+        ApplicationAction::Add
+    };
+
+    if exists_for_agent_key::<T>(&agent_key, &action) {
+        return Err(crate::Error::<T>::ApplicationKeyAlreadyUsed.into());
+    }
 
     let config = crate::GlobalGovernanceConfig::<T>::get();
     let cost = config.agent_application_cost;
@@ -78,17 +86,10 @@ pub fn submit_application<T: crate::Config>(
 
     let expires_at = current_block + config.agent_application_expiration;
 
-    let next_id: u32 = crate::AgentApplicationId::<T>::mutate(|id| {
-        let last_id = *id;
-        *id = id.saturating_add(1);
-        last_id
-    });
-
-    let action = if removing {
-        ApplicationAction::Remove
-    } else {
-        ApplicationAction::Add
-    };
+    let next_id = AgentApplications::<T>::iter()
+        .count()
+        .try_into()
+        .map_err(|_| crate::Error::<T>::InternalError)?;
 
     let application = AgentApplication::<T> {
         id: next_id,
@@ -113,10 +114,16 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
 
     match application.action {
         ApplicationAction::Add => {
-            whitelist::add_to_whitelist::<T>(application.agent_key.clone())?;
+            crate::Whitelist::<T>::insert(application.agent_key.clone(), ());
+            crate::Pallet::<T>::deposit_event(crate::Event::<T>::WhitelistAdded(
+                application.agent_key,
+            ));
         }
         ApplicationAction::Remove => {
-            whitelist::remove_from_whitelist::<T>(application.agent_key.clone())?;
+            crate::Whitelist::<T>::remove(&application.agent_key);
+            crate::Pallet::<T>::deposit_event(crate::Event::<T>::WhitelistRemoved(
+                application.agent_key,
+            ));
         }
     }
 
@@ -131,7 +138,6 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
         <T as crate::Config>::Currency::deposit_creating(&application.payer_key, application.cost);
 
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationAccepted(application.id));
-    crate::Pallet::<T>::deposit_event(crate::Event::<T>::WhitelistAdded(application.agent_key));
 
     Ok(())
 }
@@ -165,4 +171,15 @@ pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Bloc
 
         crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationExpired(application.id));
     }
+}
+
+pub(crate) fn exists_for_agent_key<T: crate::Config>(
+    key: &AccountIdOf<T>,
+    action: &ApplicationAction,
+) -> bool {
+    crate::AgentApplications::<T>::iter().any(|(_, application)| {
+        application.agent_key == *key
+            && application.status == ApplicationStatus::Open
+            && application.action == *action
+    })
 }
