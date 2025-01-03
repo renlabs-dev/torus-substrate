@@ -43,7 +43,7 @@ base_spec_file = args.spec_file
 
 spec_data = load_json(base_spec_file)
 
-# Node config / metadata
+# == Node config / metadata ==
 
 if node_env == "mainnet":
     spec_data['chainType'] = "Live"
@@ -55,7 +55,10 @@ else:
 if args.name:
     spec_data['name'] = args.name
 
-# Runtime values patch
+# Removing bootnodes list
+del spec_data['bootNodes']
+
+# == Runtime values patch ==
 
 patch_obj = spec_data['genesis']['runtimeGenesis']['patch']
 

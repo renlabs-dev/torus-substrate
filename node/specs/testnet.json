@@ -1,10 +1,7 @@
 {
-  "name": "Torus testnet torus-node 0.1.0-bfc6eb1e5ca",
+  "name": "Torus testnet torus-node 0.1.0-957b6a33dd2",
   "id": "torus-testnet",
   "chainType": "Development",
-  "bootNodes": [
-    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWQWNHQgf82QKtE6zEDKJz3hiG7xoanH8sVo94M6mPgs6R"
-  ],
   "telemetryEndpoints": null,
   "protocolId": "torus",
   "properties": {
