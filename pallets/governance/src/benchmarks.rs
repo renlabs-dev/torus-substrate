@@ -193,4 +193,13 @@ benchmarks! {
     disable_vote_delegation {
         let module_key: T::AccountId = account("ModuleKey", 0, 2);
     }:  _(RawOrigin::Signed(module_key))
+
+    add_emission_proposal {
+        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+
+        let config = crate::GlobalGovernanceConfig::<T>::get();
+        let cost = config.proposal_cost;
+        let _ = <T as crate::Config>::Currency::deposit_creating(&module_key, cost);
+
+    }:  _(RawOrigin::Signed(module_key.clone()), Percent::from_parts(40), Percent::from_parts(40), data)
 }
