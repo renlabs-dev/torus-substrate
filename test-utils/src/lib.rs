@@ -159,9 +159,9 @@ impl pallet_torus0::Config for Test {
 }
 
 parameter_types! {
-    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(to_nano(250_000_000)).unwrap();
-    pub MaxSupply: NonZeroU128 = NonZeroU128::new(to_nano(1_000_000_000)).unwrap();
-    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_percent(70);
+    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(to_nano(144_000_000)).unwrap();
+    pub MaxSupply: NonZeroU128 = NonZeroU128::new(to_nano(144_000_000 * 4)).unwrap();
+    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_parts(70);
 }
 
 impl pallet_emission0::Config for Test {
@@ -191,6 +191,7 @@ impl pallet_emission0::Config for Test {
 parameter_types! {
     pub const GovernancePalletId: PalletId = PalletId(*b"torusgov");
     pub const DefaultTreasuryEmissionFee: Percent = Percent::from_percent(20);
+    pub const MaxPenaltyPercentage: Percent = Percent::one();
 }
 
 impl pallet_governance::Config for Test {
@@ -202,7 +203,7 @@ impl pallet_governance::Config for Test {
 
     type ApplicationExpiration = ConstU64<2000>;
 
-    type MaxPenaltyPercentage = ConstU8<20>;
+    type MaxPenaltyPercentage = MaxPenaltyPercentage;
 
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 

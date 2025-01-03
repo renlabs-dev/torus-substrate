@@ -155,13 +155,19 @@ pub mod pallet {
             weight_control::set_weights::<T>(origin, weights)
         }
 
-        #[pallet::call_index(2)]
+        #[pallet::call_index(1)]
         #[pallet::weight((T::WeightInfo::delegate_weight_control(), DispatchClass::Normal, Pays::Yes))]
         pub fn delegate_weight_control(
             origin: OriginFor<T>,
             target: AccountIdOf<T>,
         ) -> DispatchResult {
             weight_control::delegate_weight_control::<T>(origin, target)
+        }
+
+        #[pallet::call_index(2)]
+        #[pallet::weight((T::WeightInfo::regain_weight_control(), DispatchClass::Normal, Pays::Yes))]
+        pub fn regain_weight_control(origin: OriginFor<T>) -> DispatchResult {
+            weight_control::regain_weight_control::<T>(origin)
         }
     }
 }
