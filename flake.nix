@@ -2,7 +2,7 @@
   description = "Torus Substrate development environment";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-24.11";
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
     pre-commit-hooks.url = "github:cachix/git-hooks.nix";
@@ -63,7 +63,9 @@
             OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include";
             RUSTC_WRAPPER = "${pkgs.sccache}/bin/sccache";
             RUST_BACKTRACE = "1";
-          } // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux { JEMALLOC_OVERRIDE = "${pkgs.jemalloc}/lib/libjemalloc.so"; };
+          } // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+            JEMALLOC_OVERRIDE = "${pkgs.jemalloc}/lib/libjemalloc.so";
+          };
         };
       }
     );
