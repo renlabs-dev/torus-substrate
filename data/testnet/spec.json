@@ -1,5 +1,5 @@
 {
-  "name": "Torus testnet torus-node 0.1.0-957b6a33dd2",
+  "name": "Torus testnet torus-node 0.1.0-57d73b95194",
   "id": "torus-testnet",
   "chainType": "Development",
   "telemetryEndpoints": null,
@@ -15,8 +15,10 @@
       "patch": {
         "aura": {
           "authorities": [
-            "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-            "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"
+            "5HgqdQWjhW6DNAwFuR9QyXPT2X8sMcPbfkqhhDMcZTtzrg6G",
+            "5CZg4dpW13JvjMo61xEgrYDkVW4R9i4HYMpLEpaa9CMfHfmt",
+            "5Gut8yb1HHw4ro9BEH3o44XgVDgXkJTWRNxEp4a1bvGr9tws",
+            "5HKQ3mwPR7oppkb957YyTBRMR4iLVjF27mdPx7a9EkBBinFN"
           ]
         },
         "balances": {
@@ -2450,11 +2452,19 @@
         "grandpa": {
           "authorities": [
             [
-              "5FA9nQDVg267DEd8m1ZypXLBnvN7SFxYwV7ndqSYGiN9TTpu",
+              "5CwLdPUxBiCUCVZ3w5dvhWztXEZ58ijXG7jD6F3QY8SfZwj1",
               1
             ],
             [
-              "5GoNkf6WdbxCFnPdAnYYQyCjAKPJgLNxXwPjwTh6DGg6gN3E",
+              "5FuTB4GLFdxX2Ee8Wz69qA6M8GtHzxy6jGVLQoDJXTRKAv4o",
+              1
+            ],
+            [
+              "5CUnFDtwqd2feHwqGuojjQX4z9eBnJqZBdWo1xY8b26rEUyN",
+              1
+            ],
+            [
+              "5D2LyEr5wvkWrVAWrM3ThpipxPDDdN6deaweLjMKitrBH9BT",
               1
             ]
           ]
