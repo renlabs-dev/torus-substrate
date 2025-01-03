@@ -16,29 +16,29 @@ def load_json(path: str):
 
 parser = argparse.ArgumentParser(
     description='Adjust chain spec file with node configuration')
+arg = parser.add_argument
 
-parser.add_argument(
-    'node_env', help='Node environment (e.g. mainnet, testnet)', type=str)
-parser.add_argument(
-    'spec_file', help='Path to the input chain spec file', type=str)
+arg('node_env', help='Node environment (e.g. mainnet, testnet)', type=str)
+arg('spec_file', help='Path to the input chain spec file', type=str)
 
-parser.add_argument(
-    "--aura-list-file", help="Path to the aura list file (JSON)", type=str)
-parser.add_argument(
-    "--gran-list-file", help="Path to the gran list file (JSON)", type=str)
-parser.add_argument(
-    "--balances-file", help="Path to the balances file (JSON)", type=str)
-parser.add_argument(
-    "--merge-balances", help="Merge external balances with the spec file balances", action="store_true")
+arg("--bootnodes-file", help="Path to the bootnodes file (JSON)", type=str)
+arg("--aura-list-file", help="Path to the aura list file (JSON)", type=str)
+arg("--gran-list-file", help="Path to the gran list file (JSON)", type=str)
+arg("--balances-file", help="Path to the balances file (JSON)", type=str)
 
-parser.add_argument(
-    "--sudo-key", help="Sudo key to use", type=str)
-parser.add_argument(
-    "--name", help="Node name", type=str, default="Torus")
+arg("--merge-balances",
+    help="Merge external balances with the spec file balances", action="store_true")
+
+arg("--sudo-key", help="Sudo key to use", type=str)
+arg("--name", help="Node name", type=str, default="Torus")
 
 args = parser.parse_args()
+
 node_env = args.node_env
 base_spec_file = args.spec_file
+bootnodes_path = args.bootnodes_file
+aura_list_path = args.aura_list_file
+gran_list_path = args.gran_list_file
 
 
 spec_data = load_json(base_spec_file)
@@ -55,15 +55,14 @@ else:
 if args.name:
     spec_data['name'] = args.name
 
-# Removing bootnodes list
-del spec_data['bootNodes']
+if bootnodes_path:
+    # Inject bootnodes
+    bootnodes = load_json(bootnodes_path)
+    spec_data['bootNodes'] = bootnodes
 
 # == Runtime values patch ==
 
 patch_obj = spec_data['genesis']['runtimeGenesis']['patch']
-
-aura_list_path = args.aura_list_file
-gran_list_path = args.gran_list_file
 
 if aura_list_path:
     # Inject AURA authority pub key list

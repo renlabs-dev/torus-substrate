@@ -27,6 +27,7 @@ gen-spec-file env: gen-base-spec
       --merge-balances \
       --aura-list-file "data/{{env}}/aura.pub.json" \
       --gran-list-file "data/{{env}}/gran.pub.json" \
+      --bootnodes-file "data/{{env}}/bootnodes.json" \
       --name "Torus {{env}} $node_version" \
       > "tmp/spec/{{env}}.json"
   
