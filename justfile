@@ -20,10 +20,13 @@ gen-base-spec:
 
 gen-spec-file env: gen-base-spec
   mkdir -p tmp/spec
-  scripts/adjust-spec-file.py "{{env}}" "{{base_spec_path}}" \
-    --balances-file data/torus-genesis-balances.json \
-    --merge-balances \
-    > tmp/spec/{{env}}.json
+
+  node_version=$(cargo run -p torus-node -- --version) \
+  && scripts/adjust-spec-file.py "{{env}}" "{{base_spec_path}}" \
+      --balances-file data/torus-genesis-balances.json \
+      --merge-balances \
+      --name "Torus {{env}} $node_version" \
+      > tmp/spec/{{env}}.json
 
 # Github Actions
 
