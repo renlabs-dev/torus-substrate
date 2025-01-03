@@ -101,6 +101,10 @@ impl pallet_governance_api::GovernanceApi<AccountId> for Test {
     fn ensure_allocator(key: &AccountId) -> DispatchResult {
         pallet_governance::roles::ensure_allocator::<Test>(key)
     }
+
+    fn set_allocator(key: &AccountId) {
+        pallet_governance::Allocators::<Test>::insert(key, ());
+    }
 }
 
 impl pallet_torus0::Config for Test {

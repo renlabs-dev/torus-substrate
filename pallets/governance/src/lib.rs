@@ -305,6 +305,23 @@ pub mod pallet {
             let delegator = ensure_signed(origin)?;
             voting::disable_delegation::<T>(delegator)
         }
+
+        #[pallet::call_index(17)]
+        #[pallet::weight((<T as Config>::WeightInfo::add_emission_proposal(), DispatchClass::Normal, Pays::Yes))]
+        pub fn add_emission_proposal(
+            origin: OriginFor<T>,
+            recycling_percentage: Percent,
+            treasury_percentage: Percent,
+            data: Vec<u8>,
+        ) -> DispatchResult {
+            let proposer = ensure_signed(origin)?;
+            proposal::add_emission_proposal::<T>(
+                proposer,
+                recycling_percentage,
+                treasury_percentage,
+                data,
+            )
+        }
     }
 
     #[pallet::event]
@@ -425,6 +442,8 @@ pub mod pallet {
         InvalidMinWeightControlFee,
         /// Invalid minimum staking fee in proposal
         InvalidMinStakingFee,
+        /// Invalid params given to Emission proposal
+        InvalidEmissionProposalData,
     }
 }
 
@@ -443,5 +462,9 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
 
     fn ensure_allocator(key: &T::AccountId) -> DispatchResult {
         crate::roles::ensure_allocator::<T>(key)
+    }
+
+    fn set_allocator(key: &T::AccountId) {
+        crate::Allocators::<T>::insert(key, ());
     }
 }

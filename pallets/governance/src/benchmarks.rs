@@ -15,7 +15,7 @@ fn create_application<T: Config>(module_key: &T::AccountId) {
     let min_data_len = T::MinApplicationDataLength::get();
     let data = vec![0; min_data_len as usize];
 
-    application::submit_application::<T>(module_key.clone(), module_key.clone(), data)
+    application::submit_application::<T>(module_key.clone(), module_key.clone(), data, false)
         .expect("failed to submit application");
 }
 
@@ -66,7 +66,7 @@ benchmarks! {
 
         let min_data_len = T::MinApplicationDataLength::get();
         let data = vec![0; min_data_len as usize];
-    }: _(RawOrigin::Signed(module_key.clone()), module_key.clone(), data)
+    }: _(RawOrigin::Signed(module_key.clone()), module_key.clone(), data, false)
 
     accept_application {
         let module_key: T::AccountId = account("ModuleKey", 0, 2);
@@ -193,4 +193,14 @@ benchmarks! {
     disable_vote_delegation {
         let module_key: T::AccountId = account("ModuleKey", 0, 2);
     }:  _(RawOrigin::Signed(module_key))
+
+    add_emission_proposal {
+        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let data = vec![0];
+
+        let config = crate::GlobalGovernanceConfig::<T>::get();
+        let cost = config.proposal_cost;
+        let _ = <T as crate::Config>::Currency::deposit_creating(&module_key, cost);
+
+    }:  _(RawOrigin::Signed(module_key.clone()), Percent::from_parts(40), Percent::from_parts(40), data)
 }

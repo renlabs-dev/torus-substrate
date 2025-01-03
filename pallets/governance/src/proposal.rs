@@ -12,6 +12,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::frame_support::traits::Currency;
 use polkadot_sdk::frame_support::traits::WithdrawReasons;
+use polkadot_sdk::polkadot_sdk_frame::traits::CheckedAdd;
 use polkadot_sdk::sp_runtime::SaturatedConversion;
 use polkadot_sdk::sp_std::{collections::btree_set::BTreeSet, vec::Vec};
 use polkadot_sdk::{
@@ -24,7 +25,7 @@ use substrate_fixed::types::I92F36;
 
 pub type ProposalId = u64;
 
-#[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
+#[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct Proposal<T: crate::Config> {
     pub id: ProposalId,
@@ -42,6 +43,13 @@ impl<T: crate::Config> Proposal<T> {
     #[must_use]
     pub fn is_active(&self) -> bool {
         matches!(self.status, ProposalStatus::Open { .. })
+    }
+
+    pub fn execution_block(&self) -> Block {
+        match self.data {
+            ProposalData::Emission { .. } => self.creation_block + 21_600,
+            _ => self.expiration_block,
+        }
     }
 
     /// Marks a proposal as accepted and overrides the storage value.
@@ -250,11 +258,15 @@ impl<T: crate::Config> GlobalParamsData<T> {
     }
 }
 
-#[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
+#[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub enum ProposalData<T: crate::Config> {
     GlobalParams(GlobalParamsData<T>),
     GlobalCustom,
+    Emission {
+        recycling_percentage: Percent,
+        treasury_percentage: Percent,
+    },
     TransferDaoTreasury {
         account: AccountIdOf<T>,
         amount: BalanceOf<T>,
@@ -265,6 +277,7 @@ impl<T: crate::Config> ProposalData<T> {
     #[must_use]
     pub fn required_stake(&self) -> Percent {
         match self {
+            Self::Emission { .. } => Percent::from_parts(10),
             Self::GlobalCustom | Self::TransferDaoTreasury { .. } => Percent::from_parts(50),
             Self::GlobalParams { .. } => Percent::from_parts(40),
         }
@@ -307,6 +320,27 @@ pub fn add_dao_treasury_transfer_proposal<T: crate::Config>(
     let data = ProposalData::<T>::TransferDaoTreasury {
         account: destination_key,
         amount: value,
+    };
+
+    add_proposal::<T>(proposer, data, metadata)
+}
+
+pub fn add_emission_proposal<T: crate::Config>(
+    proposer: AccountIdOf<T>,
+    recycling_percentage: Percent,
+    treasury_percentage: Percent,
+    metadata: Vec<u8>,
+) -> DispatchResult {
+    ensure!(
+        recycling_percentage
+            .checked_add(&treasury_percentage)
+            .is_some(),
+        crate::Error::<T>::InvalidEmissionProposalData
+    );
+
+    let data = ProposalData::<T>::Emission {
+        recycling_percentage,
+        treasury_percentage,
     };
 
     add_proposal::<T>(proposer, data, metadata)
@@ -442,7 +476,10 @@ fn tick_proposal<T: crate::Config>(
             *stake_for = stake_for_sum;
             *stake_against = stake_against_sum;
         }
-        Proposals::<T>::set(proposal.id, Some(proposal));
+        Proposals::<T>::set(proposal.id, Some(proposal.clone()));
+    }
+
+    if block_number < proposal.execution_block() {
         return Ok(());
     }
 
@@ -450,6 +487,27 @@ fn tick_proposal<T: crate::Config>(
     let minimal_stake_to_execute =
         get_minimal_stake_to_execute_with_percentage::<T>(proposal.data.required_stake());
 
+    if total_stake >= minimal_stake_to_execute {
+        create_unrewarded_proposal::<T>(proposal.id, block_number, votes_for, votes_against);
+        if stake_against_sum > stake_for_sum {
+            proposal.refuse(block_number, stake_for_sum, stake_against_sum)
+        } else {
+            proposal.accept(block_number, stake_for_sum, stake_against_sum)
+        }
+    } else if block_number >= proposal.expiration_block {
+        create_unrewarded_proposal::<T>(proposal.id, block_number, votes_for, votes_against);
+        proposal.expire(block_number)
+    } else {
+        Ok(())
+    }
+}
+
+fn create_unrewarded_proposal<T: crate::Config>(
+    proposal_id: u64,
+    block_number: Block,
+    votes_for: Vec<(AccountIdOf<T>, BalanceOf<T>)>,
+    votes_against: Vec<(AccountIdOf<T>, BalanceOf<T>)>,
+) {
     let mut reward_votes_for = BoundedBTreeMap::new();
     for (key, value) in votes_for {
         reward_votes_for
@@ -469,23 +527,13 @@ fn tick_proposal<T: crate::Config>(
     }
 
     UnrewardedProposals::<T>::insert(
-        proposal.id,
+        proposal_id,
         UnrewardedProposal::<T> {
             block: block_number,
             votes_for: reward_votes_for,
             votes_against: reward_votes_against,
         },
     );
-
-    if total_stake >= minimal_stake_to_execute {
-        if stake_against_sum > stake_for_sum {
-            proposal.refuse(block_number, stake_for_sum, stake_against_sum)
-        } else {
-            proposal.accept(block_number, stake_for_sum, stake_against_sum)
-        }
-    } else {
-        proposal.expire(block_number)
-    }
 }
 
 #[inline]

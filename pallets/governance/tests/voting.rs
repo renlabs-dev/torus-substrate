@@ -3,7 +3,8 @@ use pallet_governance::{
     proposal::{GlobalParamsData, ProposalStatus},
     DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
 };
-use polkadot_sdk::frame_support::assert_err;
+use polkadot_sdk::frame_support::traits::Get;
+use polkadot_sdk::{frame_support::assert_err, sp_runtime::BoundedBTreeSet};
 use polkadot_sdk::{frame_support::assert_ok, sp_runtime::Percent};
 use test_utils::{
     add_balance, get_balance, get_origin, new_test_ext, step_block, to_nano, zero_min_burn,
@@ -346,6 +347,163 @@ fn creates_treasury_transfer_proposal_and_transfers() {
 
         assert_eq!(get_balance(DaoTreasuryAddress::<Test>::get()), to_nano(5));
         assert_eq!(get_balance(0), to_nano(8));
+    });
+}
+
+#[test]
+fn creates_emission_proposal_and_it_runs_after_2_days() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+
+        let default_proposal_expiration: u64 =
+            <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
+
+        config(1, default_proposal_expiration);
+
+        let origin = get_origin(0);
+        add_balance(0, to_nano(2));
+        register(0, 0, 0, to_nano(1));
+        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+
+        assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
+            origin.clone(),
+            Percent::from_parts(20),
+            Percent::from_parts(20),
+            vec![b'0'; 64],
+        ));
+
+        vote(0, 0, true);
+
+        step_block(21_600);
+
+        assert_eq!(
+            Proposals::<Test>::get(0).unwrap().status,
+            ProposalStatus::Accepted {
+                block: 21_600,
+                stake_for: to_nano(1),
+                stake_against: 0
+            }
+        );
+    });
+}
+
+#[test]
+fn creates_emission_proposal_and_it_runs_before_expiration() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+
+        let default_proposal_expiration: u64 =
+            <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
+
+        let min_stake: u128 = <Test as pallet_torus0::Config>::DefaultMinAllowedStake::get();
+
+        config(1, default_proposal_expiration);
+
+        let origin = get_origin(0);
+        add_balance(0, to_nano(2));
+        register(0, 0, 0, to_nano(1) - min_stake);
+        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+
+        assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
+            origin.clone(),
+            Percent::from_parts(20),
+            Percent::from_parts(20),
+            vec![b'0'; 64],
+        ));
+
+        vote(0, 0, true);
+
+        step_block(21_600);
+
+        let mut votes_for = BoundedBTreeSet::new();
+        votes_for.try_insert(0).unwrap();
+
+        assert_eq!(
+            Proposals::<Test>::get(0).unwrap().status,
+            ProposalStatus::Open {
+                votes_for,
+                votes_against: BoundedBTreeSet::new(),
+                stake_for: to_nano(1) - min_stake,
+                stake_against: 0
+            }
+        );
+
+        stake(0, 0, min_stake);
+        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+
+        step_block(100);
+
+        assert_eq!(
+            Proposals::<Test>::get(0).unwrap().status,
+            ProposalStatus::Accepted {
+                block: 21_700,
+                stake_for: to_nano(1),
+                stake_against: 0
+            }
+        );
+    });
+}
+
+#[test]
+fn creates_emission_proposal_and_it_expires() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+
+        let default_proposal_expiration: u64 =
+            <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
+
+        let min_stake: u128 = <Test as pallet_torus0::Config>::DefaultMinAllowedStake::get();
+
+        config(1, default_proposal_expiration);
+
+        let origin = get_origin(0);
+        add_balance(0, to_nano(2));
+        register(0, 0, 0, to_nano(1) - min_stake);
+        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+
+        assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
+            origin.clone(),
+            Percent::from_parts(20),
+            Percent::from_parts(20),
+            vec![b'0'; 64],
+        ));
+
+        vote(0, 0, true);
+
+        step_block(default_proposal_expiration);
+
+        assert_eq!(
+            Proposals::<Test>::get(0).unwrap().status,
+            ProposalStatus::Expired
+        );
+    });
+}
+
+#[test]
+fn creates_emission_proposal_with_invalid_params_and_it_fails() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+
+        let default_proposal_expiration: u64 =
+            <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
+
+        let min_stake: u128 = <Test as pallet_torus0::Config>::DefaultMinAllowedStake::get();
+
+        config(1, default_proposal_expiration);
+
+        let origin = get_origin(0);
+        add_balance(0, to_nano(2));
+        register(0, 0, 0, to_nano(1) - min_stake);
+
+        assert_err!(
+            pallet_governance::Pallet::<Test>::add_emission_proposal(
+                origin.clone(),
+                Percent::from_parts(51),
+                Percent::from_parts(50),
+                vec![b'0'; 64],
+            ),
+            Error::<Test>::InvalidEmissionProposalData
+        );
     });
 }
 
