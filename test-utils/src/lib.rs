@@ -5,9 +5,7 @@ use std::{cell::RefCell, num::NonZeroU128};
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
-        self,
-        pallet_prelude::DispatchResult,
-        parameter_types,
+        self, parameter_types,
         traits::{Currency, Everything, Hooks},
         PalletId,
     },
@@ -85,28 +83,6 @@ parameter_types! {
     pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
 }
 
-impl pallet_governance_api::GovernanceApi<AccountId> for Test {
-    fn dao_treasury_address() -> AccountId {
-        pallet_governance::DaoTreasuryAddress::<Test>::get()
-    }
-
-    fn treasury_emission_fee() -> Percent {
-        pallet_governance::TreasuryEmissionFee::<Test>::get()
-    }
-
-    fn is_whitelisted(key: &AccountId) -> bool {
-        pallet_governance::Whitelist::<Test>::contains_key(key)
-    }
-
-    fn ensure_allocator(key: &AccountId) -> DispatchResult {
-        pallet_governance::roles::ensure_allocator::<Test>(key)
-    }
-
-    fn set_allocator(key: &AccountId) {
-        pallet_governance::Allocators::<Test>::insert(key, ());
-    }
-}
-
 impl pallet_torus0::Config for Test {
     type DefaultMinValidatorStake = ConstU128<50_000_000_000_000_000_000_000>;
 
@@ -160,6 +136,8 @@ impl pallet_torus0::Config for Test {
     type Governance = Governance;
 
     type Emission = Emission0;
+
+    type WeightInfo = pallet_torus0::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {

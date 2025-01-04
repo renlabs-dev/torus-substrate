@@ -22,6 +22,7 @@ runtime-benchmarks = [
     "pallet-emission0/runtime-benchmarks",
 
     "pallet-torus0-api/runtime-benchmarks",
+    "pallet-governance-api/runtime-benchmarks",
 ]
 try-runtime = [
     "polkadot-sdk/try-runtime",
