@@ -1,13 +1,9 @@
-name: Building
+name: Build Torus Runtime
 
 on:
-  workflow_dispatch:
   push:
-    branches: [github-ci-test]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    tags: "v*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,7 +19,6 @@ jobs:
         run: |
           rustup set profile minimal
           rustup show
-          rustc --version
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v1
@@ -31,7 +26,26 @@ jobs:
           version: 3.20.1
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run build
-        env:
-          SKIP_WASM_BUILD: 1
-        run: cargo build
+      - name: Build runtime
+        run: |
+          cargo build --release --timings --package torus-runtime
+
+          export SHA256SUM=$(sha256sum target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm | cut -d ' ' -f1)
+          echo Hash of compact and compressed WASM: $SHA256SUM
+
+          mkdir out
+          mv target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm out/
+          touch out/$SHA256SUM
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: torus_runtime.compact.compressed
+          path: out/
+          if-no-files-found: error
+          overwrite: true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: torus-runtime-timings
+          path: target/cargo-timings/cargo-timing.html
+          overwrite: true
