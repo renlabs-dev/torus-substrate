@@ -164,7 +164,7 @@ pub mod pallet {
         #[pallet::call_index(0)]
         #[pallet::weight((<T as Config>::WeightInfo::add_curator(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            if let Some(_) = ensure_signed_or_root(origin.clone())? {
+            if ensure_signed_or_root(origin.clone())?.is_some() {
                 roles::ensure_root_curator::<T>(origin)?;
             }
 
@@ -174,7 +174,7 @@ pub mod pallet {
         #[pallet::call_index(1)]
         #[pallet::weight((<T as Config>::WeightInfo::remove_curator(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            if let Some(_) = ensure_signed_or_root(origin.clone())? {
+            if ensure_signed_or_root(origin.clone())?.is_some() {
                 roles::ensure_root_curator::<T>(origin)?;
             }
 
@@ -334,14 +334,14 @@ pub mod pallet {
         }
 
         #[pallet::call_index(18)]
-        #[pallet::weight(0)]
+        #[pallet::weight((<T as Config>::WeightInfo::set_root_curator(), DispatchClass::Normal, Pays::No))]
         pub fn set_root_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             ensure_root(origin)?;
             roles::set_root_curator::<T>(key)
         }
 
         #[pallet::call_index(19)]
-        #[pallet::weight(0)]
+        #[pallet::weight((<T as Config>::WeightInfo::remove_root_curator(), DispatchClass::Normal, Pays::No))]
         pub fn remove_root_curator(origin: OriginFor<T>) -> DispatchResult {
             ensure_root(origin)?;
             roles::remove_root_curator::<T>()
