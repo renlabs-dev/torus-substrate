@@ -40,9 +40,18 @@ pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> D
     Ok(())
 }
 
+pub fn ensure_root_curator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
+    let key: AccountIdOf<T> = ensure_signed(origin)?;
+    if crate::RootCurator::<T>::get() != Some(key) {
+        return Err(Error::<T>::NotCurator.into());
+    }
+
+    Ok(())
+}
+
 pub fn ensure_curator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
     let key: AccountIdOf<T> = ensure_signed(origin)?;
-    if !crate::Curators::<T>::contains_key(key) {
+    if !crate::Curators::<T>::contains_key(&key) && crate::RootCurator::<T>::get() != Some(key) {
         return Err(Error::<T>::NotCurator.into());
     }
 
