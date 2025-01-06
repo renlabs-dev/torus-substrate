@@ -21,6 +21,16 @@ pub(super) fn manage_role<T: Config, M: StorageMap<AccountIdOf<T>, ()>>(
     Ok(())
 }
 
+pub fn set_root_curator<T: Config>(key: AccountIdOf<T>) -> DispatchResult {
+    crate::RootCurator::<T>::set(Some(key));
+    Ok(())
+}
+
+pub fn remove_root_curator<T: Config>() -> DispatchResult {
+    crate::RootCurator::<T>::set(None);
+    Ok(())
+}
+
 pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> DispatchResult {
     let percentage = Percent::from_parts(percentage);
     if percentage > T::MaxPenaltyPercentage::get() {
@@ -43,7 +53,7 @@ pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> D
 pub fn ensure_root_curator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
     let key: AccountIdOf<T> = ensure_signed(origin)?;
     if crate::RootCurator::<T>::get() != Some(key) {
-        return Err(Error::<T>::NotCurator.into());
+        return Err(Error::<T>::NotRootCurator.into());
     }
 
     Ok(())

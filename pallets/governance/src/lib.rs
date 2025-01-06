@@ -332,6 +332,20 @@ pub mod pallet {
                 data,
             )
         }
+
+        #[pallet::call_index(18)]
+        #[pallet::weight(0)]
+        pub fn set_root_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
+            ensure_root(origin)?;
+            roles::set_root_curator::<T>(key)
+        }
+
+        #[pallet::call_index(19)]
+        #[pallet::weight(0)]
+        pub fn remove_root_curator(origin: OriginFor<T>) -> DispatchResult {
+            ensure_root(origin)?;
+            roles::remove_root_curator::<T>()
+        }
     }
 
     #[pallet::event]
@@ -418,6 +432,8 @@ pub mod pallet {
         NotEnoughBalanceToApply,
         /// The operation can only be performed by the curator.
         NotCurator,
+        /// The operation can only be performed by the root curator.
+        NotRootCurator,
         /// The application with the given ID was not found.
         ApplicationNotFound,
         /// The account is already whitelisted and cannot be added again.
