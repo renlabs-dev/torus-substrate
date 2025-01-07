@@ -36,3 +36,23 @@ fn only_curators_can_whitelist() {
         );
     });
 }
+
+#[test]
+fn only_root_curators_can_add_curator() {
+    new_test_ext().execute_with(|| {
+        let not_curator_key = 0;
+        let module_key = 1;
+
+        assert_err!(
+            pallet_governance::Pallet::<Test>::add_curator(get_origin(not_curator_key), module_key),
+            Error::<Test>::NotRootCurator
+        );
+
+        let curator_key = 0;
+        pallet_governance::RootCurator::<Test>::set(Some(curator_key));
+        assert_ok!(pallet_governance::Pallet::<Test>::add_curator(
+            get_origin(curator_key),
+            module_key
+        ),)
+    });
+}

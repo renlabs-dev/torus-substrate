@@ -35,6 +35,7 @@ use polkadot_sdk::sp_std::vec::Vec;
 #[frame::pallet]
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
+    use frame::prelude::ensure_signed_or_root;
     use proposal::GlobalParamsData;
     use weights::WeightInfo;
 
@@ -70,6 +71,9 @@ pub mod pallet {
 
     #[pallet::storage]
     pub type Whitelist<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
+
+    #[pallet::storage]
+    pub type RootCurator<T: Config> = StorageValue<_, AccountIdOf<T>, OptionQuery>;
 
     #[pallet::storage]
     pub type Curators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
@@ -160,14 +164,20 @@ pub mod pallet {
         #[pallet::call_index(0)]
         #[pallet::weight((<T as Config>::WeightInfo::add_curator(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            ensure_root(origin)?;
+            if ensure_signed_or_root(origin.clone())?.is_some() {
+                roles::ensure_root_curator::<T>(origin)?;
+            }
+
             roles::manage_role::<T, Curators<T>>(key, true, Error::<T>::AlreadyCurator)
         }
 
         #[pallet::call_index(1)]
         #[pallet::weight((<T as Config>::WeightInfo::remove_curator(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            ensure_root(origin)?;
+            if ensure_signed_or_root(origin.clone())?.is_some() {
+                roles::ensure_root_curator::<T>(origin)?;
+            }
+
             roles::manage_role::<T, Curators<T>>(key, false, Error::<T>::NotAllocator)
         }
 
@@ -322,6 +332,20 @@ pub mod pallet {
                 data,
             )
         }
+
+        #[pallet::call_index(18)]
+        #[pallet::weight((<T as Config>::WeightInfo::set_root_curator(), DispatchClass::Normal, Pays::No))]
+        pub fn set_root_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
+            ensure_root(origin)?;
+            roles::set_root_curator::<T>(key)
+        }
+
+        #[pallet::call_index(19)]
+        #[pallet::weight((<T as Config>::WeightInfo::remove_root_curator(), DispatchClass::Normal, Pays::No))]
+        pub fn remove_root_curator(origin: OriginFor<T>) -> DispatchResult {
+            ensure_root(origin)?;
+            roles::remove_root_curator::<T>()
+        }
     }
 
     #[pallet::event]
@@ -408,6 +432,8 @@ pub mod pallet {
         NotEnoughBalanceToApply,
         /// The operation can only be performed by the curator.
         NotCurator,
+        /// The operation can only be performed by the root curator.
+        NotRootCurator,
         /// The application with the given ID was not found.
         ApplicationNotFound,
         /// The account is already whitelisted and cannot be added again.
