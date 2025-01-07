@@ -184,14 +184,20 @@ pub mod pallet {
         #[pallet::call_index(2)]
         #[pallet::weight((<T as Config>::WeightInfo::add_allocator(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            ensure_root(origin)?;
+            if ensure_signed_or_root(origin.clone())?.is_some() {
+                roles::ensure_root_curator::<T>(origin)?;
+            }
+
             roles::manage_role::<T, Allocators<T>>(key, true, Error::<T>::AlreadyAllocator)
         }
 
         #[pallet::call_index(3)]
         #[pallet::weight((<T as Config>::WeightInfo::remove_allocator(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            ensure_root(origin)?;
+            if ensure_signed_or_root(origin.clone())?.is_some() {
+                roles::ensure_root_curator::<T>(origin)?;
+            }
+
             roles::manage_role::<T, Allocators<T>>(key, false, Error::<T>::NotAllocator)
         }
 
