@@ -203,4 +203,13 @@ benchmarks! {
         let _ = <T as crate::Config>::Currency::deposit_creating(&module_key, cost);
 
     }:  _(RawOrigin::Signed(module_key.clone()), Percent::from_parts(40), Percent::from_parts(40), data)
+
+    set_root_curator {
+        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+    }:  _(RawOrigin::Root, module_key)
+
+    remove_root_curator {
+    }:  _(RawOrigin::Root)
+
+
 }
