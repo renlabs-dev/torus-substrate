@@ -1,16 +1,17 @@
 use crate::frame::traits::ExistenceRequirement;
-use crate::{whitelist, AccountIdOf, AgentApplications, BalanceOf, Block};
+use crate::{whitelist, AccountIdOf, AgentApplications, BalanceOf};
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::frame_support::dispatch::DispatchResult;
 use polkadot_sdk::frame_support::traits::Currency;
 use polkadot_sdk::frame_support::traits::WithdrawReasons;
-use polkadot_sdk::frame_support::DebugNoBound;
-use polkadot_sdk::sp_runtime::BoundedVec;
+use polkadot_sdk::frame_support::{ensure, CloneNoBound, DebugNoBound};
+use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
+use polkadot_sdk::sp_runtime::{BoundedVec, DispatchError};
 use polkadot_sdk::sp_std::vec::Vec;
 use scale_info::TypeInfo;
 
-#[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
+#[derive(CloneNoBound, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct AgentApplication<T: crate::Config> {
     pub id: u32,
@@ -18,21 +19,57 @@ pub struct AgentApplication<T: crate::Config> {
     pub agent_key: AccountIdOf<T>,
     pub data: BoundedVec<u8, T::MaxApplicationDataLength>,
     pub cost: BalanceOf<T>,
-    pub expires_at: Block,
+    pub expires_at: BlockNumberFor<T>,
     pub action: ApplicationAction,
-    pub status: ApplicationStatus,
+    pub status: ApplicationStatus<T>,
 }
 
-#[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
+impl<T: crate::Config> AgentApplication<T> {
+    fn revoke(&mut self, revoked_by: T::AccountId) -> DispatchResult {
+        ensure!(
+            self.action == ApplicationAction::Add,
+            crate::Error::<T>::CannotRevokeRemoveApplication,
+        );
+
+        let previously_accepted_by = match &self.status {
+            ApplicationStatus::Resolved {
+                accepted: true,
+                resolved_by,
+            } => resolved_by,
+            _ => return Err(crate::Error::<T>::CannotRevokeUnresolvedApplication.into()),
+        };
+
+        self.status = ApplicationStatus::Revoked {
+            previously_accepted_by: previously_accepted_by.clone(),
+            revoked_by,
+        };
+
+        whitelist::remove_from_whitelist::<T>(self.agent_key.clone())?;
+
+        crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationRevoked(self.id));
+
+        Ok(())
+    }
+}
+
+#[derive(CloneNoBound, DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
 pub enum ApplicationAction {
     Add,
     Remove,
 }
 
-#[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
-pub enum ApplicationStatus {
+#[derive(CloneNoBound, DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
+#[scale_info(skip_type_params(T))]
+pub enum ApplicationStatus<T: crate::Config> {
     Open,
-    Resolved { accepted: bool },
+    Resolved {
+        accepted: bool,
+        resolved_by: AccountIdOf<T>,
+    },
+    Revoked {
+        previously_accepted_by: AccountIdOf<T>,
+        revoked_by: AccountIdOf<T>,
+    },
     Expired,
 }
 
@@ -42,17 +79,17 @@ pub fn submit_application<T: crate::Config>(
     data: Vec<u8>,
     removing: bool,
 ) -> DispatchResult {
-    if !removing && whitelist::is_whitelisted::<T>(&agent_key) {
-        return Err(crate::Error::<T>::AlreadyWhitelisted.into());
-    } else if removing && !whitelist::is_whitelisted::<T>(&agent_key) {
-        return Err(crate::Error::<T>::NotWhitelisted.into());
-    }
-
     let action = if removing {
         ApplicationAction::Remove
     } else {
         ApplicationAction::Add
     };
+
+    if action == ApplicationAction::Add && whitelist::is_whitelisted::<T>(&agent_key) {
+        return Err(crate::Error::<T>::AlreadyWhitelisted.into());
+    } else if action == ApplicationAction::Remove && !whitelist::is_whitelisted::<T>(&agent_key) {
+        return Err(crate::Error::<T>::NotWhitelisted.into());
+    }
 
     if exists_for_agent_key::<T>(&agent_key, &action) {
         return Err(crate::Error::<T>::ApplicationKeyAlreadyUsed.into());
@@ -79,10 +116,7 @@ pub fn submit_application<T: crate::Config>(
         return Err(crate::Error::<T>::InvalidApplicationDataLength.into());
     }
 
-    let current_block: u64 =
-        TryInto::try_into(<polkadot_sdk::frame_system::Pallet<T>>::block_number())
-            .ok()
-            .expect("blockchain will not exceed 2^64 blocks; QED.");
+    let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
 
     let expires_at = current_block + config.agent_application_expiration;
 
@@ -108,30 +142,34 @@ pub fn submit_application<T: crate::Config>(
     Ok(())
 }
 
-pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResult {
-    let application = crate::AgentApplications::<T>::get(application_id)
-        .ok_or(crate::Error::<T>::ApplicationNotFound)?;
+pub fn accept_application<T: crate::Config>(
+    resolver: T::AccountId,
+    application_id: u32,
+) -> DispatchResult {
+    let application = crate::AgentApplications::<T>::mutate(application_id, |app| {
+        if let Some(app) = app {
+            ensure!(
+                app.status == ApplicationStatus::Open,
+                crate::Error::<T>::ApplicationNotPending
+            );
 
-    match application.action {
-        ApplicationAction::Add => {
-            crate::Whitelist::<T>::insert(application.agent_key.clone(), ());
-            crate::Pallet::<T>::deposit_event(crate::Event::<T>::WhitelistAdded(
-                application.agent_key,
-            ));
+            app.status = ApplicationStatus::Resolved {
+                accepted: true,
+                resolved_by: resolver,
+            };
+
+            Ok(app.clone())
+        } else {
+            Err(DispatchError::from(crate::Error::<T>::ApplicationNotFound))
         }
+    })?;
+
+    let _ = match application.action {
+        ApplicationAction::Add => whitelist::add_to_whitelist::<T>(application.agent_key.clone()),
         ApplicationAction::Remove => {
-            crate::Whitelist::<T>::remove(&application.agent_key);
-            crate::Pallet::<T>::deposit_event(crate::Event::<T>::WhitelistRemoved(
-                application.agent_key,
-            ));
+            whitelist::remove_from_whitelist::<T>(application.agent_key.clone())
         }
-    }
-
-    crate::AgentApplications::<T>::mutate(application_id, |application| {
-        if let Some(app) = application {
-            app.status = ApplicationStatus::Resolved { accepted: true };
-        }
-    });
+    };
 
     // Pay the application cost back to the applicant
     let _ =
@@ -142,22 +180,50 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
     Ok(())
 }
 
-pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult {
-    let application = crate::AgentApplications::<T>::get(application_id)
-        .ok_or(crate::Error::<T>::ApplicationNotFound)?;
+pub fn deny_application<T: crate::Config>(
+    resolved_by: T::AccountId,
+    application_id: u32,
+) -> DispatchResult {
+    let application = crate::AgentApplications::<T>::mutate(application_id, |app| {
+        if let Some(app) = app {
+            ensure!(
+                app.status == ApplicationStatus::Open,
+                crate::Error::<T>::ApplicationNotPending
+            );
 
-    crate::AgentApplications::<T>::mutate(application_id, |application| {
-        if let Some(app) = application {
-            app.status = ApplicationStatus::Resolved { accepted: false };
+            app.status = ApplicationStatus::Resolved {
+                accepted: false,
+                resolved_by,
+            };
+
+            Ok(app.clone())
+        } else {
+            Err(DispatchError::from(crate::Error::<T>::ApplicationNotFound))
         }
-    });
+    })?;
 
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationDenied(application.id));
 
     Ok(())
 }
 
-pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Block) {
+pub fn revoke_application<T: crate::Config>(
+    revoked_by: T::AccountId,
+    application_id: u32,
+) -> DispatchResult {
+    crate::AgentApplications::<T>::mutate(application_id, |app| {
+        if let Some(app) = app {
+            app.revoke(revoked_by)?;
+            Ok(app.clone())
+        } else {
+            Err(DispatchError::from(crate::Error::<T>::ApplicationNotFound))
+        }
+    })?;
+
+    Ok(())
+}
+
+pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: BlockNumberFor<T>) {
     for application in crate::AgentApplications::<T>::iter_values() {
         if current_block < application.expires_at {
             continue;

@@ -59,13 +59,15 @@ pub fn ensure_root_curator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
     Ok(())
 }
 
-pub fn ensure_curator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
+pub fn ensure_curator<T: Config>(origin: OriginFor<T>) -> Result<AccountIdOf<T>, DispatchError> {
     let key: AccountIdOf<T> = ensure_signed(origin)?;
-    if !crate::Curators::<T>::contains_key(&key) && crate::RootCurator::<T>::get() != Some(key) {
+    if !crate::Curators::<T>::contains_key(&key)
+        && crate::RootCurator::<T>::get() != Some(key.clone())
+    {
         return Err(Error::<T>::NotCurator.into());
     }
 
-    Ok(())
+    Ok(key)
 }
 
 pub fn ensure_allocator<T: Config>(key: &AccountIdOf<T>) -> DispatchResult {

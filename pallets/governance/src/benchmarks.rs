@@ -86,6 +86,17 @@ benchmarks! {
         create_application::<T>(&module_key);
     }: _(RawOrigin::Signed(module_key.clone()), 0)
 
+    revoke_application {
+        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+
+        crate::roles::manage_role::<T, crate::Curators<T>>(module_key.clone(), true, crate::Error::<T>::AlreadyCurator)
+            .expect("failed to add curator");
+
+        create_application::<T>(&module_key);
+        application::accept_application::<T>(module_key.clone(), 0)
+            .expect("failed to accept application");
+    }: _(RawOrigin::Signed(module_key.clone()), 0)
+
     penalize_agent {
         let module_key: T::AccountId = account("ModuleKey", 0, 2);
 

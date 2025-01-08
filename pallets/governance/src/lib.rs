@@ -3,6 +3,7 @@
 pub mod application;
 pub mod config;
 pub mod ext;
+pub mod migrations;
 pub mod proposal;
 pub mod roles;
 pub mod voting;
@@ -99,7 +100,8 @@ pub mod pallet {
         type MaxApplicationDataLength: Get<u32>;
 
         #[pallet::constant]
-        type ApplicationExpiration: Get<BlockAmount>;
+        #[pallet::no_default_bounds]
+        type ApplicationExpiration: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         type MaxPenaltyPercentage: Get<Percent>;
@@ -112,14 +114,16 @@ pub mod pallet {
         type DefaultProposalCost: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        type DefaultProposalExpiration: Get<BlockAmount>;
+        #[pallet::no_default_bounds]
+        type DefaultProposalExpiration: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         #[pallet::no_default_bounds]
         type DefaultAgentApplicationCost: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        type DefaultAgentApplicationExpiration: Get<BlockAmount>;
+        #[pallet::no_default_bounds]
+        type DefaultAgentApplicationExpiration: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         type DefaultProposalRewardTreasuryAllocation: Get<Percent>;
@@ -129,7 +133,8 @@ pub mod pallet {
         type DefaultMaxProposalRewardTreasuryAllocation: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        type DefaultProposalRewardInterval: Get<BlockAmount>;
+        #[pallet::no_default_bounds]
+        type DefaultProposalRewardInterval: Get<BlockNumberFor<Self>>;
 
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
@@ -140,17 +145,15 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
     }
 
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
     #[pallet::pallet]
+    #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-        fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
-            let current_block: u64 = block_number
-                .try_into()
-                .ok()
-                .expect("blockchain won't pass 2 ^ 64 blocks");
-
+        fn on_initialize(current_block: BlockNumberFor<T>) -> Weight {
             application::resolve_expired_applications::<T>(current_block);
             proposal::tick_proposals::<T>(current_block);
             proposal::tick_proposal_rewards::<T>(current_block);
@@ -218,15 +221,22 @@ pub mod pallet {
         #[pallet::call_index(6)]
         #[pallet::weight((<T as Config>::WeightInfo::accept_application(), DispatchClass::Normal, Pays::No))]
         pub fn accept_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
-            roles::ensure_curator::<T>(origin)?;
-            application::accept_application::<T>(application_id)
+            let key = roles::ensure_curator::<T>(origin)?;
+            application::accept_application::<T>(key, application_id)
         }
 
         #[pallet::call_index(7)]
         #[pallet::weight((<T as Config>::WeightInfo::deny_application(), DispatchClass::Normal, Pays::No))]
         pub fn deny_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
-            roles::ensure_curator::<T>(origin)?;
-            application::deny_application::<T>(application_id)
+            let key = roles::ensure_curator::<T>(origin)?;
+            application::deny_application::<T>(key, application_id)
+        }
+
+        #[pallet::call_index(20)]
+        #[pallet::weight((<T as Config>::WeightInfo::revoke_application(), DispatchClass::Normal, Pays::Yes))]
+        pub fn revoke_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
+            let key = roles::ensure_curator::<T>(origin)?;
+            application::revoke_application::<T>(key, application_id)
         }
 
         #[pallet::call_index(8)]
@@ -381,6 +391,8 @@ pub mod pallet {
         ApplicationDenied(u32),
         /// An application has expired.
         ApplicationExpired(u32),
+        /// An application has been revoked.
+        ApplicationRevoked(u32),
     }
 
     #[pallet::error]
@@ -434,22 +446,26 @@ pub mod pallet {
         ApplicationKeyAlreadyUsed,
         /// The application data is invalid or malformed.
         InvalidApplication,
+        /// The application data provided does not meet the length requirement
+        InvalidApplicationDataLength,
+        /// The application with the given ID was not found.
+        ApplicationNotFound,
+        /// Tried revoking a removal application.
+        CannotRevokeRemoveApplication,
+        /// Tried revoking an application that is not resolved.
+        CannotRevokeUnresolvedApplication,
         /// The account doesn't have enough balance to submit an application.
         NotEnoughBalanceToApply,
         /// The operation can only be performed by the curator.
         NotCurator,
         /// The operation can only be performed by the root curator.
         NotRootCurator,
-        /// The application with the given ID was not found.
-        ApplicationNotFound,
         /// The account is already whitelisted and cannot be added again.
         AlreadyWhitelisted,
         /// The account is not whitelisted and cannot be removed from the whitelist.
         NotWhitelisted,
         /// Failed to convert the given value to a balance.
         CouldNotConvertToBalance,
-        /// The application data provided does not meet the length requirement
-        InvalidApplicationDataLength,
         /// The penalty percentage provided does not meet the maximum requirement
         InvalidAgentPenaltyPercentage,
         /// The key is already a curator.

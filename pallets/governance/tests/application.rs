@@ -107,7 +107,10 @@ fn whitelist_executes_application_correctly_add() {
             pallet_governance::AgentApplications::<Test>::get(application_id).unwrap();
         assert_eq!(
             application.status,
-            ApplicationStatus::Resolved { accepted: true }
+            ApplicationStatus::Resolved {
+                accepted: true,
+                resolved_by: key
+            }
         );
     });
 }
@@ -162,7 +165,10 @@ fn whitelist_executes_application_correctly_remove() {
             pallet_governance::AgentApplications::<Test>::get(application_id).unwrap();
         assert_eq!(
             application.status,
-            ApplicationStatus::Resolved { accepted: true }
+            ApplicationStatus::Resolved {
+                accepted: true,
+                resolved_by: key
+            }
         );
     });
 }
@@ -247,7 +253,10 @@ fn application_denied_doesnt_add_to_whitelist() {
             pallet_governance::AgentApplications::<Test>::get(application_id).unwrap();
         assert_eq!(
             application.status,
-            ApplicationStatus::Resolved { accepted: false }
+            ApplicationStatus::Resolved {
+                accepted: false,
+                resolved_by: key
+            }
         );
     });
 }
