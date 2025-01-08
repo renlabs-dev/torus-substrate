@@ -184,8 +184,6 @@ impl pallet_governance::Config for Test {
 
     type MaxApplicationDataLength = ConstU32<256>;
 
-    type ApplicationExpiration = ConstU64<2000>;
-
     type MaxPenaltyPercentage = MaxPenaltyPercentage;
 
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
@@ -203,6 +201,8 @@ impl pallet_governance::Config for Test {
     type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<{ to_nano(10_000) }>;
 
     type DefaultProposalRewardInterval = ConstU64<75_600>;
+
+    type EmissionProposalMinimumTime = ConstU64<21_600>;
 
     type RuntimeEvent = RuntimeEvent;
 

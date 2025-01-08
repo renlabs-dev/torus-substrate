@@ -1,13 +1,14 @@
+use crate::config::GovernanceConfiguration;
 use crate::frame::traits::ExistenceRequirement;
 use crate::BoundedBTreeSet;
 use crate::BoundedVec;
 use crate::DebugNoBound;
+use crate::NotDelegatingVotingPower;
 use crate::TypeInfo;
 use crate::{
     AccountIdOf, BalanceOf, DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
     UnrewardedProposals,
 };
-use crate::{GovernanceConfiguration, NotDelegatingVotingPower};
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::frame_support::traits::Currency;
@@ -49,12 +50,12 @@ impl<T: crate::Config> Proposal<T> {
 
     pub fn execution_block(&self) -> BlockNumberFor<T> {
         match self.data {
-            ProposalData::Emission { .. } => {
+            ProposalData::Emission { .. } => self.expiration_block.min(
                 self.creation_block
                     + BlockNumberFor::<T>::try_from(U256::from(21_600))
                         .ok()
-                        .expect("valid block number")
-            }
+                        .expect("valid block number"),
+            ),
             _ => self.expiration_block,
         }
     }
@@ -98,6 +99,12 @@ impl<T: crate::Config> Proposal<T> {
                     min_staking_fee,
                     dividends_participation_weight,
                     proposal_cost,
+                    proposal_expiration,
+                    agent_application_cost,
+                    agent_application_expiration,
+                    proposal_reward_treasury_allocation,
+                    max_proposal_reward_treasury_allocation,
+                    proposal_reward_interval,
                 } = data;
 
                 pallet_torus0::MinNameLength::<T>::set(min_name_length);
@@ -113,8 +120,15 @@ impl<T: crate::Config> Proposal<T> {
                 });
                 pallet_emission0::MaxAllowedWeights::<T>::set(max_allowed_weights);
                 pallet_emission0::MinStakePerWeight::<T>::set(min_stake_per_weight);
-                crate::GlobalGovernanceConfig::<T>::mutate(|config| {
-                    config.proposal_cost = proposal_cost;
+
+                crate::GlobalGovernanceConfig::<T>::set(GovernanceConfiguration::<T> {
+                    proposal_cost,
+                    proposal_expiration,
+                    agent_application_cost,
+                    agent_application_expiration,
+                    proposal_reward_treasury_allocation,
+                    max_proposal_reward_treasury_allocation,
+                    proposal_reward_interval,
                 });
             }
             ProposalData::TransferDaoTreasury { account, amount } => {
@@ -205,6 +219,12 @@ pub struct GlobalParamsData<T: crate::Config> {
     pub min_staking_fee: u8,
     pub dividends_participation_weight: Percent,
     pub proposal_cost: BalanceOf<T>,
+    pub proposal_expiration: BlockNumberFor<T>,
+    pub agent_application_cost: BalanceOf<T>,
+    pub agent_application_expiration: BlockNumberFor<T>,
+    pub proposal_reward_treasury_allocation: Percent,
+    pub max_proposal_reward_treasury_allocation: BalanceOf<T>,
+    pub proposal_reward_interval: BlockNumberFor<T>,
 }
 
 impl<T: crate::Config> Default for GlobalParamsData<T> {
@@ -220,6 +240,13 @@ impl<T: crate::Config> Default for GlobalParamsData<T> {
             dividends_participation_weight:
                 <T as pallet_torus0::Config>::DefaultDividendsParticipationWeight::get(),
             proposal_cost: T::DefaultProposalCost::get(),
+            proposal_expiration: T::DefaultProposalExpiration::get(),
+            agent_application_cost: T::DefaultAgentApplicationCost::get(),
+            agent_application_expiration: T::DefaultAgentApplicationExpiration::get(),
+            proposal_reward_treasury_allocation: T::DefaultProposalRewardTreasuryAllocation::get(),
+            max_proposal_reward_treasury_allocation:
+                T::DefaultMaxProposalRewardTreasuryAllocation::get(),
+            proposal_reward_interval: T::DefaultProposalRewardInterval::get(),
         }
     }
 }
@@ -259,6 +286,28 @@ impl<T: crate::Config> GlobalParamsData<T> {
         ensure!(
             self.proposal_cost <= 50_000_000_000_000_000_000_000,
             crate::Error::<T>::InvalidProposalCost
+        );
+
+        let proposal_expiration_num: u64 = self
+            .proposal_expiration
+            .try_into()
+            .map_err(|_| crate::Error::<T>::InvalidProposalExpiration)?;
+
+        ensure!(
+            (5_400..u64::MAX).contains(&proposal_expiration_num),
+            crate::Error::<T>::InvalidProposalExpiration
+        );
+
+        ensure!(
+            self.agent_application_cost <= 100_000_000_000_000_000_000_000,
+            crate::Error::<T>::InvalidAgentApplicationCost
+        );
+
+        ensure!(
+            self.proposal_reward_interval
+                <= BlockNumberFor::<T>::try_from(U256::from(100_000))
+                    .map_err(|_| crate::Error::<T>::InvalidProposalRewardInterval)?,
+            crate::Error::<T>::InvalidProposalRewardInterval
         );
 
         Ok(())
@@ -385,10 +434,16 @@ fn add_proposal<T: crate::Config>(
 
     let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
 
+    let expiration_block = match &data {
+        ProposalData::Emission { .. } => (current_block + T::EmissionProposalMinimumTime::get())
+            .max(current_block + config.proposal_expiration),
+        _ => current_block + config.proposal_expiration,
+    };
+
     let proposal = Proposal::<T> {
         id: proposal_id,
         proposer,
-        expiration_block: current_block + config.proposal_expiration,
+        expiration_block,
         data,
         status: ProposalStatus::Open {
             votes_for: BoundedBTreeSet::new(),
