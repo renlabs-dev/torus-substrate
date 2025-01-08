@@ -100,10 +100,6 @@ pub mod pallet {
         type MaxApplicationDataLength: Get<u32>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
-        type ApplicationExpiration: Get<BlockNumberFor<Self>>;
-
-        #[pallet::constant]
         type MaxPenaltyPercentage: Get<Percent>;
 
         #[pallet::constant]
@@ -135,6 +131,10 @@ pub mod pallet {
         #[pallet::constant]
         #[pallet::no_default_bounds]
         type DefaultProposalRewardInterval: Get<BlockNumberFor<Self>>;
+
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type EmissionProposalMinimumTime: Get<BlockNumberFor<Self>>;
 
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
@@ -492,6 +492,10 @@ pub mod pallet {
         InvalidMinStakingFee,
         /// Invalid params given to Emission proposal
         InvalidEmissionProposalData,
+        /// Invalid proposal reward interval given to global params proposal
+        InvalidProposalRewardInterval,
+        /// Invalid agent application cost given to global params proposal
+        InvalidAgentApplicationCost,
     }
 }
 
