@@ -129,6 +129,7 @@ benchmarks! {
             min_staking_fee: 1,
             dividends_participation_weight: Percent::zero(),
             proposal_cost: 0,
+            ..Default::default()
         };
         let data = vec![0];
 
