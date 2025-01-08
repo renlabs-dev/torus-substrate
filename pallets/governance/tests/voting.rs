@@ -1,3 +1,4 @@
+use pallet_emission0::EmissionRecyclingPercentage;
 use pallet_governance::{
     config::GovernanceConfiguration,
     proposal::{GlobalParamsData, ProposalStatus},
@@ -354,6 +355,7 @@ fn creates_treasury_transfer_proposal_and_transfers() {
 fn creates_emission_proposal_and_it_runs_after_2_days() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+        EmissionRecyclingPercentage::<Test>::set(Percent::one());
 
         let default_proposal_expiration: u64 =
             <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
@@ -391,6 +393,7 @@ fn creates_emission_proposal_and_it_runs_after_2_days() {
 fn creates_emission_proposal_and_it_runs_before_expiration() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+        EmissionRecyclingPercentage::<Test>::set(Percent::one());
 
         let default_proposal_expiration: u64 =
             <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
@@ -448,6 +451,7 @@ fn creates_emission_proposal_and_it_runs_before_expiration() {
 fn creates_emission_proposal_and_it_expires() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+        EmissionRecyclingPercentage::<Test>::set(Percent::one());
 
         let default_proposal_expiration: u64 =
             <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
