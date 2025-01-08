@@ -4,7 +4,7 @@ use crate::BoundedVec;
 use crate::DebugNoBound;
 use crate::TypeInfo;
 use crate::{
-    AccountIdOf, BalanceOf, Block, DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
+    AccountIdOf, BalanceOf, DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
     UnrewardedProposals,
 };
 use crate::{GovernanceConfiguration, NotDelegatingVotingPower};
@@ -12,7 +12,9 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::frame_support::traits::Currency;
 use polkadot_sdk::frame_support::traits::WithdrawReasons;
+use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
 use polkadot_sdk::polkadot_sdk_frame::traits::CheckedAdd;
+use polkadot_sdk::sp_core::U256;
 use polkadot_sdk::sp_runtime::SaturatedConversion;
 use polkadot_sdk::sp_std::{collections::btree_set::BTreeSet, vec::Vec};
 use polkadot_sdk::{
@@ -30,12 +32,12 @@ pub type ProposalId = u64;
 pub struct Proposal<T: crate::Config> {
     pub id: ProposalId,
     pub proposer: AccountIdOf<T>,
-    pub expiration_block: Block,
+    pub expiration_block: BlockNumberFor<T>,
     pub data: ProposalData<T>,
     pub status: ProposalStatus<T>,
     pub metadata: BoundedVec<u8, ConstU32<256>>,
     pub proposal_cost: BalanceOf<T>,
-    pub creation_block: Block,
+    pub creation_block: BlockNumberFor<T>,
 }
 
 impl<T: crate::Config> Proposal<T> {
@@ -45,9 +47,14 @@ impl<T: crate::Config> Proposal<T> {
         matches!(self.status, ProposalStatus::Open { .. })
     }
 
-    pub fn execution_block(&self) -> Block {
+    pub fn execution_block(&self) -> BlockNumberFor<T> {
         match self.data {
-            ProposalData::Emission { .. } => self.creation_block + 21_600,
+            ProposalData::Emission { .. } => {
+                self.creation_block
+                    + BlockNumberFor::<T>::try_from(U256::from(21_600))
+                        .ok()
+                        .expect("valid block number")
+            }
             _ => self.expiration_block,
         }
     }
@@ -55,7 +62,7 @@ impl<T: crate::Config> Proposal<T> {
     /// Marks a proposal as accepted and overrides the storage value.
     pub fn accept(
         mut self,
-        block: Block,
+        block: BlockNumberFor<T>,
         stake_for: BalanceOf<T>,
         stake_against: BalanceOf<T>,
     ) -> DispatchResult {
@@ -129,7 +136,7 @@ impl<T: crate::Config> Proposal<T> {
     /// Marks a proposal as refused and overrides the storage value.
     pub fn refuse(
         mut self,
-        block: Block,
+        block: BlockNumberFor<T>,
         stake_for: BalanceOf<T>,
         stake_against: BalanceOf<T>,
     ) -> DispatchResult {
@@ -148,7 +155,7 @@ impl<T: crate::Config> Proposal<T> {
     }
 
     /// Marks a proposal as expired and overrides the storage value.
-    pub fn expire(mut self, block_number: u64) -> DispatchResult {
+    pub fn expire(mut self, block_number: BlockNumberFor<T>) -> DispatchResult {
         ensure!(self.is_active(), crate::Error::<T>::ProposalIsFinished);
         ensure!(
             block_number >= self.expiration_block,
@@ -174,12 +181,12 @@ pub enum ProposalStatus<T: crate::Config> {
         stake_against: BalanceOf<T>,
     },
     Accepted {
-        block: Block,
+        block: BlockNumberFor<T>,
         stake_for: BalanceOf<T>,
         stake_against: BalanceOf<T>,
     },
     Refused {
-        block: Block,
+        block: BlockNumberFor<T>,
         stake_for: BalanceOf<T>,
         stake_against: BalanceOf<T>,
     },
@@ -287,7 +294,7 @@ impl<T: crate::Config> ProposalData<T> {
 #[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub struct UnrewardedProposal<T: crate::Config> {
-    pub block: Block,
+    pub block: BlockNumberFor<T>,
     pub votes_for: BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>,
     pub votes_against: BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>,
 }
@@ -376,10 +383,7 @@ fn add_proposal<T: crate::Config>(
         .try_into()
         .map_err(|_| crate::Error::<T>::InternalError)?;
 
-    let current_block: u64 =
-        TryInto::try_into(<polkadot_sdk::frame_system::Pallet<T>>::block_number())
-            .ok()
-            .expect("blockchain will not exceed 2^64 blocks; QED.");
+    let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
 
     let proposal = Proposal::<T> {
         id: proposal_id,
@@ -402,12 +406,12 @@ fn add_proposal<T: crate::Config>(
     Ok(())
 }
 
-pub fn tick_proposals<T: crate::Config>(block_number: Block) {
+pub fn tick_proposals<T: crate::Config>(block_number: BlockNumberFor<T>) {
     let not_delegating = NotDelegatingVotingPower::<T>::get().into_inner();
 
     let proposals = Proposals::<T>::iter().filter(|(_, p)| p.is_active());
 
-    if block_number % 100 != 0 {
+    if block_number.into() % U256::from(100) != 0.into() {
         return;
     }
 
@@ -434,7 +438,7 @@ pub fn get_minimal_stake_to_execute_with_percentage<T: crate::Config>(
 
 fn tick_proposal<T: crate::Config>(
     not_delegating: &BTreeSet<T::AccountId>,
-    block_number: u64,
+    block_number: BlockNumberFor<T>,
     mut proposal: Proposal<T>,
 ) -> DispatchResult {
     let ProposalStatus::Open {
@@ -504,7 +508,7 @@ fn tick_proposal<T: crate::Config>(
 
 fn create_unrewarded_proposal<T: crate::Config>(
     proposal_id: u64,
-    block_number: Block,
+    block_number: BlockNumberFor<T>,
     votes_for: Vec<(AccountIdOf<T>, BalanceOf<T>)>,
     votes_against: Vec<(AccountIdOf<T>, BalanceOf<T>)>,
 ) {
@@ -556,11 +560,13 @@ fn calc_stake<T: crate::Config>(
     own_stake.saturating_add(delegated_stake)
 }
 
-pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
+pub fn tick_proposal_rewards<T: crate::Config>(block_number: BlockNumberFor<T>) {
     let governance_config = crate::GlobalGovernanceConfig::<T>::get();
+    let proposal_reward_interval: U256 = governance_config.proposal_reward_interval.into();
+    let block_number: U256 = block_number.into();
     let reached_interval = block_number
-        .checked_rem(governance_config.proposal_reward_interval)
-        .is_some_and(|r| r == 0);
+        .checked_rem(proposal_reward_interval)
+        .is_some_and(|r| r == 0.into());
     if !reached_interval {
         return;
     }
@@ -570,8 +576,7 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
         BoundedBTreeMap::new();
     let mut total_allocation: I92F36 = I92F36::from_num(0);
     for (proposal_id, unrewarded_proposal) in UnrewardedProposals::<T>::iter() {
-        if unrewarded_proposal.block
-            < block_number.saturating_sub(governance_config.proposal_reward_interval)
+        if unrewarded_proposal.block.into() < block_number.saturating_sub(proposal_reward_interval)
         {
             continue;
         }
