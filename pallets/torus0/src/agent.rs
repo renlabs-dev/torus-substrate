@@ -113,6 +113,9 @@ pub fn register<T: crate::Config>(
         },
     );
 
+    crate::RegistrationsThisBlock::<T>::mutate(|value| value.saturating_add(1));
+    crate::RegistrationsThisInterval::<T>::mutate(|value| value.saturating_add(1));
+
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::AgentRegistered(agent_key));
 
     Ok(())
