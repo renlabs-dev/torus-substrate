@@ -55,3 +55,4 @@ jobs:
           tags: |
             ghcr.io/renlabs-dev/torus-substrate:${{ steps.commit.outputs.short }}
             ghcr.io/renlabs-dev/torus-substrate:${{ env.SANITIZED_REF }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
