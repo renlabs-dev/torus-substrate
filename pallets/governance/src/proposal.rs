@@ -117,6 +117,7 @@ impl<T: crate::Config> Proposal<T> {
                     config.proposal_cost = proposal_cost;
                 });
             }
+
             ProposalData::TransferDaoTreasury { account, amount } => {
                 <T as crate::Config>::Currency::transfer(
                     &DaoTreasuryAddress::<T>::get(),
@@ -127,7 +128,15 @@ impl<T: crate::Config> Proposal<T> {
                 .map_err(|_| crate::Error::<T>::InternalError)?;
             }
 
-            _ => {}
+            ProposalData::Emission {
+                recycling_percentage,
+                treasury_percentage,
+            } => {
+                pallet_emission0::EmissionRecyclingPercentage::<T>::set(recycling_percentage);
+                crate::TreasuryEmissionFee::<T>::set(treasury_percentage);
+            }
+
+            ProposalData::GlobalCustom => {}
         }
 
         Ok(())
