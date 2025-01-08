@@ -162,7 +162,7 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        #[pallet::weight((<T as Config>::WeightInfo::add_curator(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((<T as Config>::WeightInfo::add_curator(), DispatchClass::Normal, Pays::No))]
         pub fn add_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             if ensure_signed_or_root(origin.clone())?.is_some() {
                 roles::ensure_root_curator::<T>(origin)?;
@@ -172,7 +172,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        #[pallet::weight((<T as Config>::WeightInfo::remove_curator(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((<T as Config>::WeightInfo::remove_curator(), DispatchClass::Normal, Pays::No))]
         pub fn remove_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             if ensure_signed_or_root(origin.clone())?.is_some() {
                 roles::ensure_root_curator::<T>(origin)?;
@@ -182,7 +182,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(2)]
-        #[pallet::weight((<T as Config>::WeightInfo::add_allocator(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((<T as Config>::WeightInfo::add_allocator(), DispatchClass::Normal, Pays::No))]
         pub fn add_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             if ensure_signed_or_root(origin.clone())?.is_some() {
                 roles::ensure_root_curator::<T>(origin)?;
@@ -192,7 +192,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(3)]
-        #[pallet::weight((<T as Config>::WeightInfo::remove_allocator(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((<T as Config>::WeightInfo::remove_allocator(), DispatchClass::Normal, Pays::No))]
         pub fn remove_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             if ensure_signed_or_root(origin.clone())?.is_some() {
                 roles::ensure_root_curator::<T>(origin)?;
@@ -202,35 +202,35 @@ pub mod pallet {
         }
 
         #[pallet::call_index(4)]
-        #[pallet::weight((<T as Config>::WeightInfo::add_to_whitelist(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((<T as Config>::WeightInfo::add_to_whitelist(), DispatchClass::Normal, Pays::No))]
         pub fn add_to_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             roles::ensure_curator::<T>(origin)?;
             whitelist::add_to_whitelist::<T>(key)
         }
 
         #[pallet::call_index(5)]
-        #[pallet::weight((<T as Config>::WeightInfo::remove_from_whitelist(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((<T as Config>::WeightInfo::remove_from_whitelist(), DispatchClass::Normal, Pays::No))]
         pub fn remove_from_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             roles::ensure_curator::<T>(origin)?;
             whitelist::remove_from_whitelist::<T>(key)
         }
 
         #[pallet::call_index(6)]
-        #[pallet::weight((<T as Config>::WeightInfo::accept_application(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((<T as Config>::WeightInfo::accept_application(), DispatchClass::Normal, Pays::No))]
         pub fn accept_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
             roles::ensure_curator::<T>(origin)?;
             application::accept_application::<T>(application_id)
         }
 
         #[pallet::call_index(7)]
-        #[pallet::weight((<T as Config>::WeightInfo::deny_application(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((<T as Config>::WeightInfo::deny_application(), DispatchClass::Normal, Pays::No))]
         pub fn deny_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
             roles::ensure_curator::<T>(origin)?;
             application::deny_application::<T>(application_id)
         }
 
         #[pallet::call_index(8)]
-        #[pallet::weight((<T as Config>::WeightInfo::penalize_agent(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((<T as Config>::WeightInfo::penalize_agent(), DispatchClass::Normal, Pays::No))]
         pub fn penalize_agent(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
