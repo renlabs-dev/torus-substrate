@@ -48,6 +48,7 @@ fc-rpc = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac4
 fc-rpc-core = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
 fc-storage = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
 fp-account = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fp-dynamic-fee = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
 fp-evm = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
 fp-rpc = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
 fp-self-contained = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
