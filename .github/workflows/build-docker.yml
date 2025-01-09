@@ -18,8 +18,10 @@ jobs:
         arch:
           - name: linux/amd64
             runner: ubuntu-22.04-32core-karl
+            sccache_arch: x86_64
           - name: linux/arm64
             runner: ubuntu-24.04-32core-arm
+            sccache_arch: aarch64
     runs-on: ${{ matrix.arch.runner }}
     steps:
       - uses: actions/checkout@v3
@@ -59,6 +61,7 @@ jobs:
             SCCACHE_BUCKET=torus-substrate-cache
             SCCACHE_ENDPOINT=${{ secrets.SCCACHE_ENDPOINT }}
             SCCACHE_REGION=auto
+            SCCACHE_ARCH=${{ matrix.arch.sccache_arch }}
           tags: |
             ghcr.io/renlabs-dev/torus-substrate:${{ steps.commit.outputs.short }}
             ghcr.io/renlabs-dev/torus-substrate:${{ env.SANITIZED_REF }}

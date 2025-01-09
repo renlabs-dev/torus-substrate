@@ -3,6 +3,7 @@ FROM debian:12-slim AS builder
 ARG SCCACHE_BUCKET
 ARG SCCACHE_ENDPOINT
 ARG SCCACHE_REGION=auto
+ARG SCCACHE_ARCH=x86_64
 
 WORKDIR /app
 COPY . .
@@ -29,10 +30,10 @@ RUN --mount=type=secret,id=aws-key-id \
     export AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws-key-id) && \
     export AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws-secret-key) && \
     if [ -n "$AWS_ACCESS_KEY_ID" ]; then \
-        curl https://github.com/mozilla/sccache/releases/download/v0.9.0/sccache-v0.9.0-x86_64-unknown-linux-musl.tar.gz \
-            -Lo sccache-v0.9.0-x86_64-unknown-linux-musl.tar.gz; \
-        tar -xzf sccache-v0.9.0-x86_64-unknown-linux-musl.tar.gz --strip-components=1 \
-            sccache-v0.9.0-x86_64-unknown-linux-musl/sccache; \
+        curl https://github.com/mozilla/sccache/releases/download/v0.9.0/sccache-v0.9.0-$SCCACHE_ARCH-unknown-linux-musl.tar.gz \
+            -Lo sccache-v0.9.0-$SCCACHE_ARCH-unknown-linux-musl.tar.gz; \
+        tar -xzf sccache-v0.9.0-$SCCACHE_ARCH-unknown-linux-musl.tar.gz --strip-components=1 \
+            sccache-v0.9.0-$SCCACHE_ARCH-unknown-linux-musl/sccache; \
         if [ $(./sccache --start-server) ]; then \
             echo "Enabling sccache"; \
             export RUSTC_WRAPPER="/app/sccache"; \
