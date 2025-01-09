@@ -44,7 +44,9 @@ fc-cli = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac4
 fc-consensus = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
 fc-db = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
 fc-mapping-sync = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
-fc-rpc = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fc-rpc = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", features = [
+    "rpc-binary-search-estimate",
+] }
 fc-rpc-core = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
 fc-storage = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
 fp-account = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
