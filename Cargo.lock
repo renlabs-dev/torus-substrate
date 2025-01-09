@@ -4078,16 +4078,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fp-dynamic-fee"
-version = "1.0.0"
-source = "git+https://github.com/paritytech/frontier.git?rev=b9b1c620c8b418bdeeadc79725f9cfa4703c0333#b9b1c620c8b418bdeeadc79725f9cfa4703c0333"
-dependencies = [
- "async-trait",
- "sp-core",
- "sp-inherents",
-]
-
-[[package]]
 name = "fp-ethereum"
 version = "1.0.0-dev"
 source = "git+https://github.com/paritytech/frontier.git?rev=b9b1c620c8b418bdeeadc79725f9cfa4703c0333#b9b1c620c8b418bdeeadc79725f9cfa4703c0333"
@@ -16969,7 +16959,6 @@ dependencies = [
  "fc-rpc-core",
  "fc-storage",
  "fp-account",
- "fp-dynamic-fee",
  "fp-evm",
  "fp-rpc",
  "futures",
