@@ -13,10 +13,14 @@ concurrency:
 jobs:
   build-n-push:
     permissions: write-all
-    runs-on: ubuntu-22.04-32core-karl
     strategy:
       matrix:
-        architecture: [amd64, arm64]
+        arch:
+          - name: linux/amd64
+            runner: ubuntu-22.04-32core-karl
+          - name: linux/arm64
+            runner: ubuntu-24.04-32core-arm
+    runs-on: ${{ matrix.arch.runner }}
     steps:
       - uses: actions/checkout@v3
 
@@ -58,4 +62,4 @@ jobs:
           tags: |
             ghcr.io/renlabs-dev/torus-substrate:${{ steps.commit.outputs.short }}
             ghcr.io/renlabs-dev/torus-substrate:${{ env.SANITIZED_REF }}
-          platforms: linux/${{ matrix.architecture }}
+          platforms: ${{ matrix.arch.name }}
