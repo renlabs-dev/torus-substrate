@@ -39,25 +39,25 @@ num-traits = { version = "0.2.19", default-features = false, features = [
 ] }
 
 # Frontier / EVM
-fc-api = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
-fc-cli = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
-fc-consensus = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
-fc-db = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
-fc-mapping-sync = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
-fc-rpc = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
-fc-rpc-core = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
-fc-storage = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
-fp-account = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
-fp-dynamic-fee = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
-fp-evm = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
-fp-rpc = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
-fp-self-contained = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
-pallet-ethereum = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
-pallet-evm = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
-pallet-evm-chain-id = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
-pallet-evm-precompile-modexp = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
-pallet-evm-precompile-sha3fips = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
-pallet-evm-precompile-simple = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
+fc-api = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fc-cli = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fc-consensus = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fc-db = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fc-mapping-sync = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fc-rpc = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fc-rpc-core = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fc-storage = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fp-account = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
+fp-dynamic-fee = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
+fp-evm = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
+fp-rpc = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
+fp-self-contained = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
+pallet-ethereum = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
+pallet-evm = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
+pallet-evm-chain-id = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
+pallet-evm-precompile-modexp = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
+pallet-evm-precompile-sha3fips = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
+pallet-evm-precompile-simple = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553", default-features = false }
 
 # CLI
 clap = { version = "4.5.22", features = ["derive"] }
