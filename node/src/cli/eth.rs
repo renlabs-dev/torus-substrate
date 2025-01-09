@@ -52,7 +52,7 @@ pub struct EthConfiguration {
 
     /// Maximum allowed gas limit will be `block.gas_limit * execute_gas_limit_multiplier`
     /// when using eth_call/eth_estimateGas.
-    #[arg(long, default_value = "1")]
+    #[arg(long, default_value = "10")]
     pub execute_gas_limit_multiplier: u64,
     /// Size in bytes of the LRU cache for block data.
     #[arg(long, default_value = "50")]
