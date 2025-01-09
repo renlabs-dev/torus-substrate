@@ -55,6 +55,7 @@ jobs:
         with:
           provenance: false
           context: .
+          push: true
           file: docker/node.dockerfile
           secret-files: |
             aws-key-id=${{ env.AWS_ACCESS_KEY_ID_PATH }}
