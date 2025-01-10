@@ -56,7 +56,12 @@ cargo run --bin torus-node --release -- --chain data/testnet/spec.json
 
 ## Docker
 
-TODO
+```sh
+mkdir -p torus-node
+cd torus-node
+wget https://raw.githubusercontent.com/renlabs-dev/torus-substrate/refs/heads/main/docker-compose.yml -O docker-compose.yml
+docker compose up -d
+```
 
 ## Development
 
