@@ -1,5 +1,5 @@
 services:
-  commune-node:
+  torus-node:
     container_name: torus-node
     image: ghcr.io/renlabs-dev/torus-substrate:f6efa2e
     volumes:
