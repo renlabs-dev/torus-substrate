@@ -63,6 +63,12 @@ wget https://raw.githubusercontent.com/renlabs-dev/torus-substrate/refs/heads/ma
 docker compose up -d
 ```
 
+The node RPC port defaults to 9944, so to connect to it locally you can just use localhost:
+ws://localhost:9944
+
+If deployed on a remote machine (not recomended without setting up a reverse proxy like Traefik and having SSL enabled), replace localhost with the VM public ipv4 address, like the below examble
+ws://123.123.123.123:9944
+
 ## Development
 
 Check your code with:
