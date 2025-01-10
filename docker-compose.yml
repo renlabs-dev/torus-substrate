@@ -1,0 +1,32 @@
+services:
+  torus-node:
+    container_name: torus-node
+    image: ghcr.io/renlabs-dev/torus-substrate:f6efa2e
+    volumes:
+      - ./docker/volumes/node-data:/node-data
+    ports:
+      - 30333:30333 # P2P
+      - 9944:9944 # RPC
+    restart: always
+    entrypoint: ["torus-node"]
+    command: [
+        "--base-path",
+        "/node-data",
+        "--chain",
+        "mainnet",
+        "--rpc-external",
+        "--rpc-cors=all",
+        "--rpc-max-response-size",
+        "100",
+        "--rpc-max-connections",
+        "5000",
+        "--port",
+        "30333",
+        "--rpc-port",
+        "9944",
+        "--telemetry-url",
+        "ws://telemetry.torus.network:8001/submit 0",
+        "--sync=warp",
+        # "--sync=full",
+        # "--pruning=archive",
+      ]

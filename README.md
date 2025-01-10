@@ -56,7 +56,18 @@ cargo run --bin torus-node --release -- --chain data/testnet/spec.json
 
 ## Docker
 
-TODO
+```sh
+mkdir -p torus-node
+cd torus-node
+wget https://raw.githubusercontent.com/renlabs-dev/torus-substrate/refs/heads/main/docker-compose.yml -O docker-compose.yml
+docker compose up -d
+```
+
+The node RPC port defaults to 9944, so to connect to it locally you can just use localhost:
+ws://localhost:9944
+
+If deployed on a remote machine (not recomended without setting up a reverse proxy like Traefik and having SSL enabled), replace localhost with the VM public ipv4 address, like the below examble
+ws://123.123.123.123:9944
 
 ## Development
 
