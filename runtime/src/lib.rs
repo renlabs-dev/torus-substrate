@@ -142,6 +142,12 @@ mod runtime {
     #[runtime::pallet_index(9)]
     pub type EVM = pallet_evm::Pallet<Runtime>;
 
+    #[runtime::pallet_index(14)]
+    pub type BaseFee = pallet_base_fee::Pallet<Runtime>;
+
+    #[runtime::pallet_index(15)]
+    pub type EvmChainId = pallet_evm_chain_id::Pallet<Runtime>;
+
     #[runtime::pallet_index(11)]
     pub type Governance = pallet_governance::Pallet<Runtime>;
 
