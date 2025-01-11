@@ -16,6 +16,7 @@ fn register_correctly() {
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent,
+            agent,
             name.clone(),
             url.clone(),
             metadata.clone(),
@@ -39,6 +40,7 @@ fn register_without_being_whitelisted() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
+                agent,
                 agent,
                 name.clone(),
                 url.clone(),
@@ -68,6 +70,7 @@ fn register_without_enough_balance() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
+                agent,
                 name.clone(),
                 url.clone(),
                 metadata.clone(),
@@ -93,6 +96,7 @@ fn register_fail_name_validation() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
+                agent,
                 "".as_bytes().to_vec(),
                 url.clone(),
                 metadata.clone(),
@@ -102,6 +106,7 @@ fn register_fail_name_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
+                agent,
                 agent,
                 " ".repeat(pallet_torus0::MaxNameLength::<Test>::get() as usize + 1)
                     .as_bytes()
@@ -114,6 +119,7 @@ fn register_fail_name_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
+                agent,
                 agent,
                 vec![249u8, 9u8, 42u8],
                 url.clone(),
@@ -138,6 +144,7 @@ fn register_fail_url_validation() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
+                agent,
                 name.clone(),
                 "".as_bytes().to_vec(),
                 metadata.clone(),
@@ -147,6 +154,7 @@ fn register_fail_url_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
+                agent,
                 agent,
                 name.clone(),
                 " ".repeat(pallet_torus0::MaxNameLength::<Test>::get() as usize + 1)
@@ -159,6 +167,7 @@ fn register_fail_url_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
+                agent,
                 agent,
                 name.clone(),
                 vec![249u8, 9u8, 42u8],
@@ -183,6 +192,7 @@ fn register_fail_metadata_validation() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
+                agent,
                 name.clone(),
                 url.clone(),
                 "".as_bytes().to_vec(),
@@ -197,6 +207,7 @@ fn register_fail_metadata_validation() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
+                agent,
                 name.clone(),
                 url.clone(),
                 " ".repeat(max_metadata_length + 1).as_bytes().to_vec(),
@@ -206,6 +217,7 @@ fn register_fail_metadata_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
+                agent,
                 agent,
                 name.clone(),
                 url.clone(),
@@ -232,6 +244,7 @@ fn register_more_than_max_allowed_agents() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
+                agent,
                 agent,
                 name.clone(),
                 url.clone(),
@@ -260,6 +273,7 @@ fn register_more_than_allowed_registrations_per_block() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
+                agent,
                 agent,
                 name.clone(),
                 url.clone(),
@@ -291,6 +305,7 @@ fn register_more_than_registrations_per_interval() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
+                agent,
                 name.clone(),
                 url.clone(),
                 metadata.clone(),
@@ -316,6 +331,7 @@ fn unregister_correctly() {
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent,
+            agent,
             name.clone(),
             url.clone(),
             metadata.clone(),
@@ -340,6 +356,7 @@ fn unregister_twice() {
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
+            agent,
             agent,
             name.clone(),
             url.clone(),
@@ -369,7 +386,7 @@ fn update_correctly() {
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
-            agent, name, url, metadata,
+            agent, agent, name, url, metadata,
         ));
 
         let new_name = "new-agent".as_bytes().to_vec();
@@ -412,6 +429,7 @@ fn update_with_zero_staking_fee() {
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
+            agent,
             agent,
             name.clone(),
             url.clone(),
@@ -461,6 +479,7 @@ fn update_with_zero_weight_control_fee() {
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
+            agent,
             agent,
             name.clone(),
             url.clone(),

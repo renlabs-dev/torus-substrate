@@ -28,6 +28,7 @@ pub struct Agent<T: crate::Config> {
 }
 
 pub fn register<T: crate::Config>(
+    payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
     name: Vec<u8>,
     url: Vec<u8>,
@@ -46,7 +47,6 @@ pub fn register<T: crate::Config>(
         crate::Error::<T>::AgentAlreadyRegistered
     );
 
-    // TODO: Take pruning scores into consideration
     ensure!(
         crate::Agents::<T>::iter().count() < crate::MaxAllowedAgents::<T>::get() as usize,
         crate::Error::<T>::MaxAllowedAgents
@@ -93,7 +93,7 @@ pub fn register<T: crate::Config>(
     let burn = crate::Burn::<T>::get();
 
     let _ = <T as crate::Config>::Currency::withdraw(
-        &agent_key,
+        &payer,
         burn,
         WithdrawReasons::except(WithdrawReasons::TIP),
         ExistenceRequirement::AllowDeath,
