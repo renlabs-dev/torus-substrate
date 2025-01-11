@@ -257,8 +257,8 @@ pub mod pallet {
             url: Vec<u8>,
             metadata: Vec<u8>,
         ) -> DispatchResult {
-            ensure_signed(origin)?;
-            agent::register::<T>(agent_key, name, url, metadata)
+            let payer = ensure_signed(origin)?;
+            agent::register::<T>(payer, agent_key, name, url, metadata)
         }
 
         #[pallet::call_index(4)]

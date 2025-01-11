@@ -15,6 +15,7 @@ fn add_stake_correctly() {
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
+            to,
             "to".as_bytes().to_vec(),
             "to://idk".as_bytes().to_vec(),
             "idk".as_bytes().to_vec()
@@ -100,6 +101,7 @@ fn remove_stake_correctly() {
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             to,
+            to,
             "to".as_bytes().to_vec(),
             "to://idk".as_bytes().to_vec(),
             "idk".as_bytes().to_vec()
@@ -137,6 +139,7 @@ fn remove_stake_with_less_than_required_amount() {
 
         assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
         assert_ok!(pallet_torus0::agent::register::<Test>(
+            to,
             to,
             "to".as_bytes().to_vec(),
             "to://idk".as_bytes().to_vec(),
@@ -180,6 +183,7 @@ fn remove_stake_with_unregistered_agent() {
 
         assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
         assert_ok!(pallet_torus0::agent::register::<Test>(
+            to,
             to,
             "to".as_bytes().to_vec(),
             "to://idk".as_bytes().to_vec(),
