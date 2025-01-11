@@ -24,6 +24,7 @@ std = [
     "fp-evm/std",
     "fp-rpc/std",
     "fp-self-contained/std",
+    "pallet-base-fee/std",
     "pallet-ethereum/std",
     "pallet-evm/std",
     "pallet-evm-chain-id/std",
@@ -76,6 +77,7 @@ polkadot-sdk = { workspace = true, features = [
 fp-evm = { workspace = true, features = ["serde"] }
 fp-rpc.workspace = true
 fp-self-contained = { workspace = true, features = ["serde"] }
+pallet-base-fee.workspace = true
 pallet-ethereum.workspace = true
 pallet-evm.workspace = true
 pallet-evm-chain-id.workspace = true

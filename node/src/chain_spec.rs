@@ -41,13 +41,13 @@ pub fn development_config() -> Result<ChainSpec, String> {
     .with_id("torus-devnet")
     .with_protocol_id("torus")
     .with_chain_type(ChainType::Development)
-    .with_genesis_config_patch(testnet_genesis())
+    .with_genesis_config_patch(devnet_genesis())
     .with_properties(props())
     .build())
 }
 
 /// Configure initial storage state for FRAME pallets.
-fn testnet_genesis() -> Value {
+fn devnet_genesis() -> Value {
     use polkadot_sdk::{
         polkadot_sdk_frame::traits::Get,
         sp_keyring::{Ed25519Keyring, Sr25519Keyring},
@@ -75,5 +75,8 @@ fn testnet_genesis() -> Value {
         "grandpa": {
             "authorities": grandpa.iter().map(|x| (x.public().to_string(), 1)).collect::<Vec<_>>(),
         },
+        "evmChainId": {
+            "chainId": 21001,
+        }
     })
 }
