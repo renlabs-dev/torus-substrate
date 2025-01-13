@@ -3,6 +3,7 @@
 pub mod application;
 pub mod config;
 pub mod ext;
+pub mod migrations;
 pub mod proposal;
 pub mod roles;
 pub mod voting;
