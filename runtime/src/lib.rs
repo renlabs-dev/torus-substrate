@@ -4,12 +4,12 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 extern crate alloc;
-use crate::weights::constants::RocksDbWeight;
 use alloc::vec::Vec;
 use interface::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use weights::constants::RocksDbWeight;
 
 use polkadot_sdk::{
     frame_executive, frame_support, frame_system,
