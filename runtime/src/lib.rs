@@ -4,6 +4,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 extern crate alloc;
+use crate::weights::constants::RocksDbWeight;
 use alloc::vec::Vec;
 use interface::*;
 #[cfg(feature = "std")]
