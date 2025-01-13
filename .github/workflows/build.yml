@@ -10,6 +10,10 @@ on:
       - "build-runtime*"
       - "testnet"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-22.04-32core-karl
