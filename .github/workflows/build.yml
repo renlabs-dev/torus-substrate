@@ -6,6 +6,7 @@ on:
     tags:
       - "v*"
       - "runtime-*"
+      - "runtime/*"
     branches:
       - github-ci-test
       - build-runtime
