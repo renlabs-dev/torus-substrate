@@ -15,9 +15,13 @@ use polkadot_sdk::{
 use scale_info::prelude::vec::Vec;
 use scale_info::TypeInfo;
 
+/// Agents are the basic primitive in the Torus ecosystem which are bounded
+/// with modules in off-chain environment. They can receive weights by the
+/// allocators.
 #[derive(DebugNoBound, Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 pub struct Agent<T: crate::Config> {
+    /// The key that bounds the agent to the module
     pub key: AccountIdOf<T>,
     pub name: BoundedVec<u8, T::MaxAgentNameLengthConstraint>,
     pub url: BoundedVec<u8, T::MaxAgentUrlLengthConstraint>,
