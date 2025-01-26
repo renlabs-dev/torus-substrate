@@ -10,7 +10,10 @@ use polkadot_sdk::sp_runtime::BoundedVec;
 use polkadot_sdk::sp_std::vec::Vec;
 use scale_info::TypeInfo;
 
-#[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
+/// Decentralized autonomous organization application, it's used to do agent
+/// operations on the network, like creating or removing, and needs to be approved
+/// by other peers.
+#[derive(CloneNoBound, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct AgentApplication<T: crate::Config> {
     pub id: u32,
@@ -23,6 +26,7 @@ pub struct AgentApplication<T: crate::Config> {
     pub status: ApplicationStatus,
 }
 
+/// DAO avaliable actions on the network
 #[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
 pub enum ApplicationAction {
     Add,
@@ -44,6 +48,7 @@ impl<T: crate::Config> AgentApplication<T> {
     }
 }
 
+/// Create DAO application for the _agent_, if it's not whitelisted yet.
 pub fn submit_application<T: crate::Config>(
     payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
