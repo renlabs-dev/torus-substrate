@@ -31,6 +31,13 @@ pub struct Agent<T: crate::Config> {
     pub fees: crate::fee::ValidatorFee<T>,
 }
 
+/// Register whitelisted agent for payer, with the default structure fields
+/// if it's not registered yet.
+///
+/// The registration drops some agents if the network is full, searching agents for
+/// pruning. (see [crate::MaxAllowedAgents]).
+///
+/// The cost is equivalent to the [crate::Burn].
 pub fn register<T: crate::Config>(
     payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
