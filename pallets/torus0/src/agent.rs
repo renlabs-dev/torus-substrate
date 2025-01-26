@@ -18,6 +18,9 @@ use scale_info::TypeInfo;
 /// Agents are the basic primitive in the Torus ecosystem which are bounded
 /// with modules in off-chain environment. They can receive weights by the
 /// allocators.
+///
+/// To register an agent, you need to be approved by a curator. It's possible
+/// to submit an application on dao.torus.network.
 #[derive(DebugNoBound, Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 pub struct Agent<T: crate::Config> {
