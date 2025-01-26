@@ -6,6 +6,8 @@ use crate::{AccountIdOf, BalanceOf};
 use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, WithdrawReasons};
 use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
 
+/// Buy stake from _staker_ currency and add stake to the _agent_, if
+/// it  meets the minimum criteria and if the agent exists.
 pub fn add_stake<T: crate::Config>(
     staker: AccountIdOf<T>,
     staked: AccountIdOf<T>,
@@ -44,6 +46,8 @@ pub fn add_stake<T: crate::Config>(
     Ok(())
 }
 
+/// Remove stake from _agent_ and add to _staker_ the specified amount if
+/// it meets the minimum criteria and if the agent exists.
 pub fn remove_stake<T: crate::Config>(
     key: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
@@ -79,6 +83,8 @@ pub fn remove_stake<T: crate::Config>(
     Ok(())
 }
 
+/// Transfer stake from an account to another, meeting the criteria for removing
+/// and adding stake. (see [remove_stake], [add_stake])
 pub fn transfer_stake<T: crate::Config>(
     staker: AccountIdOf<T>,
     old_staked: AccountIdOf<T>,
