@@ -36,7 +36,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 pub fn adjust_burn<T: crate::Config>(current_block: u64) {
     let BurnConfiguration {
         min_burn,
