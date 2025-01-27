@@ -107,22 +107,19 @@ pub mod pallet {
     #[pallet::storage]
     pub type BurnConfig<T: Config> = StorageValue<_, BurnConfiguration<T>, ValueQuery>;
 
-    #[pallet_section]
-    pub mod hooks {
-        #[pallet::hooks]
-        impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-            fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
-                let current_block: u64 = block_number
-                    .try_into()
-                    .ok()
-                    .expect("blockchain won't pass 2 ^ 64 blocks");
+    #[pallet::hooks]
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+        fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
+            let current_block: u64 = block_number
+                .try_into()
+                .ok()
+                .expect("blockchain won't pass 2 ^ 64 blocks");
 
-                burn::adjust_burn::<T>(current_block);
+            burn::adjust_burn::<T>(current_block);
 
-                RegistrationsThisBlock::<T>::set(0);
+            RegistrationsThisBlock::<T>::set(0);
 
-                Weight::default()
-            }
+            Weight::default()
         }
     }
 
