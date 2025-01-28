@@ -31,11 +31,15 @@ pub struct Proposal<T: crate::Config> {
     pub id: ProposalId,
     pub proposer: AccountIdOf<T>,
     pub expiration_block: Block,
+    /// The exact block when the block will be expired/deleted
+    pub expiration_block: BlockNumberFor<T>,
     pub data: ProposalData<T>,
     pub status: ProposalStatus<T>,
     pub metadata: BoundedVec<u8, ConstU32<256>>,
     pub proposal_cost: BalanceOf<T>,
     pub creation_block: Block,
+    /// The exact block when the block is created
+    pub creation_block: BlockNumberFor<T>,
 }
 
 impl<T: crate::Config> Proposal<T> {
@@ -198,6 +202,8 @@ pub enum ProposalStatus<T: crate::Config> {
 }
 
 // TODO: add Agent URL max length
+/// Update the global parameters configuration, like, max and min name lengths,
+/// and other validations. All values are set within default storage values.
 #[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub struct GlobalParamsData<T: crate::Config> {
@@ -270,6 +276,8 @@ impl<T: crate::Config> GlobalParamsData<T> {
     }
 }
 
+/// Proposed action in the network governance, transfering funds, etc, whatever to
+/// change the DAO
 #[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub enum ProposalData<T: crate::Config> {
@@ -361,6 +369,7 @@ pub fn add_emission_proposal<T: crate::Config>(
     add_proposal::<T>(proposer, data, metadata)
 }
 
+/// Create a proposal to be ticked with the function [tick_proposals]
 fn add_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     data: ProposalData<T>,
@@ -417,7 +426,8 @@ fn add_proposal<T: crate::Config>(
     Ok(())
 }
 
-pub fn tick_proposals<T: crate::Config>(block_number: Block) {
+/// Tick active proposals to finish it if it's possible in the current block number.
+pub fn tick_proposals<T: crate::Config>(block_number: BlockNumberFor<T>) {
     let not_delegating = NotDelegatingVotingPower::<T>::get().into_inner();
 
     let proposals = Proposals::<T>::iter().filter(|(_, p)| p.is_active());
@@ -447,6 +457,9 @@ pub fn get_minimal_stake_to_execute_with_percentage<T: crate::Config>(
         .unwrap_or_default()
 }
 
+/// Sums all voters for stakes and compare with agains't voters stakes, and whatever has
+/// the biggest value, it decides the proposal, if the current block didn't overdue the
+/// expiration block.
 fn tick_proposal<T: crate::Config>(
     not_delegating: &BTreeSet<T::AccountId>,
     block_number: u64,
@@ -517,6 +530,7 @@ fn tick_proposal<T: crate::Config>(
     }
 }
 
+/// Put the proposal in the reward queue, which will be processed by [tick_proposal_rewards].
 fn create_unrewarded_proposal<T: crate::Config>(
     proposal_id: u64,
     block_number: Block,
@@ -585,6 +599,7 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
         BoundedBTreeMap::new();
     let mut total_allocation: I92F36 = I92F36::from_num(0);
     for (proposal_id, unrewarded_proposal) in UnrewardedProposals::<T>::iter() {
+        // Just checking if it's in the chain interval
         if unrewarded_proposal.block
             < block_number.saturating_sub(governance_config.proposal_reward_interval)
         {
