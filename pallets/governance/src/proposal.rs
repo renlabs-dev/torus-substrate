@@ -349,6 +349,7 @@ pub fn add_dao_treasury_transfer_proposal<T: crate::Config>(
     add_proposal::<T>(proposer, data, metadata)
 }
 
+/// Create emission proposal where `recycling_percentage + treasury_percentage <= [u128::MAX]`.
 pub fn add_emission_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     recycling_percentage: Percent,
@@ -532,6 +533,7 @@ fn tick_proposal<T: crate::Config>(
         Ok(())
     }
 }
+type AccountStakes<T> = BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>;
 
 /// Put the proposal in the reward queue, which will be processed by [tick_proposal_rewards].
 fn create_unrewarded_proposal<T: crate::Config>(
@@ -547,11 +549,7 @@ fn create_unrewarded_proposal<T: crate::Config>(
             .expect("this wont exceed u32::MAX");
     }
 
-    let mut reward_votes_against: BoundedBTreeMap<
-        T::AccountId,
-        BalanceOf<T>,
-        ConstU32<{ u32::MAX }>,
-    > = BoundedBTreeMap::new();
+    let mut reward_votes_against: AccountStakes<T> = BoundedBTreeMap::new();
     for (key, value) in votes_against {
         reward_votes_against
             .try_insert(key, value)
@@ -599,8 +597,7 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
     }
 
     let mut n: u16 = 0;
-    let mut account_stakes: BoundedBTreeMap<T::AccountId, BalanceOf<T>, ConstU32<{ u32::MAX }>> =
-        BoundedBTreeMap::new();
+    let mut account_stakes: AccountStakes<T> = BoundedBTreeMap::new();
     let mut total_allocation: I92F36 = I92F36::from_num(0);
     for (proposal_id, unrewarded_proposal) in UnrewardedProposals::<T>::iter() {
         // Just checking if it's in the chain interval
@@ -681,7 +678,7 @@ pub fn get_reward_allocation<T: crate::Config>(
 }
 
 fn distribute_proposal_rewards<T: crate::Config>(
-    account_stakes: BoundedBTreeMap<T::AccountId, BalanceOf<T>, ConstU32<{ u32::MAX }>>,
+    account_stakes: AccountStakes<T>,
     total_allocation: I92F36,
     max_proposal_reward_treasury_allocation: BalanceOf<T>,
 ) {

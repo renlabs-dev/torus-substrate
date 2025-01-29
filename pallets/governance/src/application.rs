@@ -49,7 +49,8 @@ impl<T: crate::Config> AgentApplication<T> {
     }
 }
 
-/// Create DAO application for the _agent_, if it's not whitelisted yet.
+/// Create DAO application for the _agent_, if it's not whitelisted yet. It will withdraw
+/// a fee from the payer account for either creating or deleting an agent.
 pub fn submit_application<T: crate::Config>(
     payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
