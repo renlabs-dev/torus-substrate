@@ -122,6 +122,8 @@ pub fn submit_application<T: crate::Config>(
     Ok(())
 }
 
+/// Accept DAO application, either creating or deleting it from the whitelist. The application
+/// must be open and exist on the chain.
 pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResult {
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
@@ -161,6 +163,8 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
     Ok(())
 }
 
+/// Deny DAO application, deleting it from the whitelist. The application must be open and
+/// exist on the chain.
 pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult {
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
@@ -182,6 +186,7 @@ pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult
     Ok(())
 }
 
+/// Reverts the curator application on the chain, if it's not an application creation.
 pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Block) {
     for application in crate::AgentApplications::<T>::iter_values() {
         // Skip if not expired yet or if not in Open status

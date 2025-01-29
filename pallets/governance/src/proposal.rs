@@ -313,6 +313,7 @@ pub struct UnrewardedProposal<T: crate::Config> {
     pub votes_against: BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>,
 }
 
+/// Create global update parameters proposal with metadata.
 #[allow(clippy::too_many_arguments)]
 pub fn add_global_params_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
@@ -325,6 +326,7 @@ pub fn add_global_params_proposal<T: crate::Config>(
     add_proposal::<T>(proposer, data, metadata)
 }
 
+/// Create global custom proposal with metadata.
 pub fn add_global_custom_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     metadata: Vec<u8>,
@@ -332,6 +334,7 @@ pub fn add_global_custom_proposal<T: crate::Config>(
     add_proposal(proposer, ProposalData::<T>::GlobalCustom, metadata)
 }
 
+/// Create a treasury transfer proposal with metadata.
 pub fn add_dao_treasury_transfer_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     value: BalanceOf<T>,
@@ -585,6 +588,7 @@ fn calc_stake<T: crate::Config>(
     own_stake.saturating_add(delegated_stake)
 }
 
+/// Distribute rewards to the proposals' accounts holders.
 pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
     let governance_config = crate::GlobalGovernanceConfig::<T>::get();
     let reached_interval = block_number

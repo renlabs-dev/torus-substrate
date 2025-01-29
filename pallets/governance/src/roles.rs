@@ -21,6 +21,7 @@ pub(super) fn manage_role<T: Config, M: StorageMap<AccountIdOf<T>, ()>>(
     Ok(())
 }
 
+/// Penalities acts on agent's incentives and dividends of users who set weights on them.
 pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> DispatchResult {
     let percentage = Percent::from_parts(percentage);
     if percentage > T::MaxPenaltyPercentage::get() {

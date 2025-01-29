@@ -29,6 +29,7 @@ pub struct Agent<T: crate::Config> {
     pub name: BoundedVec<u8, T::MaxAgentNameLengthConstraint>,
     pub url: BoundedVec<u8, T::MaxAgentUrlLengthConstraint>,
     pub metadata: BoundedVec<u8, T::MaxAgentMetadataLengthConstraint>,
+    /// Penalities acts on agent's incentives and dividends of users who set weights on them.
     pub weight_penalty_factor: Percent,
     pub registration_block: BlockNumberFor<T>,
     pub fees: crate::fee::ValidatorFee<T>,
