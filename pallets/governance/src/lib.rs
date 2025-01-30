@@ -140,6 +140,8 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
     }
 
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
