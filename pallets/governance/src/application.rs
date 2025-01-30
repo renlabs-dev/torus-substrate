@@ -159,13 +159,18 @@ pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult
 
 pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Block) {
     for application in crate::AgentApplications::<T>::iter_values() {
-        if current_block < application.expires_at {
+        // Skip if not expired yet or if not in Open status
+        if current_block < application.expires_at
+            || !matches!(application.status, ApplicationStatus::Open)
+        {
             continue;
         }
 
         crate::AgentApplications::<T>::mutate(application.id, |application| {
             if let Some(app) = application {
-                app.status = ApplicationStatus::Expired;
+                if matches!(app.status, ApplicationStatus::Open) {
+                    app.status = ApplicationStatus::Expired;
+                }
             }
         });
 

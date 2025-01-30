@@ -6,8 +6,9 @@ on:
     tags:
       - "runtime/*"
     branches:
-      - "testnet"
+      - "github-ci-test"
       - "build-runtime*"
+      - "testnet"
 
 jobs:
   build:
