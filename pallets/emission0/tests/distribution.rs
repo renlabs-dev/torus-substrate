@@ -2,8 +2,8 @@ use std::array::from_fn;
 
 use pallet_emission0::{
     distribute::{get_total_emission_per_block, ConsensusMemberInput},
-    Config, ConsensusMember, ConsensusMembers, EmissionRecyclingPercentage, PendingEmission,
-    WeightControlDelegation,
+    Config, ConsensusMember, ConsensusMembers, EmissionRecyclingPercentage, IncentivesRatio,
+    PendingEmission, WeightControlDelegation,
 };
 use polkadot_sdk::{
     pallet_balances,
@@ -519,4 +519,48 @@ fn pays_weight_control_fee_and_dividends_to_stakers() {
             val_2_stake
         );
     });
+}
+
+#[test]
+fn pays_according_to_incentives_ratio() {
+    for ratio in 0..=100 {
+        test_utils::new_test_ext().execute_with(|| {
+            EmissionRecyclingPercentage::<Test>::set(Percent::zero());
+            TreasuryEmissionFee::<Test>::set(Percent::zero());
+
+            let incentives_ratio = Percent::from_parts(ratio);
+            IncentivesRatio::<Test>::set(incentives_ratio);
+
+            let min_validator_stake = 1;
+            MinValidatorStake::<Test>::set(min_validator_stake);
+            MinAllowedStake::<Test>::set(min_validator_stake);
+
+            let val = 0;
+            let miner = 1;
+
+            let mut member = ConsensusMember::<Test>::default();
+            member.update_weights(BoundedVec::truncate_from(vec![(miner, 1)]));
+
+            ConsensusMembers::<Test>::set(val, Some(member));
+            ConsensusMembers::<Test>::set(miner, Some(Default::default()));
+
+            add_stake(val, val, min_validator_stake);
+            add_stake(miner, miner, min_validator_stake);
+
+            step_block(100);
+
+            let total_emission = get_total_emission_per_block::<Test>() * 100;
+            let total_incentives = incentives_ratio.mul_floor(total_emission);
+            let total_dividends = (Percent::one() - incentives_ratio).mul_floor(total_emission);
+
+            assert_eq!(
+                StakedBy::<Test>::get(val, val).unwrap_or_default() - min_validator_stake,
+                total_dividends
+            );
+            assert_eq!(
+                StakedBy::<Test>::get(miner, miner).unwrap_or_default() - min_validator_stake,
+                total_incentives
+            );
+        });
+    }
 }
