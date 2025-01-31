@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod ext;
+pub mod migrations;
 
 pub(crate) use ext::*;
 pub use pallet::*;
@@ -23,6 +24,8 @@ pub mod weights;
 
 #[frame::pallet]
 pub mod pallet {
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
     use core::num::NonZeroU128;
 
     use frame::prelude::BlockNumberFor;
@@ -99,6 +102,7 @@ pub mod pallet {
     }
 
     #[pallet::pallet]
+    #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
 
     #[pallet::hooks]

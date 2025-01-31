@@ -36,6 +36,9 @@ use polkadot_sdk::sp_std::vec::Vec;
 #[frame::pallet]
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
+
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+
     use proposal::GlobalParamsData;
     use weights::WeightInfo;
 
@@ -136,8 +139,6 @@ pub mod pallet {
 
         type WeightInfo: WeightInfo;
     }
-
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
