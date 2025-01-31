@@ -370,6 +370,7 @@ fn creates_emission_proposal_and_it_runs_after_2_days() {
             origin.clone(),
             Percent::from_parts(20),
             Percent::from_parts(20),
+            Percent::from_parts(20),
             vec![b'0'; 64],
         ));
 
@@ -407,6 +408,7 @@ fn creates_emission_proposal_and_it_runs_before_expiration() {
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
             origin.clone(),
+            Percent::from_parts(20),
             Percent::from_parts(20),
             Percent::from_parts(20),
             vec![b'0'; 64],
@@ -466,6 +468,7 @@ fn creates_emission_proposal_and_it_expires() {
             origin.clone(),
             Percent::from_parts(20),
             Percent::from_parts(20),
+            Percent::from_parts(20),
             vec![b'0'; 64],
         ));
 
@@ -500,6 +503,7 @@ fn creates_emission_proposal_with_invalid_params_and_it_fails() {
             pallet_governance::Pallet::<Test>::add_emission_proposal(
                 origin.clone(),
                 Percent::from_parts(51),
+                Percent::from_parts(50),
                 Percent::from_parts(50),
                 vec![b'0'; 64],
             ),

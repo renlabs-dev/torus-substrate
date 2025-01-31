@@ -166,6 +166,7 @@ parameter_types! {
     pub HalvingInterval: NonZeroU128 = NonZeroU128::new(to_nano(144_000_000)).unwrap();
     pub MaxSupply: NonZeroU128 = NonZeroU128::new(to_nano(144_000_000 * 4)).unwrap();
     pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_parts(70);
+    pub const DefaultIncentivesRatio: Percent = Percent::from_parts(50);
 }
 
 impl pallet_emission0::Config for Test {
@@ -182,6 +183,8 @@ impl pallet_emission0::Config for Test {
     type DefaultMaxAllowedWeights = ConstU16<420>;
 
     type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
+
+    type DefaultIncentivesRatio = DefaultIncentivesRatio;
 
     type Currency = Balances;
 

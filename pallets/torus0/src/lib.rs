@@ -41,9 +41,6 @@ pub mod pallet {
     pub type Burn<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     #[pallet::storage]
-    pub type IncentiveRatio<T: Config> = StorageValue<_, u16, ValueQuery>;
-
-    #[pallet::storage]
     pub type RegistrationsThisInterval<T: Config> = StorageValue<_, u16, ValueQuery>;
 
     #[pallet::storage]

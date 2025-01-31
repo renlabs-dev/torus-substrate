@@ -60,6 +60,10 @@ pub mod pallet {
         StorageValue<_, Percent, ValueQuery, T::DefaultEmissionRecyclingPercentage>;
 
     #[pallet::storage]
+    pub type IncentivesRatio<T: Config> =
+        StorageValue<_, Percent, ValueQuery, T::DefaultIncentivesRatio>;
+
+    #[pallet::storage]
     pub type PendingEmission<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     #[pallet::config]
@@ -88,6 +92,9 @@ pub mod pallet {
         #[pallet::constant]
         type DefaultEmissionRecyclingPercentage: Get<Percent>;
 
+        #[pallet::constant]
+        type DefaultIncentivesRatio: Get<Percent>;
+
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
 
         type Torus: Torus0Api<
@@ -100,8 +107,6 @@ pub mod pallet {
 
         type WeightInfo: WeightInfo;
     }
-
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]

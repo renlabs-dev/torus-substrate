@@ -140,8 +140,6 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
     }
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
-
     #[pallet::pallet]
     #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
@@ -319,6 +317,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             recycling_percentage: Percent,
             treasury_percentage: Percent,
+            incentives_ratio: Percent,
             data: Vec<u8>,
         ) -> DispatchResult {
             let proposer = ensure_signed(origin)?;
@@ -326,6 +325,7 @@ pub mod pallet {
                 proposer,
                 recycling_percentage,
                 treasury_percentage,
+                incentives_ratio,
                 data,
             )
         }

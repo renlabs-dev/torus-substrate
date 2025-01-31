@@ -18,9 +18,9 @@ use polkadot_sdk::{
     },
     sp_tracing::{error, info},
 };
-use substrate_fixed::types::I96F32;
+use substrate_fixed::{traits::ToFixed, types::I96F32};
 
-use crate::{BalanceOf, Config, ConsensusMember};
+use crate::{BalanceOf, Config, ConsensusMember, IncentivesRatio};
 
 mod math;
 
@@ -448,15 +448,36 @@ fn compute_emissions<'a, T: Config>(
         normalized_dividends = Cow::Owned(dividends_emission);
     }
 
-    let mut calculate_emissions = |v: &[I96F32]| {
+    let mut calculate_emissions = |v: &[I96F32], to_be_emitted: I96F32| {
         v.iter()
             .map(|&se| se.checked_mul(to_be_emitted).unwrap_or_default())
             .map(|amount| emission.extract(amount.to_num()))
             .collect::<Vec<_>>()
     };
 
-    let incentives = calculate_emissions(&normalized_incentives);
-    let dividends = calculate_emissions(&normalized_dividends);
+    let incentives_ratio = IncentivesRatio::<T>::get().deconstruct();
+
+    let to_be_emitted = to_be_emitted.to_num::<u128>();
+    let incentives_to_be_emitted;
+    let dividends_to_be_emitted;
+
+    if let Some(incentives_ratio) = incentives_ratio.checked_sub(50) {
+        let incentives_percentage = Percent::from_parts(incentives_ratio * 2);
+        let incentives = incentives_percentage.mul_floor(to_be_emitted);
+        incentives_to_be_emitted = to_be_emitted.saturating_add(incentives);
+        dividends_to_be_emitted = to_be_emitted.saturating_sub(incentives);
+    } else if let Some(dividends_ratio) = 50u8.checked_sub(incentives_ratio) {
+        let dividends_percentage = Percent::from_parts(dividends_ratio * 2);
+        let dividends = dividends_percentage.mul_floor(to_be_emitted);
+        dividends_to_be_emitted = to_be_emitted.saturating_add(dividends);
+        incentives_to_be_emitted = to_be_emitted.saturating_sub(dividends);
+    } else {
+        unreachable!()
+    }
+
+    let incentives =
+        calculate_emissions(&normalized_incentives, incentives_to_be_emitted.to_fixed());
+    let dividends = calculate_emissions(&normalized_dividends, dividends_to_be_emitted.to_fixed());
 
     Emissions {
         dividends,

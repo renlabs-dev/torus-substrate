@@ -202,5 +202,5 @@ benchmarks! {
         let cost = config.proposal_cost;
         let _ = <T as crate::Config>::Currency::deposit_creating(&module_key, cost);
 
-    }:  _(RawOrigin::Signed(module_key.clone()), Percent::from_parts(40), Percent::from_parts(40), data)
+    }:  _(RawOrigin::Signed(module_key.clone()), Percent::from_parts(40), Percent::from_parts(40), Percent::from_parts(40), data)
 }
