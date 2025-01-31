@@ -88,3 +88,16 @@ Running a local dev node:
 ```sh
 cargo xtask run local --alice
 ```
+
+## Code Coverage
+
+> Code coverage is done via [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov).  
+
+Run the following command to generate a `Cobertura` xml file on `target/cov.xml` that can be used with the [Coverage Gutters](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters) VSCode plugin to display which functions and branches are not covered by tests yet.
+```bash
+cargo xtask coverage
+``` 
+  
+If the `--html` attribute is passed to the command, an HTML website will be generated instead. It serves the same purpose as the plugin mentioned and can be accessed on `target/llvm-cov/html/index.html`
+
+**Pull requests must not lower the overall test coverage percentage.**

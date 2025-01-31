@@ -36,6 +36,8 @@
           pkgs.act
           # Python
           pkgs.python310
+          # Code coverage tool
+          pkgs.cargo-llvm-cov
         ];
       in {
         checks = pkgs.mkShell {

@@ -71,6 +71,10 @@ xflags::xflags! {
 
             optional --sudo sudo_key: String
         }
+
+        cmd coverage {
+            optional --html
+        }
     }
 }
 
@@ -86,6 +90,7 @@ pub struct Xtask {
 pub enum XtaskCmd {
     Run(Run),
     GenerateSpec(GenerateSpec),
+    Coverage(Coverage),
 }
 
 #[derive(Debug)]
@@ -130,6 +135,11 @@ pub struct GenerateSpec {
     pub aura: Vec<String>,
     pub balance: Vec<String>,
     pub sudo: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct Coverage {
+    pub html: bool,
 }
 
 impl Xtask {
