@@ -66,6 +66,10 @@ pub mod pallet {
     pub type MaxNameLength<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultMaxNameLength>;
 
     #[pallet::storage]
+    pub type MaxAgentUrlLength<T: Config> =
+        StorageValue<_, u16, ValueQuery, T::DefaultMaxAgentUrlLength>;
+
+    #[pallet::storage]
     pub type MinNameLength<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultMinNameLength>;
 
     #[pallet::storage]
@@ -144,6 +148,9 @@ pub mod pallet {
         type DefaultMaxNameLength: Get<u16>;
 
         #[pallet::constant]
+        type DefaultMaxAgentUrlLength: Get<u16>;
+
+        #[pallet::constant]
         type DefaultMaxAllowedAgents: Get<u16>;
 
         #[pallet::constant]
@@ -187,7 +194,7 @@ pub mod pallet {
         #[pallet::constant]
         type MaxAgentNameLengthConstraint: Get<u32>;
 
-        /// This is needed on agent::Agent to set the `address` field BoundedVec max length.
+        /// This is needed on agent::Agent to set the `url` field BoundedVec max length.
         #[pallet::constant]
         type MaxAgentUrlLengthConstraint: Get<u32>;
 

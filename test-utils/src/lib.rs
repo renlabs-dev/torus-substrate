@@ -118,6 +118,8 @@ impl pallet_torus0::Config for Test {
 
     type DefaultMaxNameLength = ConstU16<32>;
 
+    type DefaultMaxAgentUrlLength = ConstU16<64>;
+
     type DefaultMaxAllowedAgents = ConstU16<10_000>;
 
     type DefaultMaxAllowedValidators = ConstU16<128>;
@@ -146,7 +148,7 @@ impl pallet_torus0::Config for Test {
     #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
     type MaxAgentNameLengthConstraint = ConstU32<256>;
 
-    #[doc = " This is needed on agent::Agent to set the `address` field BoundedVec max length."]
+    #[doc = " This is needed on agent::Agent to set the `url` field BoundedVec max length."]
     type MaxAgentUrlLengthConstraint = ConstU32<256>;
 
     type MaxAgentMetadataLengthConstraint = ConstU32<256>;
