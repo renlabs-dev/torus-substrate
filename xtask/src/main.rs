@@ -2,6 +2,7 @@ use std::{borrow::Cow, net::IpAddr, path::Path};
 
 use polkadot_sdk::sp_keyring;
 
+mod build_spec;
 mod flags;
 mod run;
 
