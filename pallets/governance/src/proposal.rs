@@ -195,6 +195,7 @@ pub enum ProposalStatus<T: crate::Config> {
     Expired,
 }
 
+// TODO: add Agent URL max length
 #[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub struct GlobalParamsData<T: crate::Config> {

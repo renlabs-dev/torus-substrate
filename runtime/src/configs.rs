@@ -312,6 +312,8 @@ impl pallet_torus0::Config for Runtime {
 
     type DefaultMaxNameLength = ConstU16<32>;
 
+    type DefaultMaxAgentUrlLength = ConstU16<64>;
+
     type DefaultMaxAllowedAgents = ConstU16<10_000>;
 
     type DefaultMaxAllowedValidators = ConstU16<128>;

@@ -157,7 +157,7 @@ fn register_fail_url_validation() {
                 agent,
                 agent,
                 name.clone(),
-                " ".repeat(pallet_torus0::MaxNameLength::<Test>::get() as usize + 1)
+                "X".repeat(pallet_torus0::MaxAgentUrlLength::<Test>::get() as usize + 1)
                     .as_bytes()
                     .to_vec(),
                 metadata.clone(),
