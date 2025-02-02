@@ -53,7 +53,8 @@ pub(super) fn run(mut r: flags::Run) {
                 .chain_spec
                 .as_ref()
                 .map(|s| s.to_str().expect("invalid string"))
-                .unwrap_or_else(|| "dev");
+                .unwrap_or_else(|| "dev")
+                .to_string();
 
             account.suri = local
                 .account_suri
@@ -62,6 +63,11 @@ pub(super) fn run(mut r: flags::Run) {
                 .unwrap_or(account.suri);
 
             (chain_path, true)
+        }
+        flags::RunCmd::Replica(replica) => {
+            let chain_path = crate::build_spec::targetchain_spec(replica, &path);
+            let chain_path_str = chain_path.to_str().expect("invalid string").to_string();
+            (chain_path_str, false)
         }
     };
 

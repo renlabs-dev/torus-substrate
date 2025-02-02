@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-
 xflags::xflags! {
     src "src/flags.rs"
 
@@ -42,6 +41,17 @@ xflags::xflags! {
 
                 /// The account SURI. The pattern is: `<mnemonic>//<seed>`.
                 optional --account-suri account_suri: String
+            }
+            /// Runs a mainnet replica with the latest state.
+            cmd replica {
+                /// Also write the generated spec file to disk.
+                optional -o, --output output: PathBuf
+
+                /// The Sudo address to use. SS58 Address.
+                optional --sudo sudo: String
+
+                /// The API URL to use for fetching chain state.
+                optional --api-url api_url: String
             }
         }
 
@@ -96,12 +106,20 @@ pub struct Run {
 #[derive(Debug)]
 pub enum RunCmd {
     Local(Local),
+    Replica(Replica),
 }
 
 #[derive(Debug)]
 pub struct Local {
     pub chain_spec: Option<PathBuf>,
     pub account_suri: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct Replica {
+    pub output: Option<PathBuf>,
+    pub sudo: Option<String>,
+    pub api_url: Option<String>,
 }
 
 #[derive(Debug)]
