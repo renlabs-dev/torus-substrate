@@ -36,6 +36,14 @@ pub enum ApplicationStatus {
     Expired,
 }
 
+impl<T: crate::Config> AgentApplication<T> {
+    /// Returns true if the application is in the Open state, i.e. not Expired
+    /// or Resolved, meaning it can be acted upon.
+    pub fn is_open(&self) -> bool {
+        matches!(self.status, ApplicationStatus::Open)
+    }
+}
+
 pub fn submit_application<T: crate::Config>(
     payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
@@ -112,6 +120,10 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
 
+    if !application.is_open() {
+        return Err(crate::Error::<T>::ApplicationNotOpen.into());
+    }
+
     match application.action {
         ApplicationAction::Add => {
             crate::Whitelist::<T>::insert(application.agent_key.clone(), ());
@@ -134,6 +146,7 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
     });
 
     // Pay the application cost back to the applicant
+    // TODO: should this value be used?
     let _ =
         <T as crate::Config>::Currency::deposit_creating(&application.payer_key, application.cost);
 
@@ -146,11 +159,17 @@ pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
 
+    if !application.is_open() {
+        return Err(crate::Error::<T>::ApplicationNotOpen.into());
+    }
+
     crate::AgentApplications::<T>::mutate(application_id, |application| {
         if let Some(app) = application {
             app.status = ApplicationStatus::Resolved { accepted: false };
         }
     });
+
+    // Application cost is discarded
 
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationDenied(application.id));
 

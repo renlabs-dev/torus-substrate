@@ -360,6 +360,7 @@ pub mod pallet {
         ApplicationExpired(u32),
     }
 
+    // TODO: organize this shit in semantic groups
     #[pallet::error]
     pub enum Error<T> {
         /// The proposal is already finished. Do not retry.
@@ -401,16 +402,10 @@ pub mod pallet {
         VoterIsDelegatingVotingPower,
         /// An internal error occurred, probably relating to the size of the bounded sets.
         InternalError,
-        /// The application data is too small or empty.
-        ApplicationTooSmall,
-        /// The application data is too large, exceeding the maximum allowed size.
-        InvalidApplicationSize,
         /// The application is not in a pending state.
-        ApplicationNotPending,
+        ApplicationNotOpen,
         /// The application key is already used in another application.
         ApplicationKeyAlreadyUsed,
-        /// The application data is invalid or malformed.
-        InvalidApplication,
         /// The account doesn't have enough balance to submit an application.
         NotEnoughBalanceToApply,
         /// The operation can only be performed by the curator.
@@ -425,8 +420,6 @@ pub mod pallet {
         CouldNotConvertToBalance,
         /// The application data provided does not meet the length requirement
         InvalidApplicationDataLength,
-        /// The penalty percentage provided does not meet the maximum requirement
-        InvalidAgentPenaltyPercentage,
         /// The key is already a curator.
         AlreadyCurator,
         /// The key is already an allocator.
