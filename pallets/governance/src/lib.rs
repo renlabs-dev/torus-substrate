@@ -329,6 +329,22 @@ pub mod pallet {
                 data,
             )
         }
+
+        #[pallet::call_index(18)]
+        #[pallet::weight((<T as Config>::WeightInfo::add_emission_proposal(), DispatchClass::Normal, Pays::No))]
+        pub fn set_emission_params(
+            origin: OriginFor<T>,
+            recycling_percentage: Percent,
+            treasury_percentage: Percent,
+        ) -> DispatchResult {
+            // ensure root
+            ensure_root(origin)?;
+
+            pallet_emission0::EmissionRecyclingPercentage::<T>::set(recycling_percentage);
+            crate::TreasuryEmissionFee::<T>::set(treasury_percentage);
+
+            Ok(())
+        }
     }
 
     #[pallet::event]
