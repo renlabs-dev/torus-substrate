@@ -4,6 +4,7 @@ pub mod agent;
 pub mod burn;
 mod ext;
 pub mod fee;
+pub mod migrations;
 pub mod stake;
 
 use crate::agent::Agent;
@@ -26,6 +27,7 @@ use scale_info::prelude::vec::Vec;
 
 #[frame::pallet]
 pub mod pallet {
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
     use frame::prelude::BlockNumberFor;
     use pallet_emission0_api::Emission0Api;
@@ -207,6 +209,7 @@ pub mod pallet {
     }
 
     #[pallet::pallet]
+    #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
 
     #[pallet::call]
