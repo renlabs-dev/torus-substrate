@@ -322,7 +322,7 @@ impl pallet_torus0::Config for Runtime {
 
     type DefaultMinAllowedStake = ConstU128<{ as_tors(5) / 10 }>;
 
-    type DefaultMinStakingFee = ConstU8<5>;
+    type DefaultMinStakingFee = ConstU8<0>;
 
     type DefaultMinWeightControlFee = ConstU8<4>;
 
