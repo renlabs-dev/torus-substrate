@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod ext;
+pub mod migrations;
 
 pub(crate) use ext::*;
 pub use pallet::*;
@@ -23,6 +24,8 @@ pub mod weights;
 
 #[frame::pallet]
 pub mod pallet {
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
     use core::num::NonZeroU128;
 
     use frame::prelude::BlockNumberFor;
@@ -57,6 +60,10 @@ pub mod pallet {
         StorageValue<_, Percent, ValueQuery, T::DefaultEmissionRecyclingPercentage>;
 
     #[pallet::storage]
+    pub type IncentivesRatio<T: Config> =
+        StorageValue<_, Percent, ValueQuery, T::DefaultIncentivesRatio>;
+
+    #[pallet::storage]
     pub type PendingEmission<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
     #[pallet::config]
@@ -85,6 +92,9 @@ pub mod pallet {
         #[pallet::constant]
         type DefaultEmissionRecyclingPercentage: Get<Percent>;
 
+        #[pallet::constant]
+        type DefaultIncentivesRatio: Get<Percent>;
+
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
 
         type Torus: Torus0Api<
@@ -99,6 +109,7 @@ pub mod pallet {
     }
 
     #[pallet::pallet]
+    #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
 
     #[pallet::hooks]

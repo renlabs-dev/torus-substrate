@@ -364,10 +364,12 @@ fn creates_emission_proposal_and_it_runs_after_2_days() {
         let origin = get_origin(0);
         add_balance(0, to_nano(2));
         register(0, 0, 0, to_nano(1));
+        let _ = pallet_governance::roles::penalize_agent::<Test>(0, 100);
         pallet_torus0::TotalStake::<Test>::set(to_nano(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
             origin.clone(),
+            Percent::from_parts(20),
             Percent::from_parts(20),
             Percent::from_parts(20),
             vec![b'0'; 64],
@@ -403,10 +405,12 @@ fn creates_emission_proposal_and_it_runs_before_expiration() {
         let origin = get_origin(0);
         add_balance(0, to_nano(2));
         register(0, 0, 0, to_nano(1) - min_stake);
+        let _ = pallet_governance::roles::penalize_agent::<Test>(0, 100);
         pallet_torus0::TotalStake::<Test>::set(to_nano(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
             origin.clone(),
+            Percent::from_parts(20),
             Percent::from_parts(20),
             Percent::from_parts(20),
             vec![b'0'; 64],
@@ -460,10 +464,12 @@ fn creates_emission_proposal_and_it_expires() {
         let origin = get_origin(0);
         add_balance(0, to_nano(2));
         register(0, 0, 0, to_nano(1) - min_stake);
+        let _ = pallet_governance::roles::penalize_agent::<Test>(0, 100);
         pallet_torus0::TotalStake::<Test>::set(to_nano(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
             origin.clone(),
+            Percent::from_parts(20),
             Percent::from_parts(20),
             Percent::from_parts(20),
             vec![b'0'; 64],
@@ -500,6 +506,7 @@ fn creates_emission_proposal_with_invalid_params_and_it_fails() {
             pallet_governance::Pallet::<Test>::add_emission_proposal(
                 origin.clone(),
                 Percent::from_parts(51),
+                Percent::from_parts(50),
                 Percent::from_parts(50),
                 vec![b'0'; 64],
             ),

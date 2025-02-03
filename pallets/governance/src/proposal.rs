@@ -124,9 +124,11 @@ impl<T: crate::Config> Proposal<T> {
             ProposalData::Emission {
                 recycling_percentage,
                 treasury_percentage,
+                incentives_ratio,
             } => {
                 pallet_emission0::EmissionRecyclingPercentage::<T>::set(recycling_percentage);
                 crate::TreasuryEmissionFee::<T>::set(treasury_percentage);
+                pallet_emission0::IncentivesRatio::<T>::set(incentives_ratio);
             }
 
             ProposalData::GlobalCustom => {}
@@ -276,6 +278,7 @@ pub enum ProposalData<T: crate::Config> {
     Emission {
         recycling_percentage: Percent,
         treasury_percentage: Percent,
+        incentives_ratio: Percent,
     },
     TransferDaoTreasury {
         account: AccountIdOf<T>,
@@ -339,6 +342,7 @@ pub fn add_emission_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     recycling_percentage: Percent,
     treasury_percentage: Percent,
+    incentives_ratio: Percent,
     metadata: Vec<u8>,
 ) -> DispatchResult {
     ensure!(
@@ -351,6 +355,7 @@ pub fn add_emission_proposal<T: crate::Config>(
     let data = ProposalData::<T>::Emission {
         recycling_percentage,
         treasury_percentage,
+        incentives_ratio,
     };
 
     add_proposal::<T>(proposer, data, metadata)

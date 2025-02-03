@@ -27,7 +27,7 @@ use scale_info::prelude::vec::Vec;
 
 #[frame::pallet]
 pub mod pallet {
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
     use frame::prelude::BlockNumberFor;
     use pallet_emission0_api::Emission0Api;
@@ -41,9 +41,6 @@ pub mod pallet {
 
     #[pallet::storage]
     pub type Burn<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
-    #[pallet::storage]
-    pub type IncentiveRatio<T: Config> = StorageValue<_, u16, ValueQuery>;
 
     #[pallet::storage]
     pub type RegistrationsThisInterval<T: Config> = StorageValue<_, u16, ValueQuery>;

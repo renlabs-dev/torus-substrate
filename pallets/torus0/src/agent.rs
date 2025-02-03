@@ -107,7 +107,7 @@ pub fn register<T: crate::Config>(
             name: BoundedVec::truncate_from(name),
             url: BoundedVec::truncate_from(url),
             metadata: BoundedVec::truncate_from(metadata),
-            weight_penalty_factor: Percent::from_percent(100),
+            weight_penalty_factor: Percent::from_percent(0),
             registration_block: <polkadot_sdk::frame_system::Pallet<T>>::block_number(),
             fees: Default::default(),
         },

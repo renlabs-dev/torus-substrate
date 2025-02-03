@@ -287,3 +287,80 @@ fn application_expires() {
         assert_eq!(application.status, ApplicationStatus::Expired);
     });
 }
+
+#[test]
+fn error_is_thrown_on_resolving_non_open_application() {
+    new_test_ext().execute_with(|| {
+        let key = 0;
+        let adding_key = 1;
+        pallet_governance::Curators::<Test>::insert(key, ());
+
+        let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
+        let data = "test".as_bytes().to_vec();
+
+        add_balance(key, proposal_cost + 1);
+
+        assert_ok!(pallet_governance::Pallet::<Test>::submit_application(
+            get_origin(key),
+            adding_key,
+            data.clone(),
+            false
+        ));
+        let application_id = 0;
+
+        // resolves the application as Accepted
+        assert_ok!(pallet_governance::Pallet::<Test>::accept_application(
+            get_origin(key),
+            0
+        ));
+
+        let balance_after_accept = get_balance(key);
+        assert_eq!(balance_after_accept, proposal_cost + 1);
+
+        assert!(pallet_governance::whitelist::is_whitelisted::<Test>(
+            &adding_key
+        ));
+
+        // tries to resolve the application as `accepted` again
+        assert_err!(
+            pallet_governance::Pallet::<Test>::accept_application(get_origin(key), application_id),
+            pallet_governance::Error::<Test>::ApplicationNotOpen
+        );
+
+        // tries to resolve the application as not-accepted
+        assert_err!(
+            pallet_governance::Pallet::<Test>::deny_application(get_origin(key), application_id),
+            pallet_governance::Error::<Test>::ApplicationNotOpen
+        );
+
+        // new application
+        let adding_key = adding_key + 1;
+        let data = "test".as_bytes().to_vec();
+        assert_ok!(pallet_governance::Pallet::<Test>::submit_application(
+            get_origin(key),
+            adding_key,
+            data.clone(),
+            false
+        ));
+        let application_id = 1;
+
+        // expires the application
+        step_block(
+            pallet_governance::GlobalGovernanceConfig::<Test>::get().agent_application_expiration,
+        );
+        let balance_after_expire = get_balance(key);
+        assert_eq!(balance_after_expire, 1);
+
+        // tries to resolve the application as `accepted`
+        assert_err!(
+            pallet_governance::Pallet::<Test>::accept_application(get_origin(key), application_id),
+            pallet_governance::Error::<Test>::ApplicationNotOpen
+        );
+
+        // tries to resolve the application as not-accepted
+        assert_err!(
+            pallet_governance::Pallet::<Test>::deny_application(get_origin(key), application_id),
+            pallet_governance::Error::<Test>::ApplicationNotOpen
+        );
+    });
+}
