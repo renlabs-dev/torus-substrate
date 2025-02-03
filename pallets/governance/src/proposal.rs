@@ -11,7 +11,6 @@ use crate::{GovernanceConfiguration, NotDelegatingVotingPower};
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::frame_support::traits::Currency;
-use polkadot_sdk::frame_support::traits::WithdrawReasons;
 use polkadot_sdk::polkadot_sdk_frame::traits::CheckedAdd;
 use polkadot_sdk::sp_runtime::SaturatedConversion;
 use polkadot_sdk::sp_std::{collections::btree_set::BTreeSet, vec::Vec};
@@ -76,8 +75,12 @@ impl<T: crate::Config> Proposal<T> {
     }
 
     fn execute_proposal(self) -> DispatchResult {
-        let _ =
-            <T as crate::Config>::Currency::deposit_creating(&self.proposer, self.proposal_cost);
+        let _ = <T as crate::Config>::Currency::transfer(
+            &crate::DaoTreasuryAddress::<T>::get(),
+            &self.proposer,
+            self.proposal_cost,
+            ExistenceRequirement::AllowDeath,
+        );
 
         match self.data {
             ProposalData::GlobalParams(data) => {
@@ -378,13 +381,13 @@ fn add_proposal<T: crate::Config>(
     let config = GlobalGovernanceConfig::<T>::get();
 
     let cost = config.proposal_cost;
-    let _ = <T as crate::Config>::Currency::withdraw(
+    <T as crate::Config>::Currency::transfer(
         &proposer,
+        &crate::DaoTreasuryAddress::<T>::get(),
         cost,
-        WithdrawReasons::except(WithdrawReasons::TIP),
         ExistenceRequirement::AllowDeath,
     )
-    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToPropose)?;
+    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToApply)?;
 
     let proposal_id: u64 = crate::Proposals::<T>::iter()
         .count()
