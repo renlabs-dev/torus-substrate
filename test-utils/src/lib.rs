@@ -128,7 +128,7 @@ impl pallet_torus0::Config for Test {
 
     type DefaultMinAllowedStake = ConstU128<500_000_000_000_000_000>;
 
-    type DefaultMinStakingFee = ConstU8<5>;
+    type DefaultMinStakingFee = ConstU8<0>;
 
     type DefaultMinWeightControlFee = ConstU8<5>;
 
