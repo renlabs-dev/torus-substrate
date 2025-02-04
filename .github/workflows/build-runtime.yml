@@ -7,7 +7,8 @@ on:
       - "runtime/*"
     branches:
       - "github-ci-test"
-      - "build-runtime*"
+      - "build-runtime"
+      - "build-runtime/*"
       - "testnet"
 
 concurrency:
@@ -35,20 +36,27 @@ jobs:
           version: 3.20.1
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare
+        run: |
+          echo "SANITIZED_REF=$(echo "$GITHUB_REF_NAME" | sed -e 's/[^a-zA-Z0-9._-]/-/g')" >> $GITHUB_ENV
+
       - name: Build runtime
         run: |
           cargo build --release --timings --package torus-runtime
 
-          export SHA256SUM=$(sha256sum target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm | cut -d ' ' -f1)
+          mkdir ./out/
+
+          mv ./target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm ./out/
+          sha256sum ./out/torus_runtime.compact.compressed.wasm > ./out/torus_runtime.compact.compressed.wasm.sha256
+
+          export SHA256SUM=$(< ./out/torus_runtime.compact.compressed.wasm.sha256 cut -d ' ' -f1)
           echo Hash of compact and compressed WASM: $SHA256SUM
 
-          mkdir out
-          mv target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm out/
-          touch out/$SHA256SUM
+          touch ./out/$SHA256SUM
 
       - uses: actions/upload-artifact@v4
         with:
-          name: torus_runtime.compact.compressed
+          name: torus-runtime.{{ env.SANITIZED_REF }}
           path: out/
           if-no-files-found: error
           overwrite: true
