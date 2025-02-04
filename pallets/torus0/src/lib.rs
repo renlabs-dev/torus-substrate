@@ -229,6 +229,10 @@ pub mod pallet {
             amount: BalanceOf<T>,
         ) -> DispatchResult {
             let key = ensure_signed(origin)?;
+            ensure!(
+                amount >= crate::MinAllowedStake::<T>::get(),
+                crate::Error::<T>::StakeTooSmall
+            );
             stake::add_stake::<T>(key, agent_key, amount)
         }
 

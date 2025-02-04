@@ -12,11 +12,6 @@ pub fn add_stake<T: crate::Config>(
     amount: BalanceOf<T>,
 ) -> DispatchResult {
     ensure!(
-        amount >= crate::MinAllowedStake::<T>::get(),
-        crate::Error::<T>::StakeTooSmall
-    );
-
-    ensure!(
         agent::exists::<T>(&staked),
         crate::Error::<T>::AgentDoesNotExist
     );
@@ -75,6 +70,8 @@ pub fn remove_stake<T: crate::Config>(
     crate::TotalStake::<T>::mutate(|total_stake| *total_stake = total_stake.saturating_sub(amount));
 
     let _ = <T as crate::Config>::Currency::deposit_creating(&key, amount);
+
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeRemoved(key, agent_key, amount));
 
     Ok(())
 }

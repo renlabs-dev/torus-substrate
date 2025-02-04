@@ -1,6 +1,6 @@
 use pallet_torus0::{Error, MinAllowedStake, StakedBy, StakingTo, TotalStake};
 use polkadot_sdk::frame_support::{assert_err, traits::Currency};
-use test_utils::{assert_ok, pallet_governance, Balances, Test};
+use test_utils::{assert_ok, get_origin, pallet_governance, Balances, Test};
 
 #[test]
 fn add_stake_correctly() {
@@ -78,7 +78,7 @@ fn add_stake_without_the_minimum_stake() {
         assert_eq!(Balances::total_balance(&to), 0);
 
         assert_err!(
-            pallet_torus0::stake::add_stake::<Test>(from, to, stake_to_add - 1),
+            pallet_torus0::Pallet::<Test>::add_stake(get_origin(from), to, stake_to_add - 1),
             Error::<Test>::StakeTooSmall
         );
 
