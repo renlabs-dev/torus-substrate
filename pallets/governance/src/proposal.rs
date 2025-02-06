@@ -30,16 +30,14 @@ pub type ProposalId = u64;
 pub struct Proposal<T: crate::Config> {
     pub id: ProposalId,
     pub proposer: AccountIdOf<T>,
-    pub expiration_block: Block,
     /// The exact block when the block will be expired/deleted
-    pub expiration_block: BlockNumberFor<T>,
+    pub expiration_block: Block,
     pub data: ProposalData<T>,
     pub status: ProposalStatus<T>,
     pub metadata: BoundedVec<u8, ConstU32<256>>,
     pub proposal_cost: BalanceOf<T>,
-    pub creation_block: Block,
     /// The exact block when the block is created
-    pub creation_block: BlockNumberFor<T>,
+    pub creation_block: Block,
 }
 
 impl<T: crate::Config> Proposal<T> {
@@ -431,7 +429,7 @@ fn add_proposal<T: crate::Config>(
 }
 
 /// Tick active proposals to finish it if it's possible in the current block number.
-pub fn tick_proposals<T: crate::Config>(block_number: BlockNumberFor<T>) {
+pub fn tick_proposals<T: crate::Config>(block_number: Block) {
     let not_delegating = NotDelegatingVotingPower::<T>::get().into_inner();
 
     let proposals = Proposals::<T>::iter().filter(|(_, p)| p.is_active());

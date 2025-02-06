@@ -13,7 +13,7 @@ use scale_info::TypeInfo;
 /// Decentralized autonomous organization application, it's used to do agent
 /// operations on the network, like creating or removing, and needs to be approved
 /// by other peers.
-#[derive(CloneNoBound, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
+#[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct AgentApplication<T: crate::Config> {
     pub id: u32,
@@ -22,7 +22,7 @@ pub struct AgentApplication<T: crate::Config> {
     pub data: BoundedVec<u8, T::MaxApplicationDataLength>,
     pub cost: BalanceOf<T>,
     /// The exact block when the agent will be deleted/expired
-    pub expires_at: BlockNumberFor<T>,
+    pub expires_at: Block,
     pub action: ApplicationAction,
     pub status: ApplicationStatus,
 }
