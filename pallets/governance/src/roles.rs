@@ -7,7 +7,8 @@ use polkadot_sdk::{
     polkadot_sdk_frame::prelude::OriginFor,
 };
 
-/// Generic function used to manage the Curator and Allocator maps, which behave similarly.
+/// Generic function used to manage the Curator and Allocator maps, which behave
+/// similarly.
 pub(super) fn manage_role<T: Config, M: StorageMap<AccountIdOf<T>, ()>>(
     key: AccountIdOf<T>,
     is_add: bool,

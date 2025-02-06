@@ -38,7 +38,9 @@ where
 
 /// Adjusts registration burn for the current block.
 ///
-/// The next burn is calculated by analyzing the last N (`target_registrations_interval`) blocks and increases if the target registrations per interval was reached.
+/// The next burn is calculated by analyzing the last N
+/// (`target_registrations_interval`) blocks and increases if the target
+/// registrations per interval was reached.
 pub fn adjust_burn<T: crate::Config>(current_block: u64) {
     let BurnConfiguration {
         min_burn,

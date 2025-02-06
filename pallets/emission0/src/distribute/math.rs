@@ -344,9 +344,10 @@ pub fn weighted_median_col_sparse(
     median
 }
 
-// Stake-weighted median score finding algorithm, based on a mid pivot binary search.
-// Normally a random pivot is used, but to ensure full determinism the mid point is chosen instead.
-// Assumes relatively random score order for efficiency, typically less than O(nlogn) complexity.
+// Stake-weighted median score finding algorithm, based on a mid pivot binary
+// search. Normally a random pivot is used, but to ensure full determinism the
+// mid point is chosen instead. Assumes relatively random score order for
+// efficiency, typically less than O(nlogn) complexity.
 //
 // # Args:
 // 	* 'stake': ( &Vec<I96F32> ):
@@ -362,12 +363,12 @@ pub fn weighted_median_col_sparse(
 // 		- minority_ratio = 1 - majority_ratio
 //
 // 	* 'partition_lo' ( I96F32 ):
-// 		- lower edge of stake for partition, where partition is a segment [lo, hi] inside stake
-//     integral [0, 1].
+// 		- lower edge of stake for partition, where partition is a segment [lo, hi]
+//     inside stake integral [0, 1].
 //
 // 	* 'partition_hi' ( I96F32 ):
-// 		- higher edge of stake for partition, where partition is a segment [lo, hi] inside stake
-//     integral [0, 1].
+// 		- higher edge of stake for partition, where partition is a segment [lo, hi]
+//     inside stake integral [0, 1].
 //
 // # Returns:
 //     * 'median': ( I96F32 ):
@@ -466,7 +467,8 @@ pub fn row_sum_sparse(sparse_matrix: &[Vec<(u16, I96F32)>]) -> Vec<I96F32> {
     result
 }
 
-// Return sparse matrix with values above column threshold set to threshold value.
+// Return sparse matrix with values above column threshold set to threshold
+// value.
 pub fn col_clip_sparse(
     sparse_matrix: &[Vec<(u16, I96F32)>],
     col_threshold: &[I96F32],
@@ -706,8 +708,8 @@ pub fn mat_ema_sparse(
     result
 }
 
-/// Max-upscale vector and convert to u16 so max_value = u16::MAX. Assumes non-negative normalized
-/// input.
+/// Max-upscale vector and convert to u16 so max_value = u16::MAX. Assumes
+/// non-negative normalized input.
 pub fn vec_max_upscale_to_u16(vec: &[I96F32]) -> Vec<u16> {
     let u16_max = I96F32::from_num(u16::MAX);
     let threshold = I96F32::from_num(32768);
@@ -809,7 +811,8 @@ mod tests {
         };
     }
 
-    /// Reshape vector to sparse matrix with specified number of input rows, cast f32 to I96F32.
+    /// Reshape vector to sparse matrix with specified number of input rows,
+    /// cast f32 to I96F32.
     fn vec_to_sparse_mat_fixed(
         vector: &[f32],
         rows: usize,

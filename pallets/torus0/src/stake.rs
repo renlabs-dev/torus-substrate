@@ -82,7 +82,8 @@ pub fn remove_stake<T: crate::Config>(
     Ok(())
 }
 
-/// Transfers stake from an account to another (see [`remove_stake`], [`add_stake`]).
+/// Transfers stake from an account to another (see [`remove_stake`],
+/// [`add_stake`]).
 pub fn transfer_stake<T: crate::Config>(
     staker: AccountIdOf<T>,
     old_staked: AccountIdOf<T>,
@@ -94,7 +95,8 @@ pub fn transfer_stake<T: crate::Config>(
     Ok(())
 }
 
-/// Usually called when de-registering an agent, removes all stakes on a given key.
+/// Usually called when de-registering an agent, removes all stakes on a given
+/// key.
 pub(crate) fn clear_key<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
     for (staker, staked, amount) in crate::StakingTo::<T>::iter() {
         if &staker == key || &staked == key {

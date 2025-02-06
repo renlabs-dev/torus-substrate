@@ -42,11 +42,13 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 /// Current approximation of the gas/s consumption considering
 /// EVM execution over compiled WASM (on 4.4Ghz CPU).
 /// Given the 2000ms Weight, from which 75% only are used for transactions,
-/// the total EVM execution gas limit is: GAS_PER_SECOND * 2 * 0.75 ~= 60_000_000.
+/// the total EVM execution gas limit is: GAS_PER_SECOND * 2 * 0.75 ~=
+/// 60_000_000.
 pub const GAS_PER_SECOND: u64 = 40_000_000;
 
 /// Approximate ratio of the amount of Weight per Gas.
-/// u64 works for approximations because Weight is a very small unit compared to gas.
+/// u64 works for approximations because Weight is a very small unit compared to
+/// gas.
 pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND / GAS_PER_SECOND;
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
@@ -71,19 +73,22 @@ parameter_types! {
 pub struct TransactionPaymentAsGasPrice;
 impl FeeCalculator for TransactionPaymentAsGasPrice {
     fn min_gas_price() -> (U256, Weight) {
-        // note: transaction-payment differs from EIP-1559 in that its tip and length fees are not
-        //       scaled by the multiplier, which means its multiplier will be overstated when
-        //       applied to an ethereum transaction
-        // note: transaction-payment uses both a congestion modifier (next_fee_multiplier, which is
-        //       updated once per block in on_finalize) and a 'WeightToFee' implementation. Our
-        //       runtime implements this as a 'ConstantModifier', so we can get away with a simple
+        // note: transaction-payment differs from EIP-1559 in that its tip and length
+        // fees are not       scaled by the multiplier, which means its
+        // multiplier will be overstated when       applied to an ethereum
+        // transaction note: transaction-payment uses both a congestion modifier
+        // (next_fee_multiplier, which is       updated once per block in
+        // on_finalize) and a 'WeightToFee' implementation. Our       runtime
+        // implements this as a 'ConstantModifier', so we can get away with a simple
         //       multiplication here.
-        // It is imperative that `saturating_mul_int` be performed as late as possible in the
-        // expression since it involves fixed point multiplication with a division by a fixed
-        // divisor. This leads to truncation and subsequent precision loss if performed too early.
-        // This can lead to min_gas_price being same across blocks even if the multiplier changes.
-        // There's still some precision loss when the final `gas_price` (used_gas * min_gas_price)
-        // is computed in frontier, but that's currently unavoidable.
+        // It is imperative that `saturating_mul_int` be performed as late as possible
+        // in the expression since it involves fixed point multiplication with a
+        // division by a fixed divisor. This leads to truncation and subsequent
+        // precision loss if performed too early. This can lead to min_gas_price
+        // being same across blocks even if the multiplier changes.
+        // There's still some precision loss when the final `gas_price` (used_gas *
+        // min_gas_price) is computed in frontier, but that's currently
+        // unavoidable.
         let min_gas_price = TransactionPayment::next_fee_multiplier()
             .saturating_mul_int((currency::WEIGHT_FEE).saturating_mul(WEIGHT_PER_GAS as u128));
         (

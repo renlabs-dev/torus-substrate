@@ -46,7 +46,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     state_version: 1,
 };
 
-/// The version information used to identify this runtime when compiled natively.
+/// The version information used to identify this runtime when compiled
+/// natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
     NativeVersion {
@@ -101,7 +102,8 @@ pub type RuntimeExecutive = frame_executive::Executive<
     Migrations,
 >;
 
-// Composes the runtime by adding all the used pallets and deriving necessary types.
+// Composes the runtime by adding all the used pallets and deriving necessary
+// types.
 #[frame_construct_runtime]
 mod runtime {
     #[runtime::runtime]
@@ -162,7 +164,8 @@ parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
 }
 
-/// Some re-exports that the node side code needs to know. Some are useful in this context as well.
+/// Some re-exports that the node side code needs to know. Some are useful in
+/// this context as well.
 ///
 /// Other types should preferably be private.
 // TODO: this should be standardized in some way, see:
@@ -202,10 +205,11 @@ pub mod interface {
     pub type MinimumBalance = <Runtime as pallet_balances::Config>::ExistentialDeposit;
 }
 
-// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
-// the specifics of the runtime. They can then be made to be agnostic over specific formats
-// of data like extrinsics, allowing for them to continue syncing the network through upgrades
-// to even the core data structures.
+// Opaque types. These are used by the CLI to instantiate machinery that don't
+// need to know the specifics of the runtime. They can then be made to be
+// agnostic over specific formats of data like extrinsics, allowing for them to
+// continue syncing the network through upgrades to even the core data
+// structures.
 pub mod opaque {
     use super::*;
 

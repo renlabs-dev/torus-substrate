@@ -47,8 +47,9 @@ impl<T: crate::Config> Proposal<T> {
     }
 
     /// Returns the block in which a proposal should be executed.
-    /// For emission proposals, that is the creation block + 21600 blocks (roughly 2 days at 1 block every 8 seconds),
-    /// as for the others, they are only executed on the expiration block.
+    /// For emission proposals, that is the creation block + 21600 blocks
+    /// (roughly 2 days at 1 block every 8 seconds), as for the others, they
+    /// are only executed on the expiration block.
     pub fn execution_block(&self) -> Block {
         match self.data {
             ProposalData::Emission { .. } => self.creation_block + 21_600,
@@ -184,7 +185,11 @@ impl<T: crate::Config> Proposal<T> {
 #[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub enum ProposalStatus<T: crate::Config> {
-    /// The proposal is active and being voted upon. The votes values only hold accounts and not stake per key, because this is subtle to change overtime. The stake values are there to help clients estimate the status of the voting, they are updated every few blocks, but are not used in the final calculation.
+    /// The proposal is active and being voted upon. The votes values only hold
+    /// accounts and not stake per key, because this is subtle to change
+    /// overtime. The stake values are there to help clients estimate the status
+    /// of the voting, they are updated every few blocks, but are not used in
+    /// the final calculation.
     Open {
         /// Accounts who have voted for this proposal to be accepted.
         votes_for: BoundedBTreeSet<AccountIdOf<T>, ConstU32<{ u32::MAX }>>,
@@ -296,15 +301,18 @@ impl<T: crate::Config> GlobalParamsData<T> {
 pub enum ProposalData<T: crate::Config> {
     /// Applies changes to global parameters.
     GlobalParams(GlobalParamsData<T>),
-    /// A custom proposal with not immediate impact in the chain. Can be used as referendums regarding the future of the chain.
+    /// A custom proposal with not immediate impact in the chain. Can be used as
+    /// referendums regarding the future of the chain.
     GlobalCustom,
     /// Changes the emission rates for incentives, recycling and treasury.
     Emission {
         /// The amount of tokens per block to be recycled ("burned").
         recycling_percentage: Percent,
-        /// The amount of tokens sent to the treasury AFTER recycling fee was applied.
+        /// The amount of tokens sent to the treasury AFTER recycling fee was
+        /// applied.
         treasury_percentage: Percent,
-        /// This changes how incentives and dividends are distributed. 50% means they are distributed equally.
+        /// This changes how incentives and dividends are distributed. 50% means
+        /// they are distributed equally.
         incentives_ratio: Percent,
     },
     /// Transfers funds from the treasury account to the specified account.
@@ -315,7 +323,8 @@ pub enum ProposalData<T: crate::Config> {
 }
 
 impl<T: crate::Config> ProposalData<T> {
-    /// The percentage of total active stake participating in the proposal for it to be processes (either approved or refused).
+    /// The percentage of total active stake participating in the proposal for
+    /// it to be processes (either approved or refused).
     #[must_use]
     pub fn required_stake(&self) -> Percent {
         match self {
@@ -370,7 +379,8 @@ pub fn add_dao_treasury_transfer_proposal<T: crate::Config>(
     add_proposal::<T>(proposer, data, metadata)
 }
 
-/// Creates a new emissions proposal. Only valid if `recycling_percentage + treasury_percentage <= u128::MAX`.
+/// Creates a new emissions proposal. Only valid if `recycling_percentage +
+/// treasury_percentage <= u128::MAX`.
 pub fn add_emission_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     recycling_percentage: Percent,
@@ -451,7 +461,8 @@ fn add_proposal<T: crate::Config>(
     Ok(())
 }
 
-/// Every 100 blocks, iterates through all pending proposals and executes the ones eligible.
+/// Every 100 blocks, iterates through all pending proposals and executes the
+/// ones eligible.
 pub fn tick_proposals<T: crate::Config>(block_number: Block) {
     if block_number % 100 != 0 {
         return;
@@ -469,7 +480,8 @@ pub fn tick_proposals<T: crate::Config>(block_number: Block) {
     }
 }
 
-/// Returns the minimum amount of active stake needed for a proposal be executed based on the given percentage.
+/// Returns the minimum amount of active stake needed for a proposal be executed
+/// based on the given percentage.
 fn get_minimal_stake_to_execute_with_percentage<T: crate::Config>(
     threshold: Percent,
 ) -> BalanceOf<T> {
@@ -477,8 +489,8 @@ fn get_minimal_stake_to_execute_with_percentage<T: crate::Config>(
     threshold.mul_floor(stake).checked_div(100).unwrap_or(stake)
 }
 
-/// Sums all stakes for votes in favor and against. The biggest value wins and the proposal is processes and executed.
-/// expiration block.
+/// Sums all stakes for votes in favor and against. The biggest value wins and
+/// the proposal is processes and executed. expiration block.
 fn tick_proposal<T: crate::Config>(
     not_delegating: &BTreeSet<T::AccountId>,
     block_number: u64,
@@ -551,7 +563,8 @@ fn tick_proposal<T: crate::Config>(
 
 type AccountStakes<T> = BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>;
 
-/// Put the proposal in the reward queue, which will be processed by [tick_proposal_rewards].
+/// Put the proposal in the reward queue, which will be processed by
+/// [tick_proposal_rewards].
 fn create_unrewarded_proposal<T: crate::Config>(
     proposal_id: u64,
     block_number: Block,
@@ -582,7 +595,8 @@ fn create_unrewarded_proposal<T: crate::Config>(
     );
 }
 
-/// Calculates the stake for a voter. This function takes into account all accounts delegating voting power to the voter.
+/// Calculates the stake for a voter. This function takes into account all
+/// accounts delegating voting power to the voter.
 #[inline]
 fn calc_stake<T: crate::Config>(
     not_delegating: &BTreeSet<T::AccountId>,
@@ -701,7 +715,8 @@ fn distribute_proposal_rewards<T: crate::Config>(
     total_allocation: I92F36,
     max_proposal_reward_treasury_allocation: BalanceOf<T>,
 ) {
-    // This is just a sanity check, making sure we can never allocate more than the max
+    // This is just a sanity check, making sure we can never allocate more than the
+    // max
     if total_allocation > I92F36::from_num(max_proposal_reward_treasury_allocation) {
         error!("total allocation exceeds max proposal reward treasury allocation");
         return;

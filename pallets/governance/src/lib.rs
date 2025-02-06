@@ -53,7 +53,8 @@ pub mod pallet {
     pub type UnrewardedProposals<T: Config> =
         StorageMap<_, Identity, ProposalId, UnrewardedProposal<T>>;
 
-    /// List of keys that are NOT delegating their voting power. By default, all keys delegate their voting power.
+    /// List of keys that are NOT delegating their voting power. By default, all
+    /// keys delegate their voting power.
     #[pallet::storage]
     pub type NotDelegatingVotingPower<T: Config> =
         StorageValue<_, BoundedBTreeSet<AccountIdOf<T>, ConstU32<{ u32::MAX }>>, ValueQuery>;
@@ -69,7 +70,9 @@ pub mod pallet {
         <T as Config>::PalletId::get().into_account_truncating()
     }
 
-    /// The treasury address to which the treasury emission percentages and other funds go to. A proposal can be created withdrawing the funds to a key.
+    /// The treasury address to which the treasury emission percentages and
+    /// other funds go to. A proposal can be created withdrawing the funds to a
+    /// key.
     #[pallet::storage]
     pub type DaoTreasuryAddress<T: Config> =
         StorageValue<_, AccountIdOf<T>, ValueQuery, DefaultDaoTreasuryAddress<T>>;
@@ -78,7 +81,8 @@ pub mod pallet {
     #[pallet::storage]
     pub type AgentApplications<T: Config> = StorageMap<_, Identity, u32, AgentApplication<T>>;
 
-    /// List of whitelisted keys. Keys listed here are allowed to register agents.
+    /// List of whitelisted keys. Keys listed here are allowed to register
+    /// agents.
     #[pallet::storage]
     pub type Whitelist<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
@@ -90,7 +94,8 @@ pub mod pallet {
     #[pallet::storage]
     pub type Allocators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
-    /// Fee taken from emission distribution and deposited into [`DaoTreasuryAddress`].
+    /// Fee taken from emission distribution and deposited into
+    /// [`DaoTreasuryAddress`].
     #[pallet::storage]
     pub type TreasuryEmissionFee<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultTreasuryEmissionFee>;
@@ -180,7 +185,8 @@ pub mod pallet {
             roles::manage_role::<T, Curators<T>>(key, true, Error::<T>::AlreadyCurator)
         }
 
-        /// Removes an existing curator from the list. Only available for the root key.
+        /// Removes an existing curator from the list. Only available for the
+        /// root key.
         #[pallet::call_index(1)]
         #[pallet::weight((<T as Config>::WeightInfo::remove_curator(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
@@ -196,7 +202,8 @@ pub mod pallet {
             roles::manage_role::<T, Allocators<T>>(key, true, Error::<T>::AlreadyAllocator)
         }
 
-        /// Removes an existing allocator from the list. Only available for the root key.
+        /// Removes an existing allocator from the list. Only available for the
+        /// root key.
         #[pallet::call_index(3)]
         #[pallet::weight((<T as Config>::WeightInfo::remove_allocator(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
@@ -204,7 +211,8 @@ pub mod pallet {
             roles::manage_role::<T, Allocators<T>>(key, false, Error::<T>::NotAllocator)
         }
 
-        /// Forcefully adds a new agent to the whitelist. Only available for the root key or curators.
+        /// Forcefully adds a new agent to the whitelist. Only available for the
+        /// root key or curators.
         #[pallet::call_index(4)]
         #[pallet::weight((<T as Config>::WeightInfo::add_to_whitelist(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_to_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
@@ -212,7 +220,8 @@ pub mod pallet {
             whitelist::add_to_whitelist::<T>(key)
         }
 
-        /// Forcefully removes an agent from the whitelist. Only available for the root key or curators.
+        /// Forcefully removes an agent from the whitelist. Only available for
+        /// the root key or curators.
         #[pallet::call_index(5)]
         #[pallet::weight((<T as Config>::WeightInfo::remove_from_whitelist(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_from_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
@@ -220,7 +229,8 @@ pub mod pallet {
             whitelist::remove_from_whitelist::<T>(key)
         }
 
-        /// Accepts an agent application. Only available for the root key or curators.
+        /// Accepts an agent application. Only available for the root key or
+        /// curators.
         #[pallet::call_index(6)]
         #[pallet::weight((<T as Config>::WeightInfo::accept_application(), DispatchClass::Normal, Pays::Yes))]
         pub fn accept_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
@@ -228,7 +238,8 @@ pub mod pallet {
             application::accept_application::<T>(application_id)
         }
 
-        /// Denies an agent application. Only available for the root key or curators.
+        /// Denies an agent application. Only available for the root key or
+        /// curators.
         #[pallet::call_index(7)]
         #[pallet::weight((<T as Config>::WeightInfo::deny_application(), DispatchClass::Normal, Pays::Yes))]
         pub fn deny_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
@@ -236,7 +247,8 @@ pub mod pallet {
             application::deny_application::<T>(application_id)
         }
 
-        /// Sets a penalty factor to the given agent emissions. Only available for the root key or curators.
+        /// Sets a penalty factor to the given agent emissions. Only available
+        /// for the root key or curators.
         #[pallet::call_index(8)]
         #[pallet::weight((<T as Config>::WeightInfo::penalize_agent(), DispatchClass::Normal, Pays::Yes))]
         pub fn penalize_agent(
@@ -284,7 +296,8 @@ pub mod pallet {
             proposal::add_global_custom_proposal::<T>(proposer, metadata)
         }
 
-        /// Creates a proposal moving funds from the treasury account to the given key.
+        /// Creates a proposal moving funds from the treasury account to the
+        /// given key.
         #[pallet::call_index(12)]
         #[pallet::weight((<T as Config>::WeightInfo::add_dao_treasury_transfer_proposal(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_dao_treasury_transfer_proposal(
@@ -358,7 +371,8 @@ pub mod pallet {
             )
         }
 
-        /// Forcefully sets emission percentages. Only available for the root key.
+        /// Forcefully sets emission percentages. Only available for the root
+        /// key.
         #[pallet::call_index(18)]
         #[pallet::weight((<T as Config>::WeightInfo::add_emission_proposal(), DispatchClass::Normal, Pays::No))]
         pub fn set_emission_params(
@@ -414,9 +428,11 @@ pub mod pallet {
         InvalidProposalFinalizationParameters,
         /// Invalid parameters were provided to the voting process.
         InvalidProposalVotingParameters,
-        /// Negative proposal cost when setting global or subnet governance configuration.
+        /// Negative proposal cost when setting global or subnet governance
+        /// configuration.
         InvalidProposalCost,
-        /// Negative expiration when setting global or subnet governance configuration.
+        /// Negative expiration when setting global or subnet governance
+        /// configuration.
         InvalidProposalExpiration,
         /// Key doesn't have enough tokens to create a proposal.
         NotEnoughBalanceToPropose,
@@ -428,7 +444,8 @@ pub mod pallet {
         ModuleDelegatingForMaxStakers,
         /// Proposal with given id doesn't exist.
         ProposalNotFound,
-        /// Proposal was either accepted, refused or expired and cannot accept votes.
+        /// Proposal was either accepted, refused or expired and cannot accept
+        /// votes.
         ProposalClosed,
         /// Proposal data isn't composed by valid UTF-8 characters.
         InvalidProposalData,
@@ -442,10 +459,11 @@ pub mod pallet {
         NotVoted,
         /// Key doesn't have enough stake to vote.
         InsufficientStake,
-        /// The voter is delegating its voting power to their staked modules. Disable voting power
-        /// delegation.
+        /// The voter is delegating its voting power to their staked modules.
+        /// Disable voting power delegation.
         VoterIsDelegatingVotingPower,
-        /// An internal error occurred, probably relating to the size of the bounded sets.
+        /// An internal error occurred, probably relating to the size of the
+        /// bounded sets.
         InternalError,
         /// The application is not in a pending state.
         ApplicationNotOpen,
@@ -459,7 +477,8 @@ pub mod pallet {
         ApplicationNotFound,
         /// The account is already whitelisted and cannot be added again.
         AlreadyWhitelisted,
-        /// The account is not whitelisted and cannot be removed from the whitelist.
+        /// The account is not whitelisted and cannot be removed from the
+        /// whitelist.
         NotWhitelisted,
         /// Failed to convert the given value to a balance.
         CouldNotConvertToBalance,

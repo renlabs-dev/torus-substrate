@@ -495,9 +495,11 @@ pub async fn new_full<Network: sc_network::NetworkBackend<Block, <Block as Block
     let storage_override = Arc::new(StorageOverrideHandler::new(client.clone()));
 
     // Sinks for pubsub notifications.
-    // Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
-    // The MappingSyncWorker sends through the channel on block import and the subscription emits a notification to the subscriber on receiving a message through this channel.
-    // This way we avoid race conditions when using native substrate block import notification stream.
+    // Every time a new subscription is created, a new mpsc channel is added to the
+    // sink pool. The MappingSyncWorker sends through the channel on block
+    // import and the subscription emits a notification to the subscriber on
+    // receiving a message through this channel. This way we avoid race
+    // conditions when using native substrate block import notification stream.
     let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
         fc_mapping_sync::EthereumBlockNotification<Block>,
     > = Default::default();

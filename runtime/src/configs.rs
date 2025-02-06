@@ -69,8 +69,8 @@ impl frame_system::Config for Runtime {
     /// Contains version information about the runtime
     /// Used for runtime upgrades and compatibility
     type Version = Version;
-    /// Defines the weight (computational and storage) costs of blocks and extrinsics
-    /// Including base values and limits
+    /// Defines the weight (computational and storage) costs of blocks and
+    /// extrinsics Including base values and limits
     type BlockWeights = BlockWeights;
     /// Specifies the maximum size of a block in bytes
     type BlockLength = BlockLength;
@@ -93,7 +93,8 @@ impl pallet_balances::Config for Runtime {
     type AccountStore = System;
     /// The overarching event type
     type RuntimeEvent = RuntimeEvent;
-    /// The type for recording an account's reason for being unable to withdraw funds
+    /// The type for recording an account's reason for being unable to withdraw
+    /// funds
     type RuntimeHoldReason = RuntimeHoldReason;
     /// The type for recording an account's freezing reason
     type RuntimeFreezeReason = ();
@@ -124,7 +125,8 @@ impl pallet_balances::Config for Runtime {
 impl pallet_sudo::Config for Runtime {
     /// The overarching event type that will be emitted by this pallet
     type RuntimeEvent = RuntimeEvent;
-    /// The type that represents all calls that can be dispatched in this runtime
+    /// The type that represents all calls that can be dispatched in this
+    /// runtime
     type RuntimeCall = RuntimeCall;
     /// Weight information for the extrinsics in this pallet
     type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
@@ -163,9 +165,11 @@ impl pallet_multisig::Config for Runtime {
 // --- Timestamp ---
 
 impl pallet_timestamp::Config for Runtime {
-    /// The type used to store timestamps. In this case, it's an unsigned 64-bit integer.
+    /// The type used to store timestamps. In this case, it's an unsigned 64-bit
+    /// integer.
     type Moment = u64;
-    /// A hook that is called after the timestamp is set. In this case, it's empty (unit type).
+    /// A hook that is called after the timestamp is set. In this case, it's
+    /// empty (unit type).
     type OnTimestampSet = ();
     /// The minimum period between blocks. Set to 4000 (8000/2) milliseconds.
     /// This helps prevent timestamp manipulation by validators.
@@ -190,7 +194,8 @@ parameter_types! {
 /// Converts transaction length to fee using a polynomial formula
 pub struct LengthToFee;
 
-/// Fee adjustment mechanism that slowly adjusts transaction fees based on block fullness
+/// Fee adjustment mechanism that slowly adjusts transaction fees based on block
+/// fullness
 pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
     R,
     TargetBlockFullness,
@@ -202,7 +207,8 @@ pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
 impl WeightToFeePolynomial for LengthToFee {
     type Balance = Balance;
 
-    /// Returns coefficients for a polynomial that converts transaction length to fee
+    /// Returns coefficients for a polynomial that converts transaction length
+    /// to fee
     fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
         sp_std::vec![
             WeightToFeeCoefficient {

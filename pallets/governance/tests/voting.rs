@@ -519,7 +519,8 @@ fn creates_emission_proposal_with_invalid_params_and_it_fails() {
 fn rewards_wont_exceed_treasury() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        // Fill the governance address with 1 mil so we are not limited by the max allocation
+        // Fill the governance address with 1 mil so we are not limited by the max
+        // allocation
         let amount = to_nano(1_000_000_000);
         let key = DaoTreasuryAddress::<Test>::get();
         add_balance(key, amount);

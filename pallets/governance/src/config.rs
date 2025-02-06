@@ -22,11 +22,11 @@ impl<T: crate::Config> Default for GovernanceConfiguration<T> {
         Self {
             proposal_cost: T::DefaultProposalCost::get(),
             proposal_expiration: T::DefaultProposalExpiration::get(), //130_000,
-            agent_application_cost: T::DefaultAgentApplicationCost::get(), //100_000_000_000_000_000_000,
+            agent_application_cost: T::DefaultAgentApplicationCost::get(), /* 100_000_000_000_000_000_000, */
             agent_application_expiration: T::DefaultAgentApplicationExpiration::get(), //2_000,
-            proposal_reward_treasury_allocation: T::DefaultProposalRewardTreasuryAllocation::get(), //Percent::from_percent(2),
+            proposal_reward_treasury_allocation: T::DefaultProposalRewardTreasuryAllocation::get(), /* Percent::from_percent(2), */
             max_proposal_reward_treasury_allocation:
-                T::DefaultMaxProposalRewardTreasuryAllocation::get(), //10_000_000_000_000_000_000_000,
+                T::DefaultMaxProposalRewardTreasuryAllocation::get(), /* 10_000_000_000_000_000_000_000, */
             proposal_reward_interval: T::DefaultProposalRewardInterval::get(), //75_600,
         }
     }

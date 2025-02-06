@@ -19,8 +19,8 @@ use scale_info::TypeInfo;
 /// to modules in off-chain environment. They can receive weights by the
 /// allocators.
 ///
-/// Agent registration needs approval from a curator. Registration applications are
-/// submitter at dao.torus.network.
+/// Agent registration needs approval from a curator. Registration applications
+/// are submitter at dao.torus.network.
 #[derive(DebugNoBound, Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 pub struct Agent<T: crate::Config> {
@@ -29,7 +29,8 @@ pub struct Agent<T: crate::Config> {
     pub name: BoundedVec<u8, T::MaxAgentNameLengthConstraint>,
     pub url: BoundedVec<u8, T::MaxAgentUrlLengthConstraint>,
     pub metadata: BoundedVec<u8, T::MaxAgentMetadataLengthConstraint>,
-    /// Penalities acts on agent's incentives and dividends of users who set weights on them.
+    /// Penalities acts on agent's incentives and dividends of users who set
+    /// weights on them.
     pub weight_penalty_factor: Percent,
     pub registration_block: BlockNumberFor<T>,
     pub fees: crate::fee::ValidatorFee<T>,
@@ -37,7 +38,9 @@ pub struct Agent<T: crate::Config> {
 
 /// Register an agent to the given key, payed by the payer key.
 ///
-/// If the network is full, this function will drop enough agents until there's at least one slot (see [`find_agent_to_prune`]). Fails if no agents were eligible for pruning.
+/// If the network is full, this function will drop enough agents until there's
+/// at least one slot (see [`find_agent_to_prune`]). Fails if no agents were
+/// eligible for pruning.
 ///
 /// Registration fee is stored as [`crate::Burn`].
 pub fn register<T: crate::Config>(
@@ -134,7 +137,8 @@ pub fn register<T: crate::Config>(
     Ok(())
 }
 
-/// Unregister an agent key from the network, erasing all its data and removing stakers.
+/// Unregister an agent key from the network, erasing all its data and removing
+/// stakers.
 pub fn unregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult {
     let span = debug_span!("unregister", agent.key = ?agent_key);
     let _guard = span.enter();
@@ -288,7 +292,8 @@ pub enum PruningStrategy {
     /// Finds the agent producing least dividends and incentives to
     /// the network that is older than the current immunity period.
     LeastProductive,
-    /// Like [`PruningStrategy::LeastProductive`] but ignoring the immunity period.
+    /// Like [`PruningStrategy::LeastProductive`] but ignoring the immunity
+    /// period.
     IgnoreImmunity,
 }
 
@@ -297,9 +302,9 @@ pub enum PruningStrategy {
 /// When search for least productive agent, agents that are older than the
 /// immunity period will be ranked based on their emissions in the last
 /// consensus run (epoch). Dividends are multiplied by the participation
-/// factor defined by the network and and summed with incentives. The to-be-pruned
-/// agent is the one with the lowest result, if multiple agents are found, the
-/// algorithm chooses the oldest one.
+/// factor defined by the network and and summed with incentives. The
+/// to-be-pruned agent is the one with the lowest result, if multiple agents are
+/// found, the algorithm chooses the oldest one.
 #[doc(hidden)]
 pub fn find_agent_to_prune<T: crate::Config>(strategy: PruningStrategy) -> Option<T::AccountId> {
     let current_block: u64 = <polkadot_sdk::frame_system::Pallet<T>>::block_number()

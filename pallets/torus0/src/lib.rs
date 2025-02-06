@@ -35,7 +35,9 @@ pub mod pallet {
 
     use super::*;
 
-    /// Max allowed of validators. This is used then calculating emissions, only the top staked agents up to this value will have their weights considered.
+    /// Max allowed of validators. This is used then calculating emissions, only
+    /// the top staked agents up to this value will have their weights
+    /// considered.
     #[pallet::storage]
     pub type MaxAllowedValidators<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedValidators>;
@@ -44,7 +46,8 @@ pub mod pallet {
     #[pallet::storage]
     pub type Burn<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
-    /// Number of agent registrations that happened in the last [`BurnConfiguration::target_registrations_interval`] blocks.
+    /// Number of agent registrations that happened in the last
+    /// [`BurnConfiguration::target_registrations_interval`] blocks.
     #[pallet::storage]
     pub type RegistrationsThisInterval<T: Config> = StorageValue<_, u16, ValueQuery>;
 
@@ -53,7 +56,8 @@ pub mod pallet {
     pub type MinValidatorStake<T: Config> =
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinValidatorStake>;
 
-    /// Number of blocks in which an agent is immune to pruning after registration.
+    /// Number of blocks in which an agent is immune to pruning after
+    /// registration.
     #[pallet::storage]
     pub type ImmunityPeriod<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultImmunityPeriod>;
 
@@ -83,7 +87,8 @@ pub mod pallet {
     pub type MaxAgentUrlLength<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAgentUrlLength>;
 
-    /// Maximum number of agents registered at one time. Registering when this number is met means new comers will cause pruning of old agents.
+    /// Maximum number of agents registered at one time. Registering when this
+    /// number is met means new comers will cause pruning of old agents.
     #[pallet::storage]
     pub type MaxAllowedAgents<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedAgents>;
@@ -92,17 +97,20 @@ pub mod pallet {
     #[pallet::storage]
     pub type RegistrationsThisBlock<T> = StorageValue<_, u16, ValueQuery>;
 
-    /// Maximum amount of agent registrations per block, tracked by [`RegistrationsThisBlock`].
+    /// Maximum amount of agent registrations per block, tracked by
+    /// [`RegistrationsThisBlock`].
     #[pallet::storage]
     pub type MaxRegistrationsPerBlock<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxRegistrationsPerBlock>;
 
-    // Map of staked tokens prefixed by the staker, and indexed by the staked agents mapping to the amount in tokens.
+    // Map of staked tokens prefixed by the staker, and indexed by the staked agents
+    // mapping to the amount in tokens.
     #[pallet::storage]
     pub type StakingTo<T: Config> =
         StorageDoubleMap<_, Identity, T::AccountId, Identity, T::AccountId, BalanceOf<T>>;
 
-    // Map of staked tokens prefixed by the staked agent, and indexed by the staker keys mapping to the amount in tokens.
+    // Map of staked tokens prefixed by the staked agent, and indexed by the staker
+    // keys mapping to the amount in tokens.
     #[pallet::storage]
     pub type StakedBy<T: Config> =
         StorageDoubleMap<_, Identity, T::AccountId, Identity, T::AccountId, BalanceOf<T>>;
@@ -116,7 +124,8 @@ pub mod pallet {
     pub type MinAllowedStake<T: Config> =
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinAllowedStake>;
 
-    /// The weight dividends have when finding agents to prune. 100% meaning it is taking fully into account.
+    /// The weight dividends have when finding agents to prune. 100% meaning it
+    /// is taking fully into account.
     #[pallet::storage]
     pub type DividendsParticipationWeight<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultDividendsParticipationWeight>;
@@ -208,12 +217,14 @@ pub mod pallet {
         #[pallet::no_default_bounds]
         type DefaultMaxRegistrationsPerInterval: Get<u16>;
 
-        /// The storage MaxNameLength should be constrained to be no more than the value of this.
-        /// This is needed on agent::Agent to set the `name` field BoundedVec max length.
+        /// The storage MaxNameLength should be constrained to be no more than
+        /// the value of this. This is needed on agent::Agent to set the
+        /// `name` field BoundedVec max length.
         #[pallet::constant]
         type MaxAgentNameLengthConstraint: Get<u32>;
 
-        /// This is needed on agent::Agent to set the `url` field BoundedVec max length.
+        /// This is needed on agent::Agent to set the `url` field BoundedVec max
+        /// length.
         #[pallet::constant]
         type MaxAgentUrlLengthConstraint: Get<u32>;
 
@@ -325,17 +336,20 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Event created when stake has been transferred from the coldkey account onto the key
-        /// staking account
+        /// Event created when stake has been transferred from the coldkey
+        /// account onto the key staking account
         StakeAdded(AccountIdOf<T>, AccountIdOf<T>, BalanceOf<T>),
-        /// Event created when stake has been removed from the key staking account onto the coldkey
-        /// account
+        /// Event created when stake has been removed from the key staking
+        /// account onto the coldkey account
         StakeRemoved(AccountIdOf<T>, AccountIdOf<T>, BalanceOf<T>),
-        /// Event created when a new agent account has been registered to the chain
+        /// Event created when a new agent account has been registered to the
+        /// chain
         AgentRegistered(AccountIdOf<T>),
-        /// Event created when a agent account has been deregistered from the chain
+        /// Event created when a agent account has been deregistered from the
+        /// chain
         AgentUnregistered(AccountIdOf<T>),
-        /// Event created when the agent's updated information is added to the network
+        /// Event created when the agent's updated information is added to the
+        /// network
         AgentUpdated(AccountIdOf<T>),
     }
 
@@ -345,11 +359,14 @@ pub mod pallet {
         AgentDoesNotExist,
         /// Insufficient stake to withdraw the requested amount.
         NotEnoughStakeToWithdraw,
-        /// Insufficient balance in the cold key account to stake the requested amount.
+        /// Insufficient balance in the cold key account to stake the requested
+        /// amount.
         NotEnoughBalanceToStake,
-        /// The number of agent registrations in this block exceeds the allowed limit.
+        /// The number of agent registrations in this block exceeds the allowed
+        /// limit.
         TooManyAgentRegistrationsThisBlock,
-        /// The number of agent registrations in this interval exceeds the allowed limit.
+        /// The number of agent registrations in this interval exceeds the
+        /// allowed limit.
         TooManyAgentRegistrationsThisInterval,
         /// The agent is already registered in the active set.
         AgentAlreadyRegistered,
@@ -373,8 +390,8 @@ pub mod pallet {
         NotEnoughStakeToRegister,
         /// The entity is still registered and cannot be modified.
         StillRegistered,
-        /// Attempted to set max allowed agents to a value less than the current number of
-        /// registered agents.
+        /// Attempted to set max allowed agents to a value less than the current
+        /// number of registered agents.
         MaxAllowedAgents,
         /// Insufficient balance to transfer.
         NotEnoughBalanceToTransfer,
@@ -410,7 +427,8 @@ pub mod pallet {
         StepPanicked,
         /// The stake amount to add or remove is too small. Minimum is 0.5 unit.
         StakeTooSmall,
-        /// Key is not present in Whitelist, it needs to be whitelisted by a Curator
+        /// Key is not present in Whitelist, it needs to be whitelisted by a
+        /// Curator
         AgentKeyNotWhitelisted,
         /// The amount given is 0
         InvalidAmount,

@@ -11,8 +11,8 @@ use polkadot_sdk::sp_std::vec::Vec;
 use scale_info::TypeInfo;
 
 /// Decentralized autonomous organization application, it's used to do agent
-/// operations on the network, like creating or removing, and needs to be approved
-/// by other peers.
+/// operations on the network, like creating or removing, and needs to be
+/// approved by other peers.
 #[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct AgentApplication<T: crate::Config> {
@@ -36,7 +36,8 @@ pub enum ApplicationAction {
 #[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
 pub enum ApplicationStatus {
     Open,
-    /// The application was processed before expiration, can be either accepted or rejected.
+    /// The application was processed before expiration, can be either accepted
+    /// or rejected.
     Resolved {
         accepted: bool,
     },
@@ -51,9 +52,9 @@ impl<T: crate::Config> AgentApplication<T> {
     }
 }
 
-/// Creates a new agent application if the key is not yet whitelisted. It withdraws a fee
-/// from the payer account, which is given back if the application is accepted. The fee
-/// avoids actors spamming applications.
+/// Creates a new agent application if the key is not yet whitelisted. It
+/// withdraws a fee from the payer account, which is given back if the
+/// application is accepted. The fee avoids actors spamming applications.
 pub fn submit_application<T: crate::Config>(
     payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
@@ -126,7 +127,8 @@ pub fn submit_application<T: crate::Config>(
     Ok(())
 }
 
-/// Accepts an agent application and executes it if it's still open, fails otherwise.
+/// Accepts an agent application and executes it if it's still open, fails
+/// otherwise.
 pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResult {
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
@@ -187,7 +189,9 @@ pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult
     Ok(())
 }
 
-/// Iterates through all open applications checking if the current block is greater or equal to the former's expiration block. If so, marks the application as Expired.
+/// Iterates through all open applications checking if the current block is
+/// greater or equal to the former's expiration block. If so, marks the
+/// application as Expired.
 pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Block) {
     for application in crate::AgentApplications::<T>::iter_values() {
         if current_block < application.expires_at
