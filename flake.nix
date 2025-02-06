@@ -2,7 +2,7 @@
   description = "Torus Substrate development environment";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
     pre-commit-hooks.url = "github:cachix/git-hooks.nix";
@@ -12,9 +12,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [ (import rust-overlay) ];
-        pkgs = import nixpkgs {
-          inherit system overlays;
-        };
+        pkgs = import nixpkgs { inherit system overlays; };
         rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
         generalBuildInputs = with pkgs; [
@@ -23,10 +21,11 @@
           rocksdb
           zstd.dev
         ];
-        buildInputs =
-          if pkgs.stdenv.isLinux
-          then generalBuildInputs ++ [ pkgs.jemalloc pkgs.pkgsi686Linux.glibc ]
-          else generalBuildInputs ++ [ pkgs.darwin.apple_sdk.frameworks.SystemConfiguration ];
+        buildInputs = if pkgs.stdenv.isLinux then
+          generalBuildInputs ++ [ pkgs.jemalloc pkgs.pkgsi686Linux.glibc ]
+        else
+          generalBuildInputs
+          ++ [ pkgs.darwin.apple_sdk.frameworks.SystemConfiguration ];
         nativeBuildInputs = with pkgs; [ git rust clang protobuf sccache ];
 
         shellPkgs = [
@@ -38,14 +37,11 @@
           # Python
           pkgs.python310
         ];
-      in
-      {
+      in {
         checks = pkgs.mkShell {
           pre-commit-check = pre-commit-hooks.lib.${system}.run {
             src = ./.;
-            hooks = {
-              rustfmt.enable = true;
-            };
+            hooks = { rustfmt.enable = true; };
           };
         };
 
@@ -69,6 +65,5 @@
             JEMALLOC_OVERRIDE = "${pkgs.jemalloc}/lib/libjemalloc.so";
           };
         };
-      }
-    );
+      });
 }
