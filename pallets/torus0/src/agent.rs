@@ -15,12 +15,12 @@ use polkadot_sdk::{
 use scale_info::prelude::vec::Vec;
 use scale_info::TypeInfo;
 
-/// Agents are the basic primitive in the Torus ecosystem which are bounded
-/// with modules in off-chain environment. They can receive weights by the
+/// Agents are one of the primitives in the Torus ecosystem which are bounded
+/// to modules in off-chain environment. They can receive weights by the
 /// allocators.
 ///
-/// To register an agent, you need to be approved by a curator. It's possible
-/// to submit an application on dao.torus.network.
+/// Agent registration needs approval from a curator. Registration applications are
+/// submitter at dao.torus.network.
 #[derive(DebugNoBound, Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 pub struct Agent<T: crate::Config> {
@@ -35,13 +35,11 @@ pub struct Agent<T: crate::Config> {
     pub fees: crate::fee::ValidatorFee<T>,
 }
 
-/// Register whitelisted agent for payer, with the default structure fields
-/// if it's not registered yet.
+/// Register an agent to the given key, payed by the payer key.
 ///
-/// The registration drops some agents if the network is full, searching agents for
-/// pruning. (see [crate::MaxAllowedAgents]).
+/// If the network is full, this function will drop enough agents until there's at least one slot (see [`find_agent_to_prune`]). Fails if no agents were eligible for pruning.
 ///
-/// The cost is equivalent to the [crate::Burn].
+/// Registration fee is stored as [`crate::Burn`].
 pub fn register<T: crate::Config>(
     payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
@@ -136,6 +134,7 @@ pub fn register<T: crate::Config>(
     Ok(())
 }
 
+/// Unregister an agent key from the network, erasing all its data and removing stakers.
 pub fn unregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult {
     let span = debug_span!("unregister", agent.key = ?agent_key);
     let _guard = span.enter();
@@ -153,6 +152,7 @@ pub fn unregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult
     Ok(())
 }
 
+/// Updates the metadata of an existing agent.
 pub fn update<T: crate::Config>(
     agent_key: AccountIdOf<T>,
     name: Vec<u8>,

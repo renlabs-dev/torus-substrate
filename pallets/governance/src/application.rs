@@ -21,13 +21,12 @@ pub struct AgentApplication<T: crate::Config> {
     pub agent_key: AccountIdOf<T>,
     pub data: BoundedVec<u8, T::MaxApplicationDataLength>,
     pub cost: BalanceOf<T>,
-    /// The exact block when the agent will be deleted/expired
     pub expires_at: Block,
     pub action: ApplicationAction,
     pub status: ApplicationStatus,
 }
 
-/// DAO avaliable actions on the network
+/// Possible operations are adding or removing applications.
 #[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
 pub enum ApplicationAction {
     Add,
@@ -37,7 +36,10 @@ pub enum ApplicationAction {
 #[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
 pub enum ApplicationStatus {
     Open,
-    Resolved { accepted: bool },
+    /// The application was processed before expiration, can be either accepted or rejected.
+    Resolved {
+        accepted: bool,
+    },
     Expired,
 }
 
@@ -49,8 +51,9 @@ impl<T: crate::Config> AgentApplication<T> {
     }
 }
 
-/// Create DAO application for the _agent_, if it's not whitelisted yet. It will withdraw
-/// a fee from the payer account for either creating or deleting an agent.
+/// Creates a new agent application if the key is not yet whitelisted. It withdraws a fee
+/// from the payer account, which is given back if the application is accepted. The fee
+/// avoids actors spamming applications.
 pub fn submit_application<T: crate::Config>(
     payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
@@ -123,8 +126,7 @@ pub fn submit_application<T: crate::Config>(
     Ok(())
 }
 
-/// Accept DAO application, either creating or deleting it from the whitelist. The application
-/// must be open and exist on the chain.
+/// Accepts an agent application and executes it if it's still open, fails otherwise.
 pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResult {
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
@@ -154,8 +156,7 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
         }
     });
 
-    // Pay the application cost back to the applicant
-    // TODO: should this value be used?
+    // Give the application fee back to the payer key.
     let _ =
         <T as crate::Config>::Currency::deposit_creating(&application.payer_key, application.cost);
 
@@ -164,8 +165,7 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
     Ok(())
 }
 
-/// Deny DAO application, deleting it from the whitelist. The application must be open and
-/// exist on the chain.
+/// Rejects an open application.
 pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult {
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
@@ -187,10 +187,9 @@ pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult
     Ok(())
 }
 
-/// Reverts the curator application on the chain, if it's not an application creation.
+/// Iterates through all open applications checking if the current block is greater or equal to the former's expiration block. If so, marks the application as Expired.
 pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Block) {
     for application in crate::AgentApplications::<T>::iter_values() {
-        // Skip if not expired yet or if not in Open status
         if current_block < application.expires_at
             || !matches!(application.status, ApplicationStatus::Open)
         {
@@ -209,6 +208,7 @@ pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Bloc
     }
 }
 
+/// If any applications for this agent and action are already pending.
 pub(crate) fn exists_for_agent_key<T: crate::Config>(
     key: &AccountIdOf<T>,
     action: &ApplicationAction,

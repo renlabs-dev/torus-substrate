@@ -1,7 +1,7 @@
 use crate::{proposal::ProposalStatus, AccountIdOf, Error, Event, Proposals};
 use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
 
-/// Vote for proposal, agreeing or not.
+/// Casts a vote on behalf of a voter.
 pub fn add_vote<T: crate::Config>(
     voter: AccountIdOf<T>,
     proposal_id: u64,
@@ -52,7 +52,7 @@ pub fn add_vote<T: crate::Config>(
     Ok(())
 }
 
-/// Remove vote to proposal.
+/// Removes the casted vote.
 pub fn remove_vote<T: crate::Config>(voter: AccountIdOf<T>, proposal_id: u64) -> DispatchResult {
     let Ok(mut proposal) = Proposals::<T>::try_get(proposal_id) else {
         return Err(Error::<T>::ProposalNotFound.into());
@@ -78,6 +78,7 @@ pub fn remove_vote<T: crate::Config>(voter: AccountIdOf<T>, proposal_id: u64) ->
     Ok(())
 }
 
+/// Gives voting power delegation to the delegator's staked agents.
 pub fn enable_delegation<T: crate::Config>(delegator: AccountIdOf<T>) -> DispatchResult {
     crate::NotDelegatingVotingPower::<T>::mutate(|delegators| {
         delegators.remove(&delegator);
@@ -86,6 +87,7 @@ pub fn enable_delegation<T: crate::Config>(delegator: AccountIdOf<T>) -> Dispatc
     Ok(())
 }
 
+/// Removes voting power delegation to the delegator's staked agents.
 pub fn disable_delegation<T: crate::Config>(delegator: AccountIdOf<T>) -> DispatchResult {
     crate::NotDelegatingVotingPower::<T>::mutate(|delegators| {
         delegators

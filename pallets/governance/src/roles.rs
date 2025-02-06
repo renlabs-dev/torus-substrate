@@ -7,6 +7,7 @@ use polkadot_sdk::{
     polkadot_sdk_frame::prelude::OriginFor,
 };
 
+/// Generic function used to manage the Curator and Allocator maps, which behave similarly.
 pub(super) fn manage_role<T: Config, M: StorageMap<AccountIdOf<T>, ()>>(
     key: AccountIdOf<T>,
     is_add: bool,
@@ -21,7 +22,7 @@ pub(super) fn manage_role<T: Config, M: StorageMap<AccountIdOf<T>, ()>>(
     Ok(())
 }
 
-/// Penalities acts on agent's incentives and dividends of users who set weights on them.
+/// Sets a penalty ratio for the given agent.
 pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> DispatchResult {
     let percentage = Percent::from_parts(percentage);
     if percentage > T::MaxPenaltyPercentage::get() {
@@ -41,6 +42,7 @@ pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> D
     Ok(())
 }
 
+/// Returns error if the origin is not listed as a curator.
 pub fn ensure_curator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
     let key: AccountIdOf<T> = ensure_signed(origin)?;
     if !crate::Curators::<T>::contains_key(key) {
@@ -50,6 +52,7 @@ pub fn ensure_curator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
     Ok(())
 }
 
+/// Returns error if the origin is not listed as an allocator.
 pub fn ensure_allocator<T: Config>(key: &AccountIdOf<T>) -> DispatchResult {
     if !crate::Allocators::<T>::contains_key(key) {
         return Err(Error::<T>::NotAllocator.into());

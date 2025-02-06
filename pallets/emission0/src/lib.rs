@@ -36,33 +36,42 @@ pub mod pallet {
 
     use super::*;
 
+    /// Map of consensus members indexed by their keys. A consensus member is any agent eligible for emissions in the next epoch. This means unregistered agents will also receive emissions.
     #[pallet::storage]
     pub type ConsensusMembers<T: Config> =
         StorageMap<_, Identity, AccountIdOf<T>, ConsensusMember<T>>;
 
+    /// Map of agents delegating weight control to other agents. Emissions derived from weight delegation are taxed and the fees go the original weight setter.
     #[pallet::storage]
     pub type WeightControlDelegation<T: Config> =
         StorageMap<_, Identity, T::AccountId, T::AccountId>;
 
+    // TODO: remove
     #[pallet::storage]
     pub type MinAllowedWeights<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMinAllowedWeights>;
 
+    /// Maximum number of weights a validator can set.
     #[pallet::storage]
     pub type MaxAllowedWeights<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedWeights>;
 
+    // TODO: cap weights on distribution.
+    /// Minimum stake a validator needs for each weight it sets.
     #[pallet::storage]
     pub type MinStakePerWeight<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+    /// Percentage of issued tokens to be burned every epoch.
     #[pallet::storage]
     pub type EmissionRecyclingPercentage<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultEmissionRecyclingPercentage>;
 
+    /// Ratio between incentives and dividends on distribution. 50% means they are distributed equally.
     #[pallet::storage]
     pub type IncentivesRatio<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultIncentivesRatio>;
 
+    /// Amount of tokens accumulated since the last epoch. This increases on every block. See [`distribute::get_total_emission_per_block`].
     #[pallet::storage]
     pub type PendingEmission<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
@@ -156,7 +165,6 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        // TODO: configure price
         #[pallet::call_index(0)]
         #[pallet::weight((T::WeightInfo::set_weights(), DispatchClass::Normal, Pays::Yes))]
         pub fn set_weights(

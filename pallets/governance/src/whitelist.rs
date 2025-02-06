@@ -2,7 +2,7 @@ use polkadot_sdk::frame_support::dispatch::DispatchResult;
 
 use crate::{application, AccountIdOf};
 
-/// Authorize DAO to be registered
+/// Adds a key to the DAO whitelist, allowing it to register an agent.
 pub fn add_to_whitelist<T: crate::Config>(key: AccountIdOf<T>) -> DispatchResult {
     if is_whitelisted::<T>(&key) {
         return Err(crate::Error::<T>::AlreadyWhitelisted.into());
@@ -17,7 +17,7 @@ pub fn add_to_whitelist<T: crate::Config>(key: AccountIdOf<T>) -> DispatchResult
     Ok(())
 }
 
-/// Unauthorize DAO
+/// Remove a key from the DAO whitelist, disallowing the key to register an agent, or de-registering an existing one.
 pub fn remove_from_whitelist<T: crate::Config>(key: AccountIdOf<T>) -> DispatchResult {
     if !is_whitelisted::<T>(&key) {
         return Err(crate::Error::<T>::NotWhitelisted.into());
