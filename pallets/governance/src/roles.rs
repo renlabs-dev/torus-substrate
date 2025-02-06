@@ -1,11 +1,12 @@
-use crate::AccountIdOf;
-use crate::{ensure, storage::StorageMap, Config, Error};
-use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::sp_runtime::{DispatchError, Percent};
 use polkadot_sdk::{
-    frame_support::dispatch::DispatchResult, frame_system::ensure_signed,
+    frame_election_provider_support::Get,
+    frame_support::dispatch::DispatchResult,
+    frame_system::ensure_signed,
     polkadot_sdk_frame::prelude::OriginFor,
+    sp_runtime::{DispatchError, Percent},
 };
+
+use crate::{ensure, storage::StorageMap, AccountIdOf, Config, Error};
 
 /// Generic function used to manage the Curator and Allocator maps, which behave
 /// similarly.

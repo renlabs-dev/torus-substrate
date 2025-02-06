@@ -6,12 +6,13 @@ pub mod migrations;
 pub(crate) use ext::*;
 pub use pallet::*;
 use pallet_emission0_api::Emission0Api;
-use polkadot_sdk::frame_support::dispatch::DispatchResult;
-use polkadot_sdk::frame_support::{pallet_prelude::*, DefaultNoBound};
-use polkadot_sdk::frame_system;
-use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
-use polkadot_sdk::polkadot_sdk_frame::{self as frame, traits::Currency};
-use polkadot_sdk::sp_runtime::Percent;
+use polkadot_sdk::{
+    frame_support::{dispatch::DispatchResult, pallet_prelude::*, DefaultNoBound},
+    frame_system,
+    frame_system::pallet_prelude::OriginFor,
+    polkadot_sdk_frame::{self as frame, traits::Currency},
+    sp_runtime::Percent,
+};
 
 #[doc(hidden)]
 pub mod distribute;

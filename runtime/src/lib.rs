@@ -5,12 +5,8 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 extern crate alloc;
 use alloc::vec::Vec;
-use interface::*;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
-use weights::constants::RocksDbWeight;
 
+use interface::*;
 use polkadot_sdk::{
     frame_executive, frame_support, frame_system,
     polkadot_sdk_frame::{self as frame, prelude::*, runtime::prelude::*},
@@ -19,6 +15,10 @@ use polkadot_sdk::{
     sp_runtime::impl_opaque_keys,
     *,
 };
+#[cfg(feature = "std")]
+use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
+use weights::constants::RocksDbWeight;
 
 pub mod apis;
 #[cfg(feature = "runtime-benchmarks")]
@@ -171,18 +171,17 @@ parameter_types! {
 // TODO: this should be standardized in some way, see:
 // https://github.com/paritytech/substrate/issues/10579#issuecomment-1600537558
 pub mod interface {
-    use crate::RuntimeCall;
-
-    use super::Runtime;
     use polkadot_sdk::{
         frame_system, pallet_balances,
         sp_core::H160,
         sp_runtime::{self, generic, traits::BlakeTwo256, MultiSignature},
     };
-
     pub use polkadot_sdk::{
         frame_system::Call as SystemCall, pallet_balances::Call as BalancesCall,
     };
+
+    use super::Runtime;
+    use crate::RuntimeCall;
 
     pub type BlockNumber = u64;
 
@@ -211,12 +210,11 @@ pub mod interface {
 // continue syncing the network through upgrades to even the core data
 // structures.
 pub mod opaque {
-    use super::*;
-
     use frame::traits::BlakeTwo256;
     use sp_runtime::generic;
-
     pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+
+    use super::*;
 
     /// Opaque block header type.
     pub type Header = generic::Header<BlockNumber, BlakeTwo256>;

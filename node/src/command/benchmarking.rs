@@ -2,7 +2,7 @@
 //!
 //! Should only be used for benchmarking as it may break in other contexts.
 
-use crate::service::FullClient;
+use std::{sync::Arc, time::Duration};
 
 use polkadot_sdk::{
     sc_cli::Result,
@@ -15,7 +15,7 @@ use polkadot_sdk::{
 };
 use torus_runtime::interface::{AccountId, Balance, BalancesCall, SystemCall};
 
-use std::{sync::Arc, time::Duration};
+use crate::service::FullClient;
 
 /// Generates extrinsics for the `benchmark overhead` command.
 ///

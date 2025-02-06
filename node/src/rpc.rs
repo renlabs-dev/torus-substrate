@@ -22,6 +22,8 @@
 
 #![warn(missing_docs)]
 
+use std::sync::Arc;
+
 use eth::EthDeps;
 use futures::channel::mpsc;
 use jsonrpsee::RpcModule;
@@ -38,7 +40,6 @@ use polkadot_sdk::{
     sp_runtime::traits::Block as BlockT,
     substrate_frame_rpc_system::{System, SystemApiServer},
 };
-use std::sync::Arc;
 use torus_runtime::{interface::Hash, opaque::Block};
 
 use crate::service::FullClient;

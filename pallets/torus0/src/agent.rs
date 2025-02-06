@@ -1,19 +1,21 @@
-use crate::AccountIdOf;
 use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_emission0_api::Emission0Api;
 use pallet_governance_api::GovernanceApi;
-use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, WithdrawReasons};
-use polkadot_sdk::frame_support::DebugNoBound;
-use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
-use polkadot_sdk::sp_runtime::DispatchError;
 use polkadot_sdk::{
-    frame_support::{dispatch::DispatchResult, ensure},
-    sp_runtime::{BoundedVec, Percent},
+    frame_election_provider_support::Get,
+    frame_support::{
+        dispatch::DispatchResult,
+        ensure,
+        traits::{Currency, ExistenceRequirement, WithdrawReasons},
+        DebugNoBound,
+    },
+    polkadot_sdk_frame::prelude::BlockNumberFor,
+    sp_runtime::{BoundedVec, DispatchError, Percent},
     sp_tracing::{debug, debug_span},
 };
-use scale_info::prelude::vec::Vec;
-use scale_info::TypeInfo;
+use scale_info::{prelude::vec::Vec, TypeInfo};
+
+use crate::AccountIdOf;
 
 /// Agents are one of the primitives in the Torus ecosystem which are bounded
 /// to modules in off-chain environment. They can receive weights by the

@@ -1,6 +1,6 @@
-use pallet_governance::application::ApplicationStatus;
-use pallet_governance::AgentApplications;
-use pallet_governance::GlobalGovernanceConfig;
+use pallet_governance::{
+    application::ApplicationStatus, AgentApplications, GlobalGovernanceConfig,
+};
 use polkadot_sdk::frame_support::assert_err;
 use test_utils::*;
 

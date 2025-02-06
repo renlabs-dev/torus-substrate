@@ -2,6 +2,9 @@
 
 use std::{cell::RefCell, num::NonZeroU128};
 
+pub use pallet_emission0;
+pub use pallet_governance;
+pub use pallet_torus0;
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
@@ -21,8 +24,6 @@ use polkadot_sdk::{
     },
     sp_tracing,
 };
-
-pub use {pallet_emission0, pallet_governance, pallet_torus0};
 
 #[frame_construct_runtime]
 mod runtime {

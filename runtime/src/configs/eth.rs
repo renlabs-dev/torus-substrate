@@ -1,7 +1,3 @@
-use crate::{
-    configs::{currency, WEIGHT_REF_TIME_PER_SECOND},
-    TransactionPayment,
-};
 use codec::{Decode, Encode};
 use pallet_ethereum::PostLogContent;
 use pallet_evm::{FeeCalculator, HashedAddressMapping};
@@ -20,6 +16,10 @@ use polkadot_sdk::{
 use super::{
     precompiles::FrontierPrecompiles, Aura, Balances, Runtime, RuntimeCall, RuntimeEvent,
     RuntimeOrigin, Timestamp, UncheckedExtrinsic, NORMAL_DISPATCH_RATIO,
+};
+use crate::{
+    configs::{currency, WEIGHT_REF_TIME_PER_SECOND},
+    TransactionPayment,
 };
 
 impl pallet_evm_chain_id::Config for Runtime {}

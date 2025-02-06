@@ -15,16 +15,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{
-    chain_spec,
-    cli::{Cli, Subcommand},
-    service,
-};
 use benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::TryFutureExt;
 use polkadot_sdk::{sc_cli::SubstrateCli, sc_service::PartialComponents, *};
 use torus_runtime::interface::Block;
+
+use crate::{
+    chain_spec,
+    cli::{Cli, Subcommand},
+    service,
+};
 
 mod benchmarking;
 

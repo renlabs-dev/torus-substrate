@@ -1,14 +1,20 @@
-use crate::frame::traits::ExistenceRequirement;
-use crate::{whitelist, AccountIdOf, AgentApplications, BalanceOf, Block};
 use codec::{Decode, Encode, MaxEncodedLen};
-use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::frame_support::dispatch::DispatchResult;
-use polkadot_sdk::frame_support::traits::Currency;
-use polkadot_sdk::frame_support::traits::WithdrawReasons;
-use polkadot_sdk::frame_support::DebugNoBound;
-use polkadot_sdk::sp_runtime::BoundedVec;
-use polkadot_sdk::sp_std::vec::Vec;
+use polkadot_sdk::{
+    frame_election_provider_support::Get,
+    frame_support::{
+        dispatch::DispatchResult,
+        traits::{Currency, WithdrawReasons},
+        DebugNoBound,
+    },
+    sp_runtime::BoundedVec,
+    sp_std::vec::Vec,
+};
 use scale_info::TypeInfo;
+
+use crate::{
+    frame::traits::ExistenceRequirement, whitelist, AccountIdOf, AgentApplications, BalanceOf,
+    Block,
+};
 
 /// Decentralized autonomous organization application, it's used to do agent
 /// operations on the network, like creating or removing, and needs to be

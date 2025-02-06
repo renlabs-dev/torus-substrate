@@ -1,15 +1,14 @@
 #![allow(dead_code)]
 
+// This is necessary because functions like `f64::{fract, floor, ceil}`
+// are only implemented in `std`.
+#[cfg(not(feature = "std"))]
+use num_traits::float::FloatCore;
 use polkadot_sdk::sp_std::{cmp::Ordering, collections::btree_map::BTreeMap, vec, vec::Vec};
 use substrate_fixed::{
     transcendental::{exp, ln},
     types::I96F32,
 };
-
-// This is necessary because functions like `f64::{fract, floor, ceil}`
-// are only implemented in `std`.
-#[cfg(not(feature = "std"))]
-use num_traits::float::FloatCore;
 
 // Return true when vector sum is zero.
 pub fn is_zero(vector: &[I96F32]) -> bool {
@@ -799,8 +798,9 @@ pub fn inplace_col_max_upscale_sparse(sparse_matrix: &mut [Vec<(u16, I96F32)>], 
 #[cfg(test)]
 #[allow(clippy::arithmetic_side_effects, clippy::indexing_slicing)]
 mod tests {
-    use super::*;
     use substrate_fixed::types::{I96F32, U64F64};
+
+    use super::*;
 
     macro_rules! fixed_vec {
         () => {

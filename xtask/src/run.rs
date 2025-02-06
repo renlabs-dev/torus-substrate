@@ -82,12 +82,13 @@ pub(super) fn run(mut r: flags::Run) {
 
 #[allow(dead_code)]
 pub mod ops {
-    use super::*;
     use std::{
         ffi::OsStr,
         io::Write,
         process::{Command, Stdio},
     };
+
+    use super::*;
 
     #[macro_export]
     macro_rules! torus_node {

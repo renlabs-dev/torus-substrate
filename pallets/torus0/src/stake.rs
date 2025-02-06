@@ -1,10 +1,14 @@
-use polkadot_sdk::sp_std::{collections::btree_map::BTreeMap, vec::Vec};
-use polkadot_sdk::sp_tracing::error;
+use polkadot_sdk::{
+    frame_support::{
+        dispatch::DispatchResult,
+        ensure,
+        traits::{Currency, ExistenceRequirement, WithdrawReasons},
+    },
+    sp_std::{collections::btree_map::BTreeMap, vec::Vec},
+    sp_tracing::error,
+};
 
-use crate::agent;
-use crate::{AccountIdOf, BalanceOf};
-use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, WithdrawReasons};
-use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
+use crate::{agent, AccountIdOf, BalanceOf};
 
 /// Stakes `amount` tokens from `staker` to `staked` by withdrawing the tokens
 /// and adding them to the [`crate::StakingTo`] and [`crate::StakedBy`] maps.

@@ -15,6 +15,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::{pin::Pin, sync::Arc, time::Duration};
+
 use fc_rpc::StorageOverrideHandler;
 use futures::FutureExt;
 use polkadot_sdk::{
@@ -28,7 +30,6 @@ use polkadot_sdk::{
     sp_runtime::traits::Block as BlockT,
     *,
 };
-use std::{pin::Pin, sync::Arc, time::Duration};
 use torus_runtime::{apis::RuntimeApi, configs::eth::TransactionConverter, opaque::Block};
 
 use crate::cli::{

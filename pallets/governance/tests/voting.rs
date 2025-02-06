@@ -3,9 +3,10 @@ use pallet_governance::{
     proposal::{GlobalParamsData, ProposalStatus},
     DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
 };
-use polkadot_sdk::frame_support::traits::Get;
-use polkadot_sdk::{frame_support::assert_err, sp_runtime::BoundedBTreeSet};
-use polkadot_sdk::{frame_support::assert_ok, sp_runtime::Percent};
+use polkadot_sdk::{
+    frame_support::{assert_err, assert_ok, traits::Get},
+    sp_runtime::{BoundedBTreeSet, Percent},
+};
 use test_utils::{
     add_balance, get_balance, get_origin, new_test_ext, step_block, to_nano, zero_min_burn,
     AccountId, Test,

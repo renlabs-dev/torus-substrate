@@ -1,4 +1,3 @@
-use crate::*;
 use frame_support::PalletId;
 use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustment};
 use polkadot_sdk::{
@@ -16,6 +15,8 @@ use polkadot_sdk::{
     sp_std::num::NonZeroU128,
 };
 use sp_runtime::{Perbill, Percent};
+
+use crate::*;
 
 pub mod eth;
 

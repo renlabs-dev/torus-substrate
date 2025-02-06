@@ -13,25 +13,30 @@ pub mod whitelist;
 pub mod benchmarks;
 pub mod weights;
 
-use crate::application::AgentApplication;
-use crate::config::GovernanceConfiguration;
-use crate::proposal::Proposal;
-use crate::proposal::ProposalId;
-use crate::proposal::UnrewardedProposal;
 pub(crate) use ext::*;
 use frame::prelude::ensure_root;
 pub use pallet::*;
-use polkadot_sdk::frame_support::{
-    dispatch::DispatchResult,
-    pallet_prelude::{ValueQuery, *},
-    sp_runtime::Percent,
-    traits::Currency,
-    Identity, PalletId,
+use polkadot_sdk::{
+    frame_support::{
+        dispatch::DispatchResult,
+        pallet_prelude::{ValueQuery, *},
+        sp_runtime::Percent,
+        traits::Currency,
+        Identity, PalletId,
+    },
+    frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor},
+    polkadot_sdk_frame::{
+        traits::AccountIdConversion,
+        {self as frame},
+    },
+    sp_std::vec::Vec,
 };
-use polkadot_sdk::frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor};
-use polkadot_sdk::polkadot_sdk_frame::traits::AccountIdConversion;
-use polkadot_sdk::polkadot_sdk_frame::{self as frame};
-use polkadot_sdk::sp_std::vec::Vec;
+
+use crate::{
+    application::AgentApplication,
+    config::GovernanceConfiguration,
+    proposal::{Proposal, ProposalId, UnrewardedProposal},
+};
 
 #[frame::pallet]
 pub mod pallet {

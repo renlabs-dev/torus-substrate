@@ -7,23 +7,22 @@ pub mod fee;
 pub mod migrations;
 pub mod stake;
 
-use crate::agent::Agent;
-use crate::burn::BurnConfiguration;
-use crate::fee::ValidatorFeeConstraints;
 pub(crate) use ext::*;
-use frame::arithmetic::Percent;
-use frame::prelude::ensure_signed;
+use frame::{arithmetic::Percent, prelude::ensure_signed};
 pub use pallet::*;
-use polkadot_sdk::frame_support::{
-    dispatch::DispatchResult,
-    pallet_prelude::{ValueQuery, *},
-    traits::Currency,
-    Identity,
+use polkadot_sdk::{
+    frame_support::{
+        dispatch::DispatchResult,
+        pallet_prelude::{ValueQuery, *},
+        traits::Currency,
+        Identity,
+    },
+    frame_system::pallet_prelude::OriginFor,
+    polkadot_sdk_frame as frame, sp_std,
 };
-use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
-use polkadot_sdk::polkadot_sdk_frame as frame;
-use polkadot_sdk::sp_std;
 use scale_info::prelude::vec::Vec;
+
+use crate::{agent::Agent, burn::BurnConfiguration, fee::ValidatorFeeConstraints};
 
 #[frame::pallet]
 pub mod pallet {

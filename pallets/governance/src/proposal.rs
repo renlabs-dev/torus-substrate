@@ -1,26 +1,25 @@
-use crate::frame::traits::ExistenceRequirement;
-use crate::BoundedBTreeSet;
-use crate::BoundedVec;
-use crate::DebugNoBound;
-use crate::TypeInfo;
-use crate::{
-    AccountIdOf, BalanceOf, Block, DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
-    UnrewardedProposals,
-};
-use crate::{GovernanceConfiguration, NotDelegatingVotingPower};
 use codec::{Decode, Encode, MaxEncodedLen};
-use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::frame_support::traits::Currency;
-use polkadot_sdk::frame_support::traits::WithdrawReasons;
-use polkadot_sdk::polkadot_sdk_frame::traits::CheckedAdd;
-use polkadot_sdk::sp_std::{collections::btree_set::BTreeSet, vec::Vec};
 use polkadot_sdk::{
-    frame_support::{dispatch::DispatchResult, ensure, storage::with_storage_layer},
+    frame_election_provider_support::Get,
+    frame_support::{
+        dispatch::DispatchResult,
+        ensure,
+        storage::with_storage_layer,
+        traits::{Currency, WithdrawReasons},
+    },
+    polkadot_sdk_frame::traits::CheckedAdd,
     sp_core::ConstU32,
     sp_runtime::{BoundedBTreeMap, DispatchError, Percent},
+    sp_std::{collections::btree_set::BTreeSet, vec::Vec},
     sp_tracing::error,
 };
 use substrate_fixed::types::I92F36;
+
+use crate::{
+    frame::traits::ExistenceRequirement, AccountIdOf, BalanceOf, Block, BoundedBTreeSet,
+    BoundedVec, DaoTreasuryAddress, DebugNoBound, Error, GlobalGovernanceConfig,
+    GovernanceConfiguration, NotDelegatingVotingPower, Proposals, TypeInfo, UnrewardedProposals,
+};
 
 pub type ProposalId = u64;
 
@@ -482,11 +481,11 @@ pub fn tick_proposals<T: crate::Config>(block_number: Block) {
 
 /// Returns the minimum amount of active stake needed for a proposal be executed
 /// based on the given percentage.
-fn get_minimal_stake_to_execute_with_percentage<T: crate::Config>(
+fn get_minimum_stake_to_execute_with_percentage<T: crate::Config>(
     threshold: Percent,
 ) -> BalanceOf<T> {
     let stake = pallet_torus0::TotalStake::<T>::get();
-    threshold.mul_floor(stake).checked_div(100).unwrap_or(stake)
+    threshold.mul_floor(stake)
 }
 
 /// Sums all stakes for votes in favor and against. The biggest value wins and
@@ -544,7 +543,7 @@ fn tick_proposal<T: crate::Config>(
 
     let total_stake = stake_for_sum.saturating_add(stake_against_sum);
     let minimal_stake_to_execute =
-        get_minimal_stake_to_execute_with_percentage::<T>(proposal.data.required_stake());
+        get_minimum_stake_to_execute_with_percentage::<T>(proposal.data.required_stake());
 
     if total_stake >= minimal_stake_to_execute {
         create_unrewarded_proposal::<T>(proposal.id, block_number, votes_for, votes_against);
