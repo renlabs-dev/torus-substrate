@@ -212,7 +212,8 @@ impl<T: Config> ConsensusMemberInput<T> {
         }
     }
 
-    /// Removes self-weights, ensures the keys are registered to the consensus and normalizes it.
+    /// Removes self-weights, ensures the keys are registered to the consensus
+    /// and normalizes it.
     pub fn prepare_weights(
         member: ConsensusMember<T>,
         agent_id: &T::AccountId,
@@ -242,7 +243,8 @@ impl<T: Config> ConsensusMemberInput<T> {
         weights
     }
 
-    /// Normalizes the list of stakers to the agent, and adds the agent itself in case no stake was given.
+    /// Normalizes the list of stakers to the agent, and adds the agent itself
+    /// in case no stake was given.
     pub fn normalized_stakers(&self) -> Vec<(T::AccountId, Perquintill)> {
         self.stakes
             .iter()

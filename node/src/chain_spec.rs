@@ -52,7 +52,6 @@ fn testnet_genesis() -> Value {
         polkadot_sdk_frame::traits::Get,
         sp_keyring::{Ed25519Keyring, Sr25519Keyring},
     };
-
     use torus_runtime::{
         interface::{Balance, MinimumBalance},
         BalancesConfig, SudoConfig,

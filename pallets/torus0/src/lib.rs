@@ -7,23 +7,22 @@ pub mod fee;
 pub mod migrations;
 pub mod stake;
 
-use crate::agent::Agent;
-use crate::burn::BurnConfiguration;
-use crate::fee::ValidatorFeeConstraints;
 pub(crate) use ext::*;
-use frame::arithmetic::Percent;
-use frame::prelude::ensure_signed;
+use frame::{arithmetic::Percent, prelude::ensure_signed};
 pub use pallet::*;
-use polkadot_sdk::frame_support::{
-    dispatch::DispatchResult,
-    pallet_prelude::{ValueQuery, *},
-    traits::Currency,
-    Identity,
+use polkadot_sdk::{
+    frame_support::{
+        dispatch::DispatchResult,
+        pallet_prelude::{ValueQuery, *},
+        traits::Currency,
+        Identity,
+    },
+    frame_system::pallet_prelude::OriginFor,
+    polkadot_sdk_frame as frame, sp_std,
 };
-use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
-use polkadot_sdk::polkadot_sdk_frame as frame;
-use polkadot_sdk::sp_std;
 use scale_info::prelude::vec::Vec;
+
+use crate::{agent::Agent, burn::BurnConfiguration, fee::ValidatorFeeConstraints};
 
 #[frame::pallet]
 pub mod pallet {
@@ -35,78 +34,106 @@ pub mod pallet {
 
     use super::*;
 
+    /// Max allowed of validators. This is used then calculating emissions, only
+    /// the top staked agents up to this value will have their weights
+    /// considered.
     #[pallet::storage]
     pub type MaxAllowedValidators<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedValidators>;
 
+    /// Amount of tokens to burn from a payer key when registering new agents.
     #[pallet::storage]
     pub type Burn<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+    /// Number of agent registrations that happened in the last
+    /// [`BurnConfiguration::target_registrations_interval`] blocks.
     #[pallet::storage]
     pub type RegistrationsThisInterval<T: Config> = StorageValue<_, u16, ValueQuery>;
 
+    /// Minimum required stake for an agent to be considered a validator.
     #[pallet::storage]
     pub type MinValidatorStake<T: Config> =
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinValidatorStake>;
 
+    /// Number of blocks in which an agent is immune to pruning after
+    /// registration.
     #[pallet::storage]
     pub type ImmunityPeriod<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultImmunityPeriod>;
 
+    /// Number of blocks between emissions.
     #[pallet::storage]
     pub type RewardInterval<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultRewardInterval>;
 
+    /// Known registered network agents indexed by the owner's key.
     #[pallet::storage]
     pub type Agents<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, Agent<T>>;
 
+    // TODO: remove
     #[pallet::storage]
     pub type RegistrationBlock<T: Config> =
         StorageMap<_, Identity, AccountIdOf<T>, BlockNumberFor<T>>;
 
+    /// Maximum number of characters allowed in an agent name.
     #[pallet::storage]
     pub type MaxNameLength<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultMaxNameLength>;
 
+    /// Minimum number of characters required in an agent name.
+    #[pallet::storage]
+    pub type MinNameLength<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultMinNameLength>;
+
+    /// Maximum number of characters allowed in an agent URL.
     #[pallet::storage]
     pub type MaxAgentUrlLength<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAgentUrlLength>;
 
-    #[pallet::storage]
-    pub type MinNameLength<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultMinNameLength>;
-
+    /// Maximum number of agents registered at one time. Registering when this
+    /// number is met means new comers will cause pruning of old agents.
     #[pallet::storage]
     pub type MaxAllowedAgents<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedAgents>;
 
+    /// Number of agent registrations that happened this block.
     #[pallet::storage]
     pub type RegistrationsThisBlock<T> = StorageValue<_, u16, ValueQuery>;
 
+    /// Maximum amount of agent registrations per block, tracked by
+    /// [`RegistrationsThisBlock`].
     #[pallet::storage]
     pub type MaxRegistrationsPerBlock<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxRegistrationsPerBlock>;
 
-    // StakeTo
+    // Map of staked tokens prefixed by the staker, and indexed by the staked agents
+    // mapping to the amount in tokens.
     #[pallet::storage]
     pub type StakingTo<T: Config> =
         StorageDoubleMap<_, Identity, T::AccountId, Identity, T::AccountId, BalanceOf<T>>;
 
-    // StakeFrom
+    // Map of staked tokens prefixed by the staked agent, and indexed by the staker
+    // keys mapping to the amount in tokens.
     #[pallet::storage]
     pub type StakedBy<T: Config> =
         StorageDoubleMap<_, Identity, T::AccountId, Identity, T::AccountId, BalanceOf<T>>;
 
+    /// The total amount of stake in the network.
     #[pallet::storage]
     pub type TotalStake<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+    /// Minimum amount of stake in tokens a key has to deposit in an agent.
     #[pallet::storage]
     pub type MinAllowedStake<T: Config> =
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinAllowedStake>;
 
+    /// The weight dividends have when finding agents to prune. 100% meaning it
+    /// is taking fully into account.
     #[pallet::storage]
     pub type DividendsParticipationWeight<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultDividendsParticipationWeight>;
 
+    /// Constraints defining validation of agent fees.
     #[pallet::storage]
     pub type FeeConstraints<T: Config> = StorageValue<_, ValidatorFeeConstraints<T>, ValueQuery>;
 
+    /// [`Burn`] configuration values.
     #[pallet::storage]
     pub type BurnConfig<T: Config> = StorageValue<_, BurnConfiguration<T>, ValueQuery>;
 
@@ -189,12 +216,14 @@ pub mod pallet {
         #[pallet::no_default_bounds]
         type DefaultMaxRegistrationsPerInterval: Get<u16>;
 
-        /// The storage MaxNameLength should be constrained to be no more than the value of this.
-        /// This is needed on agent::Agent to set the `name` field BoundedVec max length.
+        /// The storage MaxNameLength should be constrained to be no more than
+        /// the value of this. This is needed on agent::Agent to set the
+        /// `name` field BoundedVec max length.
         #[pallet::constant]
         type MaxAgentNameLengthConstraint: Get<u32>;
 
-        /// This is needed on agent::Agent to set the `url` field BoundedVec max length.
+        /// This is needed on agent::Agent to set the `url` field BoundedVec max
+        /// length.
         #[pallet::constant]
         type MaxAgentUrlLengthConstraint: Get<u32>;
 
@@ -221,6 +250,7 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
+        /// Adds stakes from origin to the agent key.
         #[pallet::call_index(0)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_stake(
@@ -236,6 +266,7 @@ pub mod pallet {
             stake::add_stake::<T>(key, agent_key, amount)
         }
 
+        /// Removes stakes from origin to the agent key.
         #[pallet::call_index(1)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_stake(
@@ -247,6 +278,7 @@ pub mod pallet {
             stake::remove_stake::<T>(key, agent_key, amount)
         }
 
+        /// Transfers origin's stakes from an agent to another.
         #[pallet::call_index(2)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn transfer_stake(
@@ -259,6 +291,7 @@ pub mod pallet {
             stake::transfer_stake::<T>(key, agent_key, new_agent_key, amount)
         }
 
+        /// Registers a new agent on behalf of an arbitrary key.
         #[pallet::call_index(3)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn register_agent(
@@ -272,6 +305,7 @@ pub mod pallet {
             agent::register::<T>(payer, agent_key, name, url, metadata)
         }
 
+        /// Unregister origin's key agent.
         #[pallet::call_index(4)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn unregister_agent(origin: OriginFor<T>) -> DispatchResult {
@@ -279,6 +313,7 @@ pub mod pallet {
             agent::unregister::<T>(agent_key)
         }
 
+        /// Updates origin's key agent metadata.
         #[pallet::call_index(5)]
         #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
         pub fn update_agent(
@@ -304,17 +339,20 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Event created when stake has been transferred from the coldkey account onto the key
-        /// staking account
+        /// Event created when stake has been transferred from the coldkey
+        /// account onto the key staking account
         StakeAdded(AccountIdOf<T>, AccountIdOf<T>, BalanceOf<T>),
-        /// Event created when stake has been removed from the key staking account onto the coldkey
-        /// account
+        /// Event created when stake has been removed from the key staking
+        /// account onto the coldkey account
         StakeRemoved(AccountIdOf<T>, AccountIdOf<T>, BalanceOf<T>),
-        /// Event created when a new agent account has been registered to the chain
+        /// Event created when a new agent account has been registered to the
+        /// chain
         AgentRegistered(AccountIdOf<T>),
-        /// Event created when a agent account has been deregistered from the chain
+        /// Event created when a agent account has been deregistered from the
+        /// chain
         AgentUnregistered(AccountIdOf<T>),
-        /// Event created when the agent's updated information is added to the network
+        /// Event created when the agent's updated information is added to the
+        /// network
         AgentUpdated(AccountIdOf<T>),
     }
 
@@ -324,11 +362,14 @@ pub mod pallet {
         AgentDoesNotExist,
         /// Insufficient stake to withdraw the requested amount.
         NotEnoughStakeToWithdraw,
-        /// Insufficient balance in the cold key account to stake the requested amount.
+        /// Insufficient balance in the cold key account to stake the requested
+        /// amount.
         NotEnoughBalanceToStake,
-        /// The number of agent registrations in this block exceeds the allowed limit.
+        /// The number of agent registrations in this block exceeds the allowed
+        /// limit.
         TooManyAgentRegistrationsThisBlock,
-        /// The number of agent registrations in this interval exceeds the allowed limit.
+        /// The number of agent registrations in this interval exceeds the
+        /// allowed limit.
         TooManyAgentRegistrationsThisInterval,
         /// The agent is already registered in the active set.
         AgentAlreadyRegistered,
@@ -352,8 +393,8 @@ pub mod pallet {
         NotEnoughStakeToRegister,
         /// The entity is still registered and cannot be modified.
         StillRegistered,
-        /// Attempted to set max allowed agents to a value less than the current number of
-        /// registered agents.
+        /// Attempted to set max allowed agents to a value less than the current
+        /// number of registered agents.
         MaxAllowedAgents,
         /// Insufficient balance to transfer.
         NotEnoughBalanceToTransfer,
@@ -389,7 +430,8 @@ pub mod pallet {
         StepPanicked,
         /// The stake amount to add or remove is too small. Minimum is 0.5 unit.
         StakeTooSmall,
-        /// Key is not present in Whitelist, it needs to be whitelisted by a Curator
+        /// Key is not present in Whitelist, it needs to be whitelisted by a
+        /// Curator
         AgentKeyNotWhitelisted,
         /// The amount given is 0
         InvalidAmount,

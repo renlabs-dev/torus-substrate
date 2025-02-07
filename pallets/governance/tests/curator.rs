@@ -1,7 +1,8 @@
-use crate::pallet_governance::Error;
 use pallet_governance::Curators;
 use polkadot_sdk::frame_support::assert_err;
 use test_utils::*;
+
+use crate::pallet_governance::Error;
 
 #[test]
 fn user_is_added_to_whitelist() {

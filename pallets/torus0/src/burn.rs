@@ -1,11 +1,12 @@
-use crate::BalanceOf;
 use codec::{Decode, Encode, MaxEncodedLen};
-use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::frame_support::DebugNoBound;
-use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
-use scale_info::prelude::marker::PhantomData;
-use scale_info::TypeInfo;
+use polkadot_sdk::{
+    frame_election_provider_support::Get, frame_support::DebugNoBound,
+    polkadot_sdk_frame::prelude::BlockNumberFor,
+};
+use scale_info::{prelude::marker::PhantomData, TypeInfo};
 use substrate_fixed::types::I110F18;
+
+use crate::BalanceOf;
 
 #[derive(Clone, TypeInfo, Decode, Encode, PartialEq, Eq, DebugNoBound, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
@@ -36,6 +37,11 @@ where
     }
 }
 
+/// Adjusts registration burn for the current block.
+///
+/// The next burn is calculated by analyzing the last N
+/// (`target_registrations_interval`) blocks and increases if the target
+/// registrations per interval was reached.
 pub fn adjust_burn<T: crate::Config>(current_block: u64) {
     let BurnConfiguration {
         min_burn,

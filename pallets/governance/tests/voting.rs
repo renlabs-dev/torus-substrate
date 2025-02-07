@@ -3,9 +3,10 @@ use pallet_governance::{
     proposal::{GlobalParamsData, ProposalStatus},
     DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
 };
-use polkadot_sdk::frame_support::traits::Get;
-use polkadot_sdk::{frame_support::assert_err, sp_runtime::BoundedBTreeSet};
-use polkadot_sdk::{frame_support::assert_ok, sp_runtime::Percent};
+use polkadot_sdk::{
+    frame_support::{assert_err, assert_ok, traits::Get},
+    sp_runtime::{BoundedBTreeSet, Percent},
+};
 use test_utils::{
     add_balance, get_balance, get_origin, new_test_ext, step_block, to_nano, zero_min_burn,
     AccountId, Test,
@@ -519,7 +520,8 @@ fn creates_emission_proposal_with_invalid_params_and_it_fails() {
 fn rewards_wont_exceed_treasury() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        // Fill the governance address with 1 mil so we are not limited by the max allocation
+        // Fill the governance address with 1 mil so we are not limited by the max
+        // allocation
         let amount = to_nano(1_000_000_000);
         let key = DaoTreasuryAddress::<Test>::get();
         add_balance(key, amount);

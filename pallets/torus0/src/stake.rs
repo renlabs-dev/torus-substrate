@@ -1,11 +1,17 @@
-use polkadot_sdk::sp_std::{collections::btree_map::BTreeMap, vec::Vec};
-use polkadot_sdk::sp_tracing::error;
+use polkadot_sdk::{
+    frame_support::{
+        dispatch::DispatchResult,
+        ensure,
+        traits::{Currency, ExistenceRequirement, WithdrawReasons},
+    },
+    sp_std::{collections::btree_map::BTreeMap, vec::Vec},
+    sp_tracing::error,
+};
 
-use crate::agent;
-use crate::{AccountIdOf, BalanceOf};
-use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, WithdrawReasons};
-use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
+use crate::{agent, AccountIdOf, BalanceOf};
 
+/// Stakes `amount` tokens from `staker` to `staked` by withdrawing the tokens
+/// and adding them to the [`crate::StakingTo`] and [`crate::StakedBy`] maps.
 pub fn add_stake<T: crate::Config>(
     staker: AccountIdOf<T>,
     staked: AccountIdOf<T>,
@@ -39,9 +45,10 @@ pub fn add_stake<T: crate::Config>(
     Ok(())
 }
 
+/// Withdraws stake from an agent and gives it back to the staker.
 pub fn remove_stake<T: crate::Config>(
-    key: AccountIdOf<T>,
-    agent_key: AccountIdOf<T>,
+    staker: AccountIdOf<T>,
+    staked: AccountIdOf<T>,
     amount: BalanceOf<T>,
 ) -> DispatchResult {
     ensure!(
@@ -50,32 +57,34 @@ pub fn remove_stake<T: crate::Config>(
     );
 
     ensure!(
-        agent::exists::<T>(&agent_key),
+        agent::exists::<T>(&staked),
         crate::Error::<T>::AgentDoesNotExist
     );
 
     ensure!(
-        crate::StakingTo::<T>::get(&key, &agent_key).unwrap_or(0) >= amount,
+        crate::StakingTo::<T>::get(&staker, &staked).unwrap_or(0) >= amount,
         crate::Error::<T>::NotEnoughStakeToWithdraw
     );
 
-    crate::StakingTo::<T>::mutate(&key, &agent_key, |stake| {
+    crate::StakingTo::<T>::mutate(&staker, &staked, |stake| {
         *stake = Some(stake.unwrap_or(0).saturating_sub(amount))
     });
 
-    crate::StakedBy::<T>::mutate(&agent_key, &key, |stake| {
+    crate::StakedBy::<T>::mutate(&staked, &staker, |stake| {
         *stake = Some(stake.unwrap_or(0).saturating_sub(amount))
     });
 
     crate::TotalStake::<T>::mutate(|total_stake| *total_stake = total_stake.saturating_sub(amount));
 
-    let _ = <T as crate::Config>::Currency::deposit_creating(&key, amount);
+    let _ = <T as crate::Config>::Currency::deposit_creating(&staker, amount);
 
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeRemoved(key, agent_key, amount));
 
     Ok(())
 }
 
+/// Transfers stake from an account to another (see [`remove_stake`],
+/// [`add_stake`]).
 pub fn transfer_stake<T: crate::Config>(
     staker: AccountIdOf<T>,
     old_staked: AccountIdOf<T>,
@@ -87,6 +96,8 @@ pub fn transfer_stake<T: crate::Config>(
     Ok(())
 }
 
+/// Usually called when de-registering an agent, removes all stakes on a given
+/// key.
 pub(crate) fn clear_key<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
     for (staker, staked, amount) in crate::StakingTo::<T>::iter() {
         if &staker == key || &staked == key {

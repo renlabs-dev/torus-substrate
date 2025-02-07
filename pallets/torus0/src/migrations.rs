@@ -9,7 +9,6 @@ use crate::{Config, Pallet};
 
 pub mod v1 {
     use super::*;
-
     use crate::{Agent, Agents};
 
     pub type Migration<T, W> = VersionedMigration<0, 1, MigrateToV1<T>, Pallet<T>, W>;

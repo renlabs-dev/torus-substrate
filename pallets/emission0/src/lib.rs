@@ -6,12 +6,13 @@ pub mod migrations;
 pub(crate) use ext::*;
 pub use pallet::*;
 use pallet_emission0_api::Emission0Api;
-use polkadot_sdk::frame_support::dispatch::DispatchResult;
-use polkadot_sdk::frame_support::{pallet_prelude::*, DefaultNoBound};
-use polkadot_sdk::frame_system;
-use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
-use polkadot_sdk::polkadot_sdk_frame::{self as frame, traits::Currency};
-use polkadot_sdk::sp_runtime::Percent;
+use polkadot_sdk::{
+    frame_support::{dispatch::DispatchResult, pallet_prelude::*, DefaultNoBound},
+    frame_system,
+    frame_system::pallet_prelude::OriginFor,
+    polkadot_sdk_frame::{self as frame, traits::Currency},
+    sp_runtime::Percent,
+};
 
 #[doc(hidden)]
 pub mod distribute;
@@ -36,33 +37,48 @@ pub mod pallet {
 
     use super::*;
 
+    /// Map of consensus members indexed by their keys. A consensus member is
+    /// any agent eligible for emissions in the next epoch. This means
+    /// unregistered agents will also receive emissions.
     #[pallet::storage]
     pub type ConsensusMembers<T: Config> =
         StorageMap<_, Identity, AccountIdOf<T>, ConsensusMember<T>>;
 
+    /// Map of agents delegating weight control to other agents. Emissions
+    /// derived from weight delegation are taxed and the fees go the original
+    /// weight setter.
     #[pallet::storage]
     pub type WeightControlDelegation<T: Config> =
         StorageMap<_, Identity, T::AccountId, T::AccountId>;
 
+    // TODO: remove
     #[pallet::storage]
     pub type MinAllowedWeights<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMinAllowedWeights>;
 
+    /// Maximum number of weights a validator can set.
     #[pallet::storage]
     pub type MaxAllowedWeights<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedWeights>;
 
+    // TODO: cap weights on distribution.
+    /// Minimum stake a validator needs for each weight it sets.
     #[pallet::storage]
     pub type MinStakePerWeight<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+    /// Percentage of issued tokens to be burned every epoch.
     #[pallet::storage]
     pub type EmissionRecyclingPercentage<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultEmissionRecyclingPercentage>;
 
+    /// Ratio between incentives and dividends on distribution. 50% means they
+    /// are distributed equally.
     #[pallet::storage]
     pub type IncentivesRatio<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultIncentivesRatio>;
 
+    /// Amount of tokens accumulated since the last epoch. This increases on
+    /// every block. See [`distribute::get_total_emission_per_block`].
     #[pallet::storage]
     pub type PendingEmission<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
@@ -79,7 +95,8 @@ pub mod pallet {
         #[pallet::constant]
         type MaxSupply: Get<NonZeroU128>;
 
-        /// Emissions per block in NANOs. Not taking into account halving and recycling.
+        /// Emissions per block in NANOs. Not taking into account halving and
+        /// recycling.
         #[pallet::constant]
         type BlockEmission: Get<u128>;
 
@@ -156,7 +173,6 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        // TODO: configure price
         #[pallet::call_index(0)]
         #[pallet::weight((T::WeightInfo::set_weights(), DispatchClass::Normal, Pays::Yes))]
         pub fn set_weights(

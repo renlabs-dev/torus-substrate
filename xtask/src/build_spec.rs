@@ -202,38 +202,42 @@ pub type RefCount = u32;
 pub struct AccountInfo {
     /// The number of transactions this account has sent.
     pub nonce: Nonce,
-    /// The number of other modules that currently depend on this account's existence. The account
-    /// cannot be reaped until this is zero.
+    /// The number of other modules that currently depend on this account's
+    /// existence. The account cannot be reaped until this is zero.
     pub consumers: RefCount,
-    /// The number of other modules that allow this account to exist. The account may not be reaped
-    /// until this and `sufficients` are both zero.
+    /// The number of other modules that allow this account to exist. The
+    /// account may not be reaped until this and `sufficients` are both
+    /// zero.
     pub providers: RefCount,
-    /// The number of modules that allow this account to exist for their own purposes only. The
-    /// account may not be reaped until this and `providers` are both zero.
+    /// The number of modules that allow this account to exist for their own
+    /// purposes only. The account may not be reaped until this and
+    /// `providers` are both zero.
     pub sufficients: RefCount,
-    /// The additional data that belongs to this account. Used to store the balance(s) in a lot of
-    /// chains.
+    /// The additional data that belongs to this account. Used to store the
+    /// balance(s) in a lot of chains.
     pub data: AccountData,
 }
 
 /// All balance information for an account.
 #[derive(Debug, parity_scale_codec::Decode, parity_scale_codec::Encode)]
 pub struct AccountData {
-    /// Non-reserved part of the balance which the account holder may be able to control.
+    /// Non-reserved part of the balance which the account holder may be able to
+    /// control.
     ///
-    /// This is the only balance that matters in terms of most operations on tokens.
+    /// This is the only balance that matters in terms of most operations on
+    /// tokens.
     pub free: Balance,
     /// Balance which is has active holds on it and may not be used at all.
     ///
-    /// This is the sum of all individual holds together with any sums still under the (deprecated)
-    /// reserves API.
+    /// This is the sum of all individual holds together with any sums still
+    /// under the (deprecated) reserves API.
     pub reserved: Balance,
-    /// The amount that `free + reserved` may not drop below when reducing the balance, except for
-    /// actions where the account owner cannot reasonably benefit from the balance reduction, such
-    /// as slashing.
+    /// The amount that `free + reserved` may not drop below when reducing the
+    /// balance, except for actions where the account owner cannot
+    /// reasonably benefit from the balance reduction, such as slashing.
     pub frozen: Balance,
-    /// Extra information about this account. The MSB is a flag indicating whether the new ref-
-    /// counting logic is in place for this account.
+    /// Extra information about this account. The MSB is a flag indicating
+    /// whether the new ref- counting logic is in place for this account.
     pub flags: ExtraFlags,
 }
 

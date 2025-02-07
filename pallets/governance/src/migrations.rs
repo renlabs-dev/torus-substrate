@@ -11,7 +11,6 @@ pub type Migrations<T, W> = (v1::Migration<T, W>, v2::Migration<T, W>);
 
 pub mod v2 {
     use super::*;
-
     use crate::TreasuryEmissionFee;
 
     pub type Migration<T, W> = VersionedMigration<1, 2, MigrateToV2<T>, Pallet<T>, W>;
@@ -29,7 +28,6 @@ pub mod v2 {
 
 pub mod v1 {
     use super::*;
-
     use crate::GlobalGovernanceConfig;
 
     pub type Migration<T, W> = VersionedMigration<0, 1, MigrateToV1<T>, Pallet<T>, W>;
