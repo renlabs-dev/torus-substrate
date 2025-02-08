@@ -13,7 +13,7 @@ use polkadot_sdk::{
 use substrate_fixed::{traits::ToFixed, types::I96F32};
 use test_utils::{
     add_balance, add_stake, get_origin,
-    pallet_governance::TreasuryEmissionFee,
+    pallet_governance::{Allocators, TreasuryEmissionFee},
     pallet_torus0::{
         stake::sum_staked_by, Agents, FeeConstraints, MaxAllowedValidators, MinAllowedStake,
         MinValidatorStake, StakedBy,
@@ -488,6 +488,8 @@ fn pays_weight_control_fee_and_dividends_to_stakers() {
         for id in [val_1, val_2, miner] {
             register_empty_agent(id);
         }
+
+        Allocators::<Test>::set(val_1, Some(()));
 
         pallet_emission0::weight_control::delegate_weight_control::<Test>(get_origin(val_2), val_1)
             .expect("failed to delegate weight control");

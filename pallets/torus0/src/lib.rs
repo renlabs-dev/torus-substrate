@@ -68,11 +68,6 @@ pub mod pallet {
     #[pallet::storage]
     pub type Agents<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, Agent<T>>;
 
-    // TODO: remove
-    #[pallet::storage]
-    pub type RegistrationBlock<T: Config> =
-        StorageMap<_, Identity, AccountIdOf<T>, BlockNumberFor<T>>;
-
     /// Maximum number of characters allowed in an agent name.
     #[pallet::storage]
     pub type MaxNameLength<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultMaxNameLength>;

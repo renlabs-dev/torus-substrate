@@ -78,7 +78,7 @@ pub fn remove_stake<T: crate::Config>(
 
     let _ = <T as crate::Config>::Currency::deposit_creating(&staker, amount);
 
-    crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeRemoved(key, agent_key, amount));
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeRemoved(staker, staked, amount));
 
     Ok(())
 }

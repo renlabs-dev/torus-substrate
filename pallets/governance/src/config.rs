@@ -1,21 +1,22 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
-    frame_election_provider_support::Get, frame_support::DebugNoBound, sp_runtime::Percent,
+    frame_election_provider_support::Get, frame_support::DebugNoBound,
+    polkadot_sdk_frame::prelude::BlockNumberFor, sp_runtime::Percent,
 };
 use scale_info::TypeInfo;
 
-use crate::{BalanceOf, BlockAmount};
+use crate::BalanceOf;
 
 #[derive(Clone, TypeInfo, Decode, Encode, PartialEq, Eq, DebugNoBound, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct GovernanceConfiguration<T: crate::Config> {
     pub proposal_cost: BalanceOf<T>,
-    pub proposal_expiration: BlockAmount,
+    pub proposal_expiration: BlockNumberFor<T>,
     pub agent_application_cost: BalanceOf<T>,
-    pub agent_application_expiration: BlockAmount,
+    pub agent_application_expiration: BlockNumberFor<T>,
     pub proposal_reward_treasury_allocation: Percent,
     pub max_proposal_reward_treasury_allocation: BalanceOf<T>,
-    pub proposal_reward_interval: BlockAmount,
+    pub proposal_reward_interval: BlockNumberFor<T>,
 }
 
 impl<T: crate::Config> Default for GovernanceConfiguration<T> {
