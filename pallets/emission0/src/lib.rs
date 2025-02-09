@@ -25,11 +25,12 @@ pub mod weights;
 
 #[frame::pallet]
 pub mod pallet {
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
     use core::num::NonZeroU128;
 
     use frame::prelude::BlockNumberFor;
+    use frame_system::ensure_signed;
     use pallet_governance_api::GovernanceApi;
     use pallet_torus0_api::Torus0Api;
     use polkadot_sdk::sp_std;
@@ -145,6 +146,9 @@ pub mod pallet {
 
         /// Agent does not have enough stake to set weights.
         NotEnoughStakeToSetWeights,
+
+        /// At the current state, agents cannot control their own weight.
+        WeightControlNotEnabled,
     }
 
     #[pallet::event]
@@ -173,6 +177,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             target: AccountIdOf<T>,
         ) -> DispatchResult {
+            let origin = ensure_signed(origin)?;
             weight_control::delegate_weight_control::<T>(origin, target)
         }
 
@@ -211,5 +216,12 @@ impl<T: Config> Emission0Api<T::AccountId> for Pallet<T> {
                 incentives: member.last_incentives,
             }
         })
+    }
+
+    fn delegate_weight_control(
+        delegator: &T::AccountId,
+        delegatee: &T::AccountId,
+    ) -> DispatchResult {
+        weight_control::delegate_weight_control::<T>(delegator.clone(), delegatee.clone())
     }
 }

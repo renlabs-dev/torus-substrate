@@ -42,7 +42,7 @@ use crate::{
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
 
     use proposal::GlobalParamsData;
     use weights::WeightInfo;
@@ -531,6 +531,10 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
 
     fn ensure_allocator(key: &T::AccountId) -> DispatchResult {
         crate::roles::ensure_allocator::<T>(key)
+    }
+
+    fn get_allocators() -> impl Iterator<Item = T::AccountId> {
+        Allocators::<T>::iter_keys()
     }
 
     fn set_allocator(key: &T::AccountId) {

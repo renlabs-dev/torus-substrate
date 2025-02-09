@@ -66,39 +66,43 @@ pub fn set_weights<T: crate::Config>(
 }
 
 pub fn delegate_weight_control<T: crate::Config>(
-    origin: OriginFor<T>,
-    target: T::AccountId,
+    delegator: T::AccountId,
+    delegatee: T::AccountId,
 ) -> DispatchResult {
-    let acc_id = ensure_signed(origin)?;
-
     ensure!(
-        acc_id != target,
+        delegator != delegatee,
         crate::Error::<T>::CannotDelegateWeightControlToSelf,
     );
 
     ensure!(
-        <T::Torus>::is_agent_registered(&acc_id),
+        <T::Torus>::is_agent_registered(&delegator),
         crate::Error::<T>::AgentIsNotRegistered
     );
 
     ensure!(
-        <T::Torus>::is_agent_registered(&target),
+        <T::Torus>::is_agent_registered(&delegatee),
         crate::Error::<T>::AgentIsNotRegistered
     );
 
     // At the current network stage, it only makes sense to delegate weight control
     // to allocators.
-    <T::Governance>::ensure_allocator(&target)?;
+    <T::Governance>::ensure_allocator(&delegatee)?;
 
-    crate::WeightControlDelegation::<T>::set(&acc_id, Some(target.clone()));
+    crate::WeightControlDelegation::<T>::set(&delegator, Some(delegatee.clone()));
 
-    crate::Pallet::<T>::deposit_event(crate::Event::<T>::DelegatedWeightControl(acc_id, target));
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::DelegatedWeightControl(
+        delegator, delegatee,
+    ));
 
     Ok(())
 }
 
 pub fn regain_weight_control<T: crate::Config>(origin: OriginFor<T>) -> DispatchResult {
     let acc_id = ensure_signed(origin)?;
+
+    if <T::Governance>::ensure_allocator(&acc_id).is_err() {
+        return Err(crate::Error::<T>::WeightControlNotEnabled.into());
+    }
 
     crate::WeightControlDelegation::<T>::mutate(acc_id, |val| match val.take() {
         Some(_) => Ok(()),

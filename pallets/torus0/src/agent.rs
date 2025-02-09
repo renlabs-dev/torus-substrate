@@ -134,7 +134,19 @@ pub fn register<T: crate::Config>(
     crate::RegistrationsThisBlock::<T>::mutate(|value| value.saturating_add(1));
     crate::RegistrationsThisInterval::<T>::mutate(|value| value.saturating_add(1));
 
-    crate::Pallet::<T>::deposit_event(crate::Event::<T>::AgentRegistered(agent_key));
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::AgentRegistered(agent_key.clone()));
+
+    if let Some(allocator) = <T::Governance>::get_allocators().next() {
+        if let Err(err) = <T::Emission>::delegate_weight_control(&agent_key, &allocator) {
+            polkadot_sdk::sp_tracing::error!(
+                "failed to delegate weight control for {agent_key:?} on {allocator:?}: {err:?}"
+            );
+        }
+    } else {
+        polkadot_sdk::sp_tracing::error!(
+            "no allocators available to delegate to for {agent_key:?}"
+        );
+    }
 
     Ok(())
 }
