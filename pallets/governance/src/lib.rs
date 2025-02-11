@@ -119,7 +119,8 @@ pub mod pallet {
         type MaxApplicationDataLength: Get<u32>;
 
         #[pallet::constant]
-        type ApplicationExpiration: Get<BlockAmount>;
+        #[pallet::no_default_bounds]
+        type ApplicationExpiration: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         type MaxPenaltyPercentage: Get<Percent>;
@@ -132,14 +133,16 @@ pub mod pallet {
         type DefaultProposalCost: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        type DefaultProposalExpiration: Get<BlockAmount>;
+        #[pallet::no_default_bounds]
+        type DefaultProposalExpiration: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         #[pallet::no_default_bounds]
         type DefaultAgentApplicationCost: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        type DefaultAgentApplicationExpiration: Get<BlockAmount>;
+        #[pallet::no_default_bounds]
+        type DefaultAgentApplicationExpiration: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         type DefaultProposalRewardTreasuryAllocation: Get<Percent>;
@@ -149,7 +152,8 @@ pub mod pallet {
         type DefaultMaxProposalRewardTreasuryAllocation: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        type DefaultProposalRewardInterval: Get<BlockAmount>;
+        #[pallet::no_default_bounds]
+        type DefaultProposalRewardInterval: Get<BlockNumberFor<Self>>;
 
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
@@ -167,14 +171,10 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
-            let current_block: u64 = block_number
-                .try_into()
-                .ok()
-                .expect("blockchain won't pass 2 ^ 64 blocks");
+            application::resolve_expired_applications::<T>(block_number);
 
-            application::resolve_expired_applications::<T>(current_block);
-            proposal::tick_proposals::<T>(current_block);
-            proposal::tick_proposal_rewards::<T>(current_block);
+            proposal::tick_proposals::<T>(block_number);
+            proposal::tick_proposal_rewards::<T>(block_number);
 
             Weight::zero()
         }

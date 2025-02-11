@@ -6,6 +6,7 @@ use polkadot_sdk::{
         traits::{Currency, WithdrawReasons},
         DebugNoBound,
     },
+    polkadot_sdk_frame::prelude::BlockNumberFor,
     sp_runtime::BoundedVec,
     sp_std::vec::Vec,
 };
@@ -13,7 +14,6 @@ use scale_info::TypeInfo;
 
 use crate::{
     frame::traits::ExistenceRequirement, whitelist, AccountIdOf, AgentApplications, BalanceOf,
-    Block,
 };
 
 /// Decentralized autonomous organization application, it's used to do agent
@@ -27,7 +27,7 @@ pub struct AgentApplication<T: crate::Config> {
     pub agent_key: AccountIdOf<T>,
     pub data: BoundedVec<u8, T::MaxApplicationDataLength>,
     pub cost: BalanceOf<T>,
-    pub expires_at: Block,
+    pub expires_at: BlockNumberFor<T>,
     pub action: ApplicationAction,
     pub status: ApplicationStatus,
 }
@@ -104,12 +104,8 @@ pub fn submit_application<T: crate::Config>(
         return Err(crate::Error::<T>::InvalidApplicationDataLength.into());
     }
 
-    let current_block: u64 =
-        TryInto::try_into(<polkadot_sdk::frame_system::Pallet<T>>::block_number())
-            .ok()
-            .expect("blockchain will not exceed 2^64 blocks; QED.");
-
-    let expires_at = current_block + config.agent_application_expiration;
+    let expires_at = <polkadot_sdk::frame_system::Pallet<T>>::block_number()
+        + config.agent_application_expiration;
 
     let next_id = AgentApplications::<T>::iter()
         .count()
@@ -198,7 +194,7 @@ pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult
 /// Iterates through all open applications checking if the current block is
 /// greater or equal to the former's expiration block. If so, marks the
 /// application as Expired.
-pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Block) {
+pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: BlockNumberFor<T>) {
     for application in crate::AgentApplications::<T>::iter_values() {
         if current_block < application.expires_at
             || !matches!(application.status, ApplicationStatus::Open)

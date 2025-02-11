@@ -111,15 +111,6 @@ fn global_governance_config_validates_parameters_correctly() {
 
         assert_err!(
             GlobalParamsData::<Test> {
-                max_allowed_weights: 2001,
-                ..GlobalParamsData::default()
-            }
-            .validate(),
-            Error::<Test>::InvalidMaxAllowedWeights
-        );
-
-        assert_err!(
-            GlobalParamsData::<Test> {
                 min_weight_control_fee: 101,
                 ..GlobalParamsData::default()
             }

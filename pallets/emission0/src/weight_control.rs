@@ -19,11 +19,6 @@ pub fn set_weights<T: crate::Config>(
     <T::Governance>::ensure_allocator(&acc_id)?;
 
     ensure!(
-        weights.len() <= crate::MaxAllowedWeights::<T>::get() as usize,
-        crate::Error::<T>::WeightSetTooLarge
-    );
-
-    ensure!(
         !crate::WeightControlDelegation::<T>::contains_key(&acc_id),
         crate::Error::<T>::CannotSetWeightsWhileDelegating,
     );
@@ -37,12 +32,8 @@ pub fn set_weights<T: crate::Config>(
         .iter()
         .map(|(_, stake)| *stake)
         .sum();
-    let min_stake_for_weights = crate::MinStakePerWeight::<T>::get()
-        .checked_mul(weights.len() as u128)
-        .unwrap_or_default();
-
     ensure!(
-        total_stake >= min_stake_for_weights,
+        total_stake >= <T::Torus>::min_validator_stake(),
         crate::Error::<T>::NotEnoughStakeToSetWeights
     );
 
@@ -94,6 +85,10 @@ pub fn delegate_weight_control<T: crate::Config>(
         <T::Torus>::is_agent_registered(&target),
         crate::Error::<T>::AgentIsNotRegistered
     );
+
+    // At the current network stage, it only makes sense to delegate weight control
+    // to allocators.
+    <T::Governance>::ensure_allocator(&target)?;
 
     crate::WeightControlDelegation::<T>::set(&acc_id, Some(target.clone()));
 

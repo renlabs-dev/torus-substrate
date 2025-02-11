@@ -51,21 +51,6 @@ pub mod pallet {
     pub type WeightControlDelegation<T: Config> =
         StorageMap<_, Identity, T::AccountId, T::AccountId>;
 
-    // TODO: remove
-    #[pallet::storage]
-    pub type MinAllowedWeights<T: Config> =
-        StorageValue<_, u16, ValueQuery, T::DefaultMinAllowedWeights>;
-
-    /// Maximum number of weights a validator can set.
-    #[pallet::storage]
-    pub type MaxAllowedWeights<T: Config> =
-        StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedWeights>;
-
-    // TODO: cap weights on distribution.
-    /// Minimum stake a validator needs for each weight it sets.
-    #[pallet::storage]
-    pub type MinStakePerWeight<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
     /// Percentage of issued tokens to be burned every epoch.
     #[pallet::storage]
     pub type EmissionRecyclingPercentage<T: Config> =
