@@ -1,14 +1,35 @@
-use pallet_torus0::{Burn, Error};
+use pallet_torus0::{agent::Agent, Agents, Burn, Error};
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
-use test_utils::{assert_ok, pallet_governance, Test};
+use test_utils::{
+    assert_ok,
+    pallet_emission0::WeightControlDelegation,
+    pallet_governance::{self, Allocators},
+    Test,
+};
 
 #[test]
 fn register_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
+        let allocator = 1;
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
+
+        // Register allocator
+        Agents::<Test>::set(
+            allocator,
+            Some(Agent {
+                key: allocator,
+                name: Default::default(),
+                url: Default::default(),
+                metadata: Default::default(),
+                weight_penalty_factor: Default::default(),
+                registration_block: Default::default(),
+                fees: Default::default(),
+            }),
+        );
+        Allocators::<Test>::set(allocator, Some(()));
 
         assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
             agent
@@ -22,11 +43,16 @@ fn register_correctly() {
             metadata.clone(),
         ));
 
-        let agent = pallet_torus0::Agents::<Test>::get(agent).expect("it should exists");
+        let agent = Agents::<Test>::get(agent).expect("it should exists");
 
         assert_eq!(agent.name.to_vec(), name);
         assert_eq!(agent.url.to_vec(), url);
         assert_eq!(agent.metadata.to_vec(), metadata);
+
+        assert_eq!(
+            WeightControlDelegation::<Test>::get(agent.key),
+            Some(allocator)
+        );
     });
 }
 
@@ -406,7 +432,7 @@ fn update_correctly() {
             Some(weight_control_fee),
         ));
 
-        let agent = pallet_torus0::Agents::<Test>::get(agent).expect("it should exists");
+        let agent = Agents::<Test>::get(agent).expect("it should exists");
 
         assert_eq!(agent.name.to_vec(), new_name);
         assert_eq!(agent.url.to_vec(), new_url);
@@ -456,7 +482,7 @@ fn update_with_zero_staking_fee() {
             Error::<Test>::InvalidStakingFee,
         );
 
-        let agent = pallet_torus0::Agents::<Test>::get(agent).expect("it should exists");
+        let agent = Agents::<Test>::get(agent).expect("it should exists");
 
         assert_eq!(agent.name.to_vec(), name);
         assert_eq!(agent.url.to_vec(), url);
@@ -506,7 +532,7 @@ fn update_with_zero_weight_control_fee() {
             Error::<Test>::InvalidWeightControlFee,
         );
 
-        let agent = pallet_torus0::Agents::<Test>::get(agent).expect("it should exists");
+        let agent = Agents::<Test>::get(agent).expect("it should exists");
 
         assert_eq!(agent.name.to_vec(), name);
         assert_eq!(agent.url.to_vec(), url);

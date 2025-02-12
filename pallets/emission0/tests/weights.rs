@@ -14,47 +14,55 @@ fn delegates_and_regains_weight_control() {
         let delegated = 1;
 
         assert_eq!(
-            delegate_weight_control::<Test>(get_origin(delegator), delegator),
+            delegate_weight_control::<Test>(delegator, delegator),
             Err(Error::<Test>::CannotDelegateWeightControlToSelf.into())
         );
 
         assert_eq!(
-            delegate_weight_control::<Test>(get_origin(delegator), delegated),
+            delegate_weight_control::<Test>(delegator, delegated),
             Err(Error::<Test>::AgentIsNotRegistered.into())
         );
 
-        assert_eq!(
-            regain_weight_control::<Test>(get_origin(delegator)),
-            Err(Error::<Test>::AgentIsNotDelegating.into())
-        );
+        // TODO: reenable when weight control is enabled again
+        // assert_eq!(
+        //     regain_weight_control::<Test>(get_origin(delegator)),
+        //     Err(Error::<Test>::AgentIsNotDelegating.into())
+        // );
 
         register_empty_agent(delegator);
 
         assert_eq!(
-            delegate_weight_control::<Test>(get_origin(delegator), delegated),
+            delegate_weight_control::<Test>(delegator, delegated),
             Err(Error::<Test>::AgentIsNotRegistered.into())
         );
 
         register_empty_agent(delegated);
 
-        delegate_weight_control::<Test>(get_origin(delegator), delegated)
+        delegate_weight_control::<Test>(delegator, delegated)
             .expect_err("cannot delegate to not-allocator");
 
         Allocators::<Test>::set(delegated, Some(()));
 
         assert_eq!(
-            delegate_weight_control::<Test>(get_origin(delegator), delegated),
+            delegate_weight_control::<Test>(delegator, delegated),
             Ok(())
         );
 
         assert!(WeightControlDelegation::<Test>::contains_key(delegator));
 
-        assert_eq!(regain_weight_control::<Test>(get_origin(delegator)), Ok(()));
-        assert!(!WeightControlDelegation::<Test>::contains_key(delegator));
+        assert_eq!(
+            regain_weight_control::<Test>(get_origin(delegator)),
+            Err(Error::<Test>::WeightControlNotEnabled.into())
+        );
+
+        // TODO: reenable when weight control is enabled
+        // assert_eq!(regain_weight_control::<Test>(get_origin(delegator)), Ok(()));
+        // assert!(!WeightControlDelegation::<Test>::contains_key(delegator));
     });
 }
 
 #[test]
+#[allow(unreachable_code)]
 fn sets_weights_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let validator = 0;
@@ -95,8 +103,7 @@ fn sets_weights_correctly() {
 
         Allocators::<Test>::set(1, Some(()));
 
-        delegate_weight_control::<Test>(get_origin(validator), 1)
-            .expect("failed to delegate weight control");
+        delegate_weight_control::<Test>(validator, 1).expect("failed to delegate weight control");
 
         assert_eq!(
             set_weights::<Test>(get_origin(validator), vec![(1, 0); 5]),

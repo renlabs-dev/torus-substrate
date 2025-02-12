@@ -11,5 +11,7 @@ pub trait GovernanceApi<AccountId> {
 
     fn ensure_allocator(key: &AccountId) -> DispatchResult;
 
+    fn get_allocators() -> impl Iterator<Item = AccountId>;
+
     fn set_allocator(key: &AccountId);
 }
