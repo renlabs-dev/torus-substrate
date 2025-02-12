@@ -422,10 +422,6 @@ impl pallet_emission0::Config for Runtime {
 
     type BlockEmission = ConstU128<{ as_tors(64_000) / 10800 }>;
 
-    type DefaultMinAllowedWeights = ConstU16<1>;
-
-    type DefaultMaxAllowedWeights = ConstU16<420>;
-
     type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
 
     type DefaultIncentivesRatio = DefaultIncentivesRatio;
