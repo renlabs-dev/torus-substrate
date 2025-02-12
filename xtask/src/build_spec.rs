@@ -91,7 +91,6 @@ fn grandpa(genesis: &mut Value) {
     )];
 
     let key = key_name(b"Grandpa", b"Authorities");
-    dbg!(&key);
 
     let mut buf = Cursor::new(vec![0; grandpa.size_hint()]);
     grandpa.encode_to(&mut buf);
