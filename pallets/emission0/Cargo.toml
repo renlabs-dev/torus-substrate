@@ -12,7 +12,6 @@ std = [
     "codec/std",
     "polkadot-sdk/std",
     "scale-info/std",
-    "substrate-fixed/std",
     "pallet-torus0-api/std",
     "num-traits/std",
 ]
@@ -27,7 +26,6 @@ try-runtime = ["polkadot-sdk/try-runtime"]
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
-substrate-fixed.workspace = true
 
 num-traits.workspace = true
 

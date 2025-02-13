@@ -31,7 +31,6 @@ codec = { package = "parity-scale-codec", version = "3.6.12", default-features =
 scale-info = { version = "2.11.1", default-features = false }
 polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "stable2409", default-features = false }
 substrate-wasm-builder = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "stable2409", default-features = false }
-substrate-fixed = { git = "https://github.com/encointer/substrate-fixed.git", branch = "master", default-features = false }
 
 # Utils
 num-traits = { version = "0.2.19", default-features = false, features = [

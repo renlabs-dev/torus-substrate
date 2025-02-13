@@ -12,7 +12,6 @@ std = [
     "codec/std",
     "polkadot-sdk/std",
     "scale-info/std",
-    "substrate-fixed/std",
     "pallet-torus0/std",
     "pallet-emission0/std",
 ]
@@ -38,7 +37,6 @@ polkadot-sdk = { workspace = true, features = [
     "runtime",
     "pallet-sudo",
 ] }
-substrate-fixed = { workspace = true }
 
 pallet-torus0.workspace = true
 pallet-emission0.workspace = true

@@ -8,9 +8,8 @@ use pallet_emission0::{
 use polkadot_sdk::{
     pallet_balances,
     sp_core::Get,
-    sp_runtime::{BoundedVec, Perbill, Percent},
+    sp_runtime::{BoundedVec, FixedU128, Perbill, Percent},
 };
-use substrate_fixed::{traits::ToFixed, types::I96F32};
 use test_utils::{
     add_balance, add_stake,
     pallet_governance::{Allocators, TreasuryEmissionFee},
@@ -102,8 +101,8 @@ fn weights_are_filtered_and_normalized() {
         assert_eq!(
             weights,
             vec![
-                (1, 0.3333333333f64.to_fixed()),
-                (2, 0.6666666665f64.to_fixed())
+                (1, FixedU128::from_rational(1, 3)),
+                (2, FixedU128::from_rational(1, 3) * 2.into())
             ]
         )
     });
@@ -123,7 +122,7 @@ fn creates_member_input_correctly() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
                 registered: false
             }
@@ -142,7 +141,7 @@ fn creates_member_input_correctly() {
         member.update_weights(BoundedVec::truncate_from(vec![(0, 0), (1, 10)]));
 
         let input = ConsensusMemberInput::<Test>::from_agent(0, member.weights.clone(), 15);
-        assert_eq!(input.total_stake, I96F32::from_num(30));
+        assert_eq!(input.total_stake, 30);
         assert!(input.validator_permit);
         assert_eq!(input.weights.len(), 1);
     });
@@ -192,10 +191,10 @@ fn creates_list_of_all_member_inputs_for_rewards() {
             ConsensusMemberInput {
                 agent_id: validator,
                 validator_permit: true,
-                weights: vec![(miner, 1.to_fixed())],
+                weights: vec![(miner, FixedU128::from_u32(1))],
                 stakes: vec![(staker, stake * 3)],
                 total_stake: stake * 3,
-                normalized_stake: 0.75f64.to_fixed(),
+                normalized_stake: FixedU128::from_float(0.75f64),
                 delegating_to: None,
                 registered: true,
             }
@@ -209,7 +208,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
                 registered: true,
             }
@@ -220,10 +219,10 @@ fn creates_list_of_all_member_inputs_for_rewards() {
             ConsensusMemberInput {
                 agent_id: delegating_registered,
                 validator_permit: true,
-                weights: vec![(miner, 1.to_fixed())],
+                weights: vec![(miner, FixedU128::from_u32(1))],
                 stakes: vec![(staker, stake)],
                 total_stake: stake,
-                normalized_stake: 0.25f64.to_fixed(),
+                normalized_stake: FixedU128::from_float(0.25f64),
                 delegating_to: Some(validator),
                 registered: true,
             }
@@ -237,7 +236,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: Some(validator),
                 registered: false,
             }
@@ -251,7 +250,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: Some(validator),
                 registered: false,
             }
@@ -265,7 +264,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
                 registered: true,
             }

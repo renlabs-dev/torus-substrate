@@ -9,11 +9,10 @@ use polkadot_sdk::{
     },
     polkadot_sdk_frame::{prelude::BlockNumberFor, traits::CheckedAdd},
     sp_core::{ConstU32, U256},
-    sp_runtime::{BoundedBTreeMap, DispatchError, Percent},
+    sp_runtime::{traits::Saturating, BoundedBTreeMap, DispatchError, FixedU128, Percent},
     sp_std::{collections::btree_set::BTreeSet, vec::Vec},
     sp_tracing::error,
 };
-use substrate_fixed::types::I92F36;
 
 use crate::{
     frame::traits::ExistenceRequirement, AccountIdOf, BalanceOf, BoundedBTreeSet, BoundedVec,
@@ -631,9 +630,9 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: BlockNumberFor<T>) 
         return;
     }
 
-    let mut n: u16 = 0;
+    let mut n = 0u16;
     let mut account_stakes: AccountStakes<T> = BoundedBTreeMap::new();
-    let mut total_allocation: I92F36 = I92F36::from_num(0);
+    let mut total_allocation = FixedU128::from_inner(0);
     for (proposal_id, unrewarded_proposal) in UnrewardedProposals::<T>::iter() {
         let proposal_block: u64 = unrewarded_proposal
             .block
@@ -658,9 +657,7 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: BlockNumberFor<T>) 
         }
 
         match get_reward_allocation::<T>(&governance_config, n) {
-            Ok(allocation) => {
-                total_allocation = total_allocation.saturating_add(allocation);
-            }
+            Ok(allocation) => total_allocation = total_allocation.saturating_add(allocation),
             Err(err) => {
                 error!("could not get reward allocation for proposal {proposal_id}: {err:?}");
                 continue;
@@ -682,50 +679,47 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: BlockNumberFor<T>) 
 pub fn get_reward_allocation<T: crate::Config>(
     governance_config: &GovernanceConfiguration<T>,
     n: u16,
-) -> Result<I92F36, DispatchError> {
+) -> Result<FixedU128, DispatchError> {
     let treasury_address = DaoTreasuryAddress::<T>::get();
     let treasury_balance = <T as crate::Config>::Currency::free_balance(&treasury_address);
-    let treasury_balance = I92F36::from_num(treasury_balance);
 
-    let allocation_percentage = I92F36::from_num(
-        governance_config
-            .proposal_reward_treasury_allocation
-            .deconstruct(),
+    let allocation_percentage = governance_config.proposal_reward_treasury_allocation;
+    let max_allocation = governance_config.max_proposal_reward_treasury_allocation;
+
+    let mut allocation = FixedU128::from_inner(
+        allocation_percentage
+            .mul_floor(treasury_balance)
+            .min(max_allocation),
     );
-    let max_allocation =
-        I92F36::from_num(governance_config.max_proposal_reward_treasury_allocation);
 
-    let mut allocation = treasury_balance
-        .checked_mul(allocation_percentage)
-        .unwrap_or_default()
-        .min(max_allocation);
     if n > 0 {
-        let mut base = I92F36::from_num(1.5);
-        let mut result = I92F36::from_num(1);
+        let mut base = FixedU128::from_float(1.5);
+        let mut result = FixedU128::from_float(1.);
         let mut remaining = n;
 
         while remaining > 0 {
             if remaining % 2 == 1 {
-                result = result.checked_mul(base).unwrap_or(result);
+                result = result.const_checked_mul(base).unwrap_or(result);
             }
-            base = base.checked_mul(base).unwrap_or_default();
+            base = base.const_checked_mul(base).unwrap_or_default();
             remaining /= 2;
         }
 
-        allocation = allocation.checked_div(result).unwrap_or(allocation);
+        allocation = allocation.const_checked_div(result).unwrap_or(allocation);
     }
+
     Ok(allocation)
 }
 
 /// Distributes the proposal rewards in a quadratic formula to all voters.
 fn distribute_proposal_rewards<T: crate::Config>(
     account_stakes: AccountStakes<T>,
-    total_allocation: I92F36,
+    total_allocation: FixedU128,
     max_proposal_reward_treasury_allocation: BalanceOf<T>,
 ) {
     // This is just a sanity check, making sure we can never allocate more than the
     // max
-    if total_allocation > I92F36::from_num(max_proposal_reward_treasury_allocation) {
+    if total_allocation > FixedU128::from_inner(max_proposal_reward_treasury_allocation) {
         error!("total allocation exceeds max proposal reward treasury allocation");
         return;
     }
@@ -739,17 +733,17 @@ fn distribute_proposal_rewards<T: crate::Config>(
         .collect();
 
     let total_stake: BalanceOf<T> = account_sqrt_stakes.iter().map(|(_, stake)| *stake).sum();
-    let total_stake = I92F36::from_num(total_stake);
+    let total_stake = FixedU128::from_inner(total_stake);
 
     for (acc_id, stake) in account_sqrt_stakes.into_iter() {
-        let percentage = I92F36::from_num(stake)
-            .checked_div(total_stake)
+        let percentage = FixedU128::from_inner(stake)
+            .const_checked_div(total_stake)
             .unwrap_or_default();
 
-        let reward: BalanceOf<T> = total_allocation
-            .checked_mul(percentage)
+        let reward = total_allocation
+            .const_checked_mul(percentage)
             .unwrap_or_default()
-            .to_num();
+            .into_inner();
 
         // Transfer the proposal reward to the accounts from treasury
         if let Err(err) = <T as crate::Config>::Currency::transfer(
