@@ -1,4 +1,4 @@
-use std::{borrow::Cow, net::IpAddr, path::Path};
+use std::{borrow::Cow, net::IpAddr, os::unix::process::CommandExt, path::Path};
 
 use polkadot_sdk::sp_keyring;
 
@@ -75,6 +75,34 @@ fn main() {
             };
 
             std::fs::write(cmd.out, out).expect("failed to write resulting ");
+        }
+        flags::XtaskCmd::Coverage(coverage) => {
+            const PALLETS: [&str; 3] = ["pallet-emission0", "pallet-governance", "pallet-torus0"];
+
+            let mut cmd = std::process::Command::new("cargo");
+            let mut args = vec![
+                "llvm-cov",
+                "--no-clean",
+                "--exclude-from-report",
+                "test-utils",
+                "--ignore-filename-regex",
+                "test-utils|weights.rs",
+            ];
+
+            for pallet in PALLETS {
+                args.extend_from_slice(&["-p", pallet]);
+            }
+
+            if coverage.html {
+                let dev_args = ["--html"];
+                args.extend_from_slice(&dev_args);
+            } else {
+                let ci_args = ["--cobertura", "--output-path", "target/cov.xml"];
+                args.extend_from_slice(&ci_args);
+            }
+
+            cmd.args(args);
+            cmd.exec();
         }
     }
 }
