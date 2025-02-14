@@ -86,7 +86,7 @@ fn main() {
                 "--exclude-from-report",
                 "test-utils",
                 "--ignore-filename-regex",
-                "test-utils|weights.rs",
+                "test-utils|weights.rs|migrations.rs|benchmarks.rs",
             ];
 
             for pallet in PALLETS {
