@@ -8,9 +8,8 @@ use pallet_emission0::{
 use polkadot_sdk::{
     pallet_balances,
     sp_core::Get,
-    sp_runtime::{BoundedVec, Percent},
+    sp_runtime::{BoundedVec, FixedU128, Perbill, Percent},
 };
-use substrate_fixed::{traits::ToFixed, types::I96F32};
 use test_utils::{
     add_balance, add_stake,
     pallet_governance::{Allocators, TreasuryEmissionFee},
@@ -75,6 +74,10 @@ fn pending_emission_accumulates_and_returns_when_network_is_empty() {
 
         step_block(98);
         assert_eq!(PendingEmission::<Test>::get(), emissions);
+
+        PendingEmission::<Test>::set(u128::MAX);
+        step_block(1);
+        assert_eq!(PendingEmission::<Test>::get(), u128::MAX);
     });
 }
 
@@ -94,12 +97,12 @@ fn weights_are_filtered_and_normalized() {
 
         register_empty_agent(2);
 
-        let weights = ConsensusMemberInput::<Test>::prepare_weights(member, &0);
+        let weights = ConsensusMemberInput::<Test>::prepare_weights(member.weights, &0);
         assert_eq!(
             weights,
             vec![
-                (1, 0.3333333333f64.to_fixed()),
-                (2, 0.6666666665f64.to_fixed())
+                (1, FixedU128::from_rational(1, 3)),
+                (2, FixedU128::from_rational(1, 3) * 2.into())
             ]
         )
     });
@@ -110,7 +113,7 @@ fn creates_member_input_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let mut member = ConsensusMember::<Test>::default();
 
-        let input = ConsensusMemberInput::<Test>::from_agent(0, member.clone(), 0);
+        let input = ConsensusMemberInput::<Test>::from_agent(0, member.weights.clone(), 0);
         assert_eq!(
             input,
             ConsensusMemberInput {
@@ -119,7 +122,7 @@ fn creates_member_input_correctly() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
                 registered: false
             }
@@ -127,7 +130,7 @@ fn creates_member_input_correctly() {
 
         register_empty_agent(0);
 
-        let input = ConsensusMemberInput::<Test>::from_agent(0, member.clone(), 0);
+        let input = ConsensusMemberInput::<Test>::from_agent(0, member.weights.clone(), 0);
         assert!(input.registered);
 
         StakedBy::<Test>::set(0, 1, Some(10));
@@ -137,8 +140,8 @@ fn creates_member_input_correctly() {
 
         member.update_weights(BoundedVec::truncate_from(vec![(0, 0), (1, 10)]));
 
-        let input = ConsensusMemberInput::<Test>::from_agent(0, member.clone(), 15);
-        assert_eq!(input.total_stake, I96F32::from_num(30));
+        let input = ConsensusMemberInput::<Test>::from_agent(0, member.weights.clone(), 15);
+        assert_eq!(input.total_stake, 30);
         assert!(input.validator_permit);
         assert_eq!(input.weights.len(), 1);
     });
@@ -188,10 +191,10 @@ fn creates_list_of_all_member_inputs_for_rewards() {
             ConsensusMemberInput {
                 agent_id: validator,
                 validator_permit: true,
-                weights: vec![(miner, 1.to_fixed())],
+                weights: vec![(miner, FixedU128::from_u32(1))],
                 stakes: vec![(staker, stake * 3)],
                 total_stake: stake * 3,
-                normalized_stake: 0.75f64.to_fixed(),
+                normalized_stake: FixedU128::from_float(0.75f64),
                 delegating_to: None,
                 registered: true,
             }
@@ -205,7 +208,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
                 registered: true,
             }
@@ -216,10 +219,10 @@ fn creates_list_of_all_member_inputs_for_rewards() {
             ConsensusMemberInput {
                 agent_id: delegating_registered,
                 validator_permit: true,
-                weights: vec![(miner, 1.to_fixed())],
+                weights: vec![(miner, FixedU128::from_u32(1))],
                 stakes: vec![(staker, stake)],
                 total_stake: stake,
-                normalized_stake: 0.25f64.to_fixed(),
+                normalized_stake: FixedU128::from_float(0.25f64),
                 delegating_to: Some(validator),
                 registered: true,
             }
@@ -233,7 +236,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: Some(validator),
                 registered: false,
             }
@@ -247,7 +250,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: Some(validator),
                 registered: false,
             }
@@ -261,7 +264,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
-                normalized_stake: 0.to_fixed(),
+                normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
                 registered: true,
             }
@@ -377,12 +380,7 @@ fn pays_dividends_and_incentives() {
 #[test]
 fn pays_dividends_to_stakers() {
     test_utils::new_test_ext().execute_with(|| {
-        EmissionRecyclingPercentage::<Test>::set(Percent::zero());
-        TreasuryEmissionFee::<Test>::set(Percent::zero());
-
-        let min_validator_stake = 1;
-        MinValidatorStake::<Test>::set(min_validator_stake);
-        MinAllowedStake::<Test>::set(min_validator_stake);
+        let (min_validator_stake, _) = set_emissions_params();
 
         let validator = 0;
         let miner = 1;
@@ -454,24 +452,20 @@ fn pays_dividends_to_stakers() {
 
         assert_eq!(PendingEmission::<Test>::get(), 0);
         assert_eq!(sum, get_total_emission_per_block::<Test>() * 100);
+
+        let validator = ConsensusMembers::<Test>::get(validator).unwrap();
+        assert_eq!(validator.last_dividends, u16::MAX);
+        assert_eq!(validator.last_incentives, 0);
+        let miner = ConsensusMembers::<Test>::get(miner).unwrap();
+        assert_eq!(miner.last_incentives, u16::MAX);
+        assert_eq!(miner.last_dividends, 0);
     });
 }
 
 #[test]
 fn pays_weight_control_fee_and_dividends_to_stakers() {
     test_utils::new_test_ext().execute_with(|| {
-        EmissionRecyclingPercentage::<Test>::set(Percent::zero());
-        TreasuryEmissionFee::<Test>::set(Percent::zero());
-
-        let weight_control_fee = Percent::from_parts(25);
-        FeeConstraints::<Test>::mutate(|constraints| {
-            constraints.min_staking_fee = Percent::zero();
-            constraints.min_weight_control_fee = weight_control_fee;
-        });
-
-        let min_validator_stake = 1;
-        MinValidatorStake::<Test>::set(min_validator_stake);
-        MinAllowedStake::<Test>::set(min_validator_stake);
+        let (min_validator_stake, weight_control_fee) = set_emissions_params();
 
         let val_1 = 0;
         let val_2 = 1;
@@ -520,6 +514,17 @@ fn pays_weight_control_fee_and_dividends_to_stakers() {
             StakedBy::<Test>::get(val_2, val_2_staker).unwrap_or_default() - min_validator_stake,
             val_2_stake
         );
+
+        let val_1 = ConsensusMembers::<Test>::get(val_1).unwrap();
+        assert_eq!(val_1.last_dividends, u16::MAX);
+
+        let factor =
+            Perbill::from_rational(val_1_stake.min(val_2_stake), val_1_stake.max(val_2_stake));
+        let val_2 = ConsensusMembers::<Test>::get(val_2).unwrap();
+        assert_eq!(
+            val_2.last_dividends,
+            factor.mul_floor(u16::MAX as u32) as u16
+        );
     });
 }
 
@@ -527,15 +532,10 @@ fn pays_weight_control_fee_and_dividends_to_stakers() {
 fn pays_according_to_incentives_ratio() {
     for ratio in 0..=100 {
         test_utils::new_test_ext().execute_with(|| {
-            EmissionRecyclingPercentage::<Test>::set(Percent::zero());
-            TreasuryEmissionFee::<Test>::set(Percent::zero());
+            let (min_validator_stake, _) = set_emissions_params();
 
             let incentives_ratio = Percent::from_parts(ratio);
             IncentivesRatio::<Test>::set(incentives_ratio);
-
-            let min_validator_stake = 1;
-            MinValidatorStake::<Test>::set(min_validator_stake);
-            MinAllowedStake::<Test>::set(min_validator_stake);
 
             let val = 0;
             let miner = 1;
@@ -553,7 +553,8 @@ fn pays_according_to_incentives_ratio() {
 
             let total_emission = get_total_emission_per_block::<Test>() * 100;
             let total_incentives = incentives_ratio.mul_floor(total_emission);
-            let total_dividends = (Percent::one() - incentives_ratio).mul_floor(total_emission);
+            let dividends_ratio = Percent::one() - incentives_ratio;
+            let total_dividends = dividends_ratio.mul_floor(total_emission);
 
             assert_eq!(
                 StakedBy::<Test>::get(val, val).unwrap_or_default() - min_validator_stake,
@@ -563,6 +564,108 @@ fn pays_according_to_incentives_ratio() {
                 StakedBy::<Test>::get(miner, miner).unwrap_or_default() - min_validator_stake,
                 total_incentives
             );
+
+            let val = ConsensusMembers::<Test>::get(val).unwrap();
+            assert_eq!(val.last_dividends, if ratio == 100 { 0 } else { u16::MAX });
+
+            let miner = ConsensusMembers::<Test>::get(miner).unwrap();
+            assert_eq!(miner.last_incentives, if ratio == 0 { 0 } else { u16::MAX },);
         });
     }
+}
+
+#[test]
+fn pays_weight_delegation_fee_to_validators_without_permits() {
+    test_utils::new_test_ext().execute_with(|| {
+        let (min_validator_stake, weight_control_fee) = set_emissions_params();
+
+        let val_1 = 0;
+        let val_2 = 1;
+
+        let miner = 2;
+
+        let mut member = ConsensusMember::<Test>::default();
+        member.update_weights(BoundedVec::truncate_from(vec![(miner, 1)]));
+
+        ConsensusMembers::<Test>::set(val_1, Some(member));
+        ConsensusMembers::<Test>::set(val_2, Some(Default::default()));
+        ConsensusMembers::<Test>::set(miner, Some(Default::default()));
+
+        for id in [val_1, val_2, miner] {
+            register_empty_agent(id);
+        }
+
+        Allocators::<Test>::set(val_1, Some(()));
+
+        pallet_emission0::weight_control::delegate_weight_control::<Test>(val_2, val_1)
+            .expect("failed to delegate weight control");
+
+        add_stake(val_2, val_2, min_validator_stake);
+
+        step_block(100);
+
+        let total_dividends = (get_total_emission_per_block::<Test>() * 100) / 2;
+
+        assert_eq!(
+            StakedBy::<Test>::get(val_1, val_1).unwrap_or_default(),
+            weight_control_fee.mul_floor(total_dividends)
+        );
+
+        assert_eq!(
+            StakedBy::<Test>::get(val_2, val_2).unwrap_or_default() - min_validator_stake,
+            total_dividends - weight_control_fee.mul_floor(total_dividends)
+        );
+    });
+}
+
+#[test]
+fn ignores_agents_delegating_to_non_existing_agents() {
+    test_utils::new_test_ext().execute_with(|| {
+        let (min_validator_stake, _) = set_emissions_params();
+
+        let val = 0;
+        let miner = 1;
+        let non_existing_val = 2;
+
+        ConsensusMembers::<Test>::set(val, Some(Default::default()));
+        ConsensusMembers::<Test>::set(miner, Some(Default::default()));
+
+        for id in [val, miner] {
+            register_empty_agent(id);
+        }
+
+        WeightControlDelegation::<Test>::set(val, Some(non_existing_val));
+
+        add_stake(val, val, min_validator_stake);
+
+        step_block(100);
+
+        assert_eq!(
+            StakedBy::<Test>::get(val, val).unwrap_or_default() - min_validator_stake,
+            0
+        );
+        assert_eq!(StakedBy::<Test>::get(miner, miner).unwrap_or_default(), 0);
+
+        let validator = ConsensusMembers::<Test>::get(val).unwrap();
+        assert_eq!(validator.last_dividends, 0);
+        let miner = ConsensusMembers::<Test>::get(miner).unwrap();
+        assert_eq!(miner.last_incentives, 0);
+    });
+}
+
+fn set_emissions_params() -> (u128, Percent) {
+    EmissionRecyclingPercentage::<Test>::set(Percent::zero());
+    TreasuryEmissionFee::<Test>::set(Percent::zero());
+
+    let weight_control_fee = Percent::from_parts(25);
+    FeeConstraints::<Test>::mutate(|constraints| {
+        constraints.min_staking_fee = Percent::zero();
+        constraints.min_weight_control_fee = weight_control_fee;
+    });
+
+    let min_validator_stake = 1;
+    MinValidatorStake::<Test>::set(min_validator_stake);
+    MinAllowedStake::<Test>::set(min_validator_stake);
+
+    (min_validator_stake, weight_control_fee)
 }

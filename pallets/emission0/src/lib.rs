@@ -87,12 +87,6 @@ pub mod pallet {
         type BlockEmission: Get<u128>;
 
         #[pallet::constant]
-        type DefaultMinAllowedWeights: Get<u16>;
-
-        #[pallet::constant]
-        type DefaultMaxAllowedWeights: Get<u16>;
-
-        #[pallet::constant]
         type DefaultEmissionRecyclingPercentage: Get<Percent>;
 
         #[pallet::constant]

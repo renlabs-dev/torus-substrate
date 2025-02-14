@@ -524,7 +524,7 @@ fn rewards_wont_exceed_treasury() {
             pallet_governance::proposal::get_reward_allocation::<Test>(&governance_config, n)
                 .unwrap();
         assert_eq!(
-            allocation.to_num::<u128>(),
+            allocation.into_inner(),
             governance_config.max_proposal_reward_treasury_allocation
         );
     });

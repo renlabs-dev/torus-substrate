@@ -417,12 +417,6 @@ pub mod pallet {
         InvalidAgentUrl,
         /// A agent with this name already exists in the subnet.
         AgentNameAlreadyExists,
-        /// An arithmetic error occurred during calculation.
-        ArithmeticError,
-        /// The extrinsic panicked during execution.
-        ExtrinsicPanicked,
-        /// A step in the process panicked.
-        StepPanicked,
         /// The stake amount to add or remove is too small. Minimum is 0.5 unit.
         StakeTooSmall,
         /// Key is not present in Whitelist, it needs to be whitelisted by a

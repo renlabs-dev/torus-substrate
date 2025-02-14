@@ -157,10 +157,6 @@ impl pallet_emission0::Config for Test {
 
     type BlockEmission = ConstU128<{ (to_nano(250_000) - 1) / 10800 }>;
 
-    type DefaultMinAllowedWeights = ConstU16<1>;
-
-    type DefaultMaxAllowedWeights = ConstU16<420>;
-
     type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
 
     type DefaultIncentivesRatio = DefaultIncentivesRatio;

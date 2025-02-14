@@ -9,7 +9,9 @@ use polkadot_sdk::{
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
     sp_core::Get,
-    sp_runtime::{traits::Saturating, ArithmeticError, DispatchError, Percent, Perquintill},
+    sp_runtime::{
+        traits::Saturating, ArithmeticError, DispatchError, FixedU128, Percent, Perquintill,
+    },
     sp_std::{
         borrow::Cow,
         collections::{btree_map::BTreeMap, btree_set::BTreeSet},
@@ -18,9 +20,8 @@ use polkadot_sdk::{
     },
     sp_tracing::{error, info},
 };
-use substrate_fixed::{traits::ToFixed, types::I96F32};
 
-use crate::{BalanceOf, Config, ConsensusMember, IncentivesRatio};
+use crate::{BalanceOf, Config, ConsensusMember, IncentivesRatio, Weights};
 
 mod math;
 
@@ -84,10 +85,10 @@ pub fn get_total_emission_per_block<T: Config>() -> BalanceOf<T> {
 pub struct ConsensusMemberInput<T: Config> {
     pub agent_id: T::AccountId,
     pub validator_permit: bool,
-    pub weights: Vec<(T::AccountId, I96F32)>,
+    pub weights: Vec<(T::AccountId, FixedU128)>,
     pub stakes: Vec<(T::AccountId, u128)>,
     pub total_stake: u128,
-    pub normalized_stake: I96F32,
+    pub normalized_stake: FixedU128,
     pub delegating_to: Option<T::AccountId>,
     pub registered: bool,
 }
@@ -114,21 +115,21 @@ impl<T: Config> ConsensusMemberInput<T> {
         let mut consensus_members: BTreeMap<_, _> = crate::ConsensusMembers::<T>::iter().collect();
 
         let mut inputs: Vec<_> = crate::WeightControlDelegation::<T>::iter()
-            .map(|(delegator, validator)| {
+            .map(|(delegator, delegatee)| {
                 let is_registered = registered_agents.remove(&delegator);
                 consensus_members.remove(&delegator);
 
-                let mut input = if let Some(validator_input) = consensus_members.get(&validator) {
+                let mut input = if let Some(delegatee_input) = consensus_members.get(&delegatee) {
                     Self::from_agent(
                         delegator.clone(),
-                        validator_input.clone(),
+                        delegatee_input.weights.clone(),
                         min_validator_stake,
                     )
                 } else {
                     Self::from_new_agent(delegator.clone(), is_registered)
                 };
 
-                input.delegating_to = Some(validator);
+                input.delegating_to = Some(delegatee);
 
                 (delegator, input)
             })
@@ -137,18 +138,20 @@ impl<T: Config> ConsensusMemberInput<T> {
         inputs.extend(registered_agents.into_iter().map(|agent_id| {
             let input = consensus_members
                 .remove(&agent_id)
-                .map(|member| Self::from_agent(agent_id.clone(), member, min_validator_stake))
+                .map(|member| {
+                    Self::from_agent(agent_id.clone(), member.weights, min_validator_stake)
+                })
                 .unwrap_or_else(|| Self::from_new_agent(agent_id.clone(), true));
             (agent_id, input)
         }));
 
         inputs.extend(consensus_members.into_iter().map(|(agent_id, member)| {
-            let input = Self::from_agent(agent_id.clone(), member, min_validator_stake);
+            let input = Self::from_agent(agent_id.clone(), member.weights, min_validator_stake);
             (agent_id, input)
         }));
 
-        let total_network_stake: I96F32 =
-            I96F32::from_num::<u128>(inputs.iter().map(|(_, member)| member.total_stake).sum());
+        let total_network_stake =
+            FixedU128::from_inner(inputs.iter().map(|(_, member)| member.total_stake).sum());
 
         inputs.sort_unstable_by(|(_, a), (_, b)| {
             b.validator_permit
@@ -163,9 +166,9 @@ impl<T: Config> ConsensusMemberInput<T> {
                 input.weights.clear();
             }
 
-            if total_network_stake != I96F32::from_num(0) {
+            if total_network_stake != 0.into() {
                 input.normalized_stake =
-                    I96F32::from_num(input.total_stake).saturating_div(total_network_stake)
+                    FixedU128::from_inner(input.total_stake) / total_network_stake;
             }
         }
 
@@ -177,7 +180,7 @@ impl<T: Config> ConsensusMemberInput<T> {
     /// Calculates the total staked tokens and the normalized weights.
     pub fn from_agent(
         agent_id: T::AccountId,
-        member: ConsensusMember<T>,
+        weights: Weights<T>,
         min_validator_stake: u128,
     ) -> ConsensusMemberInput<T> {
         let weight_factor = Percent::one() - <T::Torus>::weight_penalty_factor(&agent_id);
@@ -193,10 +196,10 @@ impl<T: Config> ConsensusMemberInput<T> {
             })
             .collect();
 
-        let validator_permit = total_stake >= min_validator_stake && !member.weights.is_empty();
+        let validator_permit = total_stake >= min_validator_stake && !weights.is_empty();
 
         let weights = validator_permit
-            .then(|| Self::prepare_weights(member, &agent_id))
+            .then(|| Self::prepare_weights(weights, &agent_id))
             .unwrap_or_default();
 
         ConsensusMemberInput {
@@ -215,12 +218,11 @@ impl<T: Config> ConsensusMemberInput<T> {
     /// Removes self-weights, ensures the keys are registered to the consensus
     /// and normalizes it.
     pub fn prepare_weights(
-        member: ConsensusMember<T>,
+        weights: Weights<T>,
         agent_id: &T::AccountId,
-    ) -> Vec<(T::AccountId, I96F32)> {
-        let mut weights_sum = I96F32::default();
-        let mut weights: Vec<_> = member
-            .weights
+    ) -> Vec<(T::AccountId, FixedU128)> {
+        let mut weights_sum = FixedU128::default();
+        let mut weights: Vec<_> = weights
             .into_iter()
             .filter(|(id, _)| {
                 id != agent_id
@@ -228,15 +230,15 @@ impl<T: Config> ConsensusMemberInput<T> {
                         || <T::Torus>::is_agent_registered(id))
             })
             .map(|(id, weight)| {
-                let weight = I96F32::from_num(weight);
+                let weight = FixedU128::from_u32(weight as u32);
                 weights_sum = weights_sum.saturating_add(weight);
                 (id, weight)
             })
             .collect();
 
-        if weights_sum > I96F32::from_num(0) {
+        if weights_sum > 0.into() {
             for (_, weight) in weights.iter_mut() {
-                *weight = weight.saturating_div(weights_sum);
+                *weight = *weight / weights_sum;
             }
         }
 
@@ -273,8 +275,8 @@ fn linear_rewards<T: Config>(
         .map(|(idx, id)| (id, idx))
         .collect();
 
-    let mut weights: Vec<Vec<(usize, I96F32)>> = vec![vec![]; inputs.len()];
-    let mut stakes = vec![I96F32::from_num(0); inputs.len()];
+    let mut weights: Vec<Vec<(usize, FixedU128)>> = vec![vec![]; inputs.len()];
+    let mut stakes = vec![FixedU128::from_inner(0); inputs.len()];
 
     for ((input, weights), stake) in inputs.values().zip(&mut weights).zip(&mut stakes) {
         *stake = input.normalized_stake;
@@ -291,37 +293,16 @@ fn linear_rewards<T: Config>(
     let ranks = math::matmul_sparse(&weights, &stakes, inputs.len());
     let incentives = math::normalize(ranks);
 
-    let bonds_delta = math::row_hadamard_sparse(weights.as_ref(), stakes.as_ref());
+    let bonds_delta = math::row_hadamard_sparse(&weights, &stakes);
     let bonds_delta = math::col_normalize_sparse(bonds_delta, inputs.len());
 
     let dividends = math::matmul_transpose_sparse(&bonds_delta, &incentives);
     let dividends = math::normalize(dividends);
 
-    let calculate_active_stake = || {
-        let stakes = inputs
-            .values()
-            .map(|input| {
-                if input.validator_permit {
-                    I96F32::from_num(input.total_stake)
-                } else {
-                    I96F32::default()
-                }
-            })
-            .collect();
-
-        math::normalize(stakes)
-    };
-
     let Emissions {
         mut dividends,
         incentives,
-    } = compute_emissions::<T>(
-        &mut emission,
-        calculate_active_stake,
-        &stakes,
-        incentives,
-        dividends,
-    );
+    } = compute_emissions::<T>(&mut emission, &stakes, incentives, dividends);
 
     for (idx, input) in inputs.values().enumerate() {
         let Some(delegating_to) = &input.delegating_to else {
@@ -345,18 +326,23 @@ fn linear_rewards<T: Config>(
         {
             delegated_dividend.subsume(stake);
         } else {
+            // This is an impossible case, but if something changes in the future,
+            // the code is here.
+            let stake_num = stake.peek();
             T::Currency::resolve_creating(delegating_to, stake);
+            let _ = <T::Torus>::stake_to(delegating_to, delegating_to, stake_num);
         }
     }
 
     let upscaled_incentives: Vec<_> = incentives
         .iter()
-        .map(|i| I96F32::from_num(i.peek()))
+        .map(|i| FixedU128::from_inner(i.peek()))
         .collect();
     let upscaled_incentives = math::vec_max_upscale_to_u16(&upscaled_incentives);
+
     let upscaled_dividends: Vec<_> = dividends
         .iter()
-        .map(|i| I96F32::from_num(i.peek()))
+        .map(|i| FixedU128::from_inner(i.peek()))
         .collect();
     let upscaled_dividends = math::vec_max_upscale_to_u16(&upscaled_dividends);
 
@@ -417,49 +403,43 @@ struct Emissions<T: Config> {
     incentives: Vec<<T::Currency as Currency<T::AccountId>>::NegativeImbalance>,
 }
 
-fn compute_emissions<'a, T: Config>(
+fn compute_emissions<T: Config>(
     emission: &mut <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
-    compute_active_stake: impl Fn() -> Vec<I96F32>,
-    stake: &'a [I96F32],
-    incentives: Vec<I96F32>,
-    dividends: Vec<I96F32>,
+    stake: &[FixedU128],
+    incentives: Vec<FixedU128>,
+    dividends: Vec<FixedU128>,
 ) -> Emissions<T> {
     let combined_emission: Vec<_> = incentives
         .iter()
         .zip(dividends.iter())
         .map(|(incentive, dividend)| incentive.saturating_add(*dividend))
         .collect();
-    let emission_sum: I96F32 = combined_emission.iter().sum();
+    let emission_sum = combined_emission
+        .iter()
+        .fold(FixedU128::default(), |acc, &e| acc + e);
 
     let normalized_incentives = math::normalize_with_sum(incentives, emission_sum);
-    let normalized_dividends: Cow<'a, [I96F32]>;
-
-    let to_be_emitted = I96F32::from_num(emission.peek());
-
-    // If emission is zero, replace emission with normalized stake.
-    if emission_sum == I96F32::from_num(0) {
-        let active_stake = compute_active_stake();
-
-        if math::is_zero(&active_stake) {
-            normalized_dividends = Cow::Borrowed(stake);
-        } else {
-            normalized_dividends = Cow::Owned(active_stake);
-        }
+    let normalized_dividends = if emission_sum == 0.into() {
+        // When incentives and dividends are zero, the protocol still needs to issue tokens,
+        // so it is distributed for all stake-holder agents.
+        Cow::Borrowed(stake)
     } else {
         let dividends_emission = math::normalize_with_sum(dividends, emission_sum);
-        normalized_dividends = Cow::Owned(dividends_emission);
-    }
+        Cow::Owned(dividends_emission)
+    };
 
-    let mut calculate_emissions = |v: &[I96F32], to_be_emitted: I96F32| {
+    let to_be_emitted = FixedU128::from_inner(emission.peek());
+
+    let mut calculate_emissions = |v: &[FixedU128], to_be_emitted: FixedU128| {
         v.iter()
-            .map(|&se| se.checked_mul(to_be_emitted).unwrap_or_default())
-            .map(|amount| emission.extract(amount.to_num()))
+            .map(|&se| se.const_checked_mul(to_be_emitted).unwrap_or_default())
+            .map(|amount| emission.extract(amount.into_inner()))
             .collect::<Vec<_>>()
     };
 
     let incentives_ratio = IncentivesRatio::<T>::get().deconstruct();
 
-    let to_be_emitted = to_be_emitted.to_num::<u128>();
+    let to_be_emitted = to_be_emitted.into_inner();
     let incentives_to_be_emitted;
     let dividends_to_be_emitted;
 
@@ -477,9 +457,14 @@ fn compute_emissions<'a, T: Config>(
         unreachable!()
     }
 
-    let incentives =
-        calculate_emissions(&normalized_incentives, incentives_to_be_emitted.to_fixed());
-    let dividends = calculate_emissions(&normalized_dividends, dividends_to_be_emitted.to_fixed());
+    let incentives = calculate_emissions(
+        &normalized_incentives,
+        FixedU128::from_inner(incentives_to_be_emitted),
+    );
+    let dividends = calculate_emissions(
+        &normalized_dividends,
+        FixedU128::from_inner(dividends_to_be_emitted),
+    );
 
     Emissions {
         dividends,
