@@ -1,5 +1,5 @@
 use pallet_governance::{
-    application::ApplicationStatus, AgentApplications, GlobalGovernanceConfig,
+    application::ApplicationStatus, AgentApplications, GlobalGovernanceConfig, Whitelist,
 };
 use polkadot_sdk::frame_support::assert_err;
 use test_utils::*;
@@ -118,7 +118,7 @@ fn whitelist_executes_application_correctly_remove() {
         zero_min_burn();
 
         let key = 0;
-        let adding_key = 1;
+        let removing_key = 1;
         pallet_governance::Curators::<Test>::insert(key, ());
 
         let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
@@ -128,11 +128,13 @@ fn whitelist_executes_application_correctly_remove() {
         // first submit an application
         let balance_before = get_balance(key);
 
+        Whitelist::<Test>::set(removing_key, Some(()));
+
         assert_ok!(pallet_governance::Pallet::<Test>::submit_application(
             get_origin(key),
-            adding_key,
+            removing_key,
             data.clone(),
-            false
+            true
         ));
 
         let balance_after = get_balance(key);
@@ -140,7 +142,7 @@ fn whitelist_executes_application_correctly_remove() {
 
         let mut application_id: u32 = u32::MAX;
         for (_, value) in AgentApplications::<Test>::iter() {
-            assert_eq!(value.agent_key, adding_key);
+            assert_eq!(value.agent_key, removing_key);
             assert_eq!(value.data, data);
             application_id = value.id;
         }
@@ -154,8 +156,8 @@ fn whitelist_executes_application_correctly_remove() {
 
         assert_eq!(balance_after_accept, balance_before);
 
-        assert!(pallet_governance::whitelist::is_whitelisted::<Test>(
-            &adding_key
+        assert!(!pallet_governance::whitelist::is_whitelisted::<Test>(
+            &removing_key
         ));
 
         let application =
