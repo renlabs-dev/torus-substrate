@@ -10,7 +10,8 @@ use crate::{ensure, storage::StorageMap, AccountIdOf, Config, Error};
 
 /// Generic function used to manage the Curator and Allocator maps, which behave
 /// similarly.
-pub(super) fn manage_role<T: Config, M: StorageMap<AccountIdOf<T>, ()>>(
+#[doc(hidden)]
+pub fn manage_role<T: Config, M: StorageMap<AccountIdOf<T>, ()>>(
     key: AccountIdOf<T>,
     is_add: bool,
     error: Error<T>,

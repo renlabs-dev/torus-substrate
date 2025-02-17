@@ -1,26 +1,26 @@
-use pallet_torus0::{agent::Agent, Agents, Burn, Error};
+use pallet_torus0::{agent::Agent, Agents, Burn, Error, ImmunityPeriod, MaxAllowedAgents};
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
 use test_utils::{
     assert_ok,
-    pallet_emission0::WeightControlDelegation,
+    pallet_emission0::{ConsensusMembers, WeightControlDelegation},
     pallet_governance::{self, Allocators},
-    Test,
+    step_block, Test,
 };
 
 #[test]
 fn register_correctly() {
     test_utils::new_test_ext().execute_with(|| {
-        let agent = 0;
-        let allocator = 1;
+        let agent_id = 0;
+        let allocator_id = 1;
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
 
         // Register allocator
         Agents::<Test>::set(
-            allocator,
+            allocator_id,
             Some(Agent {
-                key: allocator,
+                key: allocator_id,
                 name: Default::default(),
                 url: Default::default(),
                 metadata: Default::default(),
@@ -29,21 +29,21 @@ fn register_correctly() {
                 fees: Default::default(),
             }),
         );
-        Allocators::<Test>::set(allocator, Some(()));
+        Allocators::<Test>::set(allocator_id, Some(()));
 
         assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            agent
+            agent_id
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
-            agent,
-            agent,
+            agent_id,
+            agent_id,
             name.clone(),
             url.clone(),
             metadata.clone(),
         ));
 
-        let agent = Agents::<Test>::get(agent).expect("it should exists");
+        let agent = Agents::<Test>::get(agent_id).expect("it should exists");
 
         assert_eq!(agent.name.to_vec(), name);
         assert_eq!(agent.url.to_vec(), url);
@@ -51,7 +51,18 @@ fn register_correctly() {
 
         assert_eq!(
             WeightControlDelegation::<Test>::get(agent.key),
-            Some(allocator)
+            Some(allocator_id)
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent_id,
+                agent_id,
+                name.clone(),
+                url.clone(),
+                metadata.clone(),
+            ),
+            Error::<Test>::AgentAlreadyRegistered
         );
     });
 }
@@ -407,6 +418,18 @@ fn update_correctly() {
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
 
+        assert_err!(
+            pallet_torus0::agent::update::<Test>(
+                agent,
+                b"".to_vec(),
+                b"".to_vec(),
+                None,
+                None,
+                None,
+            ),
+            Error::<Test>::AgentDoesNotExist
+        );
+
         assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
             agent
         ));
@@ -539,5 +562,102 @@ fn update_with_zero_weight_control_fee() {
         assert_eq!(agent.metadata.to_vec(), metadata);
         assert_eq!(agent.fees.staking_fee, staking_fee);
         assert_eq!(agent.fees.weight_control_fee, weight_control_fee);
+    });
+}
+
+#[test]
+fn prunes_excess_agents() {
+    test_utils::new_test_ext().execute_with(|| {
+        let immunity_period = 10;
+        ImmunityPeriod::<Test>::set(immunity_period as u16);
+
+        let current_block = immunity_period * 2;
+        step_block(current_block);
+
+        let max_allowed_agents = 3u32;
+        MaxAllowedAgents::<Test>::set(max_allowed_agents as u16);
+
+        const IMMUNE_KEY: u32 = 1;
+        const ZEROED_SCORE_KEY: u32 = 2;
+        const MAX_OLD_VALIDATOR_KEY: u32 = 3;
+        const MAX_VALIDATOR_KEY: u32 = 4;
+        const MIN_VALIDATOR_KEY: u32 = 5;
+        for key in 0..6 {
+            Agents::<Test>::set(
+                key,
+                Some(Agent {
+                    key,
+                    name: Default::default(),
+                    url: Default::default(),
+                    metadata: Default::default(),
+                    weight_penalty_factor: Default::default(),
+                    registration_block: if key == IMMUNE_KEY {
+                        current_block
+                    } else {
+                        key as u64
+                    },
+                    fees: Default::default(),
+                }),
+            );
+
+            if ![IMMUNE_KEY, ZEROED_SCORE_KEY].contains(&key) {
+                ConsensusMembers::<Test>::mutate(key, |member| {
+                    let member = member.get_or_insert_with(Default::default);
+                    member.last_incentives = 40;
+                    match key {
+                        MIN_VALIDATOR_KEY => member.last_dividends = 100,
+                        MAX_OLD_VALIDATOR_KEY | MAX_VALIDATOR_KEY => member.last_dividends = 200,
+                        _ => {}
+                    }
+                })
+            }
+        }
+
+        let agent_id = 6;
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent_id
+        ));
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            agent_id,
+            agent_id,
+            b"agent".to_vec(),
+            b"idk://agent".to_vec(),
+            b"idk://agent".to_vec(),
+        ));
+
+        let expected_keys = [IMMUNE_KEY, MAX_VALIDATOR_KEY, agent_id];
+        assert_eq!(Agents::<Test>::iter().count(), expected_keys.len());
+
+        for expected_key in expected_keys {
+            assert!(Agents::<Test>::contains_key(expected_key));
+        }
+
+        let _ = Agents::<Test>::clear(u32::MAX, None);
+        MaxAllowedAgents::<Test>::set(1);
+
+        Agents::<Test>::set(
+            0,
+            Some(Agent {
+                key: 0,
+                name: Default::default(),
+                url: Default::default(),
+                metadata: Default::default(),
+                weight_penalty_factor: Default::default(),
+                registration_block: current_block,
+                fees: Default::default(),
+            }),
+        );
+
+        assert_err!(
+            pallet_torus0::agent::register::<Test>(
+                agent_id,
+                agent_id,
+                b"agent".to_vec(),
+                b"idk://agent".to_vec(),
+                b"idk://agent".to_vec(),
+            ),
+            Error::<Test>::MaxAllowedAgents
+        );
     });
 }

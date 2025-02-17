@@ -255,6 +255,12 @@ fn application_denied_doesnt_add_to_whitelist() {
 #[test]
 fn application_expires() {
     new_test_ext().execute_with(|| {
+        let expiration_blocks =
+            pallet_governance::GlobalGovernanceConfig::<Test>::mutate(|config| {
+                config.agent_application_expiration = 200;
+                config.agent_application_expiration
+            });
+
         let key = 0;
         let adding_key = 1;
         pallet_governance::Curators::<Test>::insert(key, ());
@@ -278,9 +284,7 @@ fn application_expires() {
             application_id = value.id;
         }
 
-        step_block(
-            pallet_governance::GlobalGovernanceConfig::<Test>::get().agent_application_expiration,
-        );
+        step_block(expiration_blocks);
 
         let application =
             pallet_governance::AgentApplications::<Test>::get(application_id).unwrap();
@@ -291,6 +295,12 @@ fn application_expires() {
 #[test]
 fn error_is_thrown_on_resolving_non_open_application() {
     new_test_ext().execute_with(|| {
+        let expiration_blocks =
+            pallet_governance::GlobalGovernanceConfig::<Test>::mutate(|config| {
+                config.agent_application_expiration = 200;
+                config.agent_application_expiration
+            });
+
         let key = 0;
         let adding_key = 1;
         pallet_governance::Curators::<Test>::insert(key, ());
@@ -345,9 +355,7 @@ fn error_is_thrown_on_resolving_non_open_application() {
         let application_id = 1;
 
         // expires the application
-        step_block(
-            pallet_governance::GlobalGovernanceConfig::<Test>::get().agent_application_expiration,
-        );
+        step_block(expiration_blocks);
         let balance_after_expire = get_balance(key);
         assert_eq!(balance_after_expire, 1);
 

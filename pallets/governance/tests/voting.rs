@@ -66,9 +66,7 @@ fn delegate(account: u32) {
 }
 
 pub fn stake(account: u32, module: u32, stake: u128) {
-    // if get_balance(account) <= stake {
     add_balance(account, stake);
-    // }
 
     if get_balance(account) - stake < 1 {
         add_balance(account, 1);
@@ -136,6 +134,24 @@ fn global_proposal_validates_parameters() {
         const KEY: u32 = 0;
         add_balance(KEY, to_nano(100_000));
 
+        assert_err!(
+            pallet_governance::Pallet::<Test>::add_global_params_proposal(
+                get_origin(KEY),
+                Default::default(),
+                b"".to_vec(),
+            ),
+            Error::<Test>::ProposalDataTooSmall
+        );
+
+        assert_err!(
+            pallet_governance::Pallet::<Test>::add_global_params_proposal(
+                get_origin(KEY),
+                Default::default(),
+                b"1".repeat(257),
+            ),
+            Error::<Test>::ProposalDataTooLarge
+        );
+
         let test = |global_params| {
             pallet_governance::Pallet::<Test>::add_global_params_proposal(
                 get_origin(KEY),
@@ -149,6 +165,12 @@ fn global_proposal_validates_parameters() {
             ..Default::default()
         })
         .expect_err("created proposal with invalid max name length");
+
+        test(GlobalParamsData {
+            proposal_cost: 50_000_000_000_000_000_000_001,
+            ..Default::default()
+        })
+        .expect_err("created proposal with invalid proposal cost");
 
         test(GlobalParamsData::default()).expect("failed to create proposal with valid parameters");
     });
@@ -189,6 +211,57 @@ fn global_custom_proposal_is_accepted_correctly() {
                 stake_against: to_nano(5),
             }
         );
+
+        step_block(1);
+
+        assert_eq!(
+            Proposals::<Test>::get(0).unwrap().status,
+            ProposalStatus::Accepted {
+                block: 100,
+                stake_for: to_nano(10),
+                stake_against: to_nano(5),
+            }
+        );
+    });
+}
+
+#[test]
+fn removes_vote_correctly() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+
+        const FOR: u32 = 0;
+        const AGAINST: u32 = 1;
+
+        register(FOR, 0, 0, to_nano(10));
+        register(AGAINST, 0, 1, to_nano(10));
+
+        config(1, 100);
+
+        assert_ok!(
+            pallet_governance::Pallet::<Test>::add_global_custom_proposal(
+                get_origin(FOR),
+                b"metadata".to_vec()
+            )
+        );
+
+        vote(FOR, 0, true);
+        vote(AGAINST, 0, false);
+
+        pallet_governance::voting::remove_vote::<Test>(FOR, 0).unwrap();
+        pallet_governance::voting::remove_vote::<Test>(AGAINST, 0).unwrap();
+
+        match pallet_governance::Proposals::<Test>::get(0).unwrap().status {
+            ProposalStatus::Open {
+                votes_for,
+                votes_against,
+                ..
+            } => {
+                assert!(!votes_for.contains(&FOR));
+                assert!(!votes_against.contains(&AGAINST));
+            }
+            _ => unreachable!(),
+        }
     });
 }
 
@@ -267,20 +340,19 @@ fn global_proposals_counts_delegated_stake() {
         const FOR: u32 = 0;
         const AGAINST: u32 = 1;
         const FOR_DELEGATED: u32 = 2;
-        const AGAINST_DELEGATED: u32 = 3;
 
         let origin = get_origin(0);
 
         register(FOR, 0, FOR, to_nano(5));
-        // delegate(FOR);
         register(AGAINST, 0, AGAINST, to_nano(10));
-        // delegate(AGAINST);
 
         stake(FOR_DELEGATED, FOR, to_nano(10));
         delegate(FOR_DELEGATED);
 
-        stake(AGAINST_DELEGATED, AGAINST, to_nano(3));
-        delegate(AGAINST_DELEGATED);
+        // AGAINST does not delegate voting power, so it doesn't matter
+        // to who it stakes.
+        stake(AGAINST, FOR, to_nano(3));
+        pallet_governance::voting::disable_delegation::<Test>(AGAINST).unwrap();
 
         config(1, 100);
 

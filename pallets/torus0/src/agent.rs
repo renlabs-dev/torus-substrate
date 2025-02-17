@@ -66,11 +66,6 @@ pub fn register<T: crate::Config>(
     );
 
     ensure!(
-        crate::Agents::<T>::iter().count() < crate::MaxAllowedAgents::<T>::get() as usize,
-        crate::Error::<T>::MaxAllowedAgents
-    );
-
-    ensure!(
         crate::RegistrationsThisBlock::<T>::get() < crate::MaxRegistrationsPerBlock::<T>::get(),
         crate::Error::<T>::TooManyAgentRegistrationsThisBlock
     );
@@ -98,11 +93,6 @@ pub fn register<T: crate::Config>(
             unregister::<T>(pruned_agent)?;
         }
     }
-
-    ensure!(
-        crate::Agents::<T>::iter().count() < crate::MaxAllowedAgents::<T>::get() as usize,
-        crate::Error::<T>::MaxAllowedAgents
-    );
 
     validate_agent_name::<T>(&name[..])?;
     validate_agent_url::<T>(&url[..])?;
@@ -181,11 +171,6 @@ pub fn update<T: crate::Config>(
 ) -> DispatchResult {
     let span = debug_span!("update", agent.key = ?agent_key);
     let _guard = span.enter();
-
-    ensure!(
-        exists::<T>(&agent_key),
-        crate::Error::<T>::AgentDoesNotExist
-    );
 
     crate::Agents::<T>::try_mutate(&agent_key, |agent| {
         let Some(agent) = agent else {
@@ -357,7 +342,7 @@ pub fn find_agent_to_prune<T: crate::Config>(strategy: PruningStrategy) -> Optio
     // Age is secondary to the emission.
     scores
         .iter()
-        // This is usual scenario, that is why we check for oldest 0 emission to return early
+        // This is the usual scenario, that is why we check for oldest 0 emission to return early
         .filter(|&(_, efficiency_score, _)| *efficiency_score == 0)
         .min_by_key(|&(_, _, block_at_registration)| block_at_registration)
         .or_else(|| {
