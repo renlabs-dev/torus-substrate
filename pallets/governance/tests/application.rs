@@ -1,7 +1,12 @@
+use pallet_emission0::PendingEmission;
 use pallet_governance::application::ApplicationStatus;
 use pallet_governance::AgentApplications;
+use pallet_governance::DaoTreasuryAddress;
 use pallet_governance::GlobalGovernanceConfig;
+use pallet_governance::TreasuryEmissionFee;
+use pallet_governance_api::GovernanceApi;
 use polkadot_sdk::frame_support::assert_err;
+use polkadot_sdk::sp_runtime::Percent;
 use test_utils::*;
 
 #[test]
@@ -203,6 +208,10 @@ fn error_is_thrown_on_multiple_applications_same_key() {
 #[test]
 fn application_denied_doesnt_add_to_whitelist() {
     new_test_ext().execute_with(|| {
+        PendingEmission::<Test>::set(0);
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+        let balance = get_balance(DaoTreasuryAddress::<Test>::get());
+
         let key = 0;
         let adding_key = 1;
         pallet_governance::Curators::<Test>::insert(key, ());
@@ -249,12 +258,20 @@ fn application_denied_doesnt_add_to_whitelist() {
             application.status,
             ApplicationStatus::Resolved { accepted: false }
         );
+        assert_eq!(
+            get_balance(Test::dao_treasury_address()),
+            balance + crate::GlobalGovernanceConfig::<Test>::get().agent_application_cost
+        );
     });
 }
 
 #[test]
 fn application_expires() {
     new_test_ext().execute_with(|| {
+        PendingEmission::<Test>::set(0);
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+        let balance = get_balance(DaoTreasuryAddress::<Test>::get());
+
         let key = 0;
         let adding_key = 1;
         pallet_governance::Curators::<Test>::insert(key, ());
@@ -285,6 +302,10 @@ fn application_expires() {
         let application =
             pallet_governance::AgentApplications::<Test>::get(application_id).unwrap();
         assert_eq!(application.status, ApplicationStatus::Expired);
+        assert_eq!(
+            get_balance(Test::dao_treasury_address()),
+            balance + crate::GlobalGovernanceConfig::<Test>::get().agent_application_cost
+        );
     });
 }
 

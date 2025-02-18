@@ -3,7 +3,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_emission0_api::Emission0Api;
 use pallet_governance_api::GovernanceApi;
 use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement, WithdrawReasons};
+use polkadot_sdk::frame_support::traits::{Currency, ExistenceRequirement};
 use polkadot_sdk::frame_support::DebugNoBound;
 use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
 use polkadot_sdk::sp_runtime::DispatchError;
@@ -92,10 +92,11 @@ pub fn register<T: crate::Config>(
 
     let burn = crate::Burn::<T>::get();
 
-    let _ = <T as crate::Config>::Currency::withdraw(
+    // Registration cost is sent to treasury
+    <T as crate::Config>::Currency::transfer(
         &payer,
+        &<T as crate::Config>::Governance::dao_treasury_address(),
         burn,
-        WithdrawReasons::except(WithdrawReasons::TIP),
         ExistenceRequirement::AllowDeath,
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToRegisterAgent)?;

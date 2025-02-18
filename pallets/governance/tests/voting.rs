@@ -1,8 +1,10 @@
+use pallet_emission0::PendingEmission;
 use pallet_governance::{
     config::GovernanceConfiguration,
     proposal::{GlobalParamsData, ProposalStatus},
-    DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
+    DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals, TreasuryEmissionFee,
 };
+use pallet_governance_api::GovernanceApi;
 use polkadot_sdk::frame_support::traits::Get;
 use polkadot_sdk::{frame_support::assert_err, sp_runtime::BoundedBTreeSet};
 use polkadot_sdk::{frame_support::assert_ok, sp_runtime::Percent};
@@ -203,6 +205,10 @@ fn global_custom_proposal_is_accepted_correctly() {
 #[test]
 fn global_proposal_is_refused_correctly() {
     new_test_ext().execute_with(|| {
+        PendingEmission::<Test>::set(0);
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+        let balance = get_balance(DaoTreasuryAddress::<Test>::get());
+
         zero_min_burn();
         const FOR: u32 = 0;
         const AGAINST: u32 = 1;
@@ -234,6 +240,10 @@ fn global_proposal_is_refused_correctly() {
                 stake_for: 5_000_000_000_000_000_000,
                 stake_against: 10_000_000_000_000_000_000,
             }
+        );
+        assert_eq!(
+            get_balance(Test::dao_treasury_address()),
+            balance + crate::GlobalGovernanceConfig::<Test>::get().proposal_cost
         );
     });
 }
@@ -454,6 +464,10 @@ fn creates_emission_proposal_and_it_expires() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
 
+        PendingEmission::<Test>::set(0);
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+        let balance = get_balance(DaoTreasuryAddress::<Test>::get());
+
         let default_proposal_expiration: u64 =
             <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
 
@@ -482,6 +496,10 @@ fn creates_emission_proposal_and_it_expires() {
         assert_eq!(
             Proposals::<Test>::get(0).unwrap().status,
             ProposalStatus::Expired
+        );
+        assert_eq!(
+            get_balance(Test::dao_treasury_address()),
+            balance + crate::GlobalGovernanceConfig::<Test>::get().proposal_cost
         );
     });
 }

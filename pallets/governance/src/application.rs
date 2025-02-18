@@ -4,7 +4,6 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::frame_election_provider_support::Get;
 use polkadot_sdk::frame_support::dispatch::DispatchResult;
 use polkadot_sdk::frame_support::traits::Currency;
-use polkadot_sdk::frame_support::traits::WithdrawReasons;
 use polkadot_sdk::frame_support::DebugNoBound;
 use polkadot_sdk::sp_runtime::BoundedVec;
 use polkadot_sdk::sp_std::vec::Vec;
@@ -69,10 +68,10 @@ pub fn submit_application<T: crate::Config>(
     let config = crate::GlobalGovernanceConfig::<T>::get();
     let cost = config.agent_application_cost;
 
-    let _ = <T as crate::Config>::Currency::withdraw(
+    <T as crate::Config>::Currency::transfer(
         &payer,
+        &crate::DaoTreasuryAddress::<T>::get(),
         cost,
-        WithdrawReasons::except(WithdrawReasons::TIP),
         ExistenceRequirement::AllowDeath,
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToApply)?;
@@ -145,10 +144,12 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
         }
     });
 
-    // Pay the application cost back to the applicant
-    // TODO: should this value be used?
-    let _ =
-        <T as crate::Config>::Currency::deposit_creating(&application.payer_key, application.cost);
+    let _ = <T as crate::Config>::Currency::transfer(
+        &crate::DaoTreasuryAddress::<T>::get(),
+        &application.payer_key,
+        application.cost,
+        ExistenceRequirement::AllowDeath,
+    );
 
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationAccepted(application.id));
 
@@ -168,8 +169,6 @@ pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult
             app.status = ApplicationStatus::Resolved { accepted: false };
         }
     });
-
-    // Application cost is discarded
 
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::ApplicationDenied(application.id));
 
