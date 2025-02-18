@@ -1,10 +1,20 @@
+use pallet_governance_api::GovernanceApi;
 use pallet_torus0::{Burn, Error};
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
-use test_utils::{assert_ok, pallet_governance, Test};
+use test_utils::{
+    assert_ok, get_balance,
+    pallet_emission0::PendingEmission,
+    pallet_governance::{self, DaoTreasuryAddress, TreasuryEmissionFee},
+    Test,
+};
 
 #[test]
 fn register_correctly() {
     test_utils::new_test_ext().execute_with(|| {
+        PendingEmission::<Test>::set(0);
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+        let balance = get_balance(DaoTreasuryAddress::<Test>::get());
+
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
@@ -27,6 +37,11 @@ fn register_correctly() {
         assert_eq!(agent.name.to_vec(), name);
         assert_eq!(agent.url.to_vec(), url);
         assert_eq!(agent.metadata.to_vec(), metadata);
+
+        assert_eq!(
+            get_balance(Test::dao_treasury_address()),
+            balance + Burn::<Test>::get()
+        );
     });
 }
 
