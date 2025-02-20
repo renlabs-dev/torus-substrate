@@ -1,7 +1,7 @@
 use pallet_torus0::{agent::Agent, Agents, Burn, Error, ImmunityPeriod, MaxAllowedAgents};
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
 use test_utils::{
-    assert_ok,
+    assert_ok, get_origin,
     pallet_emission0::{ConsensusMembers, WeightControlDelegation},
     pallet_governance::{self, Allocators},
     step_block, Test,
@@ -366,15 +366,17 @@ fn unregister_correctly() {
             agent
         ));
 
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            agent,
+        assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
+            get_origin(agent),
             agent,
             name.clone(),
             url.clone(),
             metadata.clone(),
         ));
 
-        assert_ok!(pallet_torus0::agent::unregister::<Test>(agent));
+        assert_ok!(pallet_torus0::Pallet::<Test>::unregister_agent(get_origin(
+            agent
+        )));
 
         assert!(pallet_torus0::Agents::<Test>::get(agent).is_none());
     });
@@ -392,15 +394,17 @@ fn unregister_twice() {
             agent
         ));
 
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            agent,
+        assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
+            get_origin(agent),
             agent,
             name.clone(),
             url.clone(),
             metadata.clone(),
         ));
 
-        assert_ok!(pallet_torus0::agent::unregister::<Test>(agent));
+        assert_ok!(pallet_torus0::Pallet::<Test>::unregister_agent(get_origin(
+            agent
+        )));
         assert_err!(
             pallet_torus0::agent::unregister::<Test>(agent),
             Error::<Test>::AgentDoesNotExist
@@ -434,8 +438,12 @@ fn update_correctly() {
             agent
         ));
 
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            agent, agent, name, url, metadata,
+        assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
+            get_origin(agent),
+            agent,
+            name,
+            url,
+            metadata,
         ));
 
         let new_name = "new-agent".as_bytes().to_vec();
@@ -446,8 +454,8 @@ fn update_correctly() {
         let staking_fee = constraints.min_staking_fee;
         let weight_control_fee = constraints.min_weight_control_fee;
 
-        assert_ok!(pallet_torus0::agent::update::<Test>(
-            agent,
+        assert_ok!(pallet_torus0::Pallet::<Test>::update_agent(
+            get_origin(agent),
             new_name.clone(),
             new_url.clone(),
             Some(new_metadata.clone()),
