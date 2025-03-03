@@ -18,9 +18,48 @@ use polkadot_sdk::{
         OpaqueExtrinsic,
     },
 };
-use serde_json::Value;
+use serde_json::{Number, Value};
 
-pub fn targetchain_spec(flags: &crate::flags::Replica, dir: &Path) -> PathBuf {
+use crate::flags;
+
+pub fn generate_spec(cmd: flags::GenerateSpec) {
+    match cmd.subcommand {
+        flags::GenerateSpecCmd::GenReplica(gen_replica) => {
+            generate_replica_spec(gen_replica, cmd.out, cmd.sudo)
+        }
+        flags::GenerateSpecCmd::GenNew(ref gen_new) => generate_new_spec(gen_new, &cmd),
+    }
+}
+
+// Types needed for chain state fetching
+type OpaqueBlock = Block<Header<u32, BlakeTwo256>, OpaqueExtrinsic>;
+pub type Balance = u64;
+pub type Nonce = u32;
+pub type RefCount = u32;
+
+fn generate_replica_spec(gen_replica: flags::GenReplica, out: PathBuf, sudo: Option<String>) {
+    // Create a temporary directory
+    let temp_dir = tempfile::Builder::new()
+        .prefix("torus-replica-spec")
+        .tempdir()
+        .expect("failed to create tempdir")
+        .into_path();
+
+    // Create Replica command
+    let replica_cmd = flags::Replica {
+        output: Some(out),
+        sudo,
+        api_url: gen_replica.api_url.clone(),
+    };
+
+    // Call the targetchain_spec function
+    targetchain_spec(&replica_cmd, &temp_dir);
+
+    // The file is already written by targetchain_spec, no need to write again
+}
+
+/// Function moved from build_spec.rs
+pub fn targetchain_spec(flags: &flags::Replica, dir: &Path) -> PathBuf {
     let spec = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -48,6 +87,7 @@ pub fn targetchain_spec(flags: &crate::flags::Replica, dir: &Path) -> PathBuf {
     chain_path
 }
 
+/// Sets the sudo key in the genesis state
 fn sudo(genesis: &mut Value, sudo: Option<&String>) {
     let key = key_name(b"Sudo", b"Key");
 
@@ -62,6 +102,7 @@ fn sudo(genesis: &mut Value, sudo: Option<&String>) {
     genesis[&key] = Value::String(format!("0x{}", hex::encode(sudo)));
 }
 
+/// Known predefined keys
 const KEYS: &[[u8; 32]] = &[
     // Alice
     hex_literal::hex!("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
@@ -69,6 +110,7 @@ const KEYS: &[[u8; 32]] = &[
     hex_literal::hex!("8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48"),
 ];
 
+/// Sets the aura authorities in the genesis state
 fn aura(genesis: &mut Value) {
     let key = key_name(b"Aura", b"Authorities");
 
@@ -79,13 +121,14 @@ fn aura(genesis: &mut Value) {
     genesis[&key] = Value::String(format!("0x{}", hex::encode(buf)));
 }
 
+/// Sets the grandpa authorities in the genesis state
 fn grandpa(genesis: &mut Value) {
     // Alice
     let grandpa = vec![(
         sp_core::ed25519::Public::from_ss58check(
             "5FA9nQDVg267DEd8m1ZypXLBnvN7SFxYwV7ndqSYGiN9TTpu",
         )
-        .expect("invalid SS58 sudo address")
+        .expect("invalid SS58 grandpa address")
         .0,
         1u64,
     )];
@@ -99,44 +142,7 @@ fn grandpa(genesis: &mut Value) {
     genesis[&key] = Value::String(format!("0x{}", hex::encode(buf)));
 }
 
-// fn balance(genesis: &mut Value, sudo: Option<&String>) {
-//     let sudo = sudo
-//         .map(|sudo| {
-//             sp_core::ed25519::Public::from_ss58check(&sudo)
-//                 .expect("invalid SS58 sudo address")
-//                 .0
-//         })
-//         .unwrap_or(KEYS[0]);
-
-//     let mut key = key_name(b"System", b"Account");
-//     key.push_str(&hex::encode(
-//         [
-//             sp_crypto_hashing::blake2_128(&sudo).as_slice(),
-//             sudo.as_slice(),
-//         ]
-//         .concat(),
-//     ));
-
-//     let info = AccountInfo {
-//         nonce: 0,
-//         consumers: 0,
-//         providers: 0,
-//         sufficients: 0,
-//         data: AccountData {
-//             free: 1_000_000_000_000_000,
-//             reserved: 0,
-//             frozen: 0,
-//             flags: ExtraFlags(IS_NEW_LOGIC),
-//         },
-//     };
-
-//     let mut buf = Cursor::new(vec![0; KEYS.size_hint()]);
-//     info.encode_to(&mut buf);
-
-//     let buf = &buf.get_ref()[..buf.position() as usize];
-//     genesis[&key] = Value::String(format!("0x{}", hex::encode(buf)));
-// }
-
+/// Generates the storage key for a given pallet and storage item
 fn key_name(pallet: &[u8], key: &[u8]) -> String {
     let mut res = [0; 32];
     res[0..16].copy_from_slice(&sp_crypto_hashing::twox_128(pallet));
@@ -144,11 +150,8 @@ fn key_name(pallet: &[u8], key: &[u8]) -> String {
     format!("0x{}", hex::encode(res))
 }
 
-type OpaqueBlock = Block<Header<u32, BlakeTwo256>, OpaqueExtrinsic>;
-
-// const IS_NEW_LOGIC: u128 = 0x80000000_00000000_00000000_00000000u128;
-
-async fn crate_chain_spec(flags: &crate::flags::Replica) -> Box<dyn ChainSpec> {
+/// Fetches the chain state from a running node
+async fn crate_chain_spec(flags: &flags::Replica) -> Box<dyn ChainSpec> {
     let mut chain_spec = sc_service::GenericChainSpec::<sc_service::NoExtension>::from_json_bytes(
         include_bytes!("../../node/specs/main.json"),
     )
@@ -191,10 +194,6 @@ async fn crate_chain_spec(flags: &crate::flags::Replica) -> Box<dyn ChainSpec> {
 
     Box::new(chain_spec)
 }
-
-pub type Balance = u64;
-pub type Nonce = u32;
-pub type RefCount = u32;
 
 /// Information of an account.
 #[derive(Debug, parity_scale_codec::Decode, parity_scale_codec::Encode)]
@@ -242,3 +241,77 @@ pub struct AccountData {
 
 #[derive(Debug, parity_scale_codec::Decode, parity_scale_codec::Encode)]
 pub struct ExtraFlags(pub(crate) u128);
+
+fn generate_new_spec(gen_new: &flags::GenNew, cmd: &flags::GenerateSpec) {
+    let chain_spec = cmd
+        .base_chain_spec
+        .clone()
+        .unwrap_or_else(|| Path::new("dev").to_path_buf());
+
+    // Start with a minimal dev chain spec
+    let out = crate::torus_node!("build-spec", "--chain", chain_spec)
+        .output()
+        .expect("failed to run torus node");
+
+    let mut json: Value = serde_json::from_slice(&out.stdout).expect("failed to parse spec file");
+
+    // Set chain name if provided
+    if let Some(name) = &gen_new.name {
+        json["name"] = Value::String(name.clone());
+    }
+
+    // Apply all the customizations from the flags
+    customize_spec(&mut json, cmd);
+
+    // Write the result to the output file
+    let serialized = serde_json::to_vec(&json).expect("failed to generate spec file");
+
+    std::fs::write(&cmd.out, serialized).expect("failed to write resulting spec file");
+}
+
+// Function to customize a spec file based on the provided flags
+pub fn customize_spec(json: &mut Value, cmd: &flags::GenerateSpec) {
+    let patch = &mut json["genesis"]["runtimeGenesis"]["patch"];
+
+    if !cmd.aura.is_empty() {
+        let aura_keys = &mut patch["aura"]["authorities"]
+            .as_array_mut()
+            .expect("missing aura keys");
+        aura_keys.clear();
+
+        for aura in &cmd.aura {
+            aura_keys.push(aura.clone().into());
+        }
+    }
+
+    if !cmd.gran.is_empty() {
+        let gran_keys = patch["grandpa"]["authorities"]
+            .as_array_mut()
+            .expect("missing grandpa keys");
+        gran_keys.clear();
+
+        for gran in &cmd.gran {
+            gran_keys.push([Value::from(gran.clone()), 1i32.into()].into());
+        }
+    }
+
+    if !cmd.balance.is_empty() {
+        let balances = &mut patch["balances"]["balances"]
+            .as_array_mut()
+            .expect("missing balances array");
+        balances.clear(); // Clear existing balances for gen-new
+
+        for balance in &cmd.balance {
+            let (account, amount) = balance
+                .split_once('=')
+                .expect("malformed balance entry, format: <account>=<amount>");
+            let amount: u128 = amount.parse().expect("balance amount must be a number");
+
+            balances.push([Value::from(account), Number::from_u128(amount).into()].into());
+        }
+    }
+
+    if let Some(sudo) = &cmd.sudo {
+        patch["sudo"]["key"] = sudo.clone().into();
+    }
+}

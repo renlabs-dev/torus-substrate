@@ -9,7 +9,9 @@ use polkadot_sdk::{
     },
     polkadot_sdk_frame::{prelude::BlockNumberFor, traits::CheckedAdd},
     sp_core::{ConstU32, U256},
-    sp_runtime::{traits::Saturating, BoundedBTreeMap, DispatchError, FixedU128, Percent},
+    sp_runtime::{
+        traits::Saturating, BoundedBTreeMap, DispatchError, FixedPointNumber, FixedU128, Percent,
+    },
     sp_std::{collections::btree_set::BTreeSet, vec::Vec},
     sp_tracing::error,
 };
@@ -693,8 +695,8 @@ pub fn get_reward_allocation<T: crate::Config>(
     );
 
     if n > 0 {
-        let mut base = FixedU128::from_float(1.5);
-        let mut result = FixedU128::from_float(1.);
+        let mut base = FixedU128::from_inner((1.5 * FixedU128::DIV as f64) as u128);
+        let mut result = FixedU128::from_u32(1);
         let mut remaining = n;
 
         while remaining > 0 {
