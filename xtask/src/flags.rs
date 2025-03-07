@@ -70,6 +70,18 @@ xflags::xflags! {
             repeated --balance balances: String
 
             optional --sudo sudo_key: String
+
+            /// Creates a replica of the mainnet
+            cmd gen-replica {
+                /// The API URL to use for fetching chain state.
+                optional --api-url api_url: String
+            }
+
+            /// Creates a new empty chain spec with only the specified values
+            cmd gen-new {
+                /// The name of the new chain
+                optional --name chain_name: String
+            }
         }
 
         cmd coverage {
@@ -135,6 +147,23 @@ pub struct GenerateSpec {
     pub aura: Vec<String>,
     pub balance: Vec<String>,
     pub sudo: Option<String>,
+    pub subcommand: GenerateSpecCmd,
+}
+
+#[derive(Debug)]
+pub enum GenerateSpecCmd {
+    GenReplica(GenReplica),
+    GenNew(GenNew),
+}
+
+#[derive(Debug)]
+pub struct GenReplica {
+    pub api_url: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct GenNew {
+    pub name: Option<String>,
 }
 
 #[derive(Debug)]

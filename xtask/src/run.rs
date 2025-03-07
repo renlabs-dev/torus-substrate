@@ -65,7 +65,7 @@ pub(super) fn run(mut r: flags::Run) {
             (chain_path, true)
         }
         flags::RunCmd::Replica(replica) => {
-            let chain_path = crate::build_spec::targetchain_spec(replica, &path);
+            let chain_path = crate::generate_spec::targetchain_spec(replica, &path);
             let chain_path_str = chain_path.to_str().expect("invalid string").to_string();
             (chain_path_str, false)
         }
