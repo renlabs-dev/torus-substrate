@@ -156,6 +156,9 @@ mod runtime {
 
     #[runtime::pallet_index(13)]
     pub type Emission0 = pallet_emission0::Pallet<Runtime>;
+
+    #[runtime::pallet_index(14)]
+    pub type Permission0 = pallet_permission0::Pallet<Runtime>;
 }
 
 parameter_types! {

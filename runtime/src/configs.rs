@@ -434,5 +434,26 @@ impl pallet_emission0::Config for Runtime {
 
     type Governance = Governance;
 
+    type Permission0 = Permission0;
+
     type WeightInfo = pallet_emission0::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+    pub const MaxTargetsPerPermission: u32 = 100;
+    pub const MinAutoDistributionThreshold: u128 = as_tors(100);
+}
+
+impl pallet_permission0::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+
+    type WeightInfo = ();
+
+    type Currency = Balances;
+
+    type Torus = Torus0;
+
+    type MaxTargetsPerPermission = MaxTargetsPerPermission;
+
+    type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 }

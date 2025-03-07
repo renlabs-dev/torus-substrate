@@ -8313,6 +8313,7 @@ dependencies = [
  "num-traits",
  "pallet-emission0-api",
  "pallet-governance-api",
+ "pallet-permission0-api",
  "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
@@ -8863,6 +8864,29 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-runtime",
+]
+
+[[package]]
+name = "pallet-permission0"
+version = "0.1.0"
+dependencies = [
+ "pallet-emission0-api",
+ "pallet-permission0-api",
+ "pallet-torus0-api",
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "scale-info",
+ "test-utils",
+]
+
+[[package]]
+name = "pallet-permission0-api"
+version = "0.1.0"
+dependencies = [
+ "pallet-torus0-api",
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "scale-info",
 ]
 
 [[package]]
@@ -17079,6 +17103,8 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-governance",
  "pallet-governance-api",
+ "pallet-permission0",
+ "pallet-permission0-api",
  "pallet-torus0",
  "pallet-torus0-api",
  "parity-scale-codec",
