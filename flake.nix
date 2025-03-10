@@ -3,9 +3,14 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+
     flake-utils.url = "github:numtide/flake-utils";
+
     rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+
     pre-commit-hooks.url = "github:cachix/git-hooks.nix";
+    pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, rust-overlay, pre-commit-hooks, flake-utils, ... }:
@@ -21,11 +26,12 @@
           rocksdb
           zstd.dev
         ];
-        buildInputs = if pkgs.stdenv.isLinux then
-          generalBuildInputs ++ [ pkgs.jemalloc pkgs.pkgsi686Linux.glibc ]
-        else
-          generalBuildInputs
-          ++ [ pkgs.darwin.apple_sdk.frameworks.SystemConfiguration ];
+        buildInputs =
+          if pkgs.stdenv.isLinux then
+            generalBuildInputs ++ [ pkgs.jemalloc pkgs.pkgsi686Linux.glibc ]
+          else
+            generalBuildInputs
+            ++ [ pkgs.darwin.apple_sdk.frameworks.SystemConfiguration ];
         nativeBuildInputs = with pkgs; [ git rust clang protobuf sccache ];
 
         shellPkgs = [
@@ -36,10 +42,11 @@
           pkgs.act
           # Python
           pkgs.python310
-          # Code coverage tool
-          pkgs.cargo-llvm-cov
+          # # Code coverage tool
+          # pkgs.cargo-llvm-cov # marked as broken
         ];
-      in {
+      in
+      {
         checks = pkgs.mkShell {
           pre-commit-check = pre-commit-hooks.lib.${system}.run {
             src = ./.;
