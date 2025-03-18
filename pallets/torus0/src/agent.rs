@@ -1,6 +1,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_emission0_api::Emission0Api;
 use pallet_governance_api::GovernanceApi;
+use polkadot_sdk::polkadot_sdk_frame::traits::Zero;
 use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::{
@@ -177,6 +178,10 @@ pub fn update<T: crate::Config>(
             return Err(crate::Error::<T>::AgentDoesNotExist.into());
         };
 
+        if is_in_update_cooldown::<T>(&agent_key) {
+            return Err(crate::Error::<T>::AgentUpdateOnCooldown.into());
+        }
+
         validate_agent_name::<T>(&name[..])?;
         agent.name = BoundedVec::truncate_from(name);
 
@@ -211,7 +216,23 @@ pub fn update<T: crate::Config>(
         Ok::<(), DispatchError>(())
     })?;
 
+    set_in_cooldown::<T>(&agent_key);
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::AgentUpdated(agent_key));
+
     Ok(())
+}
+
+fn is_in_update_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> bool {
+    let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
+    let cooldown = crate::AgentUpdateCooldown::<T>::get();
+
+    crate::AgentLastUpdateBlock::<T>::get(key)
+        .is_some_and(|update_block| update_block + cooldown >= current_block)
+}
+
+fn set_in_cooldown<T: crate::Config>(key: &AccountIdOf<T>) {
+    let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
+    crate::AgentLastUpdateBlock::<T>::insert(key.clone(), current_block);
 }
 
 pub fn exists<T: crate::Config>(key: &AccountIdOf<T>) -> bool {
@@ -353,4 +374,19 @@ pub fn find_agent_to_prune<T: crate::Config>(strategy: PruningStrategy) -> Optio
                 })
         })
         .map(|(id, _, _)| id.clone())
+}
+
+pub fn clean_last_update_block_map<T: crate::Config>(current_block: BlockNumberFor<T>) {
+    if !(current_block % 1000u32.into()).is_zero() {
+        return;
+    }
+
+    let cooldown = crate::AgentUpdateCooldown::<T>::get();
+    crate::AgentLastUpdateBlock::<T>::translate_values(|update_block| {
+        if update_block + cooldown < current_block {
+            None
+        } else {
+            Some(update_block)
+        }
+    });
 }

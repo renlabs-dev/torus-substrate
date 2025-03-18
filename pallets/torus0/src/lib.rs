@@ -8,7 +8,10 @@ pub mod migrations;
 pub mod stake;
 
 pub(crate) use ext::*;
-use frame::{arithmetic::Percent, prelude::ensure_signed};
+use frame::{
+    arithmetic::Percent,
+    prelude::{ensure_root, ensure_signed},
+};
 pub use pallet::*;
 use polkadot_sdk::{
     frame_support::{
@@ -132,6 +135,17 @@ pub mod pallet {
     #[pallet::storage]
     pub type BurnConfig<T: Config> = StorageValue<_, BurnConfiguration<T>, ValueQuery>;
 
+    /// Cooldown (in blocks) in which an agent needs to wait between each `update_agent` call.
+    #[pallet::storage]
+    pub type AgentUpdateCooldown<T: Config> =
+        StorageValue<_, BlockNumberFor<T>, ValueQuery, T::DefaultAgentUpdateCooldown>;
+
+    /// Map of keys -> last block that `update_agent` was called.
+    /// Entries that `last_block + cooldown < current_block` are cleaned every 1000 blocks.
+    #[pallet::storage]
+    pub type AgentLastUpdateBlock<T: Config> =
+        StorageMap<_, Identity, T::AccountId, BlockNumberFor<T>>;
+
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
@@ -143,6 +157,8 @@ pub mod pallet {
             burn::adjust_burn::<T>(current_block);
 
             RegistrationsThisBlock::<T>::set(0);
+
+            agent::clean_last_update_block_map::<T>(block_number);
 
             Weight::default()
         }
@@ -227,6 +243,11 @@ pub mod pallet {
 
         #[pallet::constant]
         type DefaultDividendsParticipationWeight: Get<Percent>;
+
+        /// Default Cooldown (in blocks) in which an agent needs to wait between each `update_agent` call.
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type DefaultAgentUpdateCooldown: Get<BlockNumberFor<Self>>;
 
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
@@ -329,6 +350,18 @@ pub mod pallet {
                 weight_control_fee,
             )
         }
+
+        /// Updates origin's key agent metadata.
+        #[pallet::call_index(6)]
+        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        pub fn set_agent_update_cooldown(
+            origin: OriginFor<T>,
+            new_cooldown: BlockNumberFor<T>,
+        ) -> DispatchResult {
+            ensure_root(origin)?;
+            AgentUpdateCooldown::<T>::set(new_cooldown);
+            Ok(())
+        }
     }
 
     #[pallet::event]
@@ -428,6 +461,8 @@ pub mod pallet {
         InvalidStakingFee,
         /// The weight control fee given is lower than the minimum fee
         InvalidWeightControlFee,
+        /// The agent already updated recently
+        AgentUpdateOnCooldown,
     }
 }
 
