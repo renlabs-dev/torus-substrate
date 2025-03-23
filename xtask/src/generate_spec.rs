@@ -37,29 +37,26 @@ pub type Balance = u64;
 pub type Nonce = u32;
 pub type RefCount = u32;
 
-fn generate_replica_spec(gen_replica: flags::GenReplica, out: PathBuf, sudo: Option<String>) {
-    // Create a temporary directory
-    let temp_dir = tempfile::Builder::new()
-        .prefix("torus-replica-spec")
-        .tempdir()
-        .expect("failed to create tempdir")
-        .into_path();
-
+fn generate_replica_spec(
+    gen_replica: flags::GenReplica,
+    out: Option<PathBuf>,
+    sudo: Option<String>,
+) {
     // Create Replica command
     let replica_cmd = flags::Replica {
-        output: Some(out),
+        output: out,
         sudo,
         api_url: gen_replica.api_url.clone(),
     };
 
     // Call the targetchain_spec function
-    targetchain_spec(&replica_cmd, &temp_dir);
+    targetchain_spec(&replica_cmd);
 
     // The file is already written by targetchain_spec, no need to write again
 }
 
 /// Function moved from build_spec.rs
-pub fn targetchain_spec(flags: &flags::Replica, dir: &Path) -> PathBuf {
+pub fn targetchain_spec(flags: &flags::Replica) -> Option<PathBuf> {
     let spec = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -78,13 +75,16 @@ pub fn targetchain_spec(flags: &flags::Replica, dir: &Path) -> PathBuf {
 
     let js = serde_json::to_string_pretty(&js).unwrap();
 
-    let chain_path = flags
-        .output
-        .clone()
-        .unwrap_or_else(|| dir.join("spec.json"));
-    std::fs::write(&chain_path, js).unwrap();
-
-    chain_path
+    match &flags.output {
+        Some(chain_path) => {
+            std::fs::write(chain_path, js).unwrap();
+            Some(chain_path.clone())
+        }
+        None => {
+            println!("{js}");
+            None
+        }
+    }
 }
 
 /// Sets the sudo key in the genesis state
@@ -264,9 +264,16 @@ fn generate_new_spec(gen_new: &flags::GenNew, cmd: &flags::GenerateSpec) {
     customize_spec(&mut json, cmd);
 
     // Write the result to the output file
-    let serialized = serde_json::to_vec(&json).expect("failed to generate spec file");
+    let serialized = serde_json::to_string_pretty(&json).expect("failed to generate spec file");
 
-    std::fs::write(&cmd.out, serialized).expect("failed to write resulting spec file");
+    match &cmd.out {
+        Some(output_path) => {
+            std::fs::write(output_path, serialized).expect("failed to write resulting spec file");
+        }
+        None => {
+            println!("{serialized}");
+        }
+    }
 }
 
 // Function to customize a spec file based on the provided flags

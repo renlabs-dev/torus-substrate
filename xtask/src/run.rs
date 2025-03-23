@@ -47,7 +47,7 @@ pub(super) fn run(mut r: flags::Run) {
         _ => {}
     }
 
-    let (chain_spec, _local_seal) = match &r.subcommand {
+    let (chain_spec, _local_seal) = match &mut r.subcommand {
         flags::RunCmd::Local(local) => {
             let chain_path = local
                 .chain_spec
@@ -65,7 +65,11 @@ pub(super) fn run(mut r: flags::Run) {
             (chain_path, true)
         }
         flags::RunCmd::Replica(replica) => {
-            let chain_path = crate::generate_spec::targetchain_spec(replica, &path);
+            if replica.output.is_none() {
+                replica.output = Some(path.join("spec.json"));
+            }
+
+            let chain_path = crate::generate_spec::targetchain_spec(replica).unwrap();
             let chain_path_str = chain_path.to_str().expect("invalid string").to_string();
             (chain_path_str, false)
         }
