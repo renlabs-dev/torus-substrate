@@ -3,6 +3,7 @@
 pub use pallet::*;
 
 pub mod weights;
+use pallet_permission0_api::StreamId;
 pub use weights::*;
 
 pub mod ext;
@@ -16,14 +17,12 @@ use polkadot_sdk::{
     frame_support::{
         dispatch::DispatchResult,
         pallet_prelude::*,
-        sp_runtime::traits::Saturating,
-        traits::Currency,
-        traits::{Get, ReservableCurrency},
+        traits::{Currency, Get, ReservableCurrency},
         BoundedVec,
     },
     frame_system::{self, pallet_prelude::*},
     polkadot_sdk_frame as frame,
-    sp_runtime::Percent,
+    sp_runtime::{traits::Saturating, Percent},
     sp_std::prelude::*,
 };
 
@@ -54,6 +53,11 @@ pub mod pallet {
         #[pallet::constant]
         #[pallet::no_default_bounds]
         type MaxTargetsPerPermission: Get<u32>;
+
+        /// Maximum number of delegated streams per permission.
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type MaxStreamsPerPermission: Get<u32>;
 
         /// Minimum threshold for auto-distribution
         #[pallet::constant]
@@ -93,9 +97,17 @@ pub mod pallet {
     pub type PermissionsByGrantee<T: Config> =
         StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
 
-    /// Accumulated amounts for each permission contract
+    /// Accumulated amounts for each stream
     #[pallet::storage]
-    pub type AccumulatedAmounts<T: Config> = StorageMap<_, Identity, PermissionId, BalanceOf<T>>;
+    pub type AccumulatedStreamAmounts<T: Config> = StorageNMap<
+        _,
+        (
+            NMapKey<Identity, T::AccountId>,
+            NMapKey<Identity, StreamId>,
+            NMapKey<Identity, PermissionId>,
+        ),
+        BalanceOf<T>,
+    >;
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -105,7 +117,6 @@ pub mod pallet {
             grantor: T::AccountId,
             grantee: T::AccountId,
             permission_id: PermissionId,
-            percentage: Option<Percent>,
         },
         /// Permission revoked with ID
         PermissionRevoked {
@@ -119,6 +130,7 @@ pub mod pallet {
             grantor: T::AccountId,
             grantee: T::AccountId,
             permission_id: PermissionId,
+            stream_id: Option<StreamId>,
             amount: BalanceOf<T>,
         },
         /// Auto-distribution executed
@@ -126,6 +138,7 @@ pub mod pallet {
             grantor: T::AccountId,
             grantee: T::AccountId,
             permission_id: PermissionId,
+            stream_id: Option<StreamId>,
             amount: BalanceOf<T>,
         },
         /// Permission expired with ID
@@ -160,6 +173,8 @@ pub mod pallet {
         NotPermissionGrantee,
         /// Not the grantor of the permission
         NotPermissionGrantor,
+        /// Too many streams
+        TooManyStreams,
         /// Too many targets
         TooManyTargets,
         /// Failed to insert into storage
@@ -190,6 +205,7 @@ pub mod pallet {
         /// Grant a permission for emission delegation
         #[pallet::call_index(0)]
         #[pallet::weight(T::WeightInfo::grant_permission())]
+        #[allow(clippy::too_many_arguments)]
         pub fn grant_permission(
             origin: OriginFor<T>,
             grantee: T::AccountId,
@@ -239,16 +255,14 @@ pub mod pallet {
 }
 
 /// Get total allocated percentage for a grantor
-fn get_total_allocated_percentage<T: Config>(grantor: &T::AccountId) -> Percent {
-    PermissionsByGrantor::<T>::get(grantor)
-        .iter()
-        .flatten()
+fn get_total_allocated_percentage<T: Config>(grantor: &T::AccountId, stream: &StreamId) -> Percent {
+    AccumulatedStreamAmounts::<T>::iter_key_prefix((grantor, stream))
         .filter_map(Permissions::<T>::get)
         .map(|contract| match contract.scope {
             PermissionScope::Emission(EmissionScope {
-                allocation: EmissionAllocation::Percentage(percentage),
+                allocation: EmissionAllocation::Streams(streams),
                 ..
-            }) => percentage,
+            }) => streams.get(stream).copied().unwrap_or_default(),
             _ => Percent::zero(),
         })
         .fold(Percent::zero(), |acc, percentage| {
@@ -343,13 +357,13 @@ fn remove_permission_from_indices<T: Config>(
         }
     });
 
-    PermissionsByGrantor::<T>::mutate(&grantor, |permissions| {
+    PermissionsByGrantor::<T>::mutate(grantor, |permissions| {
         if let Some(ids) = permissions {
             ids.retain(|id| *id != permission_id);
         }
     });
 
-    PermissionsByGrantee::<T>::mutate(&grantee, |permissions| {
+    PermissionsByGrantee::<T>::mutate(grantee, |permissions| {
         if let Some(ids) = permissions {
             ids.retain(|id| *id != permission_id);
         }

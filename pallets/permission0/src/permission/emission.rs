@@ -7,9 +7,12 @@ use polkadot_sdk::{
     sp_runtime::traits::{Saturating, Zero},
 };
 
-use crate::{AccumulatedAmounts, Event, Pallet, PermissionsByGrantor};
+use crate::{AccumulatedStreamAmounts, Event, Pallet};
 
 use super::*;
+
+/// Type for stream ID
+pub type StreamId = H256;
 
 /// Emission-specific permission scope
 #[derive(Encode, Decode, CloneNoBound, PartialEq, TypeInfo, MaxEncodedLen, DebugNoBound)]
@@ -24,20 +27,34 @@ pub struct EmissionScope<T: Config> {
 }
 
 impl<T: Config> EmissionScope<T> {
-    pub(super) fn cleanup(self, permission_id: H256, grantor: &T::AccountId) {
-        if let Some(accumulated) = AccumulatedAmounts::<T>::get(permission_id) {
-            AccumulatedAmounts::<T>::remove(permission_id);
-            T::Currency::unreserve(grantor, accumulated);
+    pub(super) fn cleanup(
+        self,
+        permission_id: H256,
+        last_executed: &Option<BlockNumberFor<T>>,
+        grantor: &T::AccountId,
+    ) {
+        match self.allocation {
+            EmissionAllocation::Streams(streams) => {
+                for stream in streams.keys() {
+                    AccumulatedStreamAmounts::<T>::remove((grantor, stream, &permission_id));
+                }
+            }
+            EmissionAllocation::FixedAmount(amount) if last_executed.is_none() => {
+                T::Currency::unreserve(grantor, amount);
+            }
+            _ => {}
         }
     }
 }
 
 /// Defines what portion of emissions the permission applies to
-#[derive(Encode, Decode, CloneNoBound, PartialEq, TypeInfo, MaxEncodedLen, DebugNoBound)]
+#[derive(Encode, Decode, CloneNoBound, PartialEqNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub enum EmissionAllocation<T: Config> {
-    /// Permission applies to a percentage of all emissions
-    Percentage(Percent),
+    // /// Permission applies to a percentage of all emissions
+    // Percentage(Percent),
+    // TODO: fix bound param
+    Streams(BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>),
     /// Permission applies to a specific fixed amount
     FixedAmount(BalanceOf<T>),
 }
@@ -48,16 +65,19 @@ pub enum DistributionControl<T: Config> {
     /// Manual distribution by the grantor
     Manual,
     /// Automatic distribution after accumulation threshold
+    // TODO: block for fixed amount
     Automatic(BalanceOf<T>),
     /// Distribution at specific block
     AtBlock(BlockNumberFor<T>),
     /// Distribution at fixed intervals
+    // TODO: block for fixed amount
     Interval(BlockNumberFor<T>),
 }
 
 /// Accumulate emissions for a specific agent, distributes if control is met.
 pub(crate) fn do_accumulate_emissions<T: Config>(
     agent: &T::AccountId,
+    stream: &StreamId,
     imbalance: &mut <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
 ) {
     let initial_balance = imbalance.peek();
@@ -67,11 +87,8 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
         return;
     }
 
-    let Some(permission_ids) = PermissionsByGrantor::<T>::get(agent) else {
-        return;
-    };
-
-    for permission_id in permission_ids.iter() {
+    let streams = AccumulatedStreamAmounts::<T>::iter_prefix((agent, stream));
+    for (permission_id, balance) in streams {
         let Some(contract) = Permissions::<T>::get(permission_id) else {
             continue;
         };
@@ -79,10 +96,14 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
         // Only process emission permissions with percentage allocations,
         // fixed-amount emission reserves balance upfront on permission creation
         let PermissionScope::Emission(EmissionScope {
-            allocation: EmissionAllocation::Percentage(percentage),
+            allocation: EmissionAllocation::Streams(streams),
             ..
         }) = contract.scope
         else {
+            continue;
+        };
+
+        let Some(percentage) = streams.get(stream) else {
             continue;
         };
 
@@ -95,62 +116,119 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
             .extract(delegated_amount.try_into().unwrap_or_default())
             .peek();
 
-        AccumulatedAmounts::<T>::mutate(permission_id, |acc| {
-            *acc = Some(
-                acc.unwrap_or_else(Zero::zero)
-                    .saturating_add(delegated_amount),
-            );
-        });
+        AccumulatedStreamAmounts::<T>::set(
+            (agent, stream, &permission_id),
+            Some(balance + delegated_amount),
+        );
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum DistributionReason {
+    Automatic,
+    Manual,
 }
 
 /// Distribute accumulated emissions for a permission
 pub(crate) fn do_distribute_emission<T: Config>(
     permission_id: PermissionId,
     contract: &PermissionContract<T>,
-) -> BalanceOf<T> {
+    reason: DistributionReason,
+) {
     #[allow(irrefutable_let_patterns)]
     let PermissionScope::Emission(emission_scope) = &contract.scope
     else {
-        return Zero::zero();
+        return;
     };
 
     let total_weight =
         FixedU128::from_u32(emission_scope.targets.values().map(|w| *w as u32).sum());
     if total_weight.is_zero() {
-        return Zero::zero();
+        return;
     }
 
-    let mut imbalance = {
-        let accumulated = AccumulatedAmounts::<T>::get(permission_id).unwrap_or_else(Zero::zero);
-        match emission_scope.allocation {
-            EmissionAllocation::Percentage(_) => {
-                // For percentage allocations, mint new tokens
-                // This is safe because we're only distributing a percentage of
-                // tokens that were already allocated to emission rewards
-                T::Currency::issue(accumulated)
-            }
-            EmissionAllocation::FixedAmount(_) => {
-                // For fixed amount allocations, transfer from reserved funds
-                let _ = T::Currency::unreserve(&contract.grantor, accumulated);
-                T::Currency::withdraw(
-                    &contract.grantor,
-                    accumulated,
-                    WithdrawReasons::TRANSFER,
-                    ExistenceRequirement::KeepAlive,
-                )
-                .unwrap_or_else(|_| {
-                    <T::Currency as Currency<T::AccountId>>::NegativeImbalance::zero()
-                })
+    match &emission_scope.allocation {
+        EmissionAllocation::Streams(streams) => {
+            let streams = streams.keys().filter_map(|id| {
+                let acc =
+                    AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))?;
+                if acc.is_zero() {
+                    None
+                } else {
+                    // For percentage allocations, mint new tokens
+                    // This is safe because we're only distributing a percentage of
+                    // tokens that were already allocated to emission rewards
+                    Some((id, T::Currency::issue(acc)))
+                }
+            });
+
+            for (stream, mut imbalance) in streams {
+                do_distribute_to_targets(
+                    &mut imbalance,
+                    permission_id,
+                    contract,
+                    emission_scope,
+                    Some(stream),
+                    total_weight,
+                    reason,
+                );
+
+                AccumulatedStreamAmounts::<T>::set(
+                    (&contract.grantor, stream, permission_id),
+                    Some(imbalance.peek()),
+                );
             }
         }
-    };
+        EmissionAllocation::FixedAmount(amount) => {
+            if contract.last_execution.is_some() {
+                // The fixed amount was already distributed
+                return;
+            }
 
+            // For fixed amount allocations, transfer from reserved funds
+            let _ = T::Currency::unreserve(&contract.grantor, *amount);
+            let mut imbalance = T::Currency::withdraw(
+                &contract.grantor,
+                *amount,
+                WithdrawReasons::TRANSFER,
+                ExistenceRequirement::KeepAlive,
+            )
+            .unwrap_or_else(|_| <T::Currency as Currency<T::AccountId>>::NegativeImbalance::zero());
+
+            do_distribute_to_targets(
+                &mut imbalance,
+                permission_id,
+                contract,
+                emission_scope,
+                None,
+                total_weight,
+                reason,
+            );
+        }
+    }
+
+    Permissions::<T>::mutate(permission_id, |maybe_contract| {
+        if let Some(c) = maybe_contract {
+            c.last_execution = Some(<frame_system::Pallet<T>>::block_number());
+            c.execution_count = c.execution_count.saturating_add(1);
+        }
+    });
+}
+
+fn do_distribute_to_targets<T: Config>(
+    imbalance: &mut <<T as Config>::Currency as Currency<T::AccountId>>::NegativeImbalance,
+    permission_id: PermissionId,
+    contract: &PermissionContract<T>,
+    emission_scope: &EmissionScope<T>,
+    stream: Option<&StreamId>,
+    total_weight: FixedU128,
+    reason: DistributionReason,
+) {
     let initial_balance = imbalance.peek();
     let total_initial_amount =
         FixedU128::from_inner(initial_balance.try_into().unwrap_or_default());
     if total_initial_amount.is_zero() {
-        return Zero::zero();
+        return;
     }
 
     for (target, weight) in emission_scope.targets.iter() {
@@ -165,30 +243,33 @@ pub(crate) fn do_distribute_emission<T: Config>(
             BalanceOf::<T>::try_from(target_amount.into_inner()).unwrap_or_default();
         let mut imbalance = imbalance.extract(target_amount);
 
-        // Process recursive accumulation here, only deposit what remains
-        do_accumulate_emissions::<T>(target, &mut imbalance);
+        if let Some(stream) = stream {
+            // Process recursive accumulation here, only deposit what remains
+            do_accumulate_emissions::<T>(target, stream, &mut imbalance);
+        }
 
         T::Currency::resolve_creating(target, imbalance);
     }
 
-    Permissions::<T>::mutate(permission_id, |maybe_contract| {
-        if let Some(c) = maybe_contract {
-            c.last_execution = Some(<frame_system::Pallet<T>>::block_number());
-            c.execution_count = c.execution_count.saturating_add(1);
-        }
-    });
-
-    let final_balance: u128 = imbalance.peek().try_into().unwrap_or_default();
-    if final_balance.is_zero() {
-        // All accumulated balance was distributed
-        AccumulatedAmounts::<T>::remove(permission_id);
-    } else {
-        AccumulatedAmounts::<T>::mutate(permission_id, |accumulated| {
-            *accumulated = Some(imbalance.peek());
+    let amount = initial_balance - imbalance.peek();
+    if !amount.is_zero() {
+        <Pallet<T>>::deposit_event(match reason {
+            DistributionReason::Automatic => Event::AutoDistributionExecuted {
+                grantor: contract.grantor.clone(),
+                grantee: contract.grantee.clone(),
+                permission_id,
+                stream_id: None,
+                amount,
+            },
+            DistributionReason::Manual => Event::PermissionExecuted {
+                grantor: contract.grantor.clone(),
+                grantee: contract.grantee.clone(),
+                permission_id,
+                stream_id: None,
+                amount,
+            },
         });
     }
-
-    initial_balance - imbalance.peek()
 }
 
 pub(crate) fn do_auto_distribution<T: Config>(
@@ -199,19 +280,18 @@ pub(crate) fn do_auto_distribution<T: Config>(
 ) {
     match emission_scope.distribution {
         DistributionControl::Automatic(threshold) => {
-            let accumulated =
-                AccumulatedAmounts::<T>::get(permission_id).unwrap_or_else(Zero::zero);
+            let accumulated = match &emission_scope.allocation {
+                EmissionAllocation::Streams(streams) => streams
+                    .keys()
+                    .filter_map(|id| {
+                        AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))
+                    })
+                    .fold(BalanceOf::<T>::zero(), |acc, e| acc + e), // The Balance AST does not enforce the Sum trait
+                EmissionAllocation::FixedAmount(amount) => *amount,
+            };
 
             if accumulated >= threshold {
-                let amount = do_distribute_emission::<T>(permission_id, &contract);
-                if !amount.is_zero() {
-                    <Pallet<T>>::deposit_event(Event::AutoDistributionExecuted {
-                        grantor: contract.grantor.clone(),
-                        grantee: contract.grantee.clone(),
-                        permission_id,
-                        amount,
-                    });
-                }
+                do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
             }
         }
 
@@ -227,15 +307,7 @@ pub(crate) fn do_auto_distribution<T: Config>(
                 return;
             }
 
-            let amount = do_distribute_emission::<T>(permission_id, &contract);
-            if !amount.is_zero() {
-                <Pallet<T>>::deposit_event(Event::AutoDistributionExecuted {
-                    grantor: contract.grantor.clone(),
-                    grantee: contract.grantee.clone(),
-                    permission_id,
-                    amount,
-                });
-            }
+            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
         }
 
         DistributionControl::Interval(interval) => {
@@ -244,15 +316,7 @@ pub(crate) fn do_auto_distribution<T: Config>(
                 return;
             }
 
-            let amount = do_distribute_emission::<T>(permission_id, &contract);
-            if !amount.is_zero() {
-                <Pallet<T>>::deposit_event(Event::AutoDistributionExecuted {
-                    grantor: contract.grantor.clone(),
-                    grantee: contract.grantee.clone(),
-                    permission_id,
-                    amount,
-                });
-            }
+            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
         }
 
         // Manual distribution doesn't need auto-processing

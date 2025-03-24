@@ -44,12 +44,12 @@ The `allocation` field determines how tokens are allocated:
 
 ```rust
 pub enum EmissionAllocation<T: Config> {
-    Percentage(Percent),
+    Streams(BoundedBTreeMap<StreamId, Percent, T::MaxTargetsPerPermission>),
     FixedAmount(BalanceOf<T>),
 }
 ```
 
-With `Percentage` allocation, a portion of the grantor's incoming emissions is diverted according to the specified percentage (0-100%). For `FixedAmount` allocation, a specific number of tokens is reserved from the grantor's account at contract creation.
+With `Streams` allocation, portions of the grantor's incoming emissions from specific streams are diverted according to the percentages specified (0-100%). Each stream ID represents a distinct emission source, allowing for fine-grained control over different emission types. For `FixedAmount` allocation, a specific number of tokens is reserved from the grantor's account at contract creation.
 
 The `targets` field identifies recipients with associated weights, determining how tokens are distributed among multiple targets. For example, with targets A (weight 1) and B (weight 2), target B receives twice the tokens of target A.
 
@@ -98,7 +98,7 @@ pub enum RevocationTerms<T: Config> {
 }
 ```
 
-These terms create different security guarantees for the grantee, ranging from complete assurance (`Irrevocable`) to flexible arrangements (`RevocableByGrantor`).
+These terms create different security guarantees for the grantee, ranging from complete assurance (`Irrevocable`) to flexible arrangements (`RevocableByGrantor`). The grantee can ALWAYS revoke a permission as it is the one being benefitted.
 
 ## Permission creation
 
@@ -109,25 +109,27 @@ flowchart TD
     A["Agent/Grantor"] -- grant_permission --> B["Create Permission"]
     B -- validate --> C["Check agent registration"] --> E["Check targets"] --> P{"Check Allocation Type"}
     P -- Fixed Amount --> K["Reserve Tokens"]
-    P -- Percentage --> D["Check percentage <= 100%"]
+    P -- Streams --> D["Check stream percentages <= 100%"]
     B -- Generate ID --> F["Permission Contract"]
     F -- store --> G["Permissions Storage"]
     F -- index --> J["PermissionsByParticipants"]
     F -- index --> I["PermissionsByGrantee"]
     F -- index --> H["PermissionsByGrantor"]
     B -- emit event --> M["PermissionGranted Event"]
-    K -- accumulate --> L["AccumulatedAmounts"]
+    D -- accumulate --> L["AccumulatedStreamAmounts"]
 ```
 
 ## Emission Accumulation and Distribution Process
 
 ```mermaid
 graph TD
+    Root[Root stake emissions / network rewards] -- root stream ID -->A
+    Delegation[Delegated emissions] -- parent stream ID -->A
     A[Agent Receives Emissions] -->|do_accumulate_emissions| B[Check Active Permissions]
     B -->|For each permission| C{Permission Type?}
-    C -->|Percentage| D[Calculate percentage of emissions]
+    C -->|Streams| D[Check streams map for matching stream]
     C -->|Fixed Amount| E[Already reserved at creation]
-    D -->|Extract from imbalance| F[Accumulate in storage]
+    D -->|Extract from imbalance| F[Store in AccumulatedStreamAmounts]
     F -->|Wait for trigger| G{Distribution Trigger?}
     G -->|Manual| H[Execute Permission called]
     G -->|Automatic| I[Threshold reached]
@@ -137,15 +139,34 @@ graph TD
     I --> L
     J --> L
     K --> L
-    L -->|Retrieve accumulated amount| M[Calculate target amounts]
+    L -->|Retrieve accumulated amounts for each stream| M[Calculate target amounts]
     M -->|for each target| N[Recursive Accumulation]
     N --> O[Update last execution]
     O --> P[Emit events]
 ```
 
-When an agent receives emissions, the pallet intercepts a portion based on active permission contracts through the `do_accumulate_emissions` function. The accumulated amounts are stored in the `AccumulatedAmounts` storage map until distribution conditions are met.
+When an agent receives emissions, the pallet intercepts a portion based on active permission contracts through the `do_accumulate_emissions` function. The accumulated amounts are stored in the `AccumulatedStreamAmounts` storage map until distribution conditions are met.
 
-During distribution (`do_distribute_emission`), the accumulated amount is divided among targets according to their weights. The distribution uses the `Currency` trait to handle token movement between accounts.
+The function is designed to be highly efficient, with a storage structure optimized for quick lookup of all permissions associated with a specific (agent, stream) pair:
+
+```rust
+fn do_accumulate_emissions<T: Config>(
+    agent: &T::AccountId,
+    stream: &StreamId,
+    imbalance: &mut <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+) {
+    // Get all permissions for this agent and stream
+    let streams = AccumulatedStreamAmounts::<T>::iter_prefix((agent, stream));
+
+    // Process each permission
+    for (permission_id, balance) in streams {
+        // Calculate and accumulate based on stream percentage
+        // ...
+    }
+}
+```
+
+During distribution (`do_distribute_emission`), the accumulated amount for each stream is divided among targets according to their weights. The distribution uses the `Currency` trait to handle token movement between accounts.
 
 Importantly, the recursive accumulation does not happen in the same block to prevent unbounded recursion and excessive computation. Instead, when a target receives their portion, it becomes a regular imbalance that will trigger the standard accumulation process in the next applicable block.
 
@@ -158,7 +179,15 @@ pub type Permissions<T: Config> = StorageMap<_, Identity, PermissionId, Permissi
 pub type PermissionsByParticipants<T: Config> = StorageMap<_, Identity, (T::AccountId, T::AccountId), BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
 pub type PermissionsByGrantor<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
 pub type PermissionsByGrantee<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
-pub type AccumulatedAmounts<T: Config> = StorageMap<_, Identity, PermissionId, BalanceOf<T>>;
+pub type AccumulatedStreamAmounts<T: Config> = StorageNMap<
+    _,
+    (
+        NMapKey<Identity, T::AccountId>,
+        NMapKey<Identity, StreamId>,
+        NMapKey<Identity, PermissionId>,
+    ),
+    BalanceOf<T>,
+>;
 ```
 
 This storage design allows efficient lookups for:
@@ -166,7 +195,35 @@ This storage design allows efficient lookups for:
 - Finding all permissions between specific parties
 - Retrieving all permissions granted by an account
 - Retrieving all permissions received by an account
-- Tracking accumulated tokens for each permission
+- Tracking accumulated tokens for each permission by stream
+
+The `AccumulatedStreamAmounts` uses a StorageNMap with a triple key of (AccountId, StreamId, PermissionId). This structure was chosen for performance reasons, as the `do_accumulate_emissions` function is called frequently and needs to quickly find all permissions associated with a specific account and stream combination. The order of the keys prioritizes searching by account and stream first, which is the most common access pattern.
+
+## Stream-based Emission Model
+
+The permission system uses a stream-based approach for tracking different sources of emissions:
+
+```rust
+pub type StreamId = H256;
+```
+
+Each stream is identified by a unique `StreamId`, which represents a specific source of emissions. The system distinguishes between:
+
+1. **Root Streams**: Generated for each agent using a deterministic function. These are the primary emission streams that agents receive directly.
+
+```rust
+pub fn generate_root_stream_id<AccountId: Encode>(agent_id: &AccountId) -> StreamId {
+    let mut data = ROOT_STREAM_PREFIX.to_vec();
+    data.extend(agent_id.encode());
+    blake2_256(&data).into()
+}
+```
+
+2. **Derived Streams**: Generated when emissions flow through permissions, allowing for tracking of emission pathways through the network.
+
+When streams are redelegated through the permission system, their IDs are preserved rather than generating new ones. This crucial design choice allows for easy tracking of the lineage and flow of emissions throughout the network, making it possible to trace the complete path of tokens from their source to final recipients across multiple delegation hops.
+
+This stream-based model allows for much more granular control over emission delegation, enabling agents to specify different delegation percentages for different types of emission streams they receive.
 
 ## Integration with Emission Distribution
 

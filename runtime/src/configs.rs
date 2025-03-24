@@ -441,6 +441,7 @@ impl pallet_emission0::Config for Runtime {
 
 parameter_types! {
     pub const MaxTargetsPerPermission: u32 = 100;
+    pub const MaxStreamsPerPermission: u32 = 100;
     pub const MinAutoDistributionThreshold: u128 = as_tors(100);
 }
 
@@ -454,6 +455,8 @@ impl pallet_permission0::Config for Runtime {
     type Torus = Torus0;
 
     type MaxTargetsPerPermission = MaxTargetsPerPermission;
+
+    type MaxStreamsPerPermission = MaxStreamsPerPermission;
 
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 }

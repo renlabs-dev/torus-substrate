@@ -11,6 +11,7 @@ use polkadot_sdk::{
         traits::{BlakeTwo256, Hash},
         BoundedBTreeMap, BoundedVec, Percent,
     },
+    sp_std::vec::Vec,
 };
 use scale_info::TypeInfo;
 
@@ -38,7 +39,7 @@ pub fn generate_permission_id<T: Config>(
 
     // Permission type as well in the future.
 
-    BlakeTwo256::hash(&data).into()
+    BlakeTwo256::hash(&data)
 }
 
 #[derive(Encode, Decode, CloneNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
@@ -61,19 +62,19 @@ pub struct PermissionContract<T: Config> {
 impl<T: Config> PermissionContract<T> {
     pub fn is_expired(&self, current_block: BlockNumberFor<T>) -> bool {
         match self.duration {
-            PermissionDuration::Blocks(blocks) => current_block - self.created_at >= blocks,
             PermissionDuration::UntilBlock(block) => current_block >= block,
             PermissionDuration::Indefinite => false,
         }
     }
 
     pub fn revoke(self, origin: OriginFor<T>, permission_id: H256) -> DispatchResult {
-        let who = ensure_signed_or_root(origin)?;
+        // The grantee is also always allowed to revoke the permission.
+        let who = ensure_signed_or_root(origin)?.filter(|who| who != &self.grantee);
 
         let grantor = self.grantor.clone();
         let grantee = self.grantee.clone();
 
-        // `who` will not be present if the origin is a root key.
+        // `who` will not be present if the origin is a root key
         if let Some(who) = &who {
             match &self.revocation {
                 RevocationTerms::RevocableByGrantor => {
@@ -118,7 +119,9 @@ impl<T: Config> PermissionContract<T> {
         Permissions::<T>::remove(permission_id);
 
         match self.scope {
-            PermissionScope::Emission(emission) => emission.cleanup(permission_id, &self.grantor),
+            PermissionScope::Emission(emission) => {
+                emission.cleanup(permission_id, &self.last_execution, &self.grantor)
+            }
         }
     }
 }
@@ -135,8 +138,6 @@ pub enum PermissionScope<T: Config> {
 )]
 #[scale_info(skip_type_params(T))]
 pub enum PermissionDuration<T: Config> {
-    /// Permission lasts for a specific number of blocks
-    Blocks(BlockNumberFor<T>),
     /// Permission lasts until a specific block
     UntilBlock(BlockNumberFor<T>),
     /// Permission lasts indefinitely
@@ -172,6 +173,7 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
     let mut expired = Vec::with_capacity(permissions.len());
 
     for (permission_id, contract) in Permissions::<T>::iter() {
+        #[allow(clippy::single_match)]
         match &contract.scope {
             PermissionScope::Emission(emission_scope) => {
                 emission::do_auto_distribution(

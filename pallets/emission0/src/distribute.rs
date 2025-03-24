@@ -329,7 +329,11 @@ fn linear_rewards<T: Config>(
         } else {
             // This is an impossible case, but if something changes in the future,
             // the code is here.
-            <T::Permission0>::accumulate_emissions(delegating_to, &mut stake);
+            <T::Permission0>::accumulate_emissions(
+                delegating_to,
+                &pallet_permission0_api::generate_root_stream_id(delegating_to),
+                &mut stake,
+            );
 
             let stake_num = stake.peek();
             T::Currency::resolve_creating(delegating_to, stake);
@@ -358,7 +362,11 @@ fn linear_rewards<T: Config>(
     {
         let add_stake =
             |staker, mut amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance| {
-                <T::Permission0>::accumulate_emissions(&staker, &mut amount);
+                <T::Permission0>::accumulate_emissions(
+                    &staker,
+                    &pallet_permission0_api::generate_root_stream_id(&staker),
+                    &mut amount,
+                );
 
                 let raw_amount = amount.peek();
                 T::Currency::resolve_creating(&staker, amount);
