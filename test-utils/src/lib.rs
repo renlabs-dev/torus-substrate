@@ -349,6 +349,7 @@ pub fn register_empty_agent(key: AccountId) {
             weight_penalty_factor: Default::default(),
             registration_block: <polkadot_sdk::frame_system::Pallet<Test>>::block_number(),
             fees: Default::default(),
+            last_update_block: None,
         }),
     );
 }

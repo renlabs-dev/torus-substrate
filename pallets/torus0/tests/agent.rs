@@ -27,6 +27,7 @@ fn register_correctly() {
                 weight_penalty_factor: Default::default(),
                 registration_block: Default::default(),
                 fees: Default::default(),
+                last_update_block: None,
             }),
         );
         Allocators::<Test>::set(allocator_id, Some(()));
@@ -605,6 +606,7 @@ fn prunes_excess_agents() {
                         key as u64
                     },
                     fees: Default::default(),
+                    last_update_block: None,
                 }),
             );
 
@@ -654,6 +656,7 @@ fn prunes_excess_agents() {
                 weight_penalty_factor: Default::default(),
                 registration_block: current_block,
                 fees: Default::default(),
+                last_update_block: None,
             }),
         );
 
@@ -793,71 +796,6 @@ fn updates_after_cooldown_expires() {
             Some(new_metadata.clone()),
             Some(staking_fee),
             Some(weight_control_fee),
-        ));
-    });
-}
-
-#[test]
-fn cooldown_map_is_cleaned() {
-    test_utils::new_test_ext().execute_with(|| {
-        let agent = 0;
-        let name = "agent".as_bytes().to_vec();
-        let url = "idk://agent".as_bytes().to_vec();
-        let metadata = "idk://agent".as_bytes().to_vec();
-
-        assert_err!(
-            pallet_torus0::agent::update::<Test>(
-                agent,
-                b"".to_vec(),
-                b"".to_vec(),
-                None,
-                None,
-                None,
-            ),
-            Error::<Test>::AgentDoesNotExist
-        );
-
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            agent
-        ));
-
-        assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
-            get_origin(agent),
-            agent,
-            name,
-            url,
-            metadata,
-        ));
-
-        let new_name = "new-agent".as_bytes().to_vec();
-        let new_url = "new-idk://agent".as_bytes().to_vec();
-        let new_metadata = "new-idk://agent".as_bytes().to_vec();
-
-        let constraints = pallet_torus0::FeeConstraints::<Test>::get();
-        let staking_fee = constraints.min_staking_fee;
-        let weight_control_fee = constraints.min_weight_control_fee;
-
-        assert_ok!(pallet_torus0::Pallet::<Test>::update_agent(
-            get_origin(agent),
-            new_name.clone(),
-            new_url.clone(),
-            Some(new_metadata.clone()),
-            Some(staking_fee),
-            Some(weight_control_fee),
-        ));
-
-        assert!(pallet_torus0::AgentLastUpdateBlock::<Test>::contains_key(
-            agent
-        ));
-
-        // next cleaning block after cooldown expires
-        let to_step =
-            (((pallet_torus0::AgentUpdateCooldown::<Test>::get()) / 1000u64) + 1) * 1000u64;
-
-        step_block(to_step);
-
-        assert!(!pallet_torus0::AgentLastUpdateBlock::<Test>::contains_key(
-            agent
         ));
     });
 }

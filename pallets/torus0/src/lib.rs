@@ -140,12 +140,6 @@ pub mod pallet {
     pub type AgentUpdateCooldown<T: Config> =
         StorageValue<_, BlockNumberFor<T>, ValueQuery, T::DefaultAgentUpdateCooldown>;
 
-    /// Map of keys -> last block that `update_agent` was called.
-    /// Entries that `last_block + cooldown < current_block` are cleaned every 1000 blocks.
-    #[pallet::storage]
-    pub type AgentLastUpdateBlock<T: Config> =
-        StorageMap<_, Identity, T::AccountId, BlockNumberFor<T>>;
-
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
@@ -157,8 +151,6 @@ pub mod pallet {
             burn::adjust_burn::<T>(current_block);
 
             RegistrationsThisBlock::<T>::set(0);
-
-            agent::clean_last_update_block_map::<T>(block_number);
 
             Weight::default()
         }
@@ -551,6 +543,8 @@ impl<T: Config>
                 weight_penalty_factor: Default::default(),
                 registration_block: Default::default(),
                 fees: Default::default(),
+
+                last_update_block: None,
             }),
         );
 

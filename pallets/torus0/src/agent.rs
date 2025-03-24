@@ -1,7 +1,6 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_emission0_api::Emission0Api;
 use pallet_governance_api::GovernanceApi;
-use polkadot_sdk::polkadot_sdk_frame::traits::Zero;
 use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::{
@@ -37,6 +36,7 @@ pub struct Agent<T: crate::Config> {
     pub weight_penalty_factor: Percent,
     pub registration_block: BlockNumberFor<T>,
     pub fees: crate::fee::ValidatorFee<T>,
+    pub last_update_block: Option<BlockNumberFor<T>>,
 }
 
 /// Register an agent to the given key, payed by the payer key.
@@ -119,6 +119,7 @@ pub fn register<T: crate::Config>(
             weight_penalty_factor: Percent::from_percent(0),
             registration_block: <polkadot_sdk::frame_system::Pallet<T>>::block_number(),
             fees: Default::default(),
+            last_update_block: None,
         },
     );
 
@@ -178,7 +179,7 @@ pub fn update<T: crate::Config>(
             return Err(crate::Error::<T>::AgentDoesNotExist.into());
         };
 
-        if is_in_update_cooldown::<T>(&agent_key) {
+        if is_in_update_cooldown::<T>(&agent_key)? {
             return Err(crate::Error::<T>::AgentUpdateOnCooldown.into());
         }
 
@@ -216,23 +217,33 @@ pub fn update<T: crate::Config>(
         Ok::<(), DispatchError>(())
     })?;
 
-    set_in_cooldown::<T>(&agent_key);
+    set_in_cooldown::<T>(&agent_key)?;
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::AgentUpdated(agent_key));
 
     Ok(())
 }
 
-fn is_in_update_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> bool {
+fn is_in_update_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> Result<bool, DispatchError> {
     let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
     let cooldown = crate::AgentUpdateCooldown::<T>::get();
 
-    crate::AgentLastUpdateBlock::<T>::get(key)
-        .is_some_and(|update_block| update_block + cooldown >= current_block)
+    Ok(crate::Agents::<T>::get(key)
+        .ok_or(crate::Error::<T>::AgentDoesNotExist)?
+        .last_update_block
+        .is_some_and(|update_block| update_block + cooldown >= current_block))
 }
 
-fn set_in_cooldown<T: crate::Config>(key: &AccountIdOf<T>) {
+fn set_in_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
     let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
-    crate::AgentLastUpdateBlock::<T>::insert(key.clone(), current_block);
+    crate::Agents::<T>::mutate(key, |agent| {
+        let Some(agent) = agent else {
+            return Err(crate::Error::<T>::AgentDoesNotExist.into());
+        };
+
+        agent.last_update_block = Some(current_block);
+
+        Ok(())
+    })
 }
 
 pub fn exists<T: crate::Config>(key: &AccountIdOf<T>) -> bool {
@@ -374,19 +385,4 @@ pub fn find_agent_to_prune<T: crate::Config>(strategy: PruningStrategy) -> Optio
                 })
         })
         .map(|(id, _, _)| id.clone())
-}
-
-pub fn clean_last_update_block_map<T: crate::Config>(current_block: BlockNumberFor<T>) {
-    if !(current_block % 1000u32.into()).is_zero() {
-        return;
-    }
-
-    let cooldown = crate::AgentUpdateCooldown::<T>::get();
-    crate::AgentLastUpdateBlock::<T>::translate_values(|update_block| {
-        if update_block + cooldown < current_block {
-            None
-        } else {
-            Some(update_block)
-        }
-    });
 }
