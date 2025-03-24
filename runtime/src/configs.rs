@@ -345,7 +345,7 @@ impl pallet_torus0::Config for Runtime {
 
     type DefaultMaxRegistrationsPerInterval = ConstU16<32>;
 
-    type DefaultAgentUpdateCooldown = ConstU64<32_400>;
+    type DefaultAgentUpdateCooldown = ConstU64<32_400>; // 3 days
 
     #[doc = " The storage MaxNameLength should be constrained to be no more than the value of this."]
     #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
