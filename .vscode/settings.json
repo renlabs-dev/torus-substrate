@@ -13,10 +13,14 @@
   // Spell checker
   "cSpell.words": [
     "buildx",
+    "codegen",
     "devcontainers",
     "irongut",
     "jwalton",
+    "nocapture",
     "presign",
+    "println",
+    "subxt",
     "Swatinem",
     "wbuild"
   ]

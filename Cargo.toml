@@ -6,6 +6,7 @@ members = [
     "pallets/*/api",
     "test-utils",
     "xtask",
+    "client",
 ]
 resolver = "2"
 
@@ -18,6 +19,7 @@ edition = "2021"
 # Local
 torus-node = { path = "./node", default-features = false }
 torus-runtime = { path = "./runtime", default-features = false }
+torus-client = { path = "./client", default-features = false }
 pallet-governance = { path = "./pallets/governance", default-features = false }
 pallet-governance-api = { path = "./pallets/governance/api", default-features = false }
 pallet-emission0 = { path = "./pallets/emission0", default-features = false }
