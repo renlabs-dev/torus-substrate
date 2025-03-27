@@ -16731,6 +16731,7 @@ dependencies = [
  "pallet-emission0",
  "pallet-governance",
  "pallet-governance-api",
+ "pallet-permission0",
  "pallet-torus0",
  "pallet-torus0-api",
  "parity-scale-codec",

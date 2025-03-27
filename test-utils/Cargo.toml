@@ -16,6 +16,7 @@ polkadot-sdk = { workspace = true, features = [
 pallet-governance.workspace = true
 pallet-torus0.workspace = true
 pallet-emission0.workspace = true
+pallet-permission0.workspace = true
 
 pallet-torus0-api.workspace = true
 pallet-governance-api.workspace = true

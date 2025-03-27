@@ -11,18 +11,15 @@ use pallet_permission0_api::{
     RevocationTerms as ApiRevocationTerms, StreamId,
 };
 use pallet_torus0_api::Torus0Api;
+use polkadot_sdk::polkadot_sdk_frame::traits::CheckedAdd;
 use polkadot_sdk::{
     frame_support::{
         ensure,
         traits::{Currency, Get, ReservableCurrency},
-        BoundedBTreeMap,
     },
     frame_system::{self, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
-    sp_runtime::{
-        traits::{Saturating, Zero},
-        DispatchError, DispatchResult, Percent, Vec,
-    },
+    sp_runtime::{traits::Zero, DispatchError, DispatchResult, Percent, Vec},
     sp_std::collections::btree_map::BTreeMap,
 };
 
@@ -170,8 +167,13 @@ pub(crate) fn grant_permission_impl<T: Config>(
                 ensure!(*percentage <= Percent::one(), Error::<T>::InvalidPercentage);
 
                 let total_allocated = get_total_allocated_percentage::<T>(&grantor, stream);
+                let new_total_allocated = match total_allocated.checked_add(percentage) {
+                    Some(new_total_allocated) => new_total_allocated,
+                    None => return Err(Error::<T>::TotalAllocationExceeded.into()),
+                };
+
                 ensure!(
-                    total_allocated.saturating_add(*percentage) <= Percent::one(),
+                    new_total_allocated <= Percent::one(),
                     Error::<T>::TotalAllocationExceeded
                 );
             }
