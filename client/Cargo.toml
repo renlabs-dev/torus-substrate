@@ -1,0 +1,46 @@
+[package]
+name = "torus-client"
+version = "0.1.0"
+edition = "2021"
+authors = ["Renlabs <contact@renlabs.dev>"]
+description = "Torus substrate client library using subxt"
+license = "MIT"
+
+
+[dependencies]
+
+codec = { workspace = true }
+scale-info = { workspace = true }
+
+# Subxt for Substrate client interactions
+subxt = "0.41.0"
+subxt-signer = "0.41.0"
+
+# Async runtime
+tokio = { version = "1.35", features = ["macros", "time", "rt-multi-thread"] }
+
+# Utilities
+hex = "0.4.3"
+
+# Local dependencies
+torus-runtime = { path = "../runtime", default-features = false }
+
+
+[features]
+
+default = ["std", "mainnet"]
+std = [
+    "codec/std",
+    "codec/derive",
+    "codec/max-encoded-len",
+    "scale-info/std",
+    "torus-runtime/std",
+]
+
+# Network-specific features
+mainnet = []
+testnet = []
+dev = []
+
+# Enable all networks
+all-networks = ["mainnet", "testnet", "dev"]
