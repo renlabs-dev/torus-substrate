@@ -1,14 +1,14 @@
-name: Build Torus Runtime
+name: Build Torus runtime
 
 on:
   workflow_dispatch:
   push:
-    tags:
-      - "runtime/*"
     branches:
       - "github-ci-test"
       - "build-runtime*"
       - "testnet"
+    tags:
+      - "runtime/*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

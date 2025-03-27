@@ -1,15 +1,16 @@
-name: Docker build and push xtask cli tool
+name: Build xtask cli tool Docker image
 
 on:
   push:
     branches:
       - main
       - dev
+      - github-ci-test
     paths:
-      - 'xtask/**'
-      - '.github/workflows/build-docker-xtask.yml'
-      - 'docker/xtask.dockerfile'
-    
+      - "xtask/**"
+      - ".github/workflows/build-docker-xtask.yml"
+      - "docker/xtask.dockerfile"
+
 jobs:
   docker:
     permissions:
@@ -18,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -27,17 +28,17 @@ jobs:
           tags: |
             type=sha,prefix=,enable=true
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
