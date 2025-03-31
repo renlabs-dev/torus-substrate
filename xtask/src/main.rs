@@ -12,7 +12,12 @@ fn main() {
         flags::XtaskCmd::Run(run) => run::run(run),
         flags::XtaskCmd::GenerateSpec(cmd) => generate_spec::generate_spec(cmd),
         flags::XtaskCmd::Coverage(coverage) => {
-            const PALLETS: [&str; 3] = ["pallet-emission0", "pallet-governance", "pallet-torus0"];
+            const PALLETS: &[&str] = &[
+                "pallet-emission0",
+                "pallet-governance",
+                "pallet-torus0",
+                "pallet-permission0",
+            ];
 
             let mut cmd = std::process::Command::new("cargo");
             let mut args = vec![
