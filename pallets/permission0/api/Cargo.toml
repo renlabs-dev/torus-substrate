@@ -1,10 +1,10 @@
 [package]
-name = "pallet-emission0"
-description = "Torus emission pallet."
+name = "pallet-permission0-api"
 version = "0.1.0"
-license = "MIT-0"
+description = "API for permission0 pallet"
 authors.workspace = true
 edition.workspace = true
+license = "MIT-0"
 
 [features]
 default = ["std"]
@@ -12,31 +12,16 @@ std = [
     "codec/std",
     "polkadot-sdk/std",
     "scale-info/std",
-    "num-traits/std",
     "pallet-torus0-api/std",
-    "pallet-governance-api/std",
-    "pallet-permission0-api/std",
 ]
 runtime-benchmarks = [
     "polkadot-sdk/runtime-benchmarks",
     "pallet-torus0-api/runtime-benchmarks",
-    "pallet-governance-api/runtime-benchmarks",
-    "pallet-permission0-api/runtime-benchmarks",
 ]
 try-runtime = ["polkadot-sdk/try-runtime"]
-
 
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
-
-num-traits.workspace = true
-
-pallet-torus0-api.workspace = true
-pallet-emission0-api.workspace = true
-pallet-governance-api.workspace = true
-pallet-permission0-api.workspace = true
-
-[dev-dependencies]
-test-utils.workspace = true
+pallet-torus0-api = { workspace = true, default-features = false }

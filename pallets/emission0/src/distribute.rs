@@ -1,4 +1,5 @@
 use pallet_governance_api::GovernanceApi;
+use pallet_permission0_api::Permission0Api;
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_support::{
@@ -318,7 +319,7 @@ fn linear_rewards<T: Config>(
 
         let control_fee = <T::Torus>::weight_control_fee(delegating_to);
         let control_fee = control_fee.mul_floor(dividend.peek());
-        let stake = dividend.extract(control_fee);
+        let mut stake = dividend.extract(control_fee);
 
         if let Some(delegated_dividend) = id_to_idx
             .get(delegating_to)
@@ -328,6 +329,12 @@ fn linear_rewards<T: Config>(
         } else {
             // This is an impossible case, but if something changes in the future,
             // the code is here.
+            <T::Permission0>::accumulate_emissions(
+                delegating_to,
+                &pallet_permission0_api::generate_root_stream_id(delegating_to),
+                &mut stake,
+            );
+
             let stake_num = stake.peek();
             T::Currency::resolve_creating(delegating_to, stake);
             let _ = <T::Torus>::stake_to(delegating_to, delegating_to, stake_num);
@@ -354,7 +361,13 @@ fn linear_rewards<T: Config>(
         .zip(upscaled_dividends)
     {
         let add_stake =
-            |staker, amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance| {
+            |staker, mut amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance| {
+                <T::Permission0>::accumulate_emissions(
+                    &staker,
+                    &pallet_permission0_api::generate_root_stream_id(&staker),
+                    &mut amount,
+                );
+
                 let raw_amount = amount.peek();
                 T::Currency::resolve_creating(&staker, amount);
                 let _ = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount);

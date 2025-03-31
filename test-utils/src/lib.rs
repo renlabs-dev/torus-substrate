@@ -43,6 +43,9 @@ mod runtime {
 
     #[runtime::pallet_index(4)]
     pub type Governance = pallet_governance::Pallet<Runtime>;
+
+    #[runtime::pallet_index(5)]
+    pub type Permission0 = pallet_permission0::Pallet<Runtime>;
 }
 
 pub type Block = frame_system::mocking::MockBlock<Test>;
@@ -170,6 +173,8 @@ impl pallet_emission0::Config for Test {
     type Governance = Governance;
 
     type WeightInfo = pallet_emission0::weights::SubstrateWeight<Test>;
+
+    type Permission0 = Permission0;
 }
 
 parameter_types! {
@@ -211,6 +216,28 @@ impl pallet_governance::Config for Test {
     type Currency = Balances;
 
     type WeightInfo = pallet_governance::weights::SubstrateWeight<Test>;
+}
+
+parameter_types! {
+    pub const MaxTargetsPerPermission: u32 = 100;
+    pub const MaxStreamsPerPermission: u32 = 100;
+    pub const MinAutoDistributionThreshold: u128 = to_nano(100);
+}
+
+impl pallet_permission0::Config for Test {
+    type RuntimeEvent = RuntimeEvent;
+
+    type WeightInfo = ();
+
+    type Currency = Balances;
+
+    type Torus = Torus0;
+
+    type MaxTargetsPerPermission = MaxTargetsPerPermission;
+
+    type MaxStreamsPerPermission = MaxStreamsPerPermission;
+
+    type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 }
 
 impl pallet_balances::Config for Test {
@@ -318,15 +345,19 @@ pub fn get_origin(key: AccountId) -> RuntimeOrigin {
 pub fn step_block(count: BlockNumber) {
     let current = System::block_number();
     for block in current..current + count {
+        Permission0::on_finalize(block);
         Torus0::on_finalize(block);
         Emission0::on_finalize(block);
         Governance::on_finalize(block);
         System::on_finalize(block);
+
         System::set_block_number(block + 1);
-        Governance::on_initialize(block + 1);
+
         System::on_initialize(block + 1);
+        Governance::on_initialize(block + 1);
         Emission0::on_initialize(block + 1);
         Torus0::on_initialize(block + 1);
+        Permission0::on_initialize(block + 1);
     }
 }
 
