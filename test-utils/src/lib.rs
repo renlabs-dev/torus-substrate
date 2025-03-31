@@ -349,9 +349,13 @@ pub fn register_empty_agent(key: AccountId) {
             weight_penalty_factor: Default::default(),
             registration_block: <polkadot_sdk::frame_system::Pallet<Test>>::block_number(),
             fees: Default::default(),
-            last_update_block: None,
+            last_update_block: Default::default(),
         }),
     );
+}
+
+pub fn clear_cooldown() {
+    pallet_torus0::AgentUpdateCooldown::<Test>::set(0);
 }
 
 pub fn round_first_five(num: u64) -> u64 {

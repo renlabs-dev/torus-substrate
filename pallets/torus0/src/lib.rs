@@ -29,7 +29,7 @@ use crate::{agent::Agent, burn::BurnConfiguration, fee::ValidatorFeeConstraints}
 
 #[frame::pallet]
 pub mod pallet {
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
 
     use frame::prelude::BlockNumberFor;
     use pallet_emission0_api::Emission0Api;
@@ -543,8 +543,7 @@ impl<T: Config>
                 weight_penalty_factor: Default::default(),
                 registration_block: Default::default(),
                 fees: Default::default(),
-
-                last_update_block: None,
+                last_update_block: Default::default(),
             }),
         );
 

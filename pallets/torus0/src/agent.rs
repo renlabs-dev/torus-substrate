@@ -36,7 +36,7 @@ pub struct Agent<T: crate::Config> {
     pub weight_penalty_factor: Percent,
     pub registration_block: BlockNumberFor<T>,
     pub fees: crate::fee::ValidatorFee<T>,
-    pub last_update_block: Option<BlockNumberFor<T>>,
+    pub last_update_block: BlockNumberFor<T>,
 }
 
 /// Register an agent to the given key, payed by the payer key.
@@ -109,6 +109,7 @@ pub fn register<T: crate::Config>(
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToRegisterAgent)?;
 
+    let registration_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
     crate::Agents::<T>::insert(
         agent_key.clone(),
         Agent {
@@ -117,9 +118,9 @@ pub fn register<T: crate::Config>(
             url: BoundedVec::truncate_from(url),
             metadata: BoundedVec::truncate_from(metadata),
             weight_penalty_factor: Percent::from_percent(0),
-            registration_block: <polkadot_sdk::frame_system::Pallet<T>>::block_number(),
+            registration_block,
             fees: Default::default(),
-            last_update_block: None,
+            last_update_block: registration_block,
         },
     );
 
@@ -227,20 +228,20 @@ fn is_in_update_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> Result<bool,
     let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
     let cooldown = crate::AgentUpdateCooldown::<T>::get();
 
-    Ok(crate::Agents::<T>::get(key)
+    let last_update = crate::Agents::<T>::get(key)
         .ok_or(crate::Error::<T>::AgentDoesNotExist)?
-        .last_update_block
-        .is_some_and(|update_block| update_block + cooldown >= current_block))
+        .last_update_block;
+
+    Ok(last_update + cooldown > current_block)
 }
 
 fn set_in_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
-    let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
     crate::Agents::<T>::mutate(key, |agent| {
         let Some(agent) = agent else {
             return Err(crate::Error::<T>::AgentDoesNotExist.into());
         };
 
-        agent.last_update_block = Some(current_block);
+        agent.last_update_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
 
         Ok(())
     })
