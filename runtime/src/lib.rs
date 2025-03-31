@@ -39,7 +39,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("torus-runtime"),
     impl_name: create_runtime_str!("torus-runtime"),
     authoring_version: 1,
-    spec_version: 11,
+    spec_version: 12,
     impl_version: 1,
     apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -87,7 +87,7 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 type Migrations = (
     pallet_governance::migrations::v3::Migration<Runtime, RocksDbWeight>,
     pallet_emission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
-    pallet_torus0::migrations::v2::Migration<Runtime, RocksDbWeight>,
+    pallet_torus0::migrations::v3::Migration<Runtime, RocksDbWeight>,
 );
 
 /// Executive: handles dispatch to the various modules.

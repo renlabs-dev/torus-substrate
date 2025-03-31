@@ -121,6 +121,8 @@ impl pallet_torus0::Config for Test {
 
     type DefaultMaxRegistrationsPerInterval = ConstU16<32>;
 
+    type DefaultAgentUpdateCooldown = ConstU64<32_400>;
+
     #[doc = " The storage MaxNameLength should be constrained to be no more than the value of this."]
     #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
     type MaxAgentNameLengthConstraint = ConstU32<256>;
@@ -347,8 +349,13 @@ pub fn register_empty_agent(key: AccountId) {
             weight_penalty_factor: Default::default(),
             registration_block: <polkadot_sdk::frame_system::Pallet<Test>>::block_number(),
             fees: Default::default(),
+            last_update_block: Default::default(),
         }),
     );
+}
+
+pub fn clear_cooldown() {
+    pallet_torus0::AgentUpdateCooldown::<Test>::set(0);
 }
 
 pub fn round_first_five(num: u64) -> u64 {

@@ -1,7 +1,9 @@
-use pallet_torus0::{agent::Agent, Agents, Burn, Error, ImmunityPeriod, MaxAllowedAgents};
+use pallet_torus0::{
+    agent::Agent, AgentUpdateCooldown, Agents, Burn, Error, ImmunityPeriod, MaxAllowedAgents,
+};
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
 use test_utils::{
-    assert_ok, get_origin,
+    assert_ok, clear_cooldown, get_origin,
     pallet_emission0::{ConsensusMembers, WeightControlDelegation},
     pallet_governance::{self, Allocators},
     step_block, Test,
@@ -27,6 +29,7 @@ fn register_correctly() {
                 weight_penalty_factor: Default::default(),
                 registration_block: Default::default(),
                 fees: Default::default(),
+                last_update_block: Default::default(),
             }),
         );
         Allocators::<Test>::set(allocator_id, Some(()));
@@ -417,6 +420,8 @@ fn unregister_twice() {
 #[test]
 fn update_correctly() {
     test_utils::new_test_ext().execute_with(|| {
+        clear_cooldown();
+
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
@@ -476,6 +481,8 @@ fn update_correctly() {
 #[test]
 fn update_with_zero_staking_fee() {
     test_utils::new_test_ext().execute_with(|| {
+        clear_cooldown();
+
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
@@ -526,6 +533,8 @@ fn update_with_zero_staking_fee() {
 #[test]
 fn update_with_zero_weight_control_fee() {
     test_utils::new_test_ext().execute_with(|| {
+        clear_cooldown();
+
         let agent = 0;
         let name = "agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
@@ -591,6 +600,12 @@ fn prunes_excess_agents() {
         const MAX_VALIDATOR_KEY: u32 = 4;
         const MIN_VALIDATOR_KEY: u32 = 5;
         for key in 0..6 {
+            let registration_block = if key == IMMUNE_KEY {
+                current_block
+            } else {
+                key as u64
+            };
+
             Agents::<Test>::set(
                 key,
                 Some(Agent {
@@ -599,12 +614,9 @@ fn prunes_excess_agents() {
                     url: Default::default(),
                     metadata: Default::default(),
                     weight_penalty_factor: Default::default(),
-                    registration_block: if key == IMMUNE_KEY {
-                        current_block
-                    } else {
-                        key as u64
-                    },
+                    registration_block,
                     fees: Default::default(),
+                    last_update_block: registration_block,
                 }),
             );
 
@@ -654,6 +666,7 @@ fn prunes_excess_agents() {
                 weight_penalty_factor: Default::default(),
                 registration_block: current_block,
                 fees: Default::default(),
+                last_update_block: current_block,
             }),
         );
 
@@ -666,6 +679,83 @@ fn prunes_excess_agents() {
                 b"idk://agent".to_vec(),
             ),
             Error::<Test>::MaxAllowedAgents
+        );
+    });
+}
+
+#[test]
+fn fails_updating_whitout_waiting_cooldown() {
+    test_utils::new_test_ext().execute_with(|| {
+        let agent = 0;
+        let name = "agent".as_bytes().to_vec();
+        let url = "idk://agent".as_bytes().to_vec();
+        let metadata = "idk://agent".as_bytes().to_vec();
+
+        assert_err!(
+            pallet_torus0::agent::update::<Test>(
+                agent,
+                b"".to_vec(),
+                b"".to_vec(),
+                None,
+                None,
+                None,
+            ),
+            Error::<Test>::AgentDoesNotExist
+        );
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            agent
+        ));
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
+            get_origin(agent),
+            agent,
+            name,
+            url,
+            metadata,
+        ));
+
+        let new_name = "new-agent".as_bytes().to_vec();
+        let new_url = "new-idk://agent".as_bytes().to_vec();
+        let new_metadata = "new-idk://agent".as_bytes().to_vec();
+
+        let constraints = pallet_torus0::FeeConstraints::<Test>::get();
+        let staking_fee = constraints.min_staking_fee;
+        let weight_control_fee = constraints.min_weight_control_fee;
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::update_agent(
+                get_origin(agent),
+                new_name.clone(),
+                new_url.clone(),
+                Some(new_metadata.clone()),
+                Some(staking_fee),
+                Some(weight_control_fee),
+            ),
+            crate::Error::<Test>::AgentUpdateOnCooldown
+        );
+
+        step_block(AgentUpdateCooldown::<Test>::get());
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::update_agent(
+            get_origin(agent),
+            new_name.clone(),
+            new_url.clone(),
+            Some(new_metadata.clone()),
+            Some(staking_fee),
+            Some(weight_control_fee),
+        ));
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::update_agent(
+                get_origin(agent),
+                new_name.clone(),
+                new_url.clone(),
+                Some(new_metadata.clone()),
+                Some(staking_fee),
+                Some(weight_control_fee),
+            ),
+            crate::Error::<Test>::AgentUpdateOnCooldown
         );
     });
 }

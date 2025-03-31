@@ -36,6 +36,7 @@ pub struct Agent<T: crate::Config> {
     pub weight_penalty_factor: Percent,
     pub registration_block: BlockNumberFor<T>,
     pub fees: crate::fee::ValidatorFee<T>,
+    pub last_update_block: BlockNumberFor<T>,
 }
 
 /// Register an agent to the given key, payed by the payer key.
@@ -108,6 +109,7 @@ pub fn register<T: crate::Config>(
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToRegisterAgent)?;
 
+    let registration_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
     crate::Agents::<T>::insert(
         agent_key.clone(),
         Agent {
@@ -116,8 +118,9 @@ pub fn register<T: crate::Config>(
             url: BoundedVec::truncate_from(url),
             metadata: BoundedVec::truncate_from(metadata),
             weight_penalty_factor: Percent::from_percent(0),
-            registration_block: <polkadot_sdk::frame_system::Pallet<T>>::block_number(),
+            registration_block,
             fees: Default::default(),
+            last_update_block: registration_block,
         },
     );
 
@@ -177,6 +180,10 @@ pub fn update<T: crate::Config>(
             return Err(crate::Error::<T>::AgentDoesNotExist.into());
         };
 
+        if is_in_update_cooldown::<T>(&agent_key)? {
+            return Err(crate::Error::<T>::AgentUpdateOnCooldown.into());
+        }
+
         validate_agent_name::<T>(&name[..])?;
         agent.name = BoundedVec::truncate_from(name);
 
@@ -211,7 +218,33 @@ pub fn update<T: crate::Config>(
         Ok::<(), DispatchError>(())
     })?;
 
+    set_in_cooldown::<T>(&agent_key)?;
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::AgentUpdated(agent_key));
+
     Ok(())
+}
+
+fn is_in_update_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> Result<bool, DispatchError> {
+    let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
+    let cooldown = crate::AgentUpdateCooldown::<T>::get();
+
+    let last_update = crate::Agents::<T>::get(key)
+        .ok_or(crate::Error::<T>::AgentDoesNotExist)?
+        .last_update_block;
+
+    Ok(last_update + cooldown > current_block)
+}
+
+fn set_in_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
+    crate::Agents::<T>::mutate(key, |agent| {
+        let Some(agent) = agent else {
+            return Err(crate::Error::<T>::AgentDoesNotExist.into());
+        };
+
+        agent.last_update_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
+
+        Ok(())
+    })
 }
 
 pub fn exists<T: crate::Config>(key: &AccountIdOf<T>) -> bool {
