@@ -3,8 +3,7 @@ use polkadot_sdk::{
     frame_support::{
         dispatch::DispatchResult, ensure, CloneNoBound, DebugNoBound, EqNoBound, PartialEqNoBound,
     },
-    frame_system,
-    frame_system::ensure_signed_or_root,
+    frame_system::{self, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{H256, U256},
     sp_runtime::{
@@ -15,7 +14,7 @@ use polkadot_sdk::{
 };
 use scale_info::TypeInfo;
 
-use crate::{BalanceOf, Config, Error, Event, Pallet, Permissions};
+use crate::{BalanceOf, Config, Error, Event, Pallet, Permissions, RevocationTracking};
 
 pub use emission::{DistributionControl, EmissionAllocation, EmissionScope};
 
@@ -80,10 +79,23 @@ impl<T: Config> PermissionContract<T> {
                 RevocationTerms::RevocableByGrantor => {
                     ensure!(who == &grantor, Error::<T>::NotAuthorizedToRevoke)
                 }
-                RevocationTerms::RevocableByArbiters { accounts, .. }
-                    if accounts.contains(&grantor) =>
-                {
-                    todo!("implement arbiter revocation") // TODO
+                RevocationTerms::RevocableByArbiters {
+                    accounts,
+                    required_votes,
+                } if accounts.contains(who) => {
+                    let votes = RevocationTracking::<T>::get(permission_id)
+                        .into_iter()
+                        .filter(|id| id != who)
+                        .filter(|id| accounts.contains(id))
+                        .count();
+                    if votes + 1 < *required_votes as usize {
+                        return RevocationTracking::<T>::mutate(permission_id, |votes| {
+                            votes
+                                .try_insert(who.clone())
+                                .map_err(|_| Error::<T>::TooManyRevokers)?;
+                            Ok(())
+                        });
+                    }
                 }
                 RevocationTerms::RevocableByArbiters { .. } => {
                     return Err(Error::<T>::NotAuthorizedToRevoke.into())
@@ -117,6 +129,7 @@ impl<T: Config> PermissionContract<T> {
         crate::remove_permission_from_indices::<T>(&self.grantor, &self.grantee, permission_id);
 
         Permissions::<T>::remove(permission_id);
+        RevocationTracking::<T>::remove(permission_id);
 
         match self.scope {
             PermissionScope::Emission(emission) => {
@@ -155,7 +168,7 @@ pub enum RevocationTerms<T: Config> {
     RevocableByGrantor,
     /// Can be revoked by third party arbiters
     RevocableByArbiters {
-        accounts: BoundedVec<T::AccountId, T::MaxTargetsPerPermission>,
+        accounts: BoundedVec<T::AccountId, T::MaxRevokersPerPermission>,
         required_votes: u32,
     },
     /// Time-based revocation

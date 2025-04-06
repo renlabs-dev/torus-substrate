@@ -59,6 +59,11 @@ pub mod pallet {
         #[pallet::no_default_bounds]
         type MaxStreamsPerPermission: Get<u32>;
 
+        /// Maximum number of revokers.
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type MaxRevokersPerPermission: Get<u32>;
+
         /// Minimum threshold for auto-distribution
         #[pallet::constant]
         #[pallet::no_default_bounds]
@@ -96,6 +101,16 @@ pub mod pallet {
     #[pallet::storage]
     pub type PermissionsByGrantee<T: Config> =
         StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
+
+    /// Revocations in progress and the voters
+    #[pallet::storage]
+    pub type RevocationTracking<T: Config> = StorageMap<
+        _,
+        Identity,
+        PermissionId,
+        BoundedBTreeSet<T::AccountId, T::MaxRevokersPerPermission>,
+        ValueQuery,
+    >;
 
     /// Accumulated amounts for each stream
     #[pallet::storage]
@@ -177,6 +192,8 @@ pub mod pallet {
         TooManyStreams,
         /// Too many targets
         TooManyTargets,
+        /// Too many revokers
+        TooManyRevokers,
         /// Failed to insert into storage
         StorageError,
         /// Invalid amount
@@ -189,6 +206,11 @@ pub mod pallet {
         ParentPermissionNotFound,
         /// Invalid distribution method
         InvalidDistributionMethod,
+        /// Revokers and required voters must be at least one, and required voters must
+        /// be less than the number of revokers
+        InvalidNumberOfRevokers,
+        /// Fixed amount emissions can only be triggered once, manually or at a block
+        FixedAmountCanOnlyBeTriggeredOnce,
         /// Unsupported permission type
         UnsupportedPermissionType,
     }

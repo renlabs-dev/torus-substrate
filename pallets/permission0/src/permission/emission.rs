@@ -51,9 +51,7 @@ impl<T: Config> EmissionScope<T> {
 #[derive(Encode, Decode, CloneNoBound, PartialEqNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub enum EmissionAllocation<T: Config> {
-    // /// Permission applies to a percentage of all emissions
-    // Percentage(Percent),
-    // TODO: fix bound param
+    /// Permission applies to a percentage of each stream
     Streams(BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>),
     /// Permission applies to a specific fixed amount
     FixedAmount(BalanceOf<T>),
@@ -65,12 +63,10 @@ pub enum DistributionControl<T: Config> {
     /// Manual distribution by the grantor
     Manual,
     /// Automatic distribution after accumulation threshold
-    // TODO: block for fixed amount
     Automatic(BalanceOf<T>),
     /// Distribution at specific block
     AtBlock(BlockNumberFor<T>),
     /// Distribution at fixed intervals
-    // TODO: block for fixed amount
     Interval(BlockNumberFor<T>),
 }
 

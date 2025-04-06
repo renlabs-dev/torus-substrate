@@ -424,7 +424,6 @@ pub mod pallet {
         ApplicationExpired(u32),
     }
 
-    // TODO: organize this shit in semantic groups
     #[pallet::error]
     pub enum Error<T> {
         /// The proposal is already finished. Do not retry.

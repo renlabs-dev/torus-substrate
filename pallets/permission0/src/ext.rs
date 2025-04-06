@@ -78,7 +78,7 @@ impl<T: Config>
             } => RevocationTerms::RevocableByArbiters {
                 accounts: accounts
                     .try_into()
-                    .map_err(|_| crate::Error::<T>::TooManyTargets)?,
+                    .map_err(|_| crate::Error::<T>::TooManyRevokers)?,
                 required_votes,
             },
             ApiRevocationTerms::RevocableAfter(blocks) => RevocationTerms::RevocableAfter(blocks),
@@ -184,6 +184,13 @@ pub(crate) fn grant_permission_impl<T: Config>(
                 T::Currency::can_reserve(&grantor, *amount),
                 Error::<T>::InsufficientBalance
             );
+            ensure!(
+                matches!(
+                    &distribution,
+                    DistributionControl::Manual | DistributionControl::AtBlock(_)
+                ),
+                Error::<T>::FixedAmountCanOnlyBeTriggeredOnce
+            );
         }
     }
 
@@ -197,6 +204,31 @@ pub(crate) fn grant_permission_impl<T: Config>(
         DistributionControl::Interval(interval) => {
             ensure!(!interval.is_zero(), Error::<T>::InvalidInterval);
         }
+        DistributionControl::AtBlock(block) => {
+            let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
+            ensure!(*block > current_block, Error::<T>::InvalidInterval);
+        }
+        _ => {}
+    }
+
+    match &revocation {
+        RevocationTerms::RevocableByArbiters {
+            accounts,
+            required_votes,
+        } => {
+            ensure!(*required_votes > 0, Error::<T>::InvalidNumberOfRevokers);
+            ensure!(accounts.len() > 0, Error::<T>::InvalidNumberOfRevokers);
+
+            ensure!(
+                *required_votes as usize <= accounts.len(),
+                Error::<T>::InvalidNumberOfRevokers
+            );
+        }
+        RevocationTerms::RevocableAfter(block) => {
+            let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
+            ensure!(*block > current_block, Error::<T>::InvalidInterval);
+        }
+
         _ => {}
     }
 
