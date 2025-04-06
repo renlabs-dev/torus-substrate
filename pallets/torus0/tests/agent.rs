@@ -1,20 +1,26 @@
+use pallet_governance_api::GovernanceApi;
 use pallet_torus0::{
     agent::Agent, AgentUpdateCooldown, Agents, Burn, Error, ImmunityPeriod, MaxAllowedAgents,
 };
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
 use test_utils::{
-    assert_ok, clear_cooldown, get_origin,
-    pallet_emission0::{ConsensusMembers, WeightControlDelegation},
-    pallet_governance::{self, Allocators},
-    step_block, Test,
+    assert_ok, clear_cooldown, get_balance, get_origin,
+    pallet_emission0::{ConsensusMembers, PendingEmission, WeightControlDelegation},
+    pallet_governance::{self, Allocators, DaoTreasuryAddress, TreasuryEmissionFee},
+    step_block, Governance, Test,
 };
 
 #[test]
 fn register_correctly() {
     test_utils::new_test_ext().execute_with(|| {
+        PendingEmission::<Test>::set(0);
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+        let balance = get_balance(DaoTreasuryAddress::<Test>::get());
+
         let agent_id = 0;
         let allocator_id = 1;
-        let name = "agent".as_bytes().to_vec();
+
+        let name = "idk://agent".as_bytes().to_vec();
         let url = "idk://agent".as_bytes().to_vec();
         let metadata = "idk://agent".as_bytes().to_vec();
 
@@ -66,6 +72,11 @@ fn register_correctly() {
                 metadata.clone(),
             ),
             Error::<Test>::AgentAlreadyRegistered
+        );
+
+        assert_eq!(
+            get_balance(Governance::dao_treasury_address()),
+            balance + Burn::<Test>::get()
         );
     });
 }

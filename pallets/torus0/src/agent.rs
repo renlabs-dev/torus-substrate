@@ -6,7 +6,7 @@ use polkadot_sdk::{
     frame_support::{
         dispatch::DispatchResult,
         ensure,
-        traits::{Currency, ExistenceRequirement, WithdrawReasons},
+        traits::{Currency, ExistenceRequirement},
         DebugNoBound,
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
@@ -101,10 +101,11 @@ pub fn register<T: crate::Config>(
 
     let burn = crate::Burn::<T>::get();
 
-    let _ = <T as crate::Config>::Currency::withdraw(
+    // Registration cost is sent to treasury
+    <T as crate::Config>::Currency::transfer(
         &payer,
+        &<T as crate::Config>::Governance::dao_treasury_address(),
         burn,
-        WithdrawReasons::except(WithdrawReasons::TIP),
         ExistenceRequirement::AllowDeath,
     )
     .map_err(|_| crate::Error::<T>::NotEnoughBalanceToRegisterAgent)?;

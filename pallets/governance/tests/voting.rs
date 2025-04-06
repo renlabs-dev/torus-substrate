@@ -1,10 +1,15 @@
-use pallet_governance::proposal::{Proposal, ProposalData};
-use pallet_governance::Error;
-use pallet_governance::{proposal::ProposalStatus, Proposals};
-use polkadot_sdk::frame_support::{assert_err, assert_ok};
-use polkadot_sdk::sp_runtime::BoundedVec;
+use pallet_emission0::PendingEmission;
+use pallet_governance::{
+    proposal::{Proposal, ProposalData, ProposalStatus},
+    DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals, TreasuryEmissionFee,
+};
+use pallet_governance_api::GovernanceApi;
+use polkadot_sdk::frame_support::assert_err;
+use polkadot_sdk::{frame_support::assert_ok, sp_runtime::Percent};
+use polkadot_sdk::{frame_support::traits::Get, sp_runtime::BoundedVec};
 use test_utils::{
-    add_balance, get_balance, get_origin, new_test_ext, to_nano, zero_min_burn, AccountId, Test,
+    add_balance, get_balance, get_origin, new_test_ext, step_block, to_nano, zero_min_burn,
+    AccountId, Governance, Test,
 };
 
 fn register(account: AccountId, _unused: u16, module: AccountId, stake: u128) {
@@ -74,7 +79,49 @@ fn removes_vote_correctly() {
         const FOR: u32 = 0;
         const AGAINST: u32 = 1;
 
+        let key = 0;
+
         register(FOR, 0, 0, to_nano(10));
+        register(AGAINST, 0, 1, to_nano(5));
+
+        config(1, 100);
+
+        add_balance(key, 1);
+        assert_ok!(
+            pallet_governance::Pallet::<Test>::add_global_custom_proposal(
+                get_origin(key),
+                b"metadata".to_vec()
+            )
+        );
+
+        vote(FOR, 0, true);
+        vote(AGAINST, 0, false);
+
+        step_block(100);
+
+        assert_eq!(
+            Proposals::<Test>::get(0).unwrap().status,
+            ProposalStatus::Accepted {
+                block: 100,
+                stake_for: to_nano(10),
+                stake_against: to_nano(5),
+            }
+        );
+    });
+}
+
+#[test]
+fn global_proposal_is_refused_correctly() {
+    new_test_ext().execute_with(|| {
+        PendingEmission::<Test>::set(0);
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+        let balance = get_balance(DaoTreasuryAddress::<Test>::get());
+
+        zero_min_burn();
+        const FOR: u32 = 0;
+        const AGAINST: u32 = 1;
+
+        register(FOR, 0, 0, to_nano(5));
         register(AGAINST, 0, 1, to_nano(10));
 
         config(1, 100);
@@ -103,6 +150,11 @@ fn removes_vote_correctly() {
             }
             _ => unreachable!(),
         }
+
+        assert_eq!(
+            get_balance(Governance::dao_treasury_address()),
+            balance + crate::GlobalGovernanceConfig::<Test>::get().proposal_cost
+        );
     });
 }
 
@@ -149,27 +201,80 @@ fn ensures_proposal_exists() {
         zero_min_burn();
 
         const MODULE: u32 = 0;
+        PendingEmission::<Test>::set(0);
+        TreasuryEmissionFee::<Test>::set(Percent::zero());
+        let balance = get_balance(DaoTreasuryAddress::<Test>::get());
 
-        register(MODULE, 0, 0, to_nano(10));
+        let min_stake: u128 = <Test as pallet_torus0::Config>::DefaultMinAllowedStake::get();
+        let default_proposal_expiration: u64 =
+            <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
 
         config(1, 100);
+
+        let origin = get_origin(0);
+        add_balance(0, to_nano(2));
+        register(0, 0, 0, to_nano(1) - min_stake);
 
         if pallet_torus0::stake::sum_staked_by::<Test>(&MODULE) < 1 {
             stake(MODULE, MODULE, to_nano(1));
         }
 
+        let _ = pallet_governance::roles::penalize_agent::<Test>(0, 100);
+        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+
+        assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
+            origin.clone(),
+            Percent::from_parts(20),
+            Percent::from_parts(20),
+            Percent::from_parts(20),
+            vec![b'0'; 64],
+        ));
+
+        vote(0, 0, true);
+
+        step_block(default_proposal_expiration);
+
+        assert_eq!(
+            Proposals::<Test>::get(0).unwrap().status,
+            ProposalStatus::Expired
+        );
+        assert_eq!(
+            get_balance(Governance::dao_treasury_address()),
+            balance + crate::GlobalGovernanceConfig::<Test>::get().proposal_cost
+        );
+    });
+}
+
+#[test]
+fn creates_emission_proposal_with_invalid_params_and_it_fails() {
+    new_test_ext().execute_with(|| {
+        const MODULE: AccountId = 0;
+
+        zero_min_burn();
+
+        let default_proposal_expiration: u64 =
+            <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
+
+        let min_stake: u128 = <Test as pallet_torus0::Config>::DefaultMinAllowedStake::get();
+
+        config(1, default_proposal_expiration);
+
+        let origin = get_origin(MODULE);
+        add_balance(MODULE, to_nano(2));
+        register(MODULE, 0, MODULE, to_nano(1) - min_stake);
+
         assert_err!(
-            pallet_governance::Pallet::<Test>::vote_proposal(get_origin(MODULE), 0, true),
+            pallet_governance::Pallet::<Test>::vote_proposal(origin.clone(), 0, true),
             Error::<Test>::ProposalNotFound
         );
 
         assert_err!(
-            pallet_governance::Pallet::<Test>::vote_proposal(get_origin(MODULE), 0, false),
+            pallet_governance::Pallet::<Test>::vote_proposal(origin.clone(), 0, false),
             Error::<Test>::ProposalNotFound
         );
 
         assert_err!(
-            pallet_governance::Pallet::<Test>::remove_vote_proposal(get_origin(MODULE), 0),
+            pallet_governance::Pallet::<Test>::remove_vote_proposal(origin, 0),
             Error::<Test>::ProposalNotFound
         );
     });
