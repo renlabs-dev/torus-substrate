@@ -1,7 +1,8 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
     frame_support::{
-        dispatch::DispatchResult, ensure, CloneNoBound, DebugNoBound, EqNoBound, PartialEqNoBound,
+        dispatch::DispatchResult, ensure, CloneNoBound, DebugNoBound, DefaultNoBound, EqNoBound,
+        PartialEqNoBound,
     },
     frame_system::{self, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
@@ -14,7 +15,9 @@ use polkadot_sdk::{
 };
 use scale_info::TypeInfo;
 
-use crate::{BalanceOf, Config, Error, Event, Pallet, Permissions, RevocationTracking};
+use crate::{
+    BalanceOf, Config, EnforcementTracking, Error, Event, Pallet, Permissions, RevocationTracking,
+};
 
 pub use emission::{DistributionControl, EmissionAllocation, EmissionScope};
 
@@ -49,6 +52,8 @@ pub struct PermissionContract<T: Config> {
     pub scope: PermissionScope<T>,
     pub duration: PermissionDuration<T>,
     pub revocation: RevocationTerms<T>,
+    /// Enforcement authority that can toggle the permission
+    pub enforcement: EnforcementAuthority<T>,
     /// Last execution block
     pub last_execution: Option<BlockNumberFor<T>>,
     /// Number of times the permission was executed
@@ -130,6 +135,7 @@ impl<T: Config> PermissionContract<T> {
 
         Permissions::<T>::remove(permission_id);
         RevocationTracking::<T>::remove(permission_id);
+        let _ = EnforcementTracking::<T>::clear_prefix(permission_id, u32::MAX, None);
 
         match self.scope {
             PermissionScope::Emission(emission) => {
@@ -173,6 +179,42 @@ pub enum RevocationTerms<T: Config> {
     },
     /// Time-based revocation
     RevocableAfter(BlockNumberFor<T>),
+}
+
+/// Types of enforcement actions that can be voted on
+#[derive(
+    Encode, Decode, CloneNoBound, PartialEqNoBound, EqNoBound, TypeInfo, MaxEncodedLen, DebugNoBound,
+)]
+#[scale_info(skip_type_params(T))]
+pub enum EnforcementReferendum {
+    /// Toggle emission accumulation state
+    EmissionAccumulation(bool),
+    /// Execute the permission
+    Execution,
+}
+
+/// Defines how a permission's enforcement is controlled
+#[derive(
+    Encode,
+    Decode,
+    CloneNoBound,
+    PartialEqNoBound,
+    EqNoBound,
+    TypeInfo,
+    MaxEncodedLen,
+    DebugNoBound,
+    DefaultNoBound,
+)]
+#[scale_info(skip_type_params(T))]
+pub enum EnforcementAuthority<T: Config> {
+    /// No special enforcement (standard permission execution)
+    #[default]
+    None,
+    /// Permission can be toggled active/inactive by controllers
+    ControlledBy {
+        controllers: BoundedVec<T::AccountId, T::MaxControllersPerPermission>,
+        required_votes: u32,
+    },
 }
 
 /// Process all auto-distributions and time-based distributions

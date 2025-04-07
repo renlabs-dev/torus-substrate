@@ -21,6 +21,7 @@ fn fixed_fails_without_balance() {
                 pallet_permission0_api::DistributionControl::Manual,
                 pallet_permission0_api::PermissionDuration::Indefinite,
                 pallet_permission0_api::RevocationTerms::Irrevocable,
+                pallet_permission0_api::EnforcementAuthority::None,
             ),
             pallet_permission0::Error::<Test>::InsufficientBalance
         );
@@ -47,6 +48,7 @@ fn fixed_creates() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert!(pallet_permission0::Permissions::<Test>::contains_key(
@@ -75,6 +77,7 @@ fn fixed_reserves() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert!(pallet_permission0::Permissions::<Test>::contains_key(
@@ -108,6 +111,7 @@ fn fixed_manual_executes() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert!(pallet_permission0::Permissions::<Test>::contains_key(
@@ -153,6 +157,7 @@ fn fixed_manual_executes_only_once() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert!(pallet_permission0::Permissions::<Test>::contains_key(
@@ -202,6 +207,7 @@ fn fixed_at_block_executes() {
             pallet_permission0_api::DistributionControl::AtBlock(20),
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         step_block(40);

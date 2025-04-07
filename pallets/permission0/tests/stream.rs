@@ -41,6 +41,7 @@ fn stream_fails_if_overflow() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         let stream_id = generate_root_stream_id(&agent_0);
@@ -57,6 +58,7 @@ fn stream_fails_if_overflow() {
                 pallet_permission0_api::DistributionControl::Manual,
                 pallet_permission0_api::PermissionDuration::Indefinite,
                 pallet_permission0_api::RevocationTerms::Irrevocable,
+                pallet_permission0_api::EnforcementAuthority::None,
             ),
             pallet_permission0::Error::<Test>::TotalAllocationExceeded
         );
@@ -88,6 +90,7 @@ fn stream_creates() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert!(pallet_permission0::Permissions::<Test>::contains_key(
@@ -134,6 +137,7 @@ fn stream_manual_executes() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         AccumulatedStreamAmounts::<Test>::set(
@@ -190,6 +194,7 @@ fn stream_accumulates_and_executes_at_threshold() {
             pallet_permission0_api::DistributionControl::Automatic(total_incentives),
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         step_block(120);

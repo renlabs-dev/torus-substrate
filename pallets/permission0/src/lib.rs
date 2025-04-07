@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::too_many_arguments)]
 
 pub use pallet::*;
 
@@ -9,10 +10,12 @@ pub use weights::*;
 pub mod ext;
 pub mod permission;
 
-use permission::{
+pub use permission::{
     generate_permission_id, DistributionControl, EmissionAllocation, EmissionScope,
-    PermissionContract, PermissionDuration, PermissionId, PermissionScope, RevocationTerms,
+    EnforcementAuthority, EnforcementReferendum, PermissionContract, PermissionDuration,
+    PermissionId, PermissionScope, RevocationTerms,
 };
+
 use polkadot_sdk::{
     frame_support::{
         dispatch::DispatchResult,
@@ -64,6 +67,11 @@ pub mod pallet {
         #[pallet::no_default_bounds]
         type MaxRevokersPerPermission: Get<u32>;
 
+        /// Maximum number of controllers per permission.
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type MaxControllersPerPermission: Get<u32>;
+
         /// Minimum threshold for auto-distribution
         #[pallet::constant]
         #[pallet::no_default_bounds]
@@ -109,6 +117,18 @@ pub mod pallet {
         Identity,
         PermissionId,
         BoundedBTreeSet<T::AccountId, T::MaxRevokersPerPermission>,
+        ValueQuery,
+    >;
+
+    /// Enforcement votes in progress and the voters
+    #[pallet::storage]
+    pub type EnforcementTracking<T: Config> = StorageDoubleMap<
+        _,
+        Identity,
+        PermissionId,
+        Identity,
+        EnforcementReferendum,
+        BoundedBTreeSet<T::AccountId, T::MaxControllersPerPermission>,
         ValueQuery,
     >;
 
@@ -162,6 +182,29 @@ pub mod pallet {
             grantee: T::AccountId,
             permission_id: PermissionId,
         },
+        /// Permission accumulation state toggled
+        PermissionAccumulationToggled {
+            permission_id: PermissionId,
+            accumulating: bool,
+            toggled_by: Option<T::AccountId>,
+        },
+        /// Permission was executed by enforcement authority
+        PermissionEnforcementExecuted {
+            permission_id: PermissionId,
+            executed_by: Option<T::AccountId>,
+        },
+        /// Vote for enforcement action
+        EnforcementVoteCast {
+            permission_id: PermissionId,
+            voter: T::AccountId,
+            referendum: EnforcementReferendum,
+        },
+        /// Enforcement authority set for permission
+        EnforcementAuthoritySet {
+            permission_id: PermissionId,
+            controllers_count: u32,
+            required_votes: u32,
+        },
     }
 
     #[pallet::error]
@@ -213,6 +256,12 @@ pub mod pallet {
         FixedAmountCanOnlyBeTriggeredOnce,
         /// Unsupported permission type
         UnsupportedPermissionType,
+        /// Not authorized to toggle permission state
+        NotAuthorizedToToggle,
+        /// Too many controllers
+        TooManyControllers,
+        /// Invalid number of controllers or required votes
+        InvalidNumberOfControllers,
     }
 
     #[pallet::hooks]
@@ -227,7 +276,6 @@ pub mod pallet {
         /// Grant a permission for emission delegation
         #[pallet::call_index(0)]
         #[pallet::weight(T::WeightInfo::grant_permission())]
-        #[allow(clippy::too_many_arguments)]
         pub fn grant_permission(
             origin: OriginFor<T>,
             grantee: T::AccountId,
@@ -236,7 +284,7 @@ pub mod pallet {
             distribution: DistributionControl<T>,
             duration: PermissionDuration<T>,
             revocation: RevocationTerms<T>,
-            parent_id: Option<PermissionId>,
+            enforcement: EnforcementAuthority<T>,
         ) -> DispatchResult {
             let grantor = ensure_signed(origin)?;
 
@@ -248,7 +296,8 @@ pub mod pallet {
                 distribution,
                 duration,
                 revocation,
-                parent_id,
+                enforcement,
+                None,
             )?;
 
             Ok(())
@@ -272,6 +321,85 @@ pub mod pallet {
             permission_id: PermissionId,
         ) -> DispatchResult {
             ext::execute_permission_impl::<T>(origin, &permission_id)
+        }
+
+        /// Toggle a permission's accumulation state (enabled/disabled)
+        /// The caller must be authorized as a controller or be the root key
+        #[pallet::call_index(3)]
+        #[pallet::weight(T::WeightInfo::execute_permission())] // Reuse weight for now
+        pub fn toggle_permission_accumulation(
+            origin: OriginFor<T>,
+            permission_id: PermissionId,
+            accumulating: bool,
+        ) -> DispatchResult {
+            ext::toggle_permission_accumulation_impl::<T>(origin, permission_id, accumulating)
+        }
+
+        /// Execute a permission through enforcement authority
+        /// The caller must be authorized as a controller or be the root key
+        #[pallet::call_index(4)]
+        #[pallet::weight(T::WeightInfo::execute_permission())] // Reuse weight for now
+        pub fn enforcement_execute_permission(
+            origin: OriginFor<T>,
+            permission_id: PermissionId,
+        ) -> DispatchResult {
+            ext::enforcement_execute_permission_impl::<T>(origin, permission_id)
+        }
+
+        /// Set enforcement authority for a permission
+        /// Only the grantor or root can set enforcement authority
+        #[pallet::call_index(5)]
+        #[pallet::weight(T::WeightInfo::execute_permission())] // Reuse weight for now
+        pub fn set_enforcement_authority(
+            origin: OriginFor<T>,
+            permission_id: PermissionId,
+            controllers: Vec<T::AccountId>,
+            required_votes: u32,
+        ) -> DispatchResult {
+            let who = ensure_signed_or_root(origin)?;
+
+            let mut contract =
+                Permissions::<T>::get(permission_id).ok_or(Error::<T>::PermissionNotFound)?;
+
+            // Only grantor or root can set enforcement authority
+            if let Some(who) = &who {
+                ensure!(who == &contract.grantor, Error::<T>::NotPermissionGrantor);
+            }
+
+            ensure!(
+                !controllers.is_empty(),
+                Error::<T>::InvalidNumberOfControllers
+            );
+            ensure!(required_votes > 0, Error::<T>::InvalidNumberOfControllers);
+            ensure!(
+                required_votes as usize <= controllers.len(),
+                Error::<T>::InvalidNumberOfControllers
+            );
+
+            let controllers = controllers
+                .try_into()
+                .map_err(|_| Error::<T>::TooManyControllers)?;
+
+            contract.enforcement = EnforcementAuthority::ControlledBy {
+                controllers,
+                required_votes,
+            };
+
+            Permissions::<T>::insert(permission_id, contract.clone());
+
+            if let EnforcementAuthority::ControlledBy {
+                controllers,
+                required_votes,
+            } = &contract.enforcement
+            {
+                <Pallet<T>>::deposit_event(Event::EnforcementAuthoritySet {
+                    permission_id,
+                    controllers_count: controllers.len() as u32,
+                    required_votes: *required_votes,
+                });
+            }
+
+            Ok(())
         }
     }
 }

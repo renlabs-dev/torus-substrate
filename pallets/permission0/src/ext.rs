@@ -1,14 +1,15 @@
+use crate::permission::EnforcementReferendum;
 use crate::{
     generate_permission_id, get_total_allocated_percentage, pallet,
     permission::emission::DistributionReason, update_permission_indices, AccumulatedStreamAmounts,
-    BalanceOf, Config, DistributionControl, EmissionAllocation, EmissionScope, Error, Event,
-    Pallet, PermissionContract, PermissionDuration, PermissionId, PermissionScope, Permissions,
-    RevocationTerms,
+    BalanceOf, Config, DistributionControl, EmissionAllocation, EmissionScope,
+    EnforcementAuthority, EnforcementTracking, Error, Event, Pallet, PermissionContract,
+    PermissionDuration, PermissionId, PermissionScope, Permissions, RevocationTerms,
 };
 use pallet_permission0_api::{
     DistributionControl as ApiDistributionControl, EmissionAllocation as ApiEmissionAllocation,
-    Permission0Api, PermissionDuration as ApiPermissionDuration,
-    RevocationTerms as ApiRevocationTerms, StreamId,
+    EnforcementAuthority as ApiEnforcementAuthority, Permission0Api,
+    PermissionDuration as ApiPermissionDuration, RevocationTerms as ApiRevocationTerms, StreamId,
 };
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::polkadot_sdk_frame::traits::CheckedAdd;
@@ -45,6 +46,7 @@ impl<T: Config>
         distribution: ApiDistributionControl<crate::BalanceOf<T>, BlockNumberFor<T>>,
         duration: ApiPermissionDuration<BlockNumberFor<T>>,
         revocation: ApiRevocationTerms<T::AccountId, BlockNumberFor<T>>,
+        enforcement: ApiEnforcementAuthority<T::AccountId>,
     ) -> Result<PermissionId, DispatchError> {
         let internal_allocation = match allocation {
             ApiEmissionAllocation::Streams(streams) => EmissionAllocation::Streams(
@@ -84,6 +86,19 @@ impl<T: Config>
             ApiRevocationTerms::RevocableAfter(blocks) => RevocationTerms::RevocableAfter(blocks),
         };
 
+        let internal_enforcement = match enforcement {
+            ApiEnforcementAuthority::None => EnforcementAuthority::None,
+            ApiEnforcementAuthority::ControlledBy {
+                controllers,
+                required_votes,
+            } => EnforcementAuthority::ControlledBy {
+                controllers: controllers
+                    .try_into()
+                    .map_err(|_| crate::Error::<T>::TooManyControllers)?,
+                required_votes,
+            },
+        };
+
         grant_permission_impl::<T>(
             grantor,
             grantee,
@@ -92,7 +107,8 @@ impl<T: Config>
             internal_distribution,
             internal_duration,
             internal_revocation,
-            None,
+            internal_enforcement,
+            None, // No parent by default
         )
     }
 
@@ -139,6 +155,7 @@ pub(crate) fn grant_permission_impl<T: Config>(
     distribution: DistributionControl<T>,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
+    enforcement: EnforcementAuthority<T>,
     parent_id: Option<PermissionId>,
 ) -> Result<PermissionId, DispatchError> {
     use polkadot_sdk::frame_support::ensure;
@@ -217,7 +234,7 @@ pub(crate) fn grant_permission_impl<T: Config>(
             required_votes,
         } => {
             ensure!(*required_votes > 0, Error::<T>::InvalidNumberOfRevokers);
-            ensure!(accounts.len() > 0, Error::<T>::InvalidNumberOfRevokers);
+            ensure!(!accounts.is_empty(), Error::<T>::InvalidNumberOfRevokers);
 
             ensure!(
                 *required_votes as usize <= accounts.len(),
@@ -230,6 +247,25 @@ pub(crate) fn grant_permission_impl<T: Config>(
         }
 
         _ => {}
+    }
+
+    match &enforcement {
+        EnforcementAuthority::None => {}
+        EnforcementAuthority::ControlledBy {
+            controllers,
+            required_votes,
+        } => {
+            ensure!(*required_votes > 0, Error::<T>::InvalidNumberOfControllers);
+            ensure!(
+                !controllers.is_empty(),
+                Error::<T>::InvalidNumberOfControllers
+            );
+
+            ensure!(
+                *required_votes as usize <= controllers.len(),
+                Error::<T>::InvalidNumberOfControllers
+            );
+        }
     }
 
     // TODO: develop the idea
@@ -254,6 +290,7 @@ pub(crate) fn grant_permission_impl<T: Config>(
         allocation: allocation.clone(),
         distribution,
         targets,
+        accumulating: true, // Start with accumulation enabled by default
     };
 
     let scope = PermissionScope::Emission(emission_scope);
@@ -266,6 +303,7 @@ pub(crate) fn grant_permission_impl<T: Config>(
         scope,
         duration,
         revocation,
+        enforcement,
         last_execution: None,
         execution_count: 0,
         parent: parent_id,
@@ -329,6 +367,11 @@ pub(crate) fn execute_permission_impl<T: Config>(
     match &contract.scope {
         PermissionScope::Emission(emission_scope) => match emission_scope.distribution {
             DistributionControl::Manual => {
+                ensure!(
+                    emission_scope.accumulating,
+                    Error::<T>::UnsupportedPermissionType
+                );
+
                 let accumulated = match &emission_scope.allocation {
                     EmissionAllocation::Streams(streams) => streams
                         .keys()
@@ -356,6 +399,177 @@ pub(crate) fn execute_permission_impl<T: Config>(
         #[allow(unreachable_patterns)]
         _ => return Err(Error::<T>::UnsupportedPermissionType.into()),
     }
+
+    Ok(())
+}
+
+/// Toggle a permission's accumulation state
+pub fn toggle_permission_accumulation_impl<T: Config>(
+    origin: OriginFor<T>,
+    permission_id: PermissionId,
+    accumulating: bool,
+) -> DispatchResult {
+    let who = ensure_signed_or_root(origin)?;
+
+    let mut contract =
+        Permissions::<T>::get(permission_id).ok_or(Error::<T>::PermissionNotFound)?;
+
+    if let Some(who) = &who {
+        match &contract.enforcement {
+            _ if who == &contract.grantor => {}
+            EnforcementAuthority::None => {
+                return Err(Error::<T>::NotAuthorizedToToggle.into());
+            }
+            EnforcementAuthority::ControlledBy {
+                controllers,
+                required_votes,
+            } => {
+                ensure!(controllers.contains(who), Error::<T>::NotAuthorizedToToggle);
+
+                let referendum = EnforcementReferendum::EmissionAccumulation(accumulating);
+                let votes = EnforcementTracking::<T>::get(permission_id, &referendum)
+                    .into_iter()
+                    .filter(|id| id != who)
+                    .filter(|id| controllers.contains(id))
+                    .count();
+
+                if votes + 1 < *required_votes as usize {
+                    return EnforcementTracking::<T>::mutate(
+                        permission_id,
+                        referendum.clone(),
+                        |votes| {
+                            votes
+                                .try_insert(who.clone())
+                                .map_err(|_| Error::<T>::TooManyControllers)?;
+
+                            <Pallet<T>>::deposit_event(Event::EnforcementVoteCast {
+                                permission_id,
+                                voter: who.clone(),
+                                referendum,
+                            });
+
+                            Ok(())
+                        },
+                    );
+                }
+            }
+        }
+    }
+
+    match &mut contract.scope {
+        PermissionScope::Emission(emission_scope) => emission_scope.accumulating = accumulating,
+    }
+
+    Permissions::<T>::insert(permission_id, contract);
+
+    // Clear any votes for this referendum
+    EnforcementTracking::<T>::remove(
+        permission_id,
+        EnforcementReferendum::EmissionAccumulation(accumulating),
+    );
+
+    <Pallet<T>>::deposit_event(Event::PermissionAccumulationToggled {
+        permission_id,
+        accumulating,
+        toggled_by: who,
+    });
+
+    Ok(())
+}
+
+/// Execute a permission through enforcement authority
+pub fn enforcement_execute_permission_impl<T: Config>(
+    origin: OriginFor<T>,
+    permission_id: PermissionId,
+) -> DispatchResult {
+    let who = ensure_signed_or_root(origin)?;
+
+    let contract = Permissions::<T>::get(permission_id).ok_or(Error::<T>::PermissionNotFound)?;
+
+    // If not root, check enforcement authority
+    if let Some(who) = &who {
+        match &contract.enforcement {
+            EnforcementAuthority::None => {
+                return Err(Error::<T>::NotAuthorizedToToggle.into());
+            }
+            EnforcementAuthority::ControlledBy {
+                controllers,
+                required_votes,
+            } => {
+                ensure!(controllers.contains(who), Error::<T>::NotAuthorizedToToggle);
+
+                let referendum = EnforcementReferendum::Execution;
+                let votes = EnforcementTracking::<T>::get(permission_id, &referendum)
+                    .into_iter()
+                    .filter(|id| id != who)
+                    .filter(|id| controllers.contains(id))
+                    .count();
+
+                if votes + 1 < *required_votes as usize {
+                    return EnforcementTracking::<T>::mutate(
+                        permission_id,
+                        referendum.clone(),
+                        |votes| {
+                            votes
+                                .try_insert(who.clone())
+                                .map_err(|_| Error::<T>::TooManyControllers)?;
+
+                            <Pallet<T>>::deposit_event(Event::EnforcementVoteCast {
+                                permission_id,
+                                voter: who.clone(),
+                                referendum,
+                            });
+
+                            Ok(())
+                        },
+                    );
+                }
+            }
+        }
+    }
+
+    match &contract.scope {
+        PermissionScope::Emission(emission_scope) => {
+            ensure!(
+                emission_scope.accumulating,
+                Error::<T>::UnsupportedPermissionType
+            );
+
+            match emission_scope.distribution {
+                DistributionControl::Manual => {
+                    let accumulated = match &emission_scope.allocation {
+                        EmissionAllocation::Streams(streams) => streams
+                            .keys()
+                            .filter_map(|id| {
+                                AccumulatedStreamAmounts::<T>::get((
+                                    &contract.grantor,
+                                    id,
+                                    permission_id,
+                                ))
+                            })
+                            .fold(BalanceOf::<T>::zero(), |acc, e| acc + e),
+                        EmissionAllocation::FixedAmount(amount) => *amount,
+                    };
+
+                    ensure!(!accumulated.is_zero(), Error::<T>::NoAccumulatedAmount);
+
+                    crate::permission::emission::do_distribute_emission::<T>(
+                        permission_id,
+                        &contract,
+                        DistributionReason::Manual,
+                    );
+                }
+                _ => return Err(Error::<T>::InvalidDistributionMethod.into()),
+            }
+        }
+    }
+
+    EnforcementTracking::<T>::remove(permission_id, EnforcementReferendum::Execution);
+
+    <Pallet<T>>::deposit_event(Event::PermissionEnforcementExecuted {
+        permission_id,
+        executed_by: who,
+    });
 
     Ok(())
 }

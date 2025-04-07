@@ -222,6 +222,7 @@ parameter_types! {
     pub const MaxTargetsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MaxRevokersPerPermission: u32 = 10;
+    pub const MaxControllersPerPermission: u32 = 10;
     pub const MinAutoDistributionThreshold: u128 = to_nano(100);
 }
 
@@ -239,6 +240,8 @@ impl pallet_permission0::Config for Test {
     type MaxStreamsPerPermission = MaxStreamsPerPermission;
 
     type MaxRevokersPerPermission = MaxRevokersPerPermission;
+
+    type MaxControllersPerPermission = MaxControllersPerPermission;
 
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 }

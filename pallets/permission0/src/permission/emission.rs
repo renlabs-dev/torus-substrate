@@ -24,6 +24,8 @@ pub struct EmissionScope<T: Config> {
     pub distribution: DistributionControl<T>,
     /// Targets to receive the emissions with weights
     pub targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+    /// Whether emissions should accumulate (can be toggled by enforcement authority)
+    pub accumulating: bool,
 }
 
 impl<T: Config> EmissionScope<T> {
@@ -93,11 +95,16 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
         // fixed-amount emission reserves balance upfront on permission creation
         let PermissionScope::Emission(EmissionScope {
             allocation: EmissionAllocation::Streams(streams),
+            accumulating,
             ..
         }) = contract.scope
         else {
             continue;
         };
+
+        if !accumulating {
+            continue;
+        }
 
         let Some(percentage) = streams.get(stream) else {
             continue;

@@ -26,6 +26,7 @@ fn manual_cant_execute_when_expires() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::UntilBlock(1),
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         step_block(20);
@@ -60,6 +61,7 @@ fn irrevocable() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert_err!(
@@ -103,6 +105,7 @@ fn revocable_by_grantor() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableByGrantor,
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert_err!(
@@ -140,6 +143,7 @@ fn revocable_after_block() {
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableAfter(1),
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert_err!(
@@ -180,6 +184,7 @@ fn revocable_by_arbiters() {
                     accounts: accounts.to_vec(),
                     required_votes,
                 },
+                pallet_permission0_api::EnforcementAuthority::None,
             )
         };
 
@@ -210,6 +215,7 @@ fn revocable_by_arbiters() {
                 accounts: arbiters.to_vec(),
                 required_votes: 2,
             },
+            pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert_ok!(Permission0::revoke_permission(

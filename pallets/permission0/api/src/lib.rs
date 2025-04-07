@@ -83,12 +83,25 @@ pub enum RevocationTerms<AccountId, BlockNumber> {
     RevocableAfter(BlockNumber),
 }
 
+/// Types of enforcement actions that can be voted on
+#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
+pub enum EnforcementAuthority<AccountId> {
+    /// No special enforcement (standard permission execution)
+    None,
+    /// Permission can be toggled active/inactive by controllers
+    ControlledBy {
+        controllers: Vec<AccountId>,
+        required_votes: u32,
+    },
+}
+
 /// The Permission0 API trait
 pub trait Permission0Api<AccountId, Origin, BlockNumber, Balance, NegativeImbalance> {
     /// Check if a permission exists
     fn permission_exists(id: &PermissionId) -> bool;
 
     /// Grant a permission for emission delegation
+    #[allow(clippy::too_many_arguments)]
     fn grant_emission_permission(
         grantor: AccountId,
         grantee: AccountId,
@@ -97,6 +110,7 @@ pub trait Permission0Api<AccountId, Origin, BlockNumber, Balance, NegativeImbala
         distribution: DistributionControl<Balance, BlockNumber>,
         duration: PermissionDuration<BlockNumber>,
         revocation: RevocationTerms<AccountId, BlockNumber>,
+        enforcement: EnforcementAuthority<AccountId>,
     ) -> Result<PermissionId, DispatchError>;
 
     /// Revoke a permission
