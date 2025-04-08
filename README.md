@@ -129,6 +129,14 @@ We maintain several documentation files to help you understand and contribute to
 
 - [docs/xtask-manual.md](docs/xtask-manual.md): Comprehensive guide to the `xtask` command-line tool that simplifies local development, testing, and network simulation
 
+- [pallet_emission0 docs](https://renlabs-dev.github.io/torus-substrate/pallet_emission0): Generated docs for the create `pallet_emission0`  
+
+- [pallet_governance docs](https://renlabs-dev.github.io/torus-substrate/pallet_governance): Generated docs for the create `pallet_governance`  
+
+- [pallet_permission0 docs](https://renlabs-dev.github.io/torus-substrate/pallet_permission0): Generated docs for the create `pallet_permission0`  
+
+- [pallet_torus0 docs](https://renlabs-dev.github.io/torus-substrate/pallet_torus0): Generated docs for the create `pallet_torus0`  
+
 ## Terminology
 
 We have some specific terminology throughout the codebase, so here's a list of the most important ones:
