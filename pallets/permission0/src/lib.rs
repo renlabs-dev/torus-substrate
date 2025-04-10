@@ -8,6 +8,7 @@ use pallet_permission0_api::StreamId;
 pub use weights::*;
 
 pub mod ext;
+pub mod migrations;
 pub mod permission;
 
 pub use permission::{
@@ -262,6 +263,8 @@ pub mod pallet {
         TooManyControllers,
         /// Invalid number of controllers or required votes
         InvalidNumberOfControllers,
+        /// Too many permissions are deriving the given parent
+        TooManyDerivations,
     }
 
     #[pallet::hooks]

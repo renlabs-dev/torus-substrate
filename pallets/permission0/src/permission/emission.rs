@@ -30,19 +30,19 @@ pub struct EmissionScope<T: Config> {
 
 impl<T: Config> EmissionScope<T> {
     pub(super) fn cleanup(
-        self,
+        &self,
         permission_id: H256,
         last_executed: &Option<BlockNumberFor<T>>,
         grantor: &T::AccountId,
     ) {
-        match self.allocation {
+        match &self.allocation {
             EmissionAllocation::Streams(streams) => {
                 for stream in streams.keys() {
                     AccumulatedStreamAmounts::<T>::remove((grantor, stream, &permission_id));
                 }
             }
             EmissionAllocation::FixedAmount(amount) if last_executed.is_none() => {
-                T::Currency::unreserve(grantor, amount);
+                T::Currency::unreserve(grantor, *amount);
             }
             _ => {}
         }
