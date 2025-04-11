@@ -12,7 +12,7 @@
     - Check that the hash given by the command `sha256sum <path-to-zipped-file>` is the same as the one beside the download button on the action page, on the `Digest` column.
     - The WASM blob to be used on the next steps is inside the downloaded zipped file. Extract it somewhere easy to find later.
 6. Connect the Torus Testnet Root account to [Polkadot Developer Interface](https://polkadot.js.org/apps/#/explorer) using the [PolkadotJS browser extension](https://polkadot.js.org/extension/).
-    - Make sure the interface is configured to point to the right net by clicking on the left sidebar, scrolling all the way to the bottom and under the development tab it should be Custom with the address `wss://api.testnet.torus.network` (for testnet) or `wss://api.torus.network` (for mainnet).
+    - Make sure the interface is configured to point to the right net by clicking on the left sidebar, scrolling all the way to the bottom and under the development tab it should be Custom with the address `wss://api.testnet.torus.network` (for testnet) or `wss://api.torus.network` (for mainnet). For testnet, it can also be checked through the `rpc=` query param, it should be something like this `?rpc=wss%3A%2F%2Fapi.testnet.torus.network` (the testnet api endpoint url encoded). 
 7. Upload the code to the runtime using the [Polkadot Developer Interface](https://polkadot.js.org/apps/#/explorer).
     - Click on the `Sudo` button under the `Developer` tab.
     - Select the `system` pallet and the `setCode` extrinsic.
