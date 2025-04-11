@@ -5,7 +5,9 @@
     - Make sure all tests pass by running `cargo test`
     - Make sure the runtime migrations work by running `just try-runtime-upgrade-{testnet,mainnet}`  
 3. Create the release tag following the format `runtime/{test,main}net-{spec_version}`. Example: runtime/testnet-12 (the spec version can be found in `runtime/src/lib.rs` under the `runtime_macro!` call). This will trigger a Github Action that builds the runtime WASM binary.
-4. Download said runtime binary and check it's checksum.
+    - The `spec_version` should ALWAYS be the higher number between the latest releases for mainnet and testnet + 1. Example: Latest testnet is 13 and mainnet is 9, the next release should be 14.
+    - Make sure to check if the spec_version on the code is correct and change it if it's not. 
+5. Download said runtime binary and check it's checksum.
     - The .zip file can be found on the `Artifacts` section of the Action that built it. Search for your commit message that has `Build Torus runtime` written below it on [this page](https://github.com/renlabs-dev/torus-substrate/actions). The correct file name is `torus_runtime.compact.compressed`.
     - Check that the hash given by the command `sha256sum <path-to-zipped-file>` is the same as the one beside the download button on the action page, on the `Digest` column.
     - The WASM blob to be used on the next steps is inside the downloaded zipped file. Extract it somewhere easy to find later.
