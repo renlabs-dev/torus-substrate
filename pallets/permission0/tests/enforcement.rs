@@ -133,6 +133,7 @@ fn toggle_accumulation_by_controller() {
             pallet_permission0::PermissionScope::Emission(emission_scope) => {
                 assert!(!emission_scope.accumulating);
             }
+            _ => {}
         }
 
         let balance_before = get_balance(grantee);
@@ -340,6 +341,7 @@ fn multi_controller_voting() {
             pallet_permission0::PermissionScope::Emission(emission_scope) => {
                 assert!(emission_scope.accumulating);
             }
+            _ => {}
         }
 
         assert_ok!(
@@ -355,6 +357,7 @@ fn multi_controller_voting() {
             pallet_permission0::PermissionScope::Emission(emission_scope) => {
                 assert!(!emission_scope.accumulating);
             }
+            _ => {}
         }
 
         distribute_emission(grantor, to_nano(10));
