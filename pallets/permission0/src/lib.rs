@@ -11,9 +11,9 @@ pub mod ext;
 pub mod permission;
 
 pub use permission::{
-    generate_permission_id, DistributionControl, EmissionAllocation, EmissionScope,
-    EnforcementAuthority, EnforcementReferendum, PermissionContract, PermissionDuration,
-    PermissionId, PermissionScope, RevocationTerms,
+    generate_permission_id, CuratorPermissions, CuratorScope, DistributionControl,
+    EmissionAllocation, EmissionScope, EnforcementAuthority, EnforcementReferendum,
+    PermissionContract, PermissionDuration, PermissionId, PermissionScope, RevocationTerms,
 };
 
 use polkadot_sdk::{
@@ -31,6 +31,8 @@ use polkadot_sdk::{
 
 #[frame::pallet]
 pub mod pallet {
+    use polkadot_sdk::frame_support::PalletId;
+
     use super::*;
 
     const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
@@ -41,6 +43,11 @@ pub mod pallet {
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
+
+        /// Permission0 pallet ID
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type PalletId: Get<PalletId>;
 
         type WeightInfo: WeightInfo;
 
@@ -262,6 +269,10 @@ pub mod pallet {
         TooManyControllers,
         /// Invalid number of controllers or required votes
         InvalidNumberOfControllers,
+        /// Permission is a duplicate, revoke the previous one
+        DuplicatePermission,
+        /// Permission is in cooldown, wait a bit.
+        PermissionInCooldown,
     }
 
     #[pallet::hooks]
@@ -288,7 +299,7 @@ pub mod pallet {
         ) -> DispatchResult {
             let grantor = ensure_signed(origin)?;
 
-            ext::grant_permission_impl::<T>(
+            ext::emission_impl::grant_emission_permission_impl::<T>(
                 grantor,
                 grantee,
                 allocation,
@@ -332,7 +343,11 @@ pub mod pallet {
             permission_id: PermissionId,
             accumulating: bool,
         ) -> DispatchResult {
-            ext::toggle_permission_accumulation_impl::<T>(origin, permission_id, accumulating)
+            ext::emission_impl::toggle_permission_accumulation_impl::<T>(
+                origin,
+                permission_id,
+                accumulating,
+            )
         }
 
         /// Execute a permission through enforcement authority

@@ -25,3 +25,4 @@ codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
 pallet-torus0-api = { workspace = true, default-features = false }
+bitflags = { workspace = true, default-features = false }

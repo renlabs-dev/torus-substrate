@@ -1,4 +1,4 @@
-use pallet_permission0_api::Permission0Api;
+use pallet_permission0_api::Permission0EmissionApi;
 use polkadot_sdk::frame_support::assert_err;
 use test_utils::*;
 

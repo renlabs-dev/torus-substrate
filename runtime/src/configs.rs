@@ -404,6 +404,7 @@ impl pallet_governance::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type Permission0 = Permission0;
 
     type WeightInfo = pallet_governance::weights::SubstrateWeight<Runtime>;
 }
@@ -440,6 +441,7 @@ impl pallet_emission0::Config for Runtime {
 }
 
 parameter_types! {
+    pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
     pub const MaxTargetsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MaxRevokersPerPermission: u32 = 10;
@@ -455,6 +457,8 @@ impl pallet_permission0::Config for Runtime {
     type Currency = Balances;
 
     type Torus = Torus0;
+
+    type PalletId = PermissionPalletId;
 
     type MaxTargetsPerPermission = MaxTargetsPerPermission;
 

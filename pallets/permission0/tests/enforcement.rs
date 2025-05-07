@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use pallet_permission0::permission::emission::StreamId;
 use pallet_permission0::EnforcementReferendum;
-use pallet_permission0_api::{generate_root_stream_id, Permission0Api};
+use pallet_permission0_api::{generate_root_stream_id, Permission0EmissionApi};
 use polkadot_sdk::frame_support::{assert_err, traits::Currency};
 use polkadot_sdk::sp_runtime::Percent;
 use test_utils::{assert_ok, *};
@@ -129,11 +129,8 @@ fn toggle_accumulation_by_controller() {
         );
 
         let contract = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        match contract.scope {
-            pallet_permission0::PermissionScope::Emission(emission_scope) => {
-                assert!(!emission_scope.accumulating);
-            }
-            _ => {}
+        if let pallet_permission0::PermissionScope::Emission(emission_scope) = contract.scope {
+            assert!(!emission_scope.accumulating);
         }
 
         let balance_before = get_balance(grantee);
@@ -337,11 +334,8 @@ fn multi_controller_voting() {
         );
 
         let contract = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        match contract.scope {
-            pallet_permission0::PermissionScope::Emission(emission_scope) => {
-                assert!(emission_scope.accumulating);
-            }
-            _ => {}
+        if let pallet_permission0::PermissionScope::Emission(emission_scope) = contract.scope {
+            assert!(emission_scope.accumulating);
         }
 
         assert_ok!(
@@ -353,11 +347,8 @@ fn multi_controller_voting() {
         );
 
         let contract = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        match contract.scope {
-            pallet_permission0::PermissionScope::Emission(emission_scope) => {
-                assert!(!emission_scope.accumulating);
-            }
-            _ => {}
+        if let pallet_permission0::PermissionScope::Emission(emission_scope) = contract.scope {
+            assert!(!emission_scope.accumulating);
         }
 
         distribute_emission(grantor, to_nano(10));

@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use pallet_emission0::distribute::get_total_emission_per_block;
 use pallet_permission0::AccumulatedStreamAmounts;
-use pallet_permission0_api::{generate_root_stream_id, Permission0Api};
+use pallet_permission0_api::{generate_root_stream_id, Permission0EmissionApi};
 use polkadot_sdk::{
     frame_support::assert_err,
     sp_runtime::{BoundedVec, Percent},

@@ -1,5 +1,5 @@
 use pallet_governance_api::GovernanceApi;
-use pallet_permission0_api::Permission0Api;
+use pallet_permission0_api::Permission0EmissionApi;
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_support::{
