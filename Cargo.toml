@@ -22,6 +22,7 @@ pallet-governance = { path = "./pallets/governance", default-features = false }
 pallet-governance-api = { path = "./pallets/governance/api", default-features = false }
 pallet-emission0 = { path = "./pallets/emission0", default-features = false }
 pallet-emission0-api = { path = "./pallets/emission0/api", default-features = false }
+pallet-faucet = { path = "./pallets/faucet", default-features = false }
 pallet-torus0 = { path = "./pallets/torus0", default-features = false }
 pallet-torus0-api = { path = "./pallets/torus0/api", default-features = false }
 pallet-permission0 = { path = "./pallets/permission0", default-features = false }

@@ -159,6 +159,9 @@ mod runtime {
 
     #[runtime::pallet_index(14)]
     pub type Permission0 = pallet_permission0::Pallet<Runtime>;
+
+    #[runtime::pallet_index(15)]
+    pub type Faucet = pallet_faucet::Pallet<Runtime>;
 }
 
 parameter_types! {

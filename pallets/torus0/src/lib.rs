@@ -495,6 +495,10 @@ impl<T: Config>
             .unwrap_or_else(|| FeeConstraints::<T>::get().min_staking_fee)
     }
 
+    fn sum_staking_to(staker: &T::AccountId) -> BalanceOf<T> {
+        stake::sum_staking_to::<T>(staker)
+    }
+
     fn staked_by(
         staked: &T::AccountId,
     ) -> sp_std::vec::Vec<(

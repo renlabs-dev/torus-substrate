@@ -53,7 +53,7 @@ try-runtime = [
     # Frontier
     "fp-self-contained/try-runtime",
 ]
-
+testnet = ["pallet-faucet/testnet"]
 
 [dependencies]
 
@@ -96,6 +96,7 @@ pallet-torus0-api.workspace = true
 pallet-governance-api.workspace = true
 pallet-permission0-api.workspace = true
 
+pallet-faucet = { workspace = true, default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { optional = true, workspace = true, features = [
