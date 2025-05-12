@@ -1,3 +1,6 @@
+use pallet_permission0_api::{
+    CuratorPermissions, Permission0CuratorApi, PermissionDuration, RevocationTerms,
+};
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_benchmarking::{account, benchmarks},
@@ -26,8 +29,16 @@ benchmarks! {
 
     remove_curator {
         let module_key: T::AccountId = account("ModuleKey", 0, 2);
-        crate::roles::manage_role::<T, crate::Curators<T>>(module_key.clone(), true, crate::Error::<T>::AlreadyCurator)
-            .expect("failed to add curator");
+
+        <<T as Config>::Permission0>::grant_curator_permission(
+                origin,
+                module_key.clone(),
+                CuratorPermissions::all(),
+                None,
+                PermissionDuration::Indefinite,
+                RevocationTerms::RevocableByGrantor,
+            );
+
     }: _(RawOrigin::Root, module_key)
 
     add_allocator {

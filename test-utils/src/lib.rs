@@ -4,7 +4,10 @@ use std::{cell::RefCell, num::NonZeroU128};
 
 pub use pallet_emission0;
 pub use pallet_governance;
+pub use pallet_permission0;
 pub use pallet_torus0;
+
+use pallet_permission0_api::CuratorPermissions;
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
@@ -12,7 +15,8 @@ use polkadot_sdk::{
         traits::{Currency, Everything, Hooks},
         PalletId,
     },
-    frame_system, pallet_balances,
+    frame_system::{self, RawOrigin},
+    pallet_balances,
     polkadot_sdk_frame::runtime::prelude::*,
     sp_core::{Get, H256},
     sp_io,
@@ -217,11 +221,13 @@ impl pallet_governance::Config for Test {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type Permission0 = Permission0;
 
     type WeightInfo = pallet_governance::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {
+    pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
     pub const MaxTargetsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MaxRevokersPerPermission: u32 = 10;
@@ -237,6 +243,8 @@ impl pallet_permission0::Config for Test {
     type Currency = Balances;
 
     type Torus = Torus0;
+
+    type PalletId = PermissionPalletId;
 
     type MaxTargetsPerPermission = MaxTargetsPerPermission;
 
@@ -398,6 +406,19 @@ pub fn register_empty_agent(key: AccountId) {
             last_update_block: Default::default(),
         }),
     );
+}
+
+pub fn make_curator(key: AccountId, flags: CuratorPermissions, cooldown: Option<BlockNumber>) {
+    use pallet_permission0_api::Permission0CuratorApi;
+    pallet_permission0::Pallet::<Test>::grant_curator_permission(
+        RawOrigin::Root.into(),
+        key,
+        flags,
+        cooldown,
+        pallet_permission0_api::PermissionDuration::Indefinite,
+        pallet_permission0_api::RevocationTerms::Irrevocable,
+    )
+    .expect("failed to register curator");
 }
 
 pub fn clear_cooldown() {

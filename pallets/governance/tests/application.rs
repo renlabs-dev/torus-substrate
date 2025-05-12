@@ -4,6 +4,7 @@ use pallet_governance::{
 };
 use pallet_governance::{DaoTreasuryAddress, TreasuryEmissionFee};
 use pallet_governance_api::GovernanceApi;
+use pallet_permission0_api::CuratorPermissions;
 use polkadot_sdk::frame_support::assert_err;
 use polkadot_sdk::sp_runtime::Percent;
 use test_utils::*;
@@ -15,7 +16,7 @@ fn error_is_thrown_on_applying_add_already_whitelisted() {
 
         let key = 0;
         let adding_key = 1;
-        pallet_governance::Curators::<Test>::insert(key, ());
+        make_curator(key, CuratorPermissions::all(), None);
         pallet_governance::Whitelist::<Test>::insert(adding_key, ());
 
         let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
@@ -42,7 +43,7 @@ fn error_is_thrown_on_applying_remove_not_whitelisted() {
 
         let key = 0;
         let adding_key = 1;
-        pallet_governance::Curators::<Test>::insert(key, ());
+        make_curator(key, CuratorPermissions::all(), None);
 
         let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
         let data = "test".as_bytes().to_vec();
@@ -68,7 +69,7 @@ fn whitelist_executes_application_correctly_add() {
 
         let key = 0;
         let adding_key = 1;
-        pallet_governance::Curators::<Test>::insert(key, ());
+        make_curator(key, CuratorPermissions::all(), None);
 
         let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
         let data = "test".as_bytes().to_vec();
@@ -123,7 +124,7 @@ fn whitelist_executes_application_correctly_remove() {
 
         let key = 0;
         let removing_key = 1;
-        pallet_governance::Curators::<Test>::insert(key, ());
+        make_curator(key, CuratorPermissions::all(), None);
 
         let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
         let data = "test".as_bytes().to_vec();
@@ -180,7 +181,7 @@ fn error_is_thrown_on_multiple_applications_same_key() {
 
         let key = 0;
         let adding_key = 1;
-        pallet_governance::Curators::<Test>::insert(key, ());
+        make_curator(key, CuratorPermissions::all(), None);
 
         let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
         let data = "test".as_bytes().to_vec();
@@ -215,7 +216,7 @@ fn application_denied_doesnt_add_to_whitelist() {
 
         let key = 0;
         let adding_key = 1;
-        pallet_governance::Curators::<Test>::insert(key, ());
+        make_curator(key, CuratorPermissions::all(), None);
 
         let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
         let data = "test".as_bytes().to_vec();
@@ -281,7 +282,7 @@ fn application_expires() {
 
         let key = 0;
         let adding_key = 1;
-        pallet_governance::Curators::<Test>::insert(key, ());
+        make_curator(key, CuratorPermissions::all(), None);
 
         let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
         let data = "test".as_bytes().to_vec();
@@ -325,7 +326,7 @@ fn error_is_thrown_on_resolving_non_open_application() {
 
         let key = 0;
         let adding_key = 1;
-        pallet_governance::Curators::<Test>::insert(key, ());
+        make_curator(key, CuratorPermissions::all(), None);
 
         let proposal_cost = GlobalGovernanceConfig::<Test>::get().agent_application_cost;
         let data = "test".as_bytes().to_vec();

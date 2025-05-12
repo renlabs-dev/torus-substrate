@@ -1,8 +1,10 @@
-use pallet_governance::{Curators, GlobalGovernanceConfig, Whitelist};
+use pallet_governance::{GlobalGovernanceConfig, Whitelist};
+use pallet_permission0_api::CuratorPermissions;
 use polkadot_sdk::{frame_support::assert_err, sp_runtime::Percent};
 use test_utils::*;
 
 use crate::pallet_governance::Error;
+use crate::pallet_permission0::Error as PermissionError;
 
 fn register(account: AccountId, _unused: u16, module: AccountId, stake: u128) {
     if get_balance(account) < stake {
@@ -30,31 +32,6 @@ fn register(account: AccountId, _unused: u16, module: AccountId, stake: u128) {
             account, module, stake
         ));
     }
-}
-
-#[test]
-fn add_and_remove_curator() {
-    new_test_ext().execute_with(|| {
-        let curator_key = 0;
-
-        assert_ok!(pallet_governance::Pallet::<Test>::add_curator(
-            RuntimeOrigin::root(),
-            curator_key
-        ));
-
-        assert!(pallet_governance::Curators::<Test>::contains_key(
-            curator_key
-        ));
-
-        assert_ok!(pallet_governance::Pallet::<Test>::remove_curator(
-            RuntimeOrigin::root(),
-            curator_key,
-        ));
-
-        assert!(!pallet_governance::Curators::<Test>::contains_key(
-            curator_key
-        ));
-    });
 }
 
 #[test]
@@ -87,7 +64,24 @@ fn add_and_remove_from_whitelist() {
     new_test_ext().execute_with(|| {
         let curator_key = 0;
         let module_key = 1;
-        Curators::<Test>::insert(curator_key, ());
+
+        assert_err!(
+            pallet_governance::Pallet::<Test>::add_to_whitelist(
+                get_origin(curator_key),
+                module_key
+            ),
+            PermissionError::<Test>::PermissionNotFound
+        );
+
+        assert_err!(
+            pallet_governance::Pallet::<Test>::remove_from_whitelist(
+                get_origin(curator_key),
+                module_key
+            ),
+            PermissionError::<Test>::PermissionNotFound
+        );
+
+        make_curator(curator_key, CuratorPermissions::WHITELIST_MANAGE, None);
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_to_whitelist(
             get_origin(curator_key),
@@ -126,36 +120,12 @@ fn add_and_remove_from_whitelist() {
 }
 
 #[test]
-fn only_curators_can_whitelist() {
-    new_test_ext().execute_with(|| {
-        let not_curator_key = 0;
-        let module_key = 1;
-
-        assert_err!(
-            pallet_governance::Pallet::<Test>::add_to_whitelist(
-                get_origin(not_curator_key),
-                module_key
-            ),
-            Error::<Test>::NotCurator
-        );
-
-        assert_err!(
-            pallet_governance::Pallet::<Test>::remove_from_whitelist(
-                get_origin(not_curator_key),
-                module_key
-            ),
-            Error::<Test>::NotCurator
-        );
-    });
-}
-
-#[test]
 fn cannot_remove_from_whitelist_if_remove_application_exists() {
     new_test_ext().execute_with(|| {
         let curator_key = 0;
         let module_key = 1;
 
-        Curators::<Test>::insert(curator_key, ());
+        make_curator(curator_key, CuratorPermissions::WHITELIST_MANAGE, None);
 
         Whitelist::<Test>::set(module_key, Some(()));
 
@@ -188,7 +158,7 @@ fn penalize_agent_successfully() {
         let curator_key = 0;
         let module_key = 1;
 
-        Curators::<Test>::insert(curator_key, ());
+        make_curator(curator_key, CuratorPermissions::PENALTY_CONTROL, None);
 
         register(module_key, 0, module_key, to_nano(100));
 

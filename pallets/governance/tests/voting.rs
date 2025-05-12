@@ -4,7 +4,7 @@ use pallet_governance::{
     DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals, TreasuryEmissionFee,
 };
 use pallet_governance_api::GovernanceApi;
-use polkadot_sdk::frame_support::assert_err;
+use polkadot_sdk::{frame_support::assert_err, frame_system::RawOrigin};
 use polkadot_sdk::{frame_support::assert_ok, sp_runtime::Percent};
 use polkadot_sdk::{frame_support::traits::Get, sp_runtime::BoundedVec};
 use test_utils::{
@@ -219,7 +219,7 @@ fn ensures_proposal_exists() {
             stake(MODULE, MODULE, to_nano(1));
         }
 
-        let _ = pallet_governance::roles::penalize_agent::<Test>(0, 100);
+        let _ = pallet_governance::roles::penalize_agent::<Test>(RawOrigin::Root.into(), 0, 100);
         pallet_torus0::TotalStake::<Test>::set(to_nano(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(

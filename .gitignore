@@ -16,3 +16,5 @@
 
 # Git Hooks
 .pre-commit-config.yaml
+
+**/CLAUDE.local.md
