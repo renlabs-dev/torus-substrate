@@ -42,7 +42,7 @@ use crate::{
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
     use pallet_permission0_api::{
         CuratorPermissions, Permission0Api, Permission0CuratorApi, PermissionDuration,
@@ -94,10 +94,6 @@ pub mod pallet {
     /// agents.
     #[pallet::storage]
     pub type Whitelist<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
-
-    // /// List of curator keys, which can accept and reject applications.
-    // #[pallet::storage]
-    // pub type Curators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
     /// List of allocator keys, which are the default validators on the network.
     #[pallet::storage]

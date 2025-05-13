@@ -8,6 +8,7 @@ use pallet_permission0_api::StreamId;
 pub use weights::*;
 
 pub mod ext;
+pub mod migrations;
 pub mod permission;
 
 pub use permission::{
@@ -35,7 +36,7 @@ pub mod pallet {
 
     use super::*;
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config(with_default)]
@@ -425,13 +426,18 @@ pub mod pallet {
         pub fn grant_curator_permission(
             origin: OriginFor<T>,
             grantee: T::AccountId,
-            flags: CuratorPermissions,
+            flags: u32,
             cooldown: Option<BlockNumberFor<T>>,
             duration: PermissionDuration<T>,
             revocation: RevocationTerms<T>,
         ) -> DispatchResult {
             ext::curator_impl::grant_curator_permission_impl::<T>(
-                origin, grantee, flags, cooldown, duration, revocation,
+                origin,
+                grantee,
+                CuratorPermissions::from_bits_truncate(flags),
+                cooldown,
+                duration,
+                revocation,
             )?;
 
             Ok(())
