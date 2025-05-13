@@ -66,7 +66,7 @@ impl<T: Config>
             ApiDistributionControl::Interval(interval) => DistributionControl::Interval(interval),
         };
 
-        let duration = super::translate_duration(duration);
+        let duration = super::translate_duration(duration)?;
         let revocation = super::translate_revocation_terms(revocation)?;
         let enforcement = super::translate_enforcement_authority(enforcement)?;
 

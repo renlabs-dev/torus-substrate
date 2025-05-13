@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use pallet_emission0::distribute::get_total_emission_per_block;
 use pallet_permission0::AccumulatedStreamAmounts;
-use pallet_permission0_api::{generate_root_stream_id, Permission0EmissionApi};
+use pallet_permission0_api::generate_root_stream_id;
 use polkadot_sdk::{
     frame_support::assert_err,
     sp_runtime::{BoundedVec, Percent},
@@ -33,7 +33,7 @@ fn stream_fails_if_overflow() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(98));
 
-        assert_ok!(Permission0::grant_emission_permission(
+        assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -50,7 +50,7 @@ fn stream_fails_if_overflow() {
         streams.insert(stream_id, Percent::from_percent(3));
 
         assert_err!(
-            Permission0::grant_emission_permission(
+            grant_emission_permission(
                 agent_0,
                 agent_1,
                 pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -82,7 +82,7 @@ fn stream_creates() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -129,7 +129,7 @@ fn stream_manual_executes() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -186,7 +186,7 @@ fn stream_accumulates_and_executes_at_threshold() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             miner,
             val,
             pallet_permission0_api::EmissionAllocation::Streams(streams),

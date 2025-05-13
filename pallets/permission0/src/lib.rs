@@ -273,6 +273,8 @@ pub mod pallet {
         DuplicatePermission,
         /// Permission is in cooldown, wait a bit.
         PermissionInCooldown,
+        /// Curator flags provided are invalid.
+        InvalidCuratorPermissions,
     }
 
     #[pallet::hooks]
@@ -287,7 +289,7 @@ pub mod pallet {
         /// Grant a permission for emission delegation
         #[pallet::call_index(0)]
         #[pallet::weight(T::WeightInfo::grant_permission())]
-        pub fn grant_permission(
+        pub fn grant_emission_permission(
             origin: OriginFor<T>,
             grantee: T::AccountId,
             allocation: EmissionAllocation<T>,
@@ -413,6 +415,24 @@ pub mod pallet {
                     required_votes: *required_votes,
                 });
             }
+
+            Ok(())
+        }
+
+        /// Grant a permission for curator delegation
+        #[pallet::call_index(6)]
+        #[pallet::weight(T::WeightInfo::grant_permission())]
+        pub fn grant_curator_permission(
+            origin: OriginFor<T>,
+            grantee: T::AccountId,
+            flags: CuratorPermissions,
+            cooldown: Option<BlockNumberFor<T>>,
+            duration: PermissionDuration<T>,
+            revocation: RevocationTerms<T>,
+        ) -> DispatchResult {
+            ext::curator_impl::grant_curator_permission_impl::<T>(
+                origin, grantee, flags, cooldown, duration, revocation,
+            )?;
 
             Ok(())
         }

@@ -59,18 +59,20 @@ pub enum DistributionControl<Balance, BlockNumber> {
 }
 
 /// Duration of the permission
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
+#[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
 pub enum PermissionDuration<BlockNumber> {
     /// Permission lasts until a specific block
     UntilBlock(BlockNumber),
     /// Permission lasts indefinitely
+    #[default]
     Indefinite,
 }
 
 /// Terms for revocation
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
+#[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
 pub enum RevocationTerms<AccountId, BlockNumber> {
     /// Cannot be revoked
+    #[default]
     Irrevocable,
     /// Can be revoked by the grantor at any time
     RevocableByGrantor,
@@ -84,9 +86,10 @@ pub enum RevocationTerms<AccountId, BlockNumber> {
 }
 
 /// Types of enforcement actions that can be voted on
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
+#[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
 pub enum EnforcementAuthority<AccountId> {
     /// No special enforcement (standard permission execution)
+    #[default]
     None,
     /// Permission can be toggled active/inactive by controllers
     ControlledBy {

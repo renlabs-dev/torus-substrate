@@ -42,11 +42,16 @@ impl<T: Config>
 
 fn translate_duration<T: Config>(
     duration: ApiPermissionDuration<BlockNumberFor<T>>,
-) -> PermissionDuration<T> {
-    match duration {
-        ApiPermissionDuration::UntilBlock(block) => PermissionDuration::UntilBlock(block),
+) -> Result<PermissionDuration<T>, DispatchError> {
+    Ok(match duration {
+        ApiPermissionDuration::UntilBlock(block) => {
+            let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
+            ensure!(block > current_block, Error::<T>::InvalidInterval);
+
+            PermissionDuration::UntilBlock(block)
+        }
         ApiPermissionDuration::Indefinite => PermissionDuration::Indefinite,
-    }
+    })
 }
 
 fn translate_revocation_terms<T: Config>(

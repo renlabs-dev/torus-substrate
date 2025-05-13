@@ -1,4 +1,3 @@
-use pallet_permission0_api::Permission0EmissionApi;
 use polkadot_sdk::frame_support::assert_err;
 use test_utils::*;
 
@@ -13,7 +12,7 @@ fn fixed_fails_without_balance() {
         register_empty_agent(agent_1);
 
         assert_err!(
-            Permission0::grant_emission_permission(
+            grant_emission_permission(
                 agent_0,
                 agent_1,
                 pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -40,7 +39,7 @@ fn fixed_creates() {
 
         add_balance(agent_0, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -69,7 +68,7 @@ fn fixed_reserves() {
 
         add_balance(agent_0, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -103,7 +102,7 @@ fn fixed_manual_executes() {
 
         add_balance(agent_0, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -149,7 +148,7 @@ fn fixed_manual_executes_only_once() {
 
         add_balance(agent_0, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -199,7 +198,7 @@ fn fixed_at_block_executes() {
 
         add_balance(agent_0, to_nano(10) + 1);
 
-        let _ = assert_ok!(Permission0::grant_emission_permission(
+        let _ = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),

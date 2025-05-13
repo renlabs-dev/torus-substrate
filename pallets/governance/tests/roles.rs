@@ -81,7 +81,7 @@ fn add_and_remove_from_whitelist() {
             PermissionError::<Test>::PermissionNotFound
         );
 
-        make_curator(curator_key, CuratorPermissions::WHITELIST_MANAGE, None);
+        grant_curator_permission(curator_key, CuratorPermissions::WHITELIST_MANAGE, None);
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_to_whitelist(
             get_origin(curator_key),
@@ -125,7 +125,7 @@ fn cannot_remove_from_whitelist_if_remove_application_exists() {
         let curator_key = 0;
         let module_key = 1;
 
-        make_curator(curator_key, CuratorPermissions::WHITELIST_MANAGE, None);
+        grant_curator_permission(curator_key, CuratorPermissions::WHITELIST_MANAGE, None);
 
         Whitelist::<Test>::set(module_key, Some(()));
 
@@ -158,7 +158,7 @@ fn penalize_agent_successfully() {
         let curator_key = 0;
         let module_key = 1;
 
-        make_curator(curator_key, CuratorPermissions::PENALTY_CONTROL, None);
+        grant_curator_permission(curator_key, CuratorPermissions::PENALTY_CONTROL, None);
 
         register(module_key, 0, module_key, to_nano(100));
 

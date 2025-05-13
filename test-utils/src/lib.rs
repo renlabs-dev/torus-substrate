@@ -7,7 +7,7 @@ pub use pallet_governance;
 pub use pallet_permission0;
 pub use pallet_torus0;
 
-use pallet_permission0_api::CuratorPermissions;
+use pallet_permission0_api::{CuratorPermissions, PermissionId};
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
@@ -408,9 +408,51 @@ pub fn register_empty_agent(key: AccountId) {
     );
 }
 
-pub fn make_curator(key: AccountId, flags: CuratorPermissions, cooldown: Option<BlockNumber>) {
+pub type NegativeImbalanceOf = <pallet_balances::Pallet<Test> as Currency<
+    <Test as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
+
+#[allow(clippy::too_many_arguments)]
+pub fn grant_emission_permission(
+    grantor: AccountId,
+    grantee: AccountId,
+    allocation: pallet_permission0_api::EmissionAllocation<Balance>,
+    targets: Vec<(AccountId, u16)>,
+    distribution: pallet_permission0_api::DistributionControl<Balance, BlockNumber>,
+    duration: pallet_permission0_api::PermissionDuration<BlockNumber>,
+    revocation: pallet_permission0_api::RevocationTerms<AccountId, BlockNumber>,
+    enforcement: pallet_permission0_api::EnforcementAuthority<AccountId>,
+) -> Result<PermissionId, polkadot_sdk::sp_runtime::DispatchError> {
+    use pallet_permission0_api::Permission0EmissionApi;
+    <Permission0 as Permission0EmissionApi<
+        AccountId,
+        RuntimeOrigin,
+        BlockNumber,
+        Balance,
+        NegativeImbalanceOf,
+    >>::grant_emission_permission(
+        grantor,
+        grantee,
+        allocation,
+        targets,
+        distribution,
+        duration,
+        revocation,
+        enforcement,
+    )
+}
+
+pub fn grant_curator_permission(
+    key: AccountId,
+    flags: CuratorPermissions,
+    cooldown: Option<BlockNumber>,
+) {
     use pallet_permission0_api::Permission0CuratorApi;
-    pallet_permission0::Pallet::<Test>::grant_curator_permission(
+    <pallet_permission0::Pallet<Test> as Permission0CuratorApi<
+        AccountId,
+        RuntimeOrigin,
+        BlockNumber,
+    >>::grant_curator_permission(
         RawOrigin::Root.into(),
         key,
         flags,
