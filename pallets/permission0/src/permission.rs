@@ -8,10 +8,11 @@ use polkadot_sdk::{
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{H256, U256},
     sp_runtime::{
-        traits::{BlakeTwo256, Hash},
+        traits::{BlakeTwo256, ConstU32, Hash},
         BoundedBTreeMap, BoundedVec, Percent,
     },
     sp_std::vec::Vec,
+    sp_tracing::error,
 };
 use scale_info::TypeInfo;
 
@@ -60,6 +61,7 @@ pub struct PermissionContract<T: Config> {
     pub execution_count: u32,
     /// Parent permission ID (None for root permissions)
     pub parent: Option<PermissionId>,
+    pub children: BoundedVec<PermissionId, ConstU32<256>>,
     pub created_at: BlockNumberFor<T>,
 }
 
@@ -73,7 +75,7 @@ impl<T: Config> PermissionContract<T> {
 
     pub fn revoke(self, origin: OriginFor<T>, permission_id: H256) -> DispatchResult {
         // The grantee is also always allowed to revoke the permission.
-        let who = ensure_signed_or_root(origin)?.filter(|who| who != &self.grantee);
+        let who = ensure_signed_or_root(origin.clone())?.filter(|who| who != &self.grantee);
 
         let grantor = self.grantor.clone();
         let grantee = self.grantee.clone();
@@ -127,19 +129,45 @@ impl<T: Config> PermissionContract<T> {
             permission_id,
         });
 
+        self.cleanup_children(origin, permission_id);
+
         Ok(())
     }
 
-    fn cleanup(self, permission_id: H256) {
+    fn cleanup(&self, permission_id: H256) {
         crate::remove_permission_from_indices::<T>(&self.grantor, &self.grantee, permission_id);
 
         Permissions::<T>::remove(permission_id);
         RevocationTracking::<T>::remove(permission_id);
         let _ = EnforcementTracking::<T>::clear_prefix(permission_id, u32::MAX, None);
 
-        match self.scope {
+        match &self.scope {
             PermissionScope::Emission(emission) => {
                 emission.cleanup(permission_id, &self.last_execution, &self.grantor)
+            }
+        }
+
+        if let Some(parent) = self.parent {
+            Permissions::<T>::mutate(parent, |parent_contract| {
+                let Some(parent_contract) = parent_contract.as_mut() else {
+                    return;
+                };
+
+                parent_contract
+                    .children
+                    .retain(|child| child != &permission_id);
+            });
+        }
+    }
+
+    fn cleanup_children(&self, origin: OriginFor<T>, permission_id: H256) {
+        for child in &self.children {
+            let Some(children_contract) = Permissions::<T>::get(child) else {
+                continue;
+            };
+
+            if let Err(err) = children_contract.revoke(origin.clone(), *child) {
+                error!("Could not delete {child} child of {permission_id}: {err:?}");
             }
         }
     }

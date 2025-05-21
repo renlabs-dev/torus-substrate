@@ -17,6 +17,7 @@ use polkadot_sdk::{
     frame_support::{
         ensure,
         traits::{Currency, Get, ReservableCurrency},
+        BoundedVec,
     },
     frame_system::{self, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
@@ -307,8 +308,24 @@ pub(crate) fn grant_permission_impl<T: Config>(
         last_execution: None,
         execution_count: 0,
         parent: parent_id,
+        children: BoundedVec::new(),
         created_at: <frame_system::Pallet<T>>::block_number(),
     };
+
+    if let Some(parent) = parent_id {
+        Permissions::<T>::try_mutate(parent, |parent| {
+            let parent_contract = parent
+                .as_mut()
+                .ok_or(Error::<T>::ParentPermissionNotFound)?;
+
+            parent_contract
+                .children
+                .try_push(permission_id)
+                .map_err(|_| Error::<T>::TooManyDerivations)?;
+
+            Ok::<(), crate::Error<T>>(())
+        })?;
+    }
 
     // Reserve funds if fixed amount allocation. We use the Balances API for this.
     // This means total issuance is always correct.
