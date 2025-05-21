@@ -1,5 +1,13 @@
 default: check test
 
+# Build
+
+build-mainnet:
+  cargo build --release --timings --package torus-runtime
+
+build-testnet:
+  cargo build --release --features testnet --timings --package torus-runtime
+
 # Development
 
 check:

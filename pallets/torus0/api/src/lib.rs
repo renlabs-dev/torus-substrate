@@ -17,6 +17,8 @@ pub trait Torus0Api<AccountId, Balance, NegativeImbalance> {
     fn weight_penalty_factor(who: &AccountId) -> Percent;
     fn staking_fee(who: &AccountId) -> Percent;
 
+    fn sum_staking_to(staker: &AccountId) -> Balance;
+
     fn staked_by(staked: &AccountId) -> alloc::vec::Vec<(AccountId, Balance)>;
     fn stake_to(staker: &AccountId, staked: &AccountId, amount: Balance) -> Result<(), Balance>;
 

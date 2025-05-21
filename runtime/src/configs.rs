@@ -466,3 +466,9 @@ impl pallet_permission0::Config for Runtime {
 
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 }
+
+impl pallet_faucet::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type Torus = Torus0;
+}

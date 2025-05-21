@@ -1,11 +1,8 @@
-#![allow(non_camel_case_types)]
+#![allow(unused)]
 
-use std::{cell::RefCell, num::NonZeroU128};
+use std::{cell::RefCell, io::Read, num::NonZeroU128};
 
-pub use pallet_emission0;
-pub use pallet_governance;
-pub use pallet_torus0;
-use pallet_torus0::MinAllowedStake;
+use crate::frame_support::assert_ok;
 use polkadot_sdk::{
     frame_support::{
         self, parameter_types,
@@ -13,12 +10,13 @@ use polkadot_sdk::{
         PalletId,
     },
     frame_system, pallet_balances,
-    polkadot_sdk_frame::runtime::prelude::*,
-    sp_core::{Get, H256},
+    polkadot_sdk_frame::{prelude::BlockNumberFor, runtime::prelude::*},
+    sp_core::{hex2array, keccak_256, ByteArray, Get, H256, U256},
     sp_io,
     sp_runtime::{
-        traits::{BlakeTwo256, IdentityLookup},
-        BuildStorage, Percent,
+        self,
+        traits::{AccountIdConversion, BlakeTwo256, BlockNumberProvider, IdentityLookup},
+        BoundedVec, BuildStorage, Percent,
     },
     sp_tracing,
 };
@@ -52,7 +50,7 @@ mod runtime {
 }
 
 pub type Block = frame_system::mocking::MockBlock<Test>;
-pub type AccountId = u32;
+pub type AccountId = sp_runtime::AccountId32;
 
 #[allow(dead_code)]
 pub type BalanceCall = pallet_balances::Call<Test>;
@@ -304,39 +302,10 @@ impl pallet_faucet::Config for Test {
     type Torus = Torus0;
 }
 
-// Utility functions
-//===================
-
 const TOKEN_DECIMALS: u32 = 18;
 
 pub const fn to_nano(x: Balance) -> Balance {
     x.saturating_mul((10 as Balance).pow(TOKEN_DECIMALS))
-}
-
-pub const fn from_nano(x: Balance) -> Balance {
-    x.saturating_div((10 as Balance).pow(TOKEN_DECIMALS))
-}
-
-pub fn add_balance(key: AccountId, amount: Balance) {
-    drop(<Balances as Currency<AccountId>>::deposit_creating(
-        &key, amount,
-    ));
-}
-
-pub fn add_stake(staker: AccountId, staked: AccountId, amount: Balance) {
-    let amount = MinAllowedStake::<Test>::get().max(amount);
-    let existential = ExistentialDeposit::get().saturating_sub(get_balance(staker));
-
-    drop(<Balances as Currency<AccountId>>::deposit_creating(
-        &staker,
-        amount + existential,
-    ));
-
-    if !pallet_torus0::Agents::<Test>::contains_key(staked) {
-        register_empty_agent(staked);
-    }
-
-    pallet_torus0::stake::add_stake::<Test>(staker, staked, amount).expect("failed to add stake");
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -353,94 +322,79 @@ pub fn new_test_ext_with_block(block: BlockNumber) -> sp_io::TestExternalities {
     ext
 }
 
-pub fn get_origin(key: AccountId) -> RuntimeOrigin {
-    <<Test as frame_system::Config>::RuntimeOrigin>::signed(key)
-}
-
-pub fn step_block(count: BlockNumber) {
+pub fn goto_block(block: BlockNumber) {
     let current = System::block_number();
-    for block in current..current + count {
-        Permission0::on_finalize(block);
-        Torus0::on_finalize(block);
-        Emission0::on_finalize(block);
-        Governance::on_finalize(block);
-        System::on_finalize(block);
+    // for block in current..current + count {
+    Permission0::on_finalize(block - 1);
+    Torus0::on_finalize(block - 1);
+    Emission0::on_finalize(block - 1);
+    Governance::on_finalize(block - 1);
+    System::on_finalize(block - 1);
 
-        System::set_block_number(block + 1);
+    System::set_block_number(block);
 
-        System::on_initialize(block + 1);
-        Governance::on_initialize(block + 1);
-        Emission0::on_initialize(block + 1);
-        Torus0::on_initialize(block + 1);
-        Permission0::on_initialize(block + 1);
-    }
+    System::on_initialize(block);
+    Governance::on_initialize(block);
+    Emission0::on_initialize(block);
+    Torus0::on_initialize(block);
+    Permission0::on_initialize(block);
 }
+// }
 
-pub fn run_to_block(target: BlockNumber) {
-    step_block(target - System::block_number());
-}
+#[cfg(feature = "testnet")]
+#[test]
+fn faucet_fails_with_wrong_pow() {
+    use polkadot_sdk::frame_support::assert_err;
 
-pub fn get_balance(key: AccountId) -> Balance {
-    <Balances as Currency<AccountId>>::free_balance(&key)
-}
+    new_test_ext().execute_with(|| {
+        goto_block(1);
 
-pub fn register_empty_agent(key: AccountId) {
-    pallet_torus0::Agents::<Test>::set(
-        key,
-        Some(pallet_torus0::agent::Agent {
-            key,
-            name: Default::default(),
-            url: Default::default(),
-            metadata: Default::default(),
-            weight_penalty_factor: Default::default(),
-            registration_block: <polkadot_sdk::frame_system::Pallet<Test>>::block_number(),
-            fees: Default::default(),
-            last_update_block: Default::default(),
-        }),
-    );
-}
-
-pub fn clear_cooldown() {
-    pallet_torus0::AgentUpdateCooldown::<Test>::set(0);
-}
-
-pub fn round_first_five(num: u64) -> u64 {
-    let place_value = 10_u64.pow(num.to_string().len() as u32 - 5);
-    let first_five = num / place_value;
-
-    if first_five % 10 >= 5 {
-        (first_five / 10 + 1) * place_value * 10
-    } else {
-        (first_five / 10) * place_value * 10
-    }
-}
-
-pub fn zero_min_burn() {
-    DEFAULT_MIN_BURN.set(0);
-}
-
-#[macro_export]
-macro_rules! assert_ok {
-    ( $x:expr $(,)? ) => {
-        match $x {
-            Ok(v) => v,
-            is => panic!("Expected Ok(_). Got {is:#?}"),
-        }
-    };
-    ( $x:expr, $y:expr $(,)? ) => {
-        assert_eq!($x, Ok($y));
-    };
-}
-
-#[macro_export]
-macro_rules! assert_in_range {
-    ($value:expr, $expected:expr, $margin:expr) => {
-        assert!(
-            ($expected - $margin..=$expected + $margin).contains(&$value),
-            "value {} is out of range {}..={}",
-            $value,
-            $expected,
-            $margin
+        let origin = <<Test as frame_system::Config>::RuntimeOrigin>::none();
+        let res = pallet_faucet::Pallet::<Test>::faucet(
+            origin,
+            0,
+            0,
+            vec![0; 32],
+            sp_runtime::AccountId32::new([0u8; 32]),
         );
-    };
+
+        assert_err!(res, pallet_faucet::Error::<Test>::InvalidSeal);
+    });
+}
+
+#[cfg(feature = "testnet")]
+#[test]
+fn faucet_works() {
+    use polkadot_sdk::frame_support::assert_err;
+
+    new_test_ext().execute_with(|| {
+        goto_block(6);
+        let account_key = sp_runtime::AccountId32::new([4u8; 32]);
+
+        let mut nonce = rand::random_range(0..u64::MAX);
+        let mut hash =
+            pallet_faucet::faucet::create_seal_hash::<Test>(4, nonce, &account_key).unwrap();
+
+        let difficulty: U256 = U256::from(1_000_000);
+        while !pallet_faucet::faucet::hash_meets_difficulty(&hash, difficulty) {
+            nonce = rand::random_range(0..u64::MAX);
+            hash = pallet_faucet::faucet::create_seal_hash::<Test>(4, nonce, &account_key).unwrap();
+        }
+
+        let origin = <<Test as frame_system::Config>::RuntimeOrigin>::none();
+        let res = pallet_faucet::Pallet::<Test>::faucet(
+            origin,
+            4,
+            nonce,
+            hash.as_bytes().to_vec(),
+            account_key.clone(),
+        );
+
+        assert_ok!(res);
+
+        assert_eq!(
+            <Balances as Currency<AccountId>>::free_balance(&account_key),
+            15_000_000_000_000_000_000
+        );
+    });
 }
