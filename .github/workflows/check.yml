@@ -104,8 +104,8 @@ jobs:
         id: htmlUpload
         continue-on-error: true
         run: |
-          aws --endpoint-url $ENDPOINT s3 sync ./target/llvm-cov/html s3://$BUCKET_NAME/$BRANCH
-          echo "link=$(aws --endpoint-url $ENDPOINT s3 presign s3://$BUCKET_NAME/$BRANCH/index.html)" >> $GITHUB_OUTPUT
+          aws --endpoint-url $ENDPOINT s3 sync ./target/llvm-cov/html s3://$BUCKET_NAME/$BRANCH --acl public-read
+          echo "link=https://$BUCKET_NAME.$REGION.$ENDPOINT_DOMAIN/$BRANCH/index.html" >> $GITHUB_OUTPUT
         env:
           BRANCH: ${{ steps.extractBranch.outputs.branch }}
           ENDPOINT: ${{ vars.COV_ENDPOINT_URL }}
@@ -113,6 +113,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.COV_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.COV_AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ vars.COV_DEFAULT_REGION }}
+          REGION: nyc3
+          ENDPOINT_DOMAIN: "digitaloceanspaces.com"
 
       - name: Add coverage PR report comment
         if: success() && steps.findPr.outputs.number
