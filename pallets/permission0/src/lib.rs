@@ -3,17 +3,20 @@
 
 pub use pallet::*;
 
-pub mod weights;
 use pallet_permission0_api::StreamId;
+
+pub mod benchmarking;
+pub mod weights;
 pub use weights::*;
 
 pub mod ext;
+pub mod migrations;
 pub mod permission;
 
 pub use permission::{
-    generate_permission_id, DistributionControl, EmissionAllocation, EmissionScope,
-    EnforcementAuthority, EnforcementReferendum, PermissionContract, PermissionDuration,
-    PermissionId, PermissionScope, RevocationTerms,
+    generate_permission_id, CuratorPermissions, CuratorScope, DistributionControl,
+    EmissionAllocation, EmissionScope, EnforcementAuthority, EnforcementReferendum,
+    PermissionContract, PermissionDuration, PermissionId, PermissionScope, RevocationTerms,
 };
 
 use polkadot_sdk::{
@@ -31,9 +34,11 @@ use polkadot_sdk::{
 
 #[frame::pallet]
 pub mod pallet {
+    use polkadot_sdk::frame_support::PalletId;
+
     use super::*;
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config(with_default)]
@@ -41,6 +46,11 @@ pub mod pallet {
         #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
+
+        /// Permission0 pallet ID
+        #[pallet::constant]
+        #[pallet::no_default_bounds]
+        type PalletId: Get<PalletId>;
 
         type WeightInfo: WeightInfo;
 
@@ -262,6 +272,12 @@ pub mod pallet {
         TooManyControllers,
         /// Invalid number of controllers or required votes
         InvalidNumberOfControllers,
+        /// Permission is a duplicate, revoke the previous one
+        DuplicatePermission,
+        /// Permission is in cooldown, wait a bit.
+        PermissionInCooldown,
+        /// Curator flags provided are invalid.
+        InvalidCuratorPermissions,
     }
 
     #[pallet::hooks]
@@ -275,8 +291,8 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Grant a permission for emission delegation
         #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::grant_permission())]
-        pub fn grant_permission(
+        #[pallet::weight(T::WeightInfo::grant_emission_permission())]
+        pub fn grant_emission_permission(
             origin: OriginFor<T>,
             grantee: T::AccountId,
             allocation: EmissionAllocation<T>,
@@ -288,7 +304,7 @@ pub mod pallet {
         ) -> DispatchResult {
             let grantor = ensure_signed(origin)?;
 
-            ext::grant_permission_impl::<T>(
+            ext::emission_impl::grant_emission_permission_impl::<T>(
                 grantor,
                 grantee,
                 allocation,
@@ -326,19 +342,23 @@ pub mod pallet {
         /// Toggle a permission's accumulation state (enabled/disabled)
         /// The caller must be authorized as a controller or be the root key
         #[pallet::call_index(3)]
-        #[pallet::weight(T::WeightInfo::execute_permission())] // Reuse weight for now
+        #[pallet::weight(T::WeightInfo::toggle_permission_accumulation())]
         pub fn toggle_permission_accumulation(
             origin: OriginFor<T>,
             permission_id: PermissionId,
             accumulating: bool,
         ) -> DispatchResult {
-            ext::toggle_permission_accumulation_impl::<T>(origin, permission_id, accumulating)
+            ext::emission_impl::toggle_permission_accumulation_impl::<T>(
+                origin,
+                permission_id,
+                accumulating,
+            )
         }
 
         /// Execute a permission through enforcement authority
         /// The caller must be authorized as a controller or be the root key
         #[pallet::call_index(4)]
-        #[pallet::weight(T::WeightInfo::execute_permission())] // Reuse weight for now
+        #[pallet::weight(T::WeightInfo::enforcement_execute_permission())]
         pub fn enforcement_execute_permission(
             origin: OriginFor<T>,
             permission_id: PermissionId,
@@ -349,7 +369,7 @@ pub mod pallet {
         /// Set enforcement authority for a permission
         /// Only the grantor or root can set enforcement authority
         #[pallet::call_index(5)]
-        #[pallet::weight(T::WeightInfo::execute_permission())] // Reuse weight for now
+        #[pallet::weight(T::WeightInfo::set_enforcement_authority())]
         pub fn set_enforcement_authority(
             origin: OriginFor<T>,
             permission_id: PermissionId,
@@ -398,6 +418,29 @@ pub mod pallet {
                     required_votes: *required_votes,
                 });
             }
+
+            Ok(())
+        }
+
+        /// Grant a permission for curator delegation
+        #[pallet::call_index(6)]
+        #[pallet::weight(T::WeightInfo::grant_curator_permission())]
+        pub fn grant_curator_permission(
+            origin: OriginFor<T>,
+            grantee: T::AccountId,
+            flags: u32,
+            cooldown: Option<BlockNumberFor<T>>,
+            duration: PermissionDuration<T>,
+            revocation: RevocationTerms<T>,
+        ) -> DispatchResult {
+            ext::curator_impl::grant_curator_permission_impl::<T>(
+                origin,
+                grantee,
+                CuratorPermissions::from_bits_truncate(flags),
+                cooldown,
+                duration,
+                revocation,
+            )?;
 
             Ok(())
         }

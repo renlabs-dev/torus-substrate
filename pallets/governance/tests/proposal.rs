@@ -5,6 +5,7 @@ use pallet_governance::{
 };
 use polkadot_sdk::{
     frame_support::{assert_err, assert_ok, traits::Get},
+    frame_system::RawOrigin,
     sp_runtime::{BoundedBTreeSet, Percent},
 };
 use test_utils::{
@@ -376,7 +377,7 @@ fn creates_emission_proposal_and_it_runs_after_2_days() {
         let origin = get_origin(0);
         add_balance(0, to_nano(2));
         register(0, 0, 0, to_nano(1));
-        let _ = pallet_governance::roles::penalize_agent::<Test>(0, 100);
+        let _ = pallet_governance::roles::penalize_agent::<Test>(RawOrigin::Root.into(), 0, 100);
         pallet_torus0::TotalStake::<Test>::set(to_nano(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
@@ -417,7 +418,7 @@ fn creates_emission_proposal_and_it_runs_before_expiration() {
         let origin = get_origin(0);
         add_balance(0, to_nano(2));
         register(0, 0, 0, to_nano(1) - min_stake);
-        let _ = pallet_governance::roles::penalize_agent::<Test>(0, 100);
+        let _ = pallet_governance::roles::penalize_agent::<Test>(RawOrigin::Root.into(), 0, 100);
         pallet_torus0::TotalStake::<Test>::set(to_nano(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
@@ -476,7 +477,7 @@ fn creates_emission_proposal_and_it_expires() {
         let origin = get_origin(0);
         add_balance(0, to_nano(2));
         register(0, 0, 0, to_nano(1) - min_stake);
-        let _ = pallet_governance::roles::penalize_agent::<Test>(0, 100);
+        let _ = pallet_governance::roles::penalize_agent::<Test>(RawOrigin::Root.into(), 0, 100);
         pallet_torus0::TotalStake::<Test>::set(to_nano(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(

@@ -71,7 +71,6 @@ pub fn targetchain_spec(flags: &flags::Replica) -> Option<PathBuf> {
     aura(genesis);
     grandpa(genesis);
     sudo(genesis, flags.sudo.as_ref());
-    // balance(genesis, flags.sudo.as_ref());
 
     let js = serde_json::to_string_pretty(&js).unwrap();
 

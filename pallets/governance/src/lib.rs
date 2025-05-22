@@ -9,8 +9,7 @@ pub mod roles;
 pub mod voting;
 pub mod whitelist;
 
-#[cfg(feature = "runtime-benchmarks")]
-pub mod benchmarks;
+pub mod benchmarking;
 pub mod weights;
 
 pub(crate) use ext::*;
@@ -42,8 +41,9 @@ use crate::{
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
+    use pallet_permission0_api::{CuratorPermissions, Permission0Api, Permission0CuratorApi};
     use proposal::GlobalParamsData;
     use weights::WeightInfo;
 
@@ -91,10 +91,6 @@ pub mod pallet {
     #[pallet::storage]
     pub type Whitelist<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
 
-    /// List of curator keys, which can accept and reject applications.
-    #[pallet::storage]
-    pub type Curators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
-
     /// List of allocator keys, which are the default validators on the network.
     #[pallet::storage]
     pub type Allocators<T: Config> = StorageMap<_, Identity, AccountIdOf<T>, ()>;
@@ -105,10 +101,13 @@ pub mod pallet {
     pub type TreasuryEmissionFee<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultTreasuryEmissionFee>;
 
-    #[pallet::config(with_default)]
+    #[pallet::config]
     pub trait Config:
         polkadot_sdk::frame_system::Config + pallet_torus0::Config + pallet_emission0::Config
     {
+        type RuntimeEvent: From<Event<Self>>
+            + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
+
         #[pallet::constant]
         type PalletId: Get<PalletId>;
 
@@ -119,7 +118,6 @@ pub mod pallet {
         type MaxApplicationDataLength: Get<u32>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type ApplicationExpiration: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
@@ -129,37 +127,35 @@ pub mod pallet {
         type DefaultTreasuryEmissionFee: Get<Percent>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultProposalCost: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultProposalExpiration: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultAgentApplicationCost: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultAgentApplicationExpiration: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         type DefaultProposalRewardTreasuryAllocation: Get<Percent>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultMaxProposalRewardTreasuryAllocation: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultProposalRewardInterval: Get<BlockNumberFor<Self>>;
 
-        #[pallet::no_default_bounds]
-        type RuntimeEvent: From<Event<Self>>
-            + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
-
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
+
+        type Permission0: Permission0Api<
+            Self::AccountId,
+            OriginFor<Self>,
+            BlockNumberFor<Self>,
+            crate::BalanceOf<Self>,
+            <<Self as Config>::Currency as Currency<Self::AccountId>>::NegativeImbalance,
+        >;
 
         type WeightInfo: WeightInfo;
     }
@@ -182,29 +178,12 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// Adds a new curator to the list. Only available for the root key.
-        #[pallet::call_index(0)]
-        #[pallet::weight((<T as Config>::WeightInfo::add_curator(), DispatchClass::Normal, Pays::Yes))]
-        pub fn add_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            ensure_root(origin)?;
-            roles::manage_role::<T, Curators<T>>(key, true, Error::<T>::AlreadyCurator)
-        }
-
-        /// Removes an existing curator from the list. Only available for the
-        /// root key.
-        #[pallet::call_index(1)]
-        #[pallet::weight((<T as Config>::WeightInfo::remove_curator(), DispatchClass::Normal, Pays::Yes))]
-        pub fn remove_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            ensure_root(origin)?;
-            roles::manage_role::<T, Curators<T>>(key, false, Error::<T>::NotAllocator)
-        }
-
         /// Adds a new allocator to the list. Only available for the root key.
         #[pallet::call_index(2)]
         #[pallet::weight((<T as Config>::WeightInfo::add_allocator(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             ensure_root(origin)?;
-            roles::manage_role::<T, Allocators<T>>(key, true, Error::<T>::AlreadyAllocator)
+            roles::add_allocator::<T>(key)
         }
 
         /// Removes an existing allocator from the list. Only available for the
@@ -213,7 +192,7 @@ pub mod pallet {
         #[pallet::weight((<T as Config>::WeightInfo::remove_allocator(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             ensure_root(origin)?;
-            roles::manage_role::<T, Allocators<T>>(key, false, Error::<T>::NotAllocator)
+            roles::remove_allocator::<T>(key)
         }
 
         /// Forcefully adds a new agent to the whitelist. Only available for the
@@ -221,7 +200,10 @@ pub mod pallet {
         #[pallet::call_index(4)]
         #[pallet::weight((<T as Config>::WeightInfo::add_to_whitelist(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_to_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            roles::ensure_curator::<T>(origin)?;
+            <T as Config>::Permission0::ensure_curator_permission(
+                origin,
+                CuratorPermissions::WHITELIST_MANAGE,
+            )?;
             whitelist::add_to_whitelist::<T>(key)
         }
 
@@ -230,7 +212,10 @@ pub mod pallet {
         #[pallet::call_index(5)]
         #[pallet::weight((<T as Config>::WeightInfo::remove_from_whitelist(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_from_whitelist(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            roles::ensure_curator::<T>(origin)?;
+            <T as Config>::Permission0::ensure_curator_permission(
+                origin,
+                CuratorPermissions::WHITELIST_MANAGE,
+            )?;
             whitelist::remove_from_whitelist::<T>(key)
         }
 
@@ -239,7 +224,10 @@ pub mod pallet {
         #[pallet::call_index(6)]
         #[pallet::weight((<T as Config>::WeightInfo::accept_application(), DispatchClass::Normal, Pays::Yes))]
         pub fn accept_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
-            roles::ensure_curator::<T>(origin)?;
+            <T as Config>::Permission0::ensure_curator_permission(
+                origin,
+                CuratorPermissions::APPLICATION_REVIEW,
+            )?;
             application::accept_application::<T>(application_id)
         }
 
@@ -248,7 +236,10 @@ pub mod pallet {
         #[pallet::call_index(7)]
         #[pallet::weight((<T as Config>::WeightInfo::deny_application(), DispatchClass::Normal, Pays::Yes))]
         pub fn deny_application(origin: OriginFor<T>, application_id: u32) -> DispatchResult {
-            roles::ensure_curator::<T>(origin)?;
+            <T as Config>::Permission0::ensure_curator_permission(
+                origin,
+                CuratorPermissions::APPLICATION_REVIEW,
+            )?;
             application::deny_application::<T>(application_id)
         }
 
@@ -261,8 +252,7 @@ pub mod pallet {
             agent_key: AccountIdOf<T>,
             percentage: u8,
         ) -> DispatchResult {
-            roles::ensure_curator::<T>(origin)?;
-            roles::penalize_agent::<T>(agent_key, percentage)
+            roles::penalize_agent::<T>(origin, agent_key, percentage)
         }
 
         /// Submits a new agent application on behalf of a given key.
@@ -422,6 +412,12 @@ pub mod pallet {
         ApplicationDenied(u32),
         /// An application has expired.
         ApplicationExpired(u32),
+        /// A penalty was applied to an agent.
+        PenaltyApplied {
+            curator: T::AccountId,
+            agent: T::AccountId,
+            penalty: Percent,
+        },
     }
 
     #[pallet::error]
@@ -537,6 +533,11 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
     }
 
     fn set_allocator(key: &T::AccountId) {
-        crate::Allocators::<T>::insert(key, ());
+        Allocators::<T>::insert(key, ());
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_set_whitelisted(key: &T::AccountId) {
+        Whitelist::<T>::insert(key, ());
     }
 }

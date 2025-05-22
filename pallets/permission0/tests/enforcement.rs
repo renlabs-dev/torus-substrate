@@ -2,10 +2,10 @@ use std::collections::BTreeMap;
 
 use pallet_permission0::permission::emission::StreamId;
 use pallet_permission0::EnforcementReferendum;
-use pallet_permission0_api::{generate_root_stream_id, Permission0Api};
+use pallet_permission0_api::{generate_root_stream_id, Permission0EmissionApi};
 use polkadot_sdk::frame_support::{assert_err, traits::Currency};
 use polkadot_sdk::sp_runtime::Percent;
-use test_utils::{assert_ok, *};
+use test_utils::*;
 
 fn stream_percentages(agent: AccountId, percentage: u8) -> BTreeMap<StreamId, Percent> {
     BTreeMap::from([(
@@ -34,7 +34,7 @@ fn set_enforcement_authority_by_grantor() {
 
         add_balance(grantor, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             grantor,
             grantee,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -104,7 +104,7 @@ fn toggle_accumulation_by_controller() {
 
         add_balance(grantor, to_nano(100) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             grantor,
             grantee,
             pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),
@@ -129,10 +129,8 @@ fn toggle_accumulation_by_controller() {
         );
 
         let contract = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        match contract.scope {
-            pallet_permission0::PermissionScope::Emission(emission_scope) => {
-                assert!(!emission_scope.accumulating);
-            }
+        if let pallet_permission0::PermissionScope::Emission(emission_scope) = contract.scope {
+            assert!(!emission_scope.accumulating);
         }
 
         let balance_before = get_balance(grantee);
@@ -175,7 +173,7 @@ fn unauthorized_account_cannot_toggle() {
 
         add_balance(grantor, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             grantor,
             grantee,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -222,7 +220,7 @@ fn enforcement_execute_permission() {
 
         add_balance(grantor, to_nano(100) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             grantor,
             grantee,
             pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),
@@ -267,7 +265,7 @@ fn unauthorized_cannot_enforcement_execute() {
 
         add_balance(grantor, to_nano(100) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             grantor,
             grantee,
             pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),
@@ -311,7 +309,7 @@ fn multi_controller_voting() {
 
         add_balance(grantor, to_nano(100) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             grantor,
             grantee,
             pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),
@@ -336,10 +334,8 @@ fn multi_controller_voting() {
         );
 
         let contract = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        match contract.scope {
-            pallet_permission0::PermissionScope::Emission(emission_scope) => {
-                assert!(emission_scope.accumulating);
-            }
+        if let pallet_permission0::PermissionScope::Emission(emission_scope) = contract.scope {
+            assert!(emission_scope.accumulating);
         }
 
         assert_ok!(
@@ -351,10 +347,8 @@ fn multi_controller_voting() {
         );
 
         let contract = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        match contract.scope {
-            pallet_permission0::PermissionScope::Emission(emission_scope) => {
-                assert!(!emission_scope.accumulating);
-            }
+        if let pallet_permission0::PermissionScope::Emission(emission_scope) = contract.scope {
+            assert!(!emission_scope.accumulating);
         }
 
         distribute_emission(grantor, to_nano(10));
@@ -425,7 +419,7 @@ fn enforcement_cannot_execute_non_manual_distribution() {
 
         add_balance(grantor, to_nano(100) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             grantor,
             grantee,
             pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),

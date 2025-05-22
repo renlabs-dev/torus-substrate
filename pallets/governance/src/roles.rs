@@ -1,32 +1,46 @@
+use pallet_permission0_api::{CuratorPermissions, Permission0CuratorApi};
 use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::dispatch::DispatchResult,
-    frame_system::ensure_signed,
     polkadot_sdk_frame::prelude::OriginFor,
     sp_runtime::{DispatchError, Percent},
 };
 
-use crate::{ensure, storage::StorageMap, AccountIdOf, Config, Error};
+use crate::{ensure, AccountIdOf, Allocators, Config, Error, Event};
 
-/// Generic function used to manage the Curator and Allocator maps, which behave
-/// similarly.
+/// Adds a new allocator to the network, checking wether it's already registered.
 #[doc(hidden)]
-pub fn manage_role<T: Config, M: StorageMap<AccountIdOf<T>, ()>>(
-    key: AccountIdOf<T>,
-    is_add: bool,
-    error: Error<T>,
-) -> DispatchResult {
-    ensure!(M::contains_key(&key) != is_add, error);
-    if is_add {
-        M::insert(key, ())
-    } else {
-        M::remove(&key)
-    }
+pub fn add_allocator<T: Config>(key: AccountIdOf<T>) -> DispatchResult {
+    ensure!(
+        !Allocators::<T>::contains_key(&key),
+        Error::<T>::AlreadyAllocator
+    );
+    Allocators::<T>::insert(key, ());
+    Ok(())
+}
+
+/// Removes an existing allocator to the network, checking wether it's registered.
+#[doc(hidden)]
+pub fn remove_allocator<T: Config>(key: AccountIdOf<T>) -> DispatchResult {
+    ensure!(
+        Allocators::<T>::contains_key(&key),
+        Error::<T>::NotAllocator
+    );
+    Allocators::<T>::remove(&key);
     Ok(())
 }
 
 /// Sets a penalty ratio for the given agent.
-pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> DispatchResult {
+pub fn penalize_agent<T: Config>(
+    origin: OriginFor<T>,
+    agent_key: AccountIdOf<T>,
+    percentage: u8,
+) -> DispatchResult {
+    let curator = <T as Config>::Permission0::ensure_curator_permission(
+        origin,
+        CuratorPermissions::PENALTY_CONTROL,
+    )?;
+
     let percentage = Percent::from_parts(percentage);
     if percentage > T::MaxPenaltyPercentage::get() {
         return Err(Error::<T>::InvalidPenaltyPercentage.into());
@@ -42,15 +56,11 @@ pub fn penalize_agent<T: Config>(agent_key: AccountIdOf<T>, percentage: u8) -> D
         Ok::<(), DispatchError>(())
     })?;
 
-    Ok(())
-}
-
-/// Returns error if the origin is not listed as a curator.
-pub fn ensure_curator<T: Config>(origin: OriginFor<T>) -> DispatchResult {
-    let key: AccountIdOf<T> = ensure_signed(origin)?;
-    if !crate::Curators::<T>::contains_key(key) {
-        return Err(Error::<T>::NotCurator.into());
-    }
+    crate::Pallet::<T>::deposit_event(Event::PenaltyApplied {
+        curator,
+        agent: agent_key,
+        penalty: percentage,
+    });
 
     Ok(())
 }

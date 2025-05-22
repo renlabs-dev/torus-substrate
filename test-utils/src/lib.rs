@@ -4,7 +4,10 @@ use std::{cell::RefCell, num::NonZeroU128};
 
 pub use pallet_emission0;
 pub use pallet_governance;
+pub use pallet_permission0;
 pub use pallet_torus0;
+
+use pallet_permission0_api::{CuratorPermissions, PermissionId};
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
@@ -12,7 +15,8 @@ use polkadot_sdk::{
         traits::{Currency, Everything, Hooks},
         PalletId,
     },
-    frame_system, pallet_balances,
+    frame_system::{self, RawOrigin},
+    pallet_balances,
     polkadot_sdk_frame::runtime::prelude::*,
     sp_core::{Get, H256},
     sp_io,
@@ -147,6 +151,8 @@ impl pallet_torus0::Config for Test {
     type Governance = Governance;
 
     type Emission = Emission0;
+
+    type WeightInfo = pallet_torus0::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {
@@ -217,11 +223,13 @@ impl pallet_governance::Config for Test {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type Permission0 = Permission0;
 
     type WeightInfo = pallet_governance::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {
+    pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
     pub const MaxTargetsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MaxRevokersPerPermission: u32 = 10;
@@ -237,6 +245,8 @@ impl pallet_permission0::Config for Test {
     type Currency = Balances;
 
     type Torus = Torus0;
+
+    type PalletId = PermissionPalletId;
 
     type MaxTargetsPerPermission = MaxTargetsPerPermission;
 
@@ -398,6 +408,61 @@ pub fn register_empty_agent(key: AccountId) {
             last_update_block: Default::default(),
         }),
     );
+}
+
+pub type NegativeImbalanceOf = <pallet_balances::Pallet<Test> as Currency<
+    <Test as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
+
+#[allow(clippy::too_many_arguments)]
+pub fn grant_emission_permission(
+    grantor: AccountId,
+    grantee: AccountId,
+    allocation: pallet_permission0_api::EmissionAllocation<Balance>,
+    targets: Vec<(AccountId, u16)>,
+    distribution: pallet_permission0_api::DistributionControl<Balance, BlockNumber>,
+    duration: pallet_permission0_api::PermissionDuration<BlockNumber>,
+    revocation: pallet_permission0_api::RevocationTerms<AccountId, BlockNumber>,
+    enforcement: pallet_permission0_api::EnforcementAuthority<AccountId>,
+) -> Result<PermissionId, polkadot_sdk::sp_runtime::DispatchError> {
+    use pallet_permission0_api::Permission0EmissionApi;
+    <Permission0 as Permission0EmissionApi<
+        AccountId,
+        RuntimeOrigin,
+        BlockNumber,
+        Balance,
+        NegativeImbalanceOf,
+    >>::grant_emission_permission(
+        grantor,
+        grantee,
+        allocation,
+        targets,
+        distribution,
+        duration,
+        revocation,
+        enforcement,
+    )
+}
+
+pub fn grant_curator_permission(
+    key: AccountId,
+    flags: CuratorPermissions,
+    cooldown: Option<BlockNumber>,
+) {
+    use pallet_permission0_api::Permission0CuratorApi;
+    <pallet_permission0::Pallet<Test> as Permission0CuratorApi<
+        AccountId,
+        RuntimeOrigin,
+        BlockNumber,
+    >>::grant_curator_permission(
+        RawOrigin::Root.into(),
+        key,
+        flags,
+        cooldown,
+        pallet_permission0_api::PermissionDuration::Indefinite,
+        pallet_permission0_api::RevocationTerms::Irrevocable,
+    )
+    .expect("failed to register curator");
 }
 
 pub fn clear_cooldown() {

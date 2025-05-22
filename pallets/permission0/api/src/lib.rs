@@ -59,18 +59,20 @@ pub enum DistributionControl<Balance, BlockNumber> {
 }
 
 /// Duration of the permission
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
+#[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
 pub enum PermissionDuration<BlockNumber> {
     /// Permission lasts until a specific block
     UntilBlock(BlockNumber),
     /// Permission lasts indefinitely
+    #[default]
     Indefinite,
 }
 
 /// Terms for revocation
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
+#[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
 pub enum RevocationTerms<AccountId, BlockNumber> {
     /// Cannot be revoked
+    #[default]
     Irrevocable,
     /// Can be revoked by the grantor at any time
     RevocableByGrantor,
@@ -84,9 +86,10 @@ pub enum RevocationTerms<AccountId, BlockNumber> {
 }
 
 /// Types of enforcement actions that can be voted on
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
+#[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
 pub enum EnforcementAuthority<AccountId> {
     /// No special enforcement (standard permission execution)
+    #[default]
     None,
     /// Permission can be toggled active/inactive by controllers
     ControlledBy {
@@ -96,10 +99,21 @@ pub enum EnforcementAuthority<AccountId> {
 }
 
 /// The Permission0 API trait
-pub trait Permission0Api<AccountId, Origin, BlockNumber, Balance, NegativeImbalance> {
+pub trait Permission0Api<AccountId, Origin, BlockNumber, Balance, NegativeImbalance>:
+    Permission0EmissionApi<AccountId, Origin, BlockNumber, Balance, NegativeImbalance>
+    + Permission0CuratorApi<AccountId, Origin, BlockNumber>
+{
     /// Check if a permission exists
     fn permission_exists(id: &PermissionId) -> bool;
 
+    /// Revoke a permission
+    fn revoke_permission(who: Origin, permission_id: &PermissionId) -> DispatchResult;
+
+    /// Execute a manual distribution for a permission
+    fn execute_permission(who: Origin, permission_id: &PermissionId) -> DispatchResult;
+}
+
+pub trait Permission0EmissionApi<AccountId, Origin, BlockNumber, Balance, NegativeImbalance> {
     /// Grant a permission for emission delegation
     #[allow(clippy::too_many_arguments)]
     fn grant_emission_permission(
@@ -113,12 +127,6 @@ pub trait Permission0Api<AccountId, Origin, BlockNumber, Balance, NegativeImbala
         enforcement: EnforcementAuthority<AccountId>,
     ) -> Result<PermissionId, DispatchError>;
 
-    /// Revoke a permission
-    fn revoke_permission(who: Origin, permission_id: &PermissionId) -> DispatchResult;
-
-    /// Execute a manual distribution for a permission
-    fn execute_permission(who: Origin, permission_id: &PermissionId) -> DispatchResult;
-
     /// Accumulate emissions for an agent with permissions
     fn accumulate_emissions(agent: &AccountId, stream: &StreamId, amount: &mut NegativeImbalance);
 
@@ -127,4 +135,39 @@ pub trait Permission0Api<AccountId, Origin, BlockNumber, Balance, NegativeImbala
 
     /// Get the accumulated amount for a permission
     fn get_accumulated_amount(permission_id: &PermissionId, stream: &StreamId) -> Balance;
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+    pub struct CuratorPermissions: u32 {
+        /// Permission to review and process agent applications
+        const APPLICATION_REVIEW = 0b0000_0010;
+        /// Permission to manage the whitelist (add/remove accounts)
+        const WHITELIST_MANAGE   = 0b0000_0100;
+        /// Permission to apply penalty factors to agents
+        const PENALTY_CONTROL    = 0b0000_1000;
+    }
+}
+
+pub trait Permission0CuratorApi<AccountId, Origin, BlockNumber> {
+    /// Grants a curator permission, bounded by the given flags.
+    /// Only available for the root key, currently.
+    fn grant_curator_permission(
+        grantor: Origin,
+        grantee: AccountId,
+        flags: CuratorPermissions,
+        cooldown: Option<BlockNumber>,
+        duration: PermissionDuration<BlockNumber>,
+        revocation: RevocationTerms<AccountId, BlockNumber>,
+    ) -> Result<PermissionId, DispatchError>;
+
+    /// Verifies the grantee's curator permission and returns the registered
+    /// cooldown between actions.
+    fn ensure_curator_permission(
+        grantee: Origin,
+        flags: CuratorPermissions,
+    ) -> Result<AccountId, DispatchError>;
+
+    /// Finds the curator permission granted to [`grantee`].
+    fn get_curator_permission(grantee: &AccountId) -> Option<PermissionId>;
 }

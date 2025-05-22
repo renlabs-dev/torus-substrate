@@ -8470,6 +8470,8 @@ version = "0.1.0"
 dependencies = [
  "pallet-emission0",
  "pallet-governance-api",
+ "pallet-permission0",
+ "pallet-permission0-api",
  "pallet-torus0",
  "pallet-torus0-api",
  "parity-scale-codec",
@@ -8885,6 +8887,7 @@ dependencies = [
 name = "pallet-permission0"
 version = "0.1.0"
 dependencies = [
+ "bitflags 2.6.0",
  "pallet-emission0-api",
  "pallet-permission0-api",
  "pallet-torus0-api",
@@ -8898,6 +8901,7 @@ dependencies = [
 name = "pallet-permission0-api"
 version = "0.1.0"
 dependencies = [
+ "bitflags 2.6.0",
  "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
@@ -16748,6 +16752,7 @@ dependencies = [
  "pallet-governance",
  "pallet-governance-api",
  "pallet-permission0",
+ "pallet-permission0-api",
  "pallet-torus0",
  "pallet-torus0-api",
  "parity-scale-codec",

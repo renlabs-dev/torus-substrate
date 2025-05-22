@@ -43,6 +43,8 @@ pallet-emission0.workspace = true
 
 pallet-governance-api.workspace = true
 pallet-torus0-api.workspace = true
+pallet-permission0-api.workspace = true
 
 [dev-dependencies]
 test-utils.workspace = true
+pallet-permission0.workspace = true

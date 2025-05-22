@@ -19,8 +19,10 @@ use crate::{
     BalanceOf, Config, EnforcementTracking, Error, Event, Pallet, Permissions, RevocationTracking,
 };
 
+pub use curator::{CuratorPermissions, CuratorScope};
 pub use emission::{DistributionControl, EmissionAllocation, EmissionScope};
 
+pub mod curator;
 pub mod emission;
 
 /// Type for permission ID
@@ -141,6 +143,9 @@ impl<T: Config> PermissionContract<T> {
             PermissionScope::Emission(emission) => {
                 emission.cleanup(permission_id, &self.last_execution, &self.grantor)
             }
+            PermissionScope::Curator(curator) => {
+                curator.cleanup(permission_id, &self.last_execution, &self.grantor)
+            }
         }
     }
 }
@@ -150,6 +155,7 @@ impl<T: Config> PermissionContract<T> {
 #[scale_info(skip_type_params(T))]
 pub enum PermissionScope<T: Config> {
     Emission(EmissionScope<T>),
+    Curator(CuratorScope<T>),
 }
 
 #[derive(
@@ -238,7 +244,6 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
                     &contract,
                 );
             }
-            #[allow(unreachable_patterns)]
             _ => (),
         }
 

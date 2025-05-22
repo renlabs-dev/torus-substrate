@@ -7,6 +7,9 @@ pub mod fee;
 pub mod migrations;
 pub mod stake;
 
+pub mod benchmarking;
+pub mod weights;
+
 pub(crate) use ext::*;
 use frame::{
     arithmetic::Percent,
@@ -34,6 +37,7 @@ pub mod pallet {
     use frame::prelude::BlockNumberFor;
     use pallet_emission0_api::Emission0Api;
     use pallet_governance_api::GovernanceApi;
+    use weights::WeightInfo;
 
     use super::*;
 
@@ -250,6 +254,8 @@ pub mod pallet {
         type Governance: GovernanceApi<Self::AccountId>;
 
         type Emission: Emission0Api<Self::AccountId>;
+
+        type WeightInfo: WeightInfo;
     }
 
     #[pallet::pallet]
@@ -260,7 +266,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Adds stakes from origin to the agent key.
         #[pallet::call_index(0)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::add_stake(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
@@ -276,7 +282,7 @@ pub mod pallet {
 
         /// Removes stakes from origin to the agent key.
         #[pallet::call_index(1)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::remove_stake(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
@@ -288,7 +294,7 @@ pub mod pallet {
 
         /// Transfers origin's stakes from an agent to another.
         #[pallet::call_index(2)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::transfer_stake(), DispatchClass::Normal, Pays::Yes))]
         pub fn transfer_stake(
             origin: OriginFor<T>,
             agent_key: AccountIdOf<T>,
@@ -301,7 +307,7 @@ pub mod pallet {
 
         /// Registers a new agent on behalf of an arbitrary key.
         #[pallet::call_index(3)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::register_agent(), DispatchClass::Normal, Pays::Yes))]
         pub fn register_agent(
             origin: OriginFor<T>,
             agent_key: T::AccountId,
@@ -315,7 +321,7 @@ pub mod pallet {
 
         /// Unregister origin's key agent.
         #[pallet::call_index(4)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::unregister_agent(), DispatchClass::Normal, Pays::Yes))]
         pub fn unregister_agent(origin: OriginFor<T>) -> DispatchResult {
             let agent_key = ensure_signed(origin)?;
             agent::unregister::<T>(agent_key)
@@ -323,7 +329,7 @@ pub mod pallet {
 
         /// Updates origin's key agent metadata.
         #[pallet::call_index(5)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::update_agent(), DispatchClass::Normal, Pays::Yes))]
         pub fn update_agent(
             origin: OriginFor<T>,
             name: Vec<u8>,
@@ -345,7 +351,7 @@ pub mod pallet {
 
         /// Updates origin's key agent metadata.
         #[pallet::call_index(6)]
-        #[pallet::weight((Weight::zero(), DispatchClass::Normal, Pays::Yes))]
+        #[pallet::weight((T::WeightInfo::set_agent_update_cooldown(), DispatchClass::Normal, Pays::Yes))]
         pub fn set_agent_update_cooldown(
             origin: OriginFor<T>,
             new_cooldown: BlockNumberFor<T>,
@@ -552,5 +558,14 @@ impl<T: Config>
         );
 
         Ok(())
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_set_stake(
+        staker: &T::AccountId,
+        staked: &T::AccountId,
+        amount: BalanceOf<T>,
+    ) -> DispatchResult {
+        stake::add_stake::<T>(staker.clone(), staked.clone(), amount)
     }
 }

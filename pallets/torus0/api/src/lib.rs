@@ -33,4 +33,12 @@ pub trait Torus0Api<AccountId, Balance, NegativeImbalance> {
         url: alloc::vec::Vec<u8>,
         metadata: alloc::vec::Vec<u8>,
     ) -> polkadot_sdk::frame_support::dispatch::DispatchResult;
+
+    #[doc(hidden)]
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_set_stake(
+        staker: &AccountId,
+        staked: &AccountId,
+        amount: Balance,
+    ) -> polkadot_sdk::frame_support::dispatch::DispatchResult;
 }

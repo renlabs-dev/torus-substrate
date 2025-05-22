@@ -21,7 +21,6 @@ use sp_version::RuntimeVersion;
 use weights::constants::RocksDbWeight;
 
 pub mod apis;
-#[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarks;
 pub mod configs;
 pub mod precompiles;
@@ -39,7 +38,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("torus-runtime"),
     impl_name: create_runtime_str!("torus-runtime"),
     authoring_version: 1,
-    spec_version: 12,
+    spec_version: 13,
     impl_version: 1,
     apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -86,6 +85,8 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
 type Migrations = (
     pallet_governance::migrations::v3::Migration<Runtime, RocksDbWeight>,
+    pallet_governance::migrations::v4::Migration<Runtime, RocksDbWeight>,
+    pallet_permission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
     pallet_emission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v3::Migration<Runtime, RocksDbWeight>,
 );

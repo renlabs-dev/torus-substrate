@@ -137,9 +137,7 @@ pub fn register<T: crate::Config>(
             );
         }
     } else {
-        polkadot_sdk::sp_tracing::error!(
-            "no allocators available to delegate to for {agent_key:?}"
-        );
+        polkadot_sdk::sp_tracing::warn!("no allocators available to delegate to for {agent_key:?}");
     }
 
     Ok(())

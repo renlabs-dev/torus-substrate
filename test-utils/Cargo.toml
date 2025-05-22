@@ -21,3 +21,4 @@ pallet-faucet.workspace = true
 
 pallet-torus0-api.workspace = true
 pallet-governance-api.workspace = true
+pallet-permission0-api.workspace = true

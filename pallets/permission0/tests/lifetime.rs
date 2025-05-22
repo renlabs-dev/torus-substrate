@@ -1,5 +1,4 @@
 use pallet_permission0::Error;
-use pallet_permission0_api::Permission0Api;
 use polkadot_sdk::frame_support::assert_err;
 use test_utils::*;
 
@@ -18,7 +17,7 @@ fn manual_cant_execute_when_expires() {
 
         add_balance(agent_0, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -53,7 +52,7 @@ fn irrevocable() {
 
         add_balance(agent_0, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -97,7 +96,7 @@ fn revocable_by_grantor() {
 
         add_balance(agent_0, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -135,7 +134,7 @@ fn revocable_after_block() {
 
         add_balance(agent_0, to_nano(10) + 1);
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -173,7 +172,7 @@ fn revocable_by_arbiters() {
         add_balance(agent_0, to_nano(10) + 1);
 
         let grant_invalid = |accounts: &[AccountId], required_votes| {
-            Permission0::grant_emission_permission(
+            grant_emission_permission(
                 agent_0,
                 agent_1,
                 pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
@@ -204,7 +203,7 @@ fn revocable_by_arbiters() {
         let arbiters = [2, 3, 4, 5];
         let not_arbiter = 6;
 
-        let permission_id = assert_ok!(Permission0::grant_emission_permission(
+        let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),

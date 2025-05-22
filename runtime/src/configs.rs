@@ -365,6 +365,8 @@ impl pallet_torus0::Config for Runtime {
     type Governance = Governance;
 
     type Emission = Emission0;
+
+    type WeightInfo = pallet_torus0::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -404,11 +406,13 @@ impl pallet_governance::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type Permission0 = Permission0;
 
     type WeightInfo = pallet_governance::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
+    // SAFETY: `NonZeroU128::new` only fails if the passed value is 0, which is not the case here.
     pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
     pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
     pub const DefaultEmissionRecyclingPercentage: Percent = Percent::one();
@@ -440,6 +444,7 @@ impl pallet_emission0::Config for Runtime {
 }
 
 parameter_types! {
+    pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
     pub const MaxTargetsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MaxRevokersPerPermission: u32 = 10;
@@ -455,6 +460,8 @@ impl pallet_permission0::Config for Runtime {
     type Currency = Balances;
 
     type Torus = Torus0;
+
+    type PalletId = PermissionPalletId;
 
     type MaxTargetsPerPermission = MaxTargetsPerPermission;
 

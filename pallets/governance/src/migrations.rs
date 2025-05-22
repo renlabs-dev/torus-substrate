@@ -130,3 +130,50 @@ pub mod v3 {
         }
     }
 }
+
+pub mod v4 {
+    use pallet_permission0_api::{CuratorPermissions, Permission0CuratorApi, PermissionDuration};
+    use polkadot_sdk::{
+        frame_system::RawOrigin,
+        sp_tracing::{info, warn},
+    };
+
+    use super::*;
+
+    pub type Migration<T, W> = VersionedMigration<3, 4, MigrateToV4<T>, Pallet<T>, W>;
+    pub struct MigrateToV4<T>(core::marker::PhantomData<T>);
+
+    mod old_storage {
+        use polkadot_sdk::frame_support::{storage_alias, Identity};
+
+        use crate::AccountIdOf;
+
+        #[storage_alias]
+        pub type Curators<T: crate::Config> =
+            StorageMap<crate::Pallet<T>, Identity, AccountIdOf<T>, ()>;
+    }
+
+    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV4<T> {
+        fn on_runtime_upgrade() -> Weight {
+            for (curator, _) in old_storage::Curators::<T>::iter() {
+                let res = <<T as Config>::Permission0>::grant_curator_permission(
+                    RawOrigin::Root.into(),
+                    curator.clone(),
+                    CuratorPermissions::all(),
+                    None,
+                    PermissionDuration::Indefinite,
+                    pallet_permission0_api::RevocationTerms::RevocableByGrantor,
+                );
+
+                match res {
+                    Ok(perm_id) => info!("migrated curator {curator:?} to permission0: {perm_id}"),
+                    Err(err) => {
+                        warn!("Could not migrate curator {curator:?} to permission0: {err:?}");
+                    }
+                }
+            }
+
+            Weight::zero()
+        }
+    }
+}
