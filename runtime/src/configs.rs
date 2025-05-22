@@ -412,6 +412,7 @@ impl pallet_governance::Config for Runtime {
 }
 
 parameter_types! {
+    // SAFETY: `NonZeroU128::new` only fails if the passed value is 0, which is not the case here.
     pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
     pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
     pub const DefaultEmissionRecyclingPercentage: Percent = Percent::one();

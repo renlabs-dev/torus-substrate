@@ -467,7 +467,10 @@ fn compute_emissions<T: Config>(
         dividends_to_be_emitted = to_be_emitted.saturating_add(dividends);
         incentives_to_be_emitted = to_be_emitted.saturating_sub(dividends);
     } else {
-        unreachable!()
+        // This is logically impossible at the time of writing.
+        dividends_to_be_emitted = 0;
+        incentives_to_be_emitted = 0;
+        error!("MATH IS NOT MATHING. PLEASE CHECK ME, incentives_ratio = {incentives_ratio}");
     }
 
     let incentives = calculate_emissions(
