@@ -14,4 +14,8 @@ pub trait GovernanceApi<AccountId> {
     fn get_allocators() -> impl Iterator<Item = AccountId>;
 
     fn set_allocator(key: &AccountId);
+
+    #[doc(hidden)]
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_set_whitelisted(key: &AccountId);
 }

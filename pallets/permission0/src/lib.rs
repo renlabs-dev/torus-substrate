@@ -3,8 +3,10 @@
 
 pub use pallet::*;
 
-pub mod weights;
 use pallet_permission0_api::StreamId;
+
+pub mod benchmarking;
+pub mod weights;
 pub use weights::*;
 
 pub mod ext;
@@ -289,7 +291,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Grant a permission for emission delegation
         #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::grant_permission())]
+        #[pallet::weight(T::WeightInfo::grant_emission_permission())]
         pub fn grant_emission_permission(
             origin: OriginFor<T>,
             grantee: T::AccountId,
@@ -340,7 +342,7 @@ pub mod pallet {
         /// Toggle a permission's accumulation state (enabled/disabled)
         /// The caller must be authorized as a controller or be the root key
         #[pallet::call_index(3)]
-        #[pallet::weight(T::WeightInfo::execute_permission())] // Reuse weight for now
+        #[pallet::weight(T::WeightInfo::toggle_permission_accumulation())]
         pub fn toggle_permission_accumulation(
             origin: OriginFor<T>,
             permission_id: PermissionId,
@@ -356,7 +358,7 @@ pub mod pallet {
         /// Execute a permission through enforcement authority
         /// The caller must be authorized as a controller or be the root key
         #[pallet::call_index(4)]
-        #[pallet::weight(T::WeightInfo::execute_permission())] // Reuse weight for now
+        #[pallet::weight(T::WeightInfo::enforcement_execute_permission())]
         pub fn enforcement_execute_permission(
             origin: OriginFor<T>,
             permission_id: PermissionId,
@@ -367,7 +369,7 @@ pub mod pallet {
         /// Set enforcement authority for a permission
         /// Only the grantor or root can set enforcement authority
         #[pallet::call_index(5)]
-        #[pallet::weight(T::WeightInfo::execute_permission())] // Reuse weight for now
+        #[pallet::weight(T::WeightInfo::set_enforcement_authority())]
         pub fn set_enforcement_authority(
             origin: OriginFor<T>,
             permission_id: PermissionId,
@@ -422,7 +424,7 @@ pub mod pallet {
 
         /// Grant a permission for curator delegation
         #[pallet::call_index(6)]
-        #[pallet::weight(T::WeightInfo::grant_permission())]
+        #[pallet::weight(T::WeightInfo::grant_curator_permission())]
         pub fn grant_curator_permission(
             origin: OriginFor<T>,
             grantee: T::AccountId,

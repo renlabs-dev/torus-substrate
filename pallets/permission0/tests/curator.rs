@@ -9,7 +9,8 @@ use polkadot_sdk::{
 use test_utils::*;
 
 fn ensure_curator(origin: OriginFor<Test>, flags: CuratorPermissions) -> DispatchResult {
-    Pallet::<Test>::ensure_curator_permission(origin, flags)
+    Pallet::<Test>::ensure_curator_permission(origin, flags)?;
+    Ok(())
 }
 
 #[test]

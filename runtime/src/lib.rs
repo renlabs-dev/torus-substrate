@@ -21,7 +21,6 @@ use sp_version::RuntimeVersion;
 use weights::constants::RocksDbWeight;
 
 pub mod apis;
-#[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarks;
 pub mod configs;
 pub mod precompiles;

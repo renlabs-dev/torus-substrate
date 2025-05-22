@@ -9,8 +9,7 @@ pub mod roles;
 pub mod voting;
 pub mod whitelist;
 
-#[cfg(feature = "runtime-benchmarks")]
-pub mod benchmarks;
+pub mod benchmarking;
 pub mod weights;
 
 pub(crate) use ext::*;
@@ -44,10 +43,7 @@ pub mod pallet {
 
     const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
-    use pallet_permission0_api::{
-        CuratorPermissions, Permission0Api, Permission0CuratorApi, PermissionDuration,
-        RevocationTerms,
-    };
+    use pallet_permission0_api::{CuratorPermissions, Permission0Api, Permission0CuratorApi};
     use proposal::GlobalParamsData;
     use weights::WeightInfo;
 
@@ -182,47 +178,12 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// Adds a new curator to the list. Only available for the root key.
-        #[pallet::call_index(0)]
-        #[pallet::weight((<T as Config>::WeightInfo::add_curator(), DispatchClass::Normal, Pays::Yes))]
-        pub fn add_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            ensure_root(origin.clone())?;
-
-            <<T as Config>::Permission0>::grant_curator_permission(
-                origin,
-                key,
-                CuratorPermissions::all(),
-                None,
-                PermissionDuration::Indefinite,
-                RevocationTerms::RevocableByGrantor,
-            )?;
-
-            Ok(())
-        }
-
-        /// Removes an existing curator from the list. Only available for the
-        /// root key.
-        #[pallet::call_index(1)]
-        #[pallet::weight((<T as Config>::WeightInfo::remove_curator(), DispatchClass::Normal, Pays::Yes))]
-        pub fn remove_curator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
-            ensure_root(origin.clone())?;
-
-            let Some(permission_id) = <<T as Config>::Permission0>::get_curator_permission(&key)
-            else {
-                return Err(Error::<T>::NotCurator.into());
-            };
-
-            <<T as Config>::Permission0>::revoke_permission(origin, &permission_id)?;
-
-            Ok(())
-        }
-
         /// Adds a new allocator to the list. Only available for the root key.
         #[pallet::call_index(2)]
         #[pallet::weight((<T as Config>::WeightInfo::add_allocator(), DispatchClass::Normal, Pays::Yes))]
         pub fn add_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             ensure_root(origin)?;
-            roles::manage_allocators::<T>(key, true, Error::<T>::AlreadyAllocator)
+            roles::add_allocator::<T>(key)
         }
 
         /// Removes an existing allocator from the list. Only available for the
@@ -231,7 +192,7 @@ pub mod pallet {
         #[pallet::weight((<T as Config>::WeightInfo::remove_allocator(), DispatchClass::Normal, Pays::Yes))]
         pub fn remove_allocator(origin: OriginFor<T>, key: AccountIdOf<T>) -> DispatchResult {
             ensure_root(origin)?;
-            roles::manage_allocators::<T>(key, false, Error::<T>::NotAllocator)
+            roles::remove_allocator::<T>(key)
         }
 
         /// Forcefully adds a new agent to the whitelist. Only available for the
@@ -451,6 +412,12 @@ pub mod pallet {
         ApplicationDenied(u32),
         /// An application has expired.
         ApplicationExpired(u32),
+        /// A penalty was applied to an agent.
+        PenaltyApplied {
+            curator: T::AccountId,
+            agent: T::AccountId,
+            penalty: Percent,
+        },
     }
 
     #[pallet::error]
@@ -566,6 +533,11 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
     }
 
     fn set_allocator(key: &T::AccountId) {
-        crate::Allocators::<T>::insert(key, ());
+        Allocators::<T>::insert(key, ());
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_set_whitelisted(key: &T::AccountId) {
+        Whitelist::<T>::insert(key, ());
     }
 }

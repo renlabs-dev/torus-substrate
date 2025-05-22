@@ -40,12 +40,12 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
     fn ensure_curator_permission(
         grantee: OriginFor<T>,
         flags: ApiCuratorPermissions,
-    ) -> Result<(), DispatchError> {
+    ) -> Result<T::AccountId, DispatchError> {
         let Some(grantee) = ensure_signed_or_root(grantee)? else {
-            return Ok(());
+            return Ok(T::PalletId::get().into_account_truncating());
         };
 
-        let Some(permissions) = PermissionsByGrantee::<T>::get(grantee) else {
+        let Some(permissions) = PermissionsByGrantee::<T>::get(&grantee) else {
             return Err(Error::<T>::PermissionNotFound.into());
         };
 
@@ -81,7 +81,7 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
             }
         }
 
-        Ok(())
+        Ok(grantee)
     }
 
     fn get_curator_permission(grantee: &T::AccountId) -> Option<PermissionId> {

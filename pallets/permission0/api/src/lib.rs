@@ -166,7 +166,7 @@ pub trait Permission0CuratorApi<AccountId, Origin, BlockNumber> {
     fn ensure_curator_permission(
         grantee: Origin,
         flags: CuratorPermissions,
-    ) -> Result<(), DispatchError>;
+    ) -> Result<AccountId, DispatchError>;
 
     /// Finds the curator permission granted to [`grantee`].
     fn get_curator_permission(grantee: &AccountId) -> Option<PermissionId>;

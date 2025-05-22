@@ -6,22 +6,27 @@ use polkadot_sdk::{
     sp_runtime::{DispatchError, Percent},
 };
 
-use crate::{ensure, AccountIdOf, Allocators, Config, Error};
+use crate::{ensure, AccountIdOf, Allocators, Config, Error, Event};
 
-/// Generic function used to manage the Curator and Allocator maps, which behave
-/// similarly.
+/// Adds a new allocator to the network, checking wether it's already registered.
 #[doc(hidden)]
-pub fn manage_allocators<T: Config>(
-    key: AccountIdOf<T>,
-    is_add: bool,
-    error: Error<T>,
-) -> DispatchResult {
-    ensure!(Allocators::<T>::contains_key(&key) != is_add, error);
-    if is_add {
-        Allocators::<T>::insert(key, ())
-    } else {
-        Allocators::<T>::remove(&key)
-    }
+pub fn add_allocator<T: Config>(key: AccountIdOf<T>) -> DispatchResult {
+    ensure!(
+        !Allocators::<T>::contains_key(&key),
+        Error::<T>::AlreadyAllocator
+    );
+    Allocators::<T>::insert(key, ());
+    Ok(())
+}
+
+/// Removes an existing allocator to the network, checking wether it's registered.
+#[doc(hidden)]
+pub fn remove_allocator<T: Config>(key: AccountIdOf<T>) -> DispatchResult {
+    ensure!(
+        Allocators::<T>::contains_key(&key),
+        Error::<T>::NotAllocator
+    );
+    Allocators::<T>::remove(&key);
     Ok(())
 }
 
@@ -31,7 +36,7 @@ pub fn penalize_agent<T: Config>(
     agent_key: AccountIdOf<T>,
     percentage: u8,
 ) -> DispatchResult {
-    <T as Config>::Permission0::ensure_curator_permission(
+    let curator = <T as Config>::Permission0::ensure_curator_permission(
         origin,
         CuratorPermissions::PENALTY_CONTROL,
     )?;
@@ -50,6 +55,12 @@ pub fn penalize_agent<T: Config>(
 
         Ok::<(), DispatchError>(())
     })?;
+
+    crate::Pallet::<T>::deposit_event(Event::PenaltyApplied {
+        curator,
+        agent: agent_key,
+        penalty: percentage,
+    });
 
     Ok(())
 }

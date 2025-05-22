@@ -145,6 +145,8 @@ impl pallet_torus0::Config for Test {
     type Governance = Governance;
 
     type Emission = Emission0;
+
+    type WeightInfo = pallet_torus0::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {
@@ -216,10 +218,13 @@ impl pallet_governance::Config for Test {
 
     type Currency = Balances;
 
+    type Permission0 = Permission0;
+
     type WeightInfo = pallet_governance::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {
+    pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
     pub const MaxTargetsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MaxRevokersPerPermission: u32 = 10;
@@ -228,6 +233,8 @@ parameter_types! {
 }
 
 impl pallet_permission0::Config for Test {
+    type PalletId = PermissionPalletId;
+
     type RuntimeEvent = RuntimeEvent;
 
     type WeightInfo = ();

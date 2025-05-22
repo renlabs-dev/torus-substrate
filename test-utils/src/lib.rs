@@ -151,6 +151,8 @@ impl pallet_torus0::Config for Test {
     type Governance = Governance;
 
     type Emission = Emission0;
+
+    type WeightInfo = pallet_torus0::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {

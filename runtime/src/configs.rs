@@ -365,6 +365,8 @@ impl pallet_torus0::Config for Runtime {
     type Governance = Governance;
 
     type Emission = Emission0;
+
+    type WeightInfo = pallet_torus0::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {

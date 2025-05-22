@@ -19,8 +19,7 @@ pub mod distribute;
 #[doc(hidden)]
 pub mod weight_control;
 
-#[cfg(feature = "runtime-benchmarks")]
-pub mod benchmarks;
+pub mod benchmarking;
 pub mod weights;
 
 #[frame::pallet]
