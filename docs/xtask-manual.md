@@ -20,7 +20,7 @@ The `run` command launches Torus nodes with various configuration options. It of
 
 The local mode starts a node using either a provided chain spec file or the default development configuration:
 
-```bash
+```sh
 cargo xtask run local [OPTIONS]
 ```
 
@@ -38,7 +38,7 @@ The Alice and Bob accounts come with predefined keys and network configurations.
 
 The replica mode creates and runs a node that replicates the mainnet state:
 
-```bash
+```sh
 cargo xtask run replica [OPTIONS]
 ```
 
@@ -58,7 +58,7 @@ The `generate-spec` command creates chain specification files that define the in
 
 The `gen-new` subcommand creates a fresh chain specification with customizable parameters:
 
-```bash
+```sh
 cargo xtask generate-spec gen-new [OPTIONS] -o <OUTPUT_FILE>
 ```
 
@@ -73,7 +73,7 @@ Important options include:
 
 For example, to create a new chain with custom authorities and initial balances:
 
-```bash
+```sh
 cargo xtask generate-spec gen-new \
   --name "My Test Network" \
   --sudo 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY \
@@ -87,7 +87,7 @@ cargo xtask generate-spec gen-new \
 
 The `gen-replica` subcommand creates a chain specification that replicates the current mainnet state:
 
-```bash
+```sh
 cargo xtask generate-spec gen-replica [OPTIONS] -o <OUTPUT_FILE>
 ```
 
@@ -100,7 +100,7 @@ This command fetches the entire state from a running node and creates a chain sp
 
 Example usage:
 
-```bash
+```sh
 cargo xtask generate-spec gen-replica \
   --sudo 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY \
   --api-url "wss://my-custom-node.torus.network" \
@@ -125,7 +125,7 @@ The typical workflow is to first generate a chain spec file with desired propert
 
 Here's an example of setting up a two-node local network:
 
-```bash
+```sh
 # Generate a chain spec
 cargo xtask generate-spec gen-new --sudo 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY -o local-spec.json
 
@@ -142,7 +142,7 @@ The nodes will automatically connect to each other and start producing blocks si
 
 The `coverage` command generates code coverage reports for the Torus pallets:
 
-```bash
+```sh
 cargo xtask coverage [--html]
 ```
 
@@ -158,7 +158,7 @@ The xtask tools use several techniques to simplify working with Torus. It provid
 
 You can customize various node parameters to fit your specific needs:
 
-```bash
+```sh
 cargo xtask run local [OPTIONS] --chain-spec my-spec.json \
   --node-name "Custom Node" \
   --node-key <KEY> \
@@ -168,13 +168,13 @@ cargo xtask run local [OPTIONS] --chain-spec my-spec.json \
 
 For testing in isolation, you can prevent the node from connecting to other peers with the `--isolated` flag:
 
-```bash
+```sh
 cargo xtask run local --chain-spec my-spec.json --isolated
 ```
 
 You can also specify custom bootnodes for your node to connect to:
 
-```bash
+```sh
 cargo xtask run local --chain-spec my-spec.json \
   --bootnodes "/ip4/192.168.1.1/tcp/30333/p2p/<node-id>" \
   --bootnodes "/ip4/192.168.1.2/tcp/30333/p2p/<node-id>"
@@ -186,6 +186,6 @@ When working with xtask, you might encounter some common issues. If a node fails
 
 For debugging purposes, you can examine the temporary node directories to check logs and configuration files. The path is printed when the node starts. You can also run a node without using xtask to get more detailed logs:
 
-```bash
+```sh
 ./target/release/torus-node -d /tmp/node-data --chain my-spec.json --validator
 ```

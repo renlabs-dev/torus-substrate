@@ -4,10 +4,9 @@
 
 ![Docker Build](https://github.com/renlabs-dev/torus-substrate/actions/workflows/build-docker.yml/badge.svg)
 
-Torus is a self-assembling and evolving peer-to-peer blockchain organism, with a
-stake-driven network built in Rust with the Substrate framework. Torus powers an
-innovative ecosystem of agents and incentives, incorporating diverse
-technologies into its collective body.
+Torus is a self-assembling and evolving peer-to-peer organism with a
+stake-driven ecosystem of agents and incentives. It's core coordination system
+is a blockchain built on Substrate, implemented in this repository.
 
 ## Table of Contents
 
@@ -74,7 +73,7 @@ The Torus node operates on two primary ports:
 
 We have tools to simulate a network locally as well. The `cargo xtask run` command allows you to run a local network from scratch by setting up nodes with fresh spec files:
 
-```bash
+```sh
 cargo xtask generate-spec gen-new --sudo <your Torus key> -o myspec.json
 cargo xtask run local --chain myspec.json --alice --node-validator true &
 cargo xtask run local --chain myspec.json --bob --node-validator true &
@@ -84,13 +83,13 @@ The `generate-spec` command has been expanded with subcommands that allow you to
 
 1. Generate a new empty chain spec with custom parameters:
 
-```bash
+```sh
 cargo xtask generate-spec gen-new --name "My Custom Chain" --sudo <your Torus key> -o myspec.json
 ```
 
 2. Generate a replica of the mainnet:
 
-```bash
+```sh
 cargo xtask generate-spec gen-replica --sudo <your Torus key> -o myreplica.json
 ```
 
@@ -98,7 +97,7 @@ You can also pass an `--api-url` flag with a WS endpoint to clone the state from
 
 Both commands take additional parameters to configure Aura, Grandpa and balances. For example:
 
-```bash
+```sh
 cargo xtask generate-spec gen-new \
   --name "My Chain" \
   --sudo <your Torus key> \
@@ -110,7 +109,7 @@ cargo xtask generate-spec gen-new \
 
 You can then run nodes with the generated specs:
 
-```bash
+```sh
 cargo xtask run local --chain myspec.json --alice --node-validator true &
 cargo xtask run local --chain myspec.json --bob --node-validator true &
 ```

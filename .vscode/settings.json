@@ -12,10 +12,13 @@
   "coverage-gutters.coverageFileNames": ["target/cov.xml"],
   // Spell checker
   "cSpell.words": [
+    "alice",
     "buildx",
     "devcontainers",
+    "extrinsics",
     "irongut",
     "jwalton",
+    "mainnet",
     "presign",
     "Swatinem",
     "wbuild"

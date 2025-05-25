@@ -18,19 +18,22 @@ The project uses Nix flakes to manage dependencies and ensure a consistent devel
 
 1. Install Nix package manager by following the instructions at [nixos.org](https://nixos.org/download.html)
 2. Enable flakes by adding the following to your `~/.config/nix/nix.conf` or `/etc/nix/nix.conf`:
-   ```
+
+   ```conf
    experimental-features = nix-command flakes
    ```
+
 3. Enter the development environment:
 
-   ```bash
+   ```sh
    nix develop
    ```
 
    This will set up the correct Rust version, git, and precompiled binaries for dependencies like RocksDB and OpenSSL.
 
 4. Build the project:
-   ```bash
+
+   ```sh
    cargo build --release
    ```
 
@@ -92,7 +95,7 @@ For detailed guidance on creating migrations, refer to the [Substrate Storage Mi
 
 1. Fork the repo and create a new branch for your feature or bugfix:
 
-   ```bash
+   ```sh
    git checkout -b feature/your-feature-name
    ```
 
@@ -100,7 +103,7 @@ For detailed guidance on creating migrations, refer to the [Substrate Storage Mi
 
 3. Run tests and checks to ensure your changes don't break existing functionality:
 
-   ```bash
+   ```sh
    cargo fmt
    cargo clippy
    cargo test
@@ -108,7 +111,7 @@ For detailed guidance on creating migrations, refer to the [Substrate Storage Mi
 
 4. Check code coverage to ensure sufficient test coverage:
 
-   ```bash
+   ```sh
    cargo xtask coverage
    ```
 
@@ -125,7 +128,7 @@ Strong test coverage is a core value for our project. All pallets must maintain 
 
 Run the following command to generate a `Cobertura` xml file on `target/cov.xml` that can be used with the [Coverage Gutters](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters) VSCode plugin to display which functions and branches are not covered by tests yet.
 
-```bash
+```sh
 cargo xtask coverage
 ```
 
