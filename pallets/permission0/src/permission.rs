@@ -68,7 +68,7 @@ pub struct PermissionContract<T: Config> {
 impl<T: Config> PermissionContract<T> {
     pub fn is_expired(&self, current_block: BlockNumberFor<T>) -> bool {
         match self.duration {
-            PermissionDuration::UntilBlock(block) => current_block >= block,
+            PermissionDuration::UntilBlock(block) => current_block > block,
             PermissionDuration::Indefinite => false,
         }
     }
