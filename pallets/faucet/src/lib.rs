@@ -156,7 +156,7 @@ pub mod pallet {
                 // Build a valid transaction if all checks pass
                 ValidTransaction::with_tag_prefix("RunFaucet")
                     .priority(0)
-                    .longevity(5)
+                    .longevity(3)
                     .and_provides(key)
                     .propagate(true)
                     .build()
