@@ -23,6 +23,9 @@ mod test_balance_sum;
 #[cfg(test)]
 mod test_mainnet;
 
+#[cfg(feature = "testnet")]
+mod faucet;
+
 use subxt::{config::Header, OnlineClient, PolkadotConfig};
 
 /// Network type to connect to

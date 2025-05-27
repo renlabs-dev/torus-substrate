@@ -64,6 +64,8 @@ pallet-evm-precompile-modexp = { git = "https://github.com/paritytech/frontier.g
 pallet-evm-precompile-sha3fips = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
 pallet-evm-precompile-simple = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
 
+keccak-hash = { git = "https://github.com/paritytech/parity-common", rev = "f0dade11ac0b2450e6a54f36035f74b2b8ce4c00" }
+
 # CLI
 clap = { version = "4.5.22", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
@@ -74,3 +76,5 @@ jsonrpsee = { version = "0.24", features = ["server"] }
 # Async
 futures = "0.3"
 futures-timer = "3"
+
+rand = "0.9.1"
