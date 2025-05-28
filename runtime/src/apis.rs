@@ -7,6 +7,7 @@ use pallet_ethereum::{
 };
 use pallet_evm::{Account as EVMAccount, FeeCalculator, Runner};
 use pallet_grandpa::AuthorityId as GrandpaId;
+use pallet_permission0_api::{generate_root_stream_id, StreamId};
 use polkadot_sdk::{
     polkadot_sdk_frame::runtime::prelude::*,
     sp_consensus_aura::sr25519::AuthorityId as AuraId,
@@ -213,7 +214,9 @@ impl_runtime_apis! {
             use baseline::Pallet as BaselineBench;
             use super::*;
 
+            #[allow(non_local_definitions)]
             impl frame_system_benchmarking::Config for Runtime {}
+            #[allow(non_local_definitions)]
             impl baseline::Config for Runtime {}
 
             use frame_support::traits::WhitelistedStorageKeys;
@@ -442,7 +445,7 @@ impl_runtime_apis! {
                 let _ = RuntimeExecutive::apply_extrinsic(ext);
             }
 
-            Ethereum::on_finalize(System::block_number() + 1);
+            Ethereum::on_finalize(System::block_number().saturating_add(1));
 
             (
                 pallet_ethereum::CurrentBlock::<Runtime>::get(),
@@ -460,6 +463,12 @@ impl_runtime_apis! {
             UncheckedExtrinsic::new_unsigned(
                 pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
             )
+        }
+    }
+
+    impl pallet_permission0_api::Permission0RuntimeApi<Block, AccountId> for Runtime {
+        fn root_stream_id_for_account(account_id: AccountId) -> StreamId {
+            generate_root_stream_id(&account_id)
         }
     }
 }

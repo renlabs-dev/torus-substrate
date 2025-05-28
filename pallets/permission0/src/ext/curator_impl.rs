@@ -11,7 +11,7 @@ use pallet_permission0_api::{
 };
 use polkadot_sdk::frame_system::{ensure_root, ensure_signed_or_root};
 use polkadot_sdk::sp_core::Get;
-use polkadot_sdk::sp_runtime::traits::AccountIdConversion;
+use polkadot_sdk::sp_runtime::traits::{AccountIdConversion, Saturating};
 use polkadot_sdk::{
     frame_support::ensure,
     frame_system,
@@ -75,7 +75,7 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
 
             if contract
                 .last_execution
-                .is_some_and(|last_execution| last_execution + cooldown > now)
+                .is_some_and(|last_execution| last_execution.saturating_add(cooldown) > now)
             {
                 return Err(Error::<T>::PermissionInCooldown.into());
             }

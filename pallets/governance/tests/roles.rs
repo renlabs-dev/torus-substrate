@@ -1,3 +1,5 @@
+#![allow(unused, clippy::arithmetic_side_effects)]
+
 use pallet_governance::{GlobalGovernanceConfig, Whitelist};
 use pallet_permission0_api::CuratorPermissions;
 use polkadot_sdk::{frame_support::assert_err, sp_runtime::Percent};

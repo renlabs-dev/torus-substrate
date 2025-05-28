@@ -1,0 +1,14 @@
+[package]
+name = "pallet-permission0-rpc"
+version = "0.1.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+jsonrpsee.workspace = true
+pallet-permission0-api = { workspace = true, features = ["std"] }
+polkadot-sdk = { workspace = true, features = ["sp-api", "sp-runtime", "std"] }
+torus-runtime = { workspace = true, features = ["std"] }

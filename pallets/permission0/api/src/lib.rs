@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::multiple_bound_locations)]
 
 use codec::{Decode, Encode};
 use polkadot_sdk::{
@@ -23,16 +24,6 @@ pub const ROOT_STREAM_PREFIX: &[u8] = b"torus:emission:root";
 pub fn generate_root_stream_id<AccountId: Encode>(agent_id: &AccountId) -> StreamId {
     let mut data = ROOT_STREAM_PREFIX.to_vec();
     data.extend(agent_id.encode());
-    blake2_256(&data).into()
-}
-
-/// Generates a derived stream ID based on source stream and permission
-pub fn generate_derived_stream_id(
-    source_stream: &StreamId,
-    permission_id: &PermissionId,
-) -> StreamId {
-    let mut data = source_stream.encode();
-    data.extend(permission_id.encode());
     blake2_256(&data).into()
 }
 
@@ -170,4 +161,15 @@ pub trait Permission0CuratorApi<AccountId, Origin, BlockNumber> {
 
     /// Finds the curator permission granted to [`grantee`].
     fn get_curator_permission(grantee: &AccountId) -> Option<PermissionId>;
+}
+
+polkadot_sdk::sp_api::decl_runtime_apis! {
+    /// A set of helper functions for permission and streams
+    /// queries.
+    pub trait Permission0RuntimeApi<AccountId: Encode> {
+        /// Generates a root stream ID for the given account.
+        /// The root stream ID is assigned by the system when emitting
+        /// tokens from the STAKE as rewards.
+        fn root_stream_id_for_account(account_id: AccountId) -> StreamId;
+    }
 }

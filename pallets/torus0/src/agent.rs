@@ -10,7 +10,7 @@ use polkadot_sdk::{
         DebugNoBound,
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
-    sp_runtime::{BoundedVec, DispatchError, Percent},
+    sp_runtime::{traits::Saturating, BoundedVec, DispatchError, Percent},
     sp_tracing::{debug, debug_span},
 };
 use scale_info::{prelude::vec::Vec, TypeInfo};
@@ -231,7 +231,7 @@ fn is_in_update_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> Result<bool,
         .ok_or(crate::Error::<T>::AgentDoesNotExist)?
         .last_update_block;
 
-    Ok(last_update + cooldown > current_block)
+    Ok(last_update.saturating_add(cooldown) > current_block)
 }
 
 fn set_in_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {

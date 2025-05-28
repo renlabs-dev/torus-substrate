@@ -9,7 +9,9 @@ use polkadot_sdk::{
 };
 
 pub fn normalize(x: Vec<FixedU128>) -> Vec<FixedU128> {
-    let sum: FixedU128 = x.iter().fold(FixedU128::default(), |acc, &e| acc + e);
+    let sum: FixedU128 = x
+        .iter()
+        .fold(FixedU128::default(), |acc, &e| acc.saturating_add(e));
     normalize_with_sum(x, sum)
 }
 
@@ -20,7 +22,7 @@ pub fn normalize_with_sum(mut x: Vec<FixedU128>, sum: FixedU128) -> Vec<FixedU12
     }
 
     for ele in &mut x {
-        *ele = *ele / sum;
+        *ele = ele.const_checked_div(sum).unwrap_or_default();
     }
 
     x
@@ -29,7 +31,9 @@ pub fn normalize_with_sum(mut x: Vec<FixedU128>, sum: FixedU128) -> Vec<FixedU12
 #[allow(dead_code)]
 pub fn inplace_row_normalize_64(x: &mut [Vec<FixedU128>]) {
     for row in x {
-        let row_sum: FixedU128 = row.iter().fold(FixedU128::default(), |acc, &e| acc + e);
+        let row_sum: FixedU128 = row
+            .iter()
+            .fold(FixedU128::default(), |acc, &e| acc.saturating_add(e));
         if row_sum > FixedU128::from_inner(0) {
             row.iter_mut().for_each(|x_ij: &mut FixedU128| {
                 *x_ij = x_ij.const_checked_div(row_sum).unwrap_or_default();
@@ -79,7 +83,7 @@ pub fn col_normalize_sparse(
                 continue;
             };
             if *col_sum_j != 0.into() {
-                *value = *value / *col_sum_j;
+                *value = value.const_checked_div(*col_sum_j).unwrap_or_default();
             }
         }
     }
@@ -136,7 +140,7 @@ pub fn vec_max_upscale_to_u16(vec: &[FixedU128]) -> Vec<u16> {
         return vec![0; vec.len()];
     };
 
-    let ratio = MAX / *max_ele;
+    let ratio = MAX.const_checked_div(*max_ele).unwrap_or_default();
 
     vec.iter()
         .map(|e| {

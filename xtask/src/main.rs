@@ -42,7 +42,7 @@ fn main() {
             }
 
             cmd.args(args);
-            cmd.exec();
+            let _ = cmd.exec();
         }
     }
 }
@@ -92,7 +92,7 @@ struct Account<'a> {
     pub(crate) grandpa_address: sp_keyring::Ed25519Keyring,
 }
 
-impl<'a> Default for Account<'a> {
+impl Default for Account<'_> {
     fn default() -> Self {
         Self {
             suri: "".into(),

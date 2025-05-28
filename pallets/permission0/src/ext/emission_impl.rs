@@ -21,7 +21,7 @@ use polkadot_sdk::{
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::Get,
     sp_runtime::{
-        traits::{CheckedAdd, Zero},
+        traits::{CheckedAdd, Saturating, Zero},
         DispatchError, Percent, Vec,
     },
     sp_std::collections::btree_map::BTreeMap,
@@ -277,7 +277,7 @@ pub fn execute_permission_impl<T: Config>(
                     .filter_map(|id| {
                         AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))
                     })
-                    .fold(BalanceOf::<T>::zero(), |acc, e| acc + e), // The Balance AST does not enforce the Sum trait
+                    .fold(BalanceOf::<T>::zero(), |acc, e| acc.saturating_add(e)), // The Balance AST does not enforce the Sum trait
                 EmissionAllocation::FixedAmount(amount) => *amount,
             };
 
@@ -325,7 +325,7 @@ pub fn toggle_permission_accumulation_impl<T: Config>(
                     .filter(|id| controllers.contains(id))
                     .count();
 
-                if votes + 1 < *required_votes as usize {
+                if votes.saturating_add(1) < *required_votes as usize {
                     return EnforcementTracking::<T>::mutate(
                         permission_id,
                         referendum.clone(),

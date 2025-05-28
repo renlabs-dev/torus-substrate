@@ -49,13 +49,12 @@ impl<T: crate::Config> Proposal<T> {
     /// are only executed on the expiration block.
     pub fn execution_block(&self) -> BlockNumberFor<T> {
         match self.data {
-            ProposalData::Emission { .. } => {
-                self.creation_block
-                    + U256::from(21_600)
-                        .try_into()
-                        .ok()
-                        .expect("this is a safe conversion")
-            }
+            ProposalData::Emission { .. } => self.creation_block.saturating_add(
+                U256::from(21_600)
+                    .try_into()
+                    .ok()
+                    .expect("this is a safe conversion"),
+            ),
             _ => self.expiration_block,
         }
     }
@@ -434,7 +433,7 @@ fn add_proposal<T: crate::Config>(
     let proposal = Proposal::<T> {
         id: proposal_id,
         proposer,
-        expiration_block: current_block + config.proposal_expiration,
+        expiration_block: current_block.saturating_add(config.proposal_expiration),
         data,
         status: ProposalStatus::Open {
             votes_for: BoundedBTreeSet::new(),

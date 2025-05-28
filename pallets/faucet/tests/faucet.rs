@@ -1,4 +1,4 @@
-#![allow(unused)]
+#![allow(unused, clippy::arithmetic_side_effects)]
 
 use std::{cell::RefCell, io::Read, num::NonZeroU128};
 

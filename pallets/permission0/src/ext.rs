@@ -183,7 +183,7 @@ pub fn enforcement_execute_permission_impl<T: Config>(
                     .filter(|id| controllers.contains(id))
                     .count();
 
-                if votes + 1 < *required_votes as usize {
+                if votes.saturating_add(1) < *required_votes as usize {
                     return EnforcementTracking::<T>::mutate(
                         permission_id,
                         referendum.clone(),

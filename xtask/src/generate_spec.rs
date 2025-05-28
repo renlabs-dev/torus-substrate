@@ -247,22 +247,19 @@ fn generate_new_spec(gen_new: &flags::GenNew, cmd: &flags::GenerateSpec) {
         .clone()
         .unwrap_or_else(|| Path::new("dev").to_path_buf());
 
-    // Start with a minimal dev chain spec
     let out = crate::torus_node!("build-spec", "--chain", chain_spec)
+        .stderr(std::io::stderr())
         .output()
         .expect("failed to run torus node");
 
     let mut json: Value = serde_json::from_slice(&out.stdout).expect("failed to parse spec file");
 
-    // Set chain name if provided
     if let Some(name) = &gen_new.name {
         json["name"] = Value::String(name.clone());
     }
 
-    // Apply all the customizations from the flags
     customize_spec(&mut json, cmd);
 
-    // Write the result to the output file
     let serialized = serde_json::to_string_pretty(&json).expect("failed to generate spec file");
 
     match &cmd.out {

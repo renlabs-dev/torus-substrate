@@ -1,3 +1,5 @@
+#![allow(clippy::arithmetic_side_effects)]
+
 use codec::{Decode, Encode};
 use pallet_ethereum::PostLogContent;
 use pallet_evm::{FeeCalculator, HashedAddressMapping};
@@ -30,12 +32,13 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
     where
         I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
     {
-        if let Some(author_index) = F::find_author(digests) {
-            let authority_id =
-                pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
-            return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
-        }
-        None
+        let authority_id = F::find_author(digests).and_then(|author_index| {
+            pallet_aura::Authorities::<Runtime>::get()
+                .get(author_index as usize)
+                .cloned()
+        })?;
+
+        authority_id.to_raw_vec().get(4..24).map(H160::from_slice)
     }
 }
 

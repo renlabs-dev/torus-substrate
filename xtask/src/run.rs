@@ -38,7 +38,7 @@ pub(super) fn run(mut r: flags::Run) {
             .suffix(node.name.as_ref().unwrap_or(&Cow::Borrowed("")).as_ref())
             .tempdir()
             .expect("failed to create tempdir")
-            .into_path()
+            .keep()
     });
 
     match (path.exists(), path.is_dir()) {

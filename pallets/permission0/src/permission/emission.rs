@@ -121,7 +121,7 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
 
         AccumulatedStreamAmounts::<T>::set(
             (agent, stream, &permission_id),
-            Some(balance + delegated_amount),
+            Some(balance.saturating_add(delegated_amount)),
         );
     }
 }
@@ -236,7 +236,10 @@ fn do_distribute_to_targets<T: Config>(
 
     for (target, weight) in emission_scope.targets.iter() {
         let target_weight = FixedU128::from_u32(*weight as u32);
-        let target_amount = total_initial_amount.saturating_mul(target_weight) / total_weight;
+        let target_amount = total_initial_amount
+            .saturating_mul(target_weight)
+            .const_checked_div(total_weight)
+            .unwrap_or_default();
 
         if target_amount.is_zero() {
             continue;
@@ -254,7 +257,7 @@ fn do_distribute_to_targets<T: Config>(
         T::Currency::resolve_creating(target, imbalance);
     }
 
-    let amount = initial_balance - imbalance.peek();
+    let amount = initial_balance.saturating_sub(imbalance.peek());
     if !amount.is_zero() {
         <Pallet<T>>::deposit_event(match reason {
             DistributionReason::Automatic => Event::AutoDistributionExecuted {
@@ -289,7 +292,7 @@ pub(crate) fn do_auto_distribution<T: Config>(
                     .filter_map(|id| {
                         AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))
                     })
-                    .fold(BalanceOf::<T>::zero(), |acc, e| acc + e), // The Balance AST does not enforce the Sum trait
+                    .fold(BalanceOf::<T>::zero(), |acc, e| acc.saturating_add(e)), // The Balance AST does not enforce the Sum trait
                 EmissionAllocation::FixedAmount(amount) => *amount,
             };
 

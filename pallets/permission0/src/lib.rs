@@ -1,10 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 
-pub use pallet::*;
-
-use pallet_permission0_api::StreamId;
-
 pub mod benchmarking;
 pub mod weights;
 pub use weights::*;
@@ -13,11 +9,15 @@ pub mod ext;
 pub mod migrations;
 pub mod permission;
 
+pub use pallet::*;
+
 pub use permission::{
     generate_permission_id, CuratorPermissions, CuratorScope, DistributionControl,
     EmissionAllocation, EmissionScope, EnforcementAuthority, EnforcementReferendum,
     PermissionContract, PermissionDuration, PermissionId, PermissionScope, RevocationTerms,
 };
+
+pub use pallet_permission0_api::{generate_root_stream_id, StreamId};
 
 use polkadot_sdk::{
     frame_support::{

@@ -95,7 +95,7 @@ impl<T: Config> PermissionContract<T> {
                         .filter(|id| id != who)
                         .filter(|id| accounts.contains(id))
                         .count();
-                    if votes + 1 < *required_votes as usize {
+                    if votes.saturating_add(1) < *required_votes as usize {
                         return RevocationTracking::<T>::mutate(permission_id, |votes| {
                             votes
                                 .try_insert(who.clone())
@@ -226,7 +226,11 @@ pub enum EnforcementAuthority<T: Config> {
 /// Process all auto-distributions and time-based distributions
 pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumberFor<T>) {
     // Only check every 10 blocks to reduce computational overhead
-    if current_block.into() % 10 != U256::zero() {
+    if <BlockNumberFor<T> as Into<U256>>::into(current_block)
+        .checked_rem(10.into())
+        .unwrap_or_default()
+        != U256::zero()
+    {
         return;
     }
 

@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing)]
+
 use std::collections::BTreeMap;
 
 use pallet_permission0::permission::emission::StreamId;
