@@ -20,6 +20,8 @@ use polkadot_sdk::{
     sp_tracing::{info, trace},
 };
 
+const FAUCET_AMOUNT: u128 = 50_000_000_000_000_000_000;
+
 /// Main execution function for the faucet pallet
 ///
 /// This function processes a faucet request after it has passed the unsigned validation.
@@ -82,8 +84,7 @@ pub fn execute<T: crate::Config>(
     ensure!(seal == work_hash, Error::<T>::InvalidSeal);
 
     // Award tokens to the account (15 tokens with 18 decimals)
-    let amount: u64 = 15_000_000_000_000_000_000;
-    let amount: BalanceOf<T> = amount.try_into().map_err(|_| "Invalid amount")?;
+    let amount: BalanceOf<T> = FAUCET_AMOUNT.try_into().map_err(|_| "Invalid amount")?;
     let _ = T::Currency::deposit_creating(&key, amount);
 
     // Log success and emit event
