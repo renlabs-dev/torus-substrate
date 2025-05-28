@@ -13,6 +13,7 @@ runtime-benchmarks = [
     "torus-runtime/runtime-benchmarks",
     "polkadot-sdk/runtime-benchmarks",
 ]
+testnet = ["torus-runtime/testnet"]
 
 
 [dependencies]
