@@ -98,7 +98,7 @@ pub mod ops {
     macro_rules! torus_node {
         ($($arg:expr),*) => {{
             let mut cmd = std::process::Command::new("cargo");
-            cmd.args(["run", "--release", "--package", "torus-node", "--"]);
+            cmd.args(["run", "--release", "--features", "testnet", "--package", "torus-node", "--"]);
             $(cmd.arg($arg);)*
             cmd
         }};

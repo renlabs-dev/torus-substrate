@@ -50,7 +50,7 @@ pub fn execute<T: crate::Config>(
         <frame_system::Pallet<T>>::inc_providers(&key);
     }
 
-    info!("do faucet with key: {key:?} and block number: {block_number} and nonce: {nonce}");
+    info!("do faucet with key: {key:?} and block number: {block_number} and nonce: {nonce} and hash: {work:?}");
 
     // Get the current block number for validation
     let current_block_number: u64 = frame_system::Pallet::<T>::block_number()
