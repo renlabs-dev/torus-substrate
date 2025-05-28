@@ -78,6 +78,8 @@ pub(super) fn run(mut r: flags::Run) {
     ops::key_insert_cmd(&path, &chain_spec, &account.suri, "aura");
     ops::key_insert_cmd(&path, &chain_spec, &account.suri, "gran");
 
+    dbg!(&chain_spec);
+
     let _run = ops::run_node(&path, &chain_spec, &node, &r.bootnodes, r.isolated)
         .spawn()
         .unwrap()
