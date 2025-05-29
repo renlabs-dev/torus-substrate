@@ -1,0 +1,37 @@
+# Justfile for torus-client
+
+# Default network
+default_net := "mainnet"
+
+# Download metadata for a given network (default: mainnet)
+download_metadata net=default_net:
+    @echo "Downloading metadata for {{net}} network..."
+    ./scripts/get-metadata.sh {{net}}
+    @echo "Metadata downloaded to data/metadata/{{net}}.scale"
+
+# Generate interfaces from metadata for a given network (default: mainnet)
+gen_interfaces net=default_net: (download_metadata net)
+    @echo "Generating interfaces for {{net}} network..."
+    subxt codegen --file data/metadata/{{net}}.scale | rustfmt > src/interfaces/{{net}}.rs
+    @echo "Generated interfaces in src/interfaces/{{net}}.rs"
+
+# Generate interfaces for live networks (mainnet and testnet)
+gen_for_live: (gen_interfaces "mainnet") (gen_interfaces "testnet")
+    @echo "Live network interfaces generated successfully"
+
+# Build the client library
+build:
+    @echo "Building torus-client..."
+    cargo build --package torus-client
+
+# Run tests for the client library
+test:
+    @echo "Running tests for torus-client..."
+    cargo test --package torus-client
+
+# Clean build artifacts and optionally metadata
+clean:
+    @echo "Cleaning build artifacts..."
+    cargo clean --package torus-client
+    # rm -rf data/metadata/*.scale
+    @echo "Cleaned build artifacts"
