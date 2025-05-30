@@ -1,0 +1,20 @@
+[package]
+name = "torus-cli"
+version = "0.1.0"
+edition = "2021"
+authors = ["Renlabs <contact@renlabs.dev>"]
+description = "Torus chain cli using torus client"
+license = "MIT"
+
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+home = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+torus-client = { workspace = true, features = ["std", "mainnet", "testnet"] }
+tokio = { workspace = true, features = ["macros", "rt"] }
+tracing = { workspace = true }
+
+[features]
