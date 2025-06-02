@@ -86,7 +86,7 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
     }
 
     let streams = AccumulatedStreamAmounts::<T>::iter_prefix((agent, stream));
-    for (permission_id, balance) in streams {
+    for (permission_id, accumulated) in streams {
         let Some(contract) = Permissions::<T>::get(permission_id) else {
             continue;
         };
@@ -121,8 +121,60 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
 
         AccumulatedStreamAmounts::<T>::set(
             (agent, stream, &permission_id),
-            Some(balance.saturating_add(delegated_amount)),
+            Some(accumulated.saturating_add(delegated_amount)),
         );
+    }
+}
+
+pub(crate) fn do_auto_distribution<T: Config>(
+    emission_scope: &EmissionScope<T>,
+    permission_id: H256,
+    current_block: BlockNumberFor<T>,
+    contract: &PermissionContract<T>,
+) {
+    match emission_scope.distribution {
+        DistributionControl::Automatic(threshold) => {
+            let accumulated = match &emission_scope.allocation {
+                EmissionAllocation::Streams(streams) => streams
+                    .keys()
+                    .filter_map(|id| {
+                        AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))
+                    })
+                    .fold(BalanceOf::<T>::zero(), |acc, e| acc.saturating_add(e)), // The Balance AST does not enforce the Sum trait
+                EmissionAllocation::FixedAmount(amount) => *amount,
+            };
+
+            if accumulated >= threshold {
+                do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
+            }
+        }
+
+        DistributionControl::AtBlock(target_block) if current_block > target_block => {
+            // As we only verify once every 10 blocks, we have to check if current block
+            // is GTE to the target block. To avoid, triggering on every block,
+            // we also verify that the last execution occurred before the target block
+            // (or haven't occurred at all)
+            if contract
+                .last_execution
+                .is_some_and(|last_execution| last_execution >= target_block)
+            {
+                return;
+            }
+
+            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
+        }
+
+        DistributionControl::Interval(interval) => {
+            let last_execution = contract.last_execution.unwrap_or(contract.created_at);
+            if current_block.saturating_sub(last_execution) < interval {
+                return;
+            }
+
+            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
+        }
+
+        // Manual distribution doesn't need auto-processing
+        _ => {}
     }
 }
 
@@ -275,57 +327,5 @@ fn do_distribute_to_targets<T: Config>(
                 amount,
             },
         });
-    }
-}
-
-pub(crate) fn do_auto_distribution<T: Config>(
-    emission_scope: &EmissionScope<T>,
-    permission_id: H256,
-    current_block: BlockNumberFor<T>,
-    contract: &PermissionContract<T>,
-) {
-    match emission_scope.distribution {
-        DistributionControl::Automatic(threshold) => {
-            let accumulated = match &emission_scope.allocation {
-                EmissionAllocation::Streams(streams) => streams
-                    .keys()
-                    .filter_map(|id| {
-                        AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))
-                    })
-                    .fold(BalanceOf::<T>::zero(), |acc, e| acc.saturating_add(e)), // The Balance AST does not enforce the Sum trait
-                EmissionAllocation::FixedAmount(amount) => *amount,
-            };
-
-            if accumulated >= threshold {
-                do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
-            }
-        }
-
-        DistributionControl::AtBlock(target_block) if current_block > target_block => {
-            // As we only verify once every 10 blocks, we have to check if current block
-            // is GTE to the target block. To avoid, triggering on every block,
-            // we also verify that the last execution occurred before the target block
-            // (or haven't occurred at all)
-            if contract
-                .last_execution
-                .is_some_and(|last_execution| last_execution >= target_block)
-            {
-                return;
-            }
-
-            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
-        }
-
-        DistributionControl::Interval(interval) => {
-            let last_execution = contract.last_execution.unwrap_or(contract.created_at);
-            if current_block.saturating_sub(last_execution) < interval {
-                return;
-            }
-
-            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
-        }
-
-        // Manual distribution doesn't need auto-processing
-        _ => {}
     }
 }

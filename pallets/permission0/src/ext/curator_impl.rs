@@ -134,7 +134,7 @@ pub fn grant_curator_permission_impl<T: Config>(
     }
 
     let scope = PermissionScope::Curator(CuratorScope { flags, cooldown });
-    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope);
+    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope)?;
 
     let contract = PermissionContract {
         grantor,

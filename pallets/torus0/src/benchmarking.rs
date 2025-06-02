@@ -33,7 +33,7 @@ mod benchmarks {
 
         register_test_agent::<T>(&agent, vec![1, 2, 3], vec![1, 2, 3], vec![1, 2, 3]);
 
-        let _ = <T::Currency>::deposit_creating(&staker, amount * 2);
+        let _ = <T::Currency>::deposit_creating(&staker, amount.saturating_mul(2));
 
         #[extrinsic_call]
         add_stake(RawOrigin::Signed(staker), agent, amount)
@@ -47,7 +47,7 @@ mod benchmarks {
         register_test_agent::<T>(&agent, vec![1, 2, 3], vec![1, 2, 3], vec![1, 2, 3]);
 
         let amount = MinAllowedStake::<T>::get();
-        let _ = <T::Currency>::deposit_creating(&staker, amount * 2);
+        let _ = <T::Currency>::deposit_creating(&staker, amount.saturating_mul(2));
         Pallet::<T>::force_set_stake(&staker, &agent, amount).expect("failed to add stake");
 
         #[extrinsic_call]
@@ -64,7 +64,7 @@ mod benchmarks {
         register_test_agent::<T>(&agent_b, vec![4, 5, 6], vec![4, 5, 6], vec![4, 5, 6]);
 
         let amount = MinAllowedStake::<T>::get();
-        let _ = <T::Currency>::deposit_creating(&staker, amount * 2);
+        let _ = <T::Currency>::deposit_creating(&staker, amount.saturating_mul(2));
         Pallet::<T>::force_set_stake(&staker, &agent_a, amount).expect("failed to add stake");
 
         #[extrinsic_call]
@@ -77,7 +77,7 @@ mod benchmarks {
         <T::Governance>::force_set_whitelisted(&agent);
 
         let burn = crate::Burn::<T>::get();
-        let _ = <T::Currency>::deposit_creating(&agent, burn * 2);
+        let _ = <T::Currency>::deposit_creating(&agent, burn.saturating_mul(2));
 
         let name = vec![1, 2, 3];
         let url = vec![1, 2, 3];

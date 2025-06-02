@@ -8471,6 +8471,7 @@ dependencies = [
  "pallet-torus0-api",
  "parity-scale-codec",
  "polkadot-sdk",
+ "rand 0.9.1",
  "scale-info",
 ]
 

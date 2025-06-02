@@ -3,9 +3,10 @@
 use std::collections::BTreeMap;
 
 use pallet_permission0::permission::emission::StreamId;
-use pallet_permission0::EnforcementReferendum;
+use pallet_permission0::{EnforcementAuthority, EnforcementReferendum};
 use pallet_permission0_api::{generate_root_stream_id, Permission0EmissionApi};
 use polkadot_sdk::frame_support::{assert_err, traits::Currency};
+use polkadot_sdk::sp_core::bounded_vec;
 use polkadot_sdk::sp_runtime::Percent;
 use test_utils::*;
 
@@ -51,8 +52,10 @@ fn set_enforcement_authority_by_grantor() {
             pallet_permission0::Pallet::<Test>::set_enforcement_authority(
                 get_origin(grantee),
                 permission_id,
-                vec![controller],
-                1,
+                EnforcementAuthority::ControlledBy {
+                    controllers: bounded_vec![controller],
+                    required_votes: 1
+                }
             ),
             pallet_permission0::Error::<Test>::NotPermissionGrantor
         );
@@ -61,8 +64,10 @@ fn set_enforcement_authority_by_grantor() {
             pallet_permission0::Pallet::<Test>::set_enforcement_authority(
                 get_origin(controller),
                 permission_id,
-                vec![controller],
-                1,
+                EnforcementAuthority::ControlledBy {
+                    controllers: bounded_vec![controller],
+                    required_votes: 1
+                }
             ),
             pallet_permission0::Error::<Test>::NotPermissionGrantor
         );
@@ -71,8 +76,10 @@ fn set_enforcement_authority_by_grantor() {
             pallet_permission0::Pallet::<Test>::set_enforcement_authority(
                 get_origin(grantor),
                 permission_id,
-                vec![controller],
-                1,
+                EnforcementAuthority::ControlledBy {
+                    controllers: bounded_vec![controller],
+                    required_votes: 1
+                }
             )
         );
 

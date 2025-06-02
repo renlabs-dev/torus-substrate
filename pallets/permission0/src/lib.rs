@@ -221,12 +221,19 @@ pub mod pallet {
     pub enum Error<T> {
         /// The agent is not registered
         NotRegisteredAgent,
+        /// Permissions can only be created through extrinsics
+        PermissionCreationOutsideExtrinsic,
+        /// A permission with the same exact parameters was
+        /// already created in the current block
+        DuplicatePermissionInBlock,
         /// Permission not found
         PermissionNotFound,
         /// Self-permission is not allowed
         SelfPermissionNotAllowed,
         /// Invalid percentage (out of range)
         InvalidPercentage,
+        /// Invalid emission weight set to target
+        InvalidTargetWeight,
         /// No targets specified
         NoTargetsSpecified,
         /// Invalid threshold
@@ -296,7 +303,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             grantee: T::AccountId,
             allocation: EmissionAllocation<T>,
-            targets: Vec<(T::AccountId, u16)>,
+            targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
             distribution: DistributionControl<T>,
             duration: PermissionDuration<T>,
             revocation: RevocationTerms<T>,
@@ -373,53 +380,18 @@ pub mod pallet {
         pub fn set_enforcement_authority(
             origin: OriginFor<T>,
             permission_id: PermissionId,
-            controllers: Vec<T::AccountId>,
-            required_votes: u32,
+            enforcement: EnforcementAuthority<T>,
         ) -> DispatchResult {
             let who = ensure_signed_or_root(origin)?;
 
-            let mut contract =
+            let contract =
                 Permissions::<T>::get(permission_id).ok_or(Error::<T>::PermissionNotFound)?;
 
-            // Only grantor or root can set enforcement authority
             if let Some(who) = &who {
                 ensure!(who == &contract.grantor, Error::<T>::NotPermissionGrantor);
             }
 
-            ensure!(
-                !controllers.is_empty(),
-                Error::<T>::InvalidNumberOfControllers
-            );
-            ensure!(required_votes > 0, Error::<T>::InvalidNumberOfControllers);
-            ensure!(
-                required_votes as usize <= controllers.len(),
-                Error::<T>::InvalidNumberOfControllers
-            );
-
-            let controllers = controllers
-                .try_into()
-                .map_err(|_| Error::<T>::TooManyControllers)?;
-
-            contract.enforcement = EnforcementAuthority::ControlledBy {
-                controllers,
-                required_votes,
-            };
-
-            Permissions::<T>::insert(permission_id, contract.clone());
-
-            if let EnforcementAuthority::ControlledBy {
-                controllers,
-                required_votes,
-            } = &contract.enforcement
-            {
-                <Pallet<T>>::deposit_event(Event::EnforcementAuthoritySet {
-                    permission_id,
-                    controllers_count: controllers.len() as u32,
-                    required_votes: *required_votes,
-                });
-            }
-
-            Ok(())
+            contract.update_enforcement(permission_id, enforcement)
         }
 
         /// Grant a permission for curator delegation
@@ -469,7 +441,7 @@ fn update_permission_indices<T: Config>(
     grantee: &T::AccountId,
     permission_id: PermissionId,
 ) -> Result<(), DispatchError> {
-    // Update (grantor, grantee) -> permission_id mapping
+    // Update (grantor, grantee) -> [permission_id] mapping
     PermissionsByParticipants::<T>::try_mutate(
         (grantor.clone(), grantee.clone()),
         |permissions| -> Result<(), DispatchError> {
@@ -491,7 +463,7 @@ fn update_permission_indices<T: Config>(
         },
     )?;
 
-    // Update grantor -> permission_id mapping
+    // Update grantor -> [permission_id] mapping
     PermissionsByGrantor::<T>::try_mutate(
         grantor.clone(),
         |permissions| -> Result<(), DispatchError> {
@@ -513,7 +485,7 @@ fn update_permission_indices<T: Config>(
         },
     )?;
 
-    // Update grantee -> permission_id mapping
+    // Update grantee -> [permission_id] mapping
     PermissionsByGrantee::<T>::try_mutate(
         grantee.clone(),
         |permissions| -> Result<(), DispatchError> {
