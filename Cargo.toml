@@ -52,6 +52,7 @@ num-traits = { version = "0.2.19", default-features = false, features = [
     "libm",
 ] }
 bitflags = { version = "2.9.1", default-features = false }
+rand = { version = "0.9.1", default-features = false }
 
 # Frontier / EVM
 fc-api = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }

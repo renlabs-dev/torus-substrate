@@ -140,7 +140,7 @@ mod benchmarks {
 
         let params = proposal::GlobalParamsData {
             min_name_length: 2,
-            max_name_length: T::MaxAgentNameLengthConstraint::get() as u16 - 1,
+            max_name_length: (T::MaxAgentNameLengthConstraint::get() as u16).saturating_sub(1),
             max_allowed_agents: 1,
             min_weight_control_fee: 1,
             min_staking_fee: 1,

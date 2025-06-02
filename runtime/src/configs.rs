@@ -87,7 +87,7 @@ impl frame_system::Config for Runtime {
 
 // --- Balances ---
 
-pub const EXISTENTIAL_DEPOSIT: u128 = 10_u128.pow(TOKEN_DECIMALS) / 10;
+pub const EXISTENTIAL_DEPOSIT: u128 = as_tors(1) / 10;
 
 impl pallet_balances::Config for Runtime {
     /// The means of storing the balances of an account
@@ -301,7 +301,7 @@ impl pallet_grandpa::Config for Runtime {
 // --- Torus ---
 
 const fn as_tors(val: u128) -> u128 {
-    val.saturating_add(10u128.pow(TOKEN_DECIMALS))
+    val.saturating_mul(10u128.pow(TOKEN_DECIMALS))
 }
 
 parameter_types! {

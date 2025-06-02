@@ -19,12 +19,11 @@ use polkadot_sdk::{
     },
     frame_system::{self, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
-    sp_core::Get,
+    sp_core::{Get, TryCollect},
     sp_runtime::{
         traits::{CheckedAdd, Saturating, Zero},
-        DispatchError, Percent, Vec,
+        BoundedBTreeMap, DispatchError, Percent, Vec,
     },
-    sp_std::collections::btree_map::BTreeMap,
 };
 
 use pallet_torus0_api::Torus0Api;
@@ -70,6 +69,11 @@ impl<T: Config>
         let revocation = super::translate_revocation_terms(revocation)?;
         let enforcement = super::translate_enforcement_authority(enforcement)?;
 
+        let targets = targets
+            .into_iter()
+            .try_collect()
+            .map_err(|_| crate::Error::<T>::TooManyTargets)?;
+
         grant_emission_permission_impl::<T>(
             grantor,
             grantee,
@@ -114,7 +118,7 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
     grantor: T::AccountId,
     grantee: T::AccountId,
     allocation: EmissionAllocation<T>,
-    targets: Vec<(T::AccountId, u16)>,
+    targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
     distribution: DistributionControl<T>,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
@@ -134,7 +138,8 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
     ensure!(grantor != grantee, Error::<T>::SelfPermissionNotAllowed);
     ensure!(!targets.is_empty(), Error::<T>::NoTargetsSpecified);
 
-    for (target, _) in &targets {
+    for (target, weight) in &targets {
+        ensure!(*weight > 0, Error::<T>::InvalidTargetWeight);
         ensure!(
             T::Torus::is_agent_registered(target),
             Error::<T>::NotRegisteredAgent
@@ -201,11 +206,6 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
         );
     }
 
-    let target_map: BTreeMap<_, _> = targets.into_iter().collect();
-    let targets = target_map
-        .try_into()
-        .map_err(|_| Error::<T>::TooManyTargets)?;
-
     let emission_scope = EmissionScope {
         allocation: allocation.clone(),
         distribution,
@@ -215,7 +215,7 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
 
     let scope = PermissionScope::Emission(emission_scope);
 
-    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope);
+    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope)?;
 
     let contract = PermissionContract {
         grantor: grantor.clone(),

@@ -33,3 +33,4 @@ pallet-torus0.workspace = true
 pallet-emission0.workspace = true
 pallet-permission0.workspace = true
 pallet-governance-api.workspace = true
+rand = { workspace = true, features = ["thread_rng"] }

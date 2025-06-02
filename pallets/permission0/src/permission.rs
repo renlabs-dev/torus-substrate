@@ -9,15 +9,13 @@ use polkadot_sdk::{
     sp_core::{H256, U256},
     sp_runtime::{
         traits::{BlakeTwo256, Hash},
-        BoundedBTreeMap, BoundedVec, Percent,
+        BoundedBTreeMap, BoundedVec, DispatchError, Percent,
     },
     sp_std::vec::Vec,
 };
 use scale_info::TypeInfo;
 
-use crate::{
-    BalanceOf, Config, EnforcementTracking, Error, Event, Pallet, Permissions, RevocationTracking,
-};
+use crate::*;
 
 pub use curator::{CuratorPermissions, CuratorScope};
 pub use emission::{DistributionControl, EmissionAllocation, EmissionScope};
@@ -34,16 +32,26 @@ pub fn generate_permission_id<T: Config>(
     grantor: &T::AccountId,
     grantee: &T::AccountId,
     scope: &PermissionScope<T>,
-) -> PermissionId {
+) -> Result<PermissionId, DispatchError> {
     let mut data = grantor.encode();
     data.extend(grantee.encode());
     data.extend(scope.encode());
 
     data.extend(<frame_system::Pallet<T>>::block_number().encode());
 
-    // Permission type as well in the future.
+    if !cfg!(debug_assertions) {
+        let extrinsic_index = <frame_system::Pallet<T>>::extrinsic_index()
+            .ok_or(Error::<T>::PermissionCreationOutsideExtrinsic)?;
+        data.extend(extrinsic_index.encode());
+    }
 
-    BlakeTwo256::hash(&data)
+    let id = BlakeTwo256::hash(&data);
+    ensure!(
+        !Permissions::<T>::contains_key(id),
+        Error::<T>::DuplicatePermissionInBlock
+    );
+
+    Ok(id)
 }
 
 #[derive(Encode, Decode, CloneNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
@@ -128,6 +136,65 @@ impl<T: Config> PermissionContract<T> {
             revoked_by: who,
             permission_id,
         });
+
+        Ok(())
+    }
+
+    /// Updates the enforcement authority for this permission.
+    ///
+    /// When the enforcement authority changes, all ongoing enforcement
+    /// referendums for this permission are wiped.
+    pub fn update_enforcement(
+        mut self,
+        permission_id: H256,
+        enforcement: EnforcementAuthority<T>,
+    ) -> DispatchResult {
+        let (controllers, required_votes) = match enforcement {
+            EnforcementAuthority::None => {
+                self.enforcement = EnforcementAuthority::None;
+                Permissions::<T>::insert(permission_id, self);
+
+                let _ = EnforcementTracking::<T>::clear_prefix(permission_id, u32::MAX, None);
+
+                Pallet::<T>::deposit_event(Event::EnforcementAuthoritySet {
+                    permission_id,
+                    controllers_count: 0,
+                    required_votes: 0,
+                });
+
+                return Ok(());
+            }
+            EnforcementAuthority::ControlledBy {
+                controllers,
+                required_votes,
+            } => (controllers, required_votes),
+        };
+
+        ensure!(
+            !controllers.is_empty(),
+            Error::<T>::InvalidNumberOfControllers
+        );
+        ensure!(required_votes > 0, Error::<T>::InvalidNumberOfControllers);
+        ensure!(
+            required_votes as usize <= controllers.len(),
+            Error::<T>::InvalidNumberOfControllers
+        );
+
+        let event = Event::EnforcementAuthoritySet {
+            permission_id,
+            controllers_count: controllers.len() as u32,
+            required_votes,
+        };
+
+        self.enforcement = EnforcementAuthority::ControlledBy {
+            controllers,
+            required_votes,
+        };
+        Permissions::<T>::insert(permission_id, self);
+
+        let _ = EnforcementTracking::<T>::clear_prefix(permission_id, u32::MAX, None);
+
+        <Pallet<T>>::deposit_event(event);
 
         Ok(())
     }
