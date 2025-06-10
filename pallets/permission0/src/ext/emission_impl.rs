@@ -1,6 +1,10 @@
 use crate::{
+    generate_permission_id, get_total_allocated_percentage, pallet,
+    permission::{self, emission::*, *},
     permission::{emission::*, *},
-    *,
+    update_permission_indices, AccumulatedStreamAmounts, BalanceOf, Config, DistributionControl,
+    EmissionAllocation, EmissionScope, EnforcementTracking, Error, Event, NegativeImbalanceOf,
+    Pallet, PermissionContract, PermissionDuration, PermissionId, PermissionScope, Permissions,
 };
 
 use pallet_permission0_api::{
@@ -10,7 +14,7 @@ use pallet_permission0_api::{
 };
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure, traits::ReservableCurrency},
-    frame_system::{self, ensure_signed_or_root},
+    frame_system::{self, ensure_signed, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{Get, TryCollect},
     sp_runtime::{
@@ -361,4 +365,99 @@ pub fn toggle_permission_accumulation_impl<T: Config>(
     });
 
     Ok(())
+}
+
+pub fn update_emission_permission<T: Config>(
+    origin: OriginFor<T>,
+    permission_id: PermissionId,
+    new_targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+    new_streams: Option<BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>>,
+    new_distribution_control: Option<DistributionControl<T>>,
+) -> DispatchResult {
+    let who = ensure_signed(origin)?;
+
+    return Permissions::<T>::mutate(&permission_id, |permission| {
+        let Some(permission) = permission else {
+            return Err(Error::<T>::PermissionNotFound.into());
+        };
+
+        if permission.grantor == who {
+            if permission.is_updatable() {
+                return Err(Error::<T>::NotEditable.into());
+            }
+        } else if permission.grantee != who {
+            return Err(Error::<T>::NotAuthorizedToEdit.into());
+        }
+
+        if permission.grantee == who
+            && (new_streams.is_some() || new_distribution_control.is_some())
+        {
+            return Err(Error::<T>::NotAuthorizedToEdit.into());
+        }
+
+        match &mut permission.scope {
+            PermissionScope::Emission(emission_scope) => {
+                ensure!(!new_targets.is_empty(), Error::<T>::NoTargetsSpecified);
+
+                for (target, weight) in &new_targets {
+                    ensure!(*weight > 0, Error::<T>::InvalidTargetWeight);
+                    ensure!(
+                        T::Torus::is_agent_registered(target),
+                        Error::<T>::NotRegisteredAgent
+                    );
+                }
+
+                emission_scope.targets = new_targets;
+
+                let EmissionAllocation::Streams(streams) = &mut emission_scope.allocation else {
+                    return Err(Error::<T>::NotEditable.into());
+                };
+
+                if let Some(new_streams) = new_streams {
+                    for (stream, percentage) in &new_streams {
+                        ensure!(*percentage <= Percent::one(), Error::<T>::InvalidPercentage);
+
+                        let total_allocated =
+                            get_total_allocated_percentage::<T>(&permission.grantor, stream);
+                        let new_total_allocated = match total_allocated.checked_add(percentage) {
+                            Some(new_total_allocated) => new_total_allocated,
+                            None => return Err(Error::<T>::TotalAllocationExceeded.into()),
+                        };
+
+                        ensure!(
+                            new_total_allocated <= Percent::one(),
+                            Error::<T>::TotalAllocationExceeded
+                        );
+                    }
+
+                    *streams = new_streams;
+                }
+
+                if let Some(new_distribution_control) = new_distribution_control {
+                    match &new_distribution_control {
+                        DistributionControl::Automatic(threshold) => {
+                            ensure!(
+                                *threshold >= T::MinAutoDistributionThreshold::get(),
+                                Error::<T>::InvalidThreshold
+                            );
+                        }
+                        DistributionControl::Interval(interval) => {
+                            ensure!(!interval.is_zero(), Error::<T>::InvalidInterval);
+                        }
+                        DistributionControl::AtBlock(block) => {
+                            let current_block =
+                                <polkadot_sdk::frame_system::Pallet<T>>::block_number();
+                            ensure!(*block > current_block, Error::<T>::InvalidInterval);
+                        }
+                        _ => {}
+                    }
+
+                    emission_scope.distribution = new_distribution_control;
+                }
+            }
+            _ => return Err(Error::<T>::NotEditable.into()),
+        }
+
+        Ok(())
+    });
 }
