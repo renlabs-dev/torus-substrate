@@ -62,3 +62,21 @@ pub mod v3 {
         }
     }
 }
+
+pub mod v4 {
+    use polkadot_sdk::{
+        frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
+        sp_weights::Weight,
+    };
+
+    use crate::{Config, Pallet};
+
+    pub type Migration<T, W> = VersionedMigration<3, 4, MigrateToV4<T>, Pallet<T>, W>;
+    pub struct MigrateToV4<T>(core::marker::PhantomData<T>);
+
+    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV4<T> {
+        fn on_runtime_upgrade() -> Weight {
+            Weight::zero()
+        }
+    }
+}

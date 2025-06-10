@@ -31,6 +31,7 @@ codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
 bitflags = { workspace = true, default-features = false }
+num-traits = { workspace = true }
 
 # Local dependencies
 pallet-permission0-api = { workspace = true, default-features = false }

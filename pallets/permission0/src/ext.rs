@@ -8,7 +8,7 @@ use pallet_permission0_api::{
     PermissionDuration as ApiPermissionDuration, RevocationTerms as ApiRevocationTerms,
 };
 use polkadot_sdk::{
-    frame_support::{ensure, traits::Currency},
+    frame_support::ensure,
     frame_system::ensure_signed_or_root,
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_runtime::{DispatchError, DispatchResult},
@@ -16,17 +16,10 @@ use polkadot_sdk::{
 
 pub mod curator_impl;
 pub mod emission_impl;
+pub mod namespace_impl;
 
 /// Implementation of the Permission0Api trait to be used externally
-impl<T: Config>
-    Permission0Api<
-        T::AccountId,
-        OriginFor<T>,
-        BlockNumberFor<T>,
-        crate::BalanceOf<T>,
-        <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
-    > for pallet::Pallet<T>
-{
+impl<T: Config> Permission0Api<OriginFor<T>> for pallet::Pallet<T> {
     fn permission_exists(id: &PermissionId) -> bool {
         Permissions::<T>::contains_key(id)
     }
@@ -152,6 +145,7 @@ pub(crate) fn execute_permission_impl<T: Config>(
             emission_impl::execute_permission_impl(permission_id, &contract, emission_scope)
         }
         PermissionScope::Curator(_) => curator_impl::execute_permission_impl::<T>(permission_id),
+        PermissionScope::Namespace(_) => Ok(()),
     }
 }
 
@@ -213,6 +207,7 @@ pub fn enforcement_execute_permission_impl<T: Config>(
         PermissionScope::Curator(_) => {
             return curator_impl::execute_permission_impl::<T>(&permission_id);
         }
+        PermissionScope::Namespace(_) => return Ok(()),
     }
 
     EnforcementTracking::<T>::remove(permission_id, EnforcementReferendum::Execution);

@@ -26,6 +26,9 @@ mod benchmarks {
         <T::Torus>::force_register_agent(&module_key2, vec![], vec![], vec![])
             .expect("failed to register agent");
 
+        <T::Governance>::force_set_whitelisted(&module_key);
+        <T::Governance>::force_set_whitelisted(&module_key2);
+
         <T::Governance>::set_allocator(&module_key2);
         let _ = <T::Currency>::deposit_creating(&module_key2, <T::Torus>::min_validator_stake());
         <T::Torus>::force_set_stake(
@@ -51,6 +54,9 @@ mod benchmarks {
         <T::Torus>::force_register_agent(&module_key2, vec![], vec![], vec![])
             .expect("failed to register agent");
 
+        <T::Governance>::force_set_whitelisted(&module_key);
+        <T::Governance>::force_set_whitelisted(&module_key2);
+
         <T::Governance>::set_allocator(&module_key2);
 
         #[extrinsic_call]
@@ -66,6 +72,9 @@ mod benchmarks {
             .expect("failed to register agent");
         <T::Torus>::force_register_agent(&module_key2, vec![], vec![], vec![])
             .expect("failed to register agent");
+
+        <T::Governance>::force_set_whitelisted(&module_key);
+        <T::Governance>::force_set_whitelisted(&module_key2);
 
         <T::Governance>::set_allocator(&module_key);
         <T::Governance>::set_allocator(&module_key2);

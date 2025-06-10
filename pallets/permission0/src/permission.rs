@@ -1,4 +1,5 @@
 use codec::{Decode, Encode, MaxEncodedLen};
+use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{
     frame_support::{
         dispatch::DispatchResult, ensure, CloneNoBound, DebugNoBound, DefaultNoBound, EqNoBound,
@@ -213,6 +214,9 @@ impl<T: Config> PermissionContract<T> {
             PermissionScope::Curator(curator) => {
                 curator.cleanup(permission_id, &self.last_execution, &self.grantor)
             }
+            PermissionScope::Namespace(_) => {
+                // No cleanup needed for namespace permissions
+            }
         }
     }
 }
@@ -223,6 +227,15 @@ impl<T: Config> PermissionContract<T> {
 pub enum PermissionScope<T: Config> {
     Emission(EmissionScope<T>),
     Curator(CuratorScope<T>),
+    Namespace(NamespaceScope<T>),
+}
+
+/// Scope for namespace permissions
+#[derive(Encode, Decode, CloneNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
+#[scale_info(skip_type_params(T))]
+pub struct NamespaceScope<T: Config> {
+    /// Set of namespace paths this permission grants access to
+    pub paths: BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
 }
 
 #[derive(

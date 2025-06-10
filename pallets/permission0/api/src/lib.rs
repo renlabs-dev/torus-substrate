@@ -90,10 +90,7 @@ pub enum EnforcementAuthority<AccountId> {
 }
 
 /// The Permission0 API trait
-pub trait Permission0Api<AccountId, Origin, BlockNumber, Balance, NegativeImbalance>:
-    Permission0EmissionApi<AccountId, Origin, BlockNumber, Balance, NegativeImbalance>
-    + Permission0CuratorApi<AccountId, Origin, BlockNumber>
-{
+pub trait Permission0Api<Origin> {
     /// Check if a permission exists
     fn permission_exists(id: &PermissionId) -> bool;
 
@@ -161,6 +158,11 @@ pub trait Permission0CuratorApi<AccountId, Origin, BlockNumber> {
 
     /// Finds the curator permission granted to [`grantee`].
     fn get_curator_permission(grantee: &AccountId) -> Option<PermissionId>;
+}
+
+pub trait Permission0NamespacesApi<AccountId, NamespacePath> {
+    /// Wether the given grantor is delegating a permission over the namespace.
+    fn is_delegating_namespace(grantor: &AccountId, path: &NamespacePath) -> bool;
 }
 
 polkadot_sdk::sp_api::decl_runtime_apis! {

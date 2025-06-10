@@ -22,7 +22,7 @@ use polkadot_sdk::{
     sp_tracing::{error, info},
 };
 
-use crate::{BalanceOf, Config, ConsensusMember, IncentivesRatio, Weights};
+use crate::{BalanceOf, Config, ConsensusMember, IncentivesRatio, NegativeImbalanceOf, Weights};
 
 mod math;
 
@@ -115,7 +115,9 @@ impl<T: Config> ConsensusMemberInput<T> {
     pub fn all_members() -> BTreeMap<T::AccountId, ConsensusMemberInput<T>> {
         let min_validator_stake = <T::Torus>::min_validator_stake();
 
-        let mut registered_agents: BTreeSet<_> = <T::Torus>::agent_ids().collect();
+        let mut registered_agents: BTreeSet<_> = <T::Torus>::agent_ids()
+            .filter(<T::Governance>::is_whitelisted)
+            .collect();
         let mut consensus_members: BTreeMap<_, _> = crate::ConsensusMembers::<T>::iter().collect();
 
         let mut inputs: Vec<_> = crate::WeightControlDelegation::<T>::iter()
@@ -209,7 +211,8 @@ impl<T: Config> ConsensusMemberInput<T> {
             .unwrap_or_default();
 
         ConsensusMemberInput {
-            registered: <T::Torus>::is_agent_registered(&agent_id),
+            registered: <T::Torus>::is_agent_registered(&agent_id)
+                && <T::Governance>::is_whitelisted(&agent_id),
 
             agent_id,
             validator_permit,
@@ -262,9 +265,7 @@ impl<T: Config> ConsensusMemberInput<T> {
 }
 
 #[must_use]
-fn linear_rewards<T: Config>(
-    mut emission: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
-) -> <T::Currency as Currency<T::AccountId>>::NegativeImbalance {
+fn linear_rewards<T: Config>(mut emission: NegativeImbalanceOf<T>) -> NegativeImbalanceOf<T> {
     let treasury_fee = <T::Governance>::treasury_emission_fee();
     if !treasury_fee.is_zero() {
         let treasury_fee = treasury_fee.mul_floor(emission.peek());
@@ -365,18 +366,17 @@ fn linear_rewards<T: Config>(
         .zip(upscaled_incentives)
         .zip(upscaled_dividends)
     {
-        let add_stake =
-            |staker, mut amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance| {
-                <T::Permission0>::accumulate_emissions(
-                    &staker,
-                    &pallet_permission0_api::generate_root_stream_id(&staker),
-                    &mut amount,
-                );
+        let add_stake = |staker, mut amount: NegativeImbalanceOf<T>| {
+            <T::Permission0>::accumulate_emissions(
+                &staker,
+                &pallet_permission0_api::generate_root_stream_id(&staker),
+                &mut amount,
+            );
 
-                let raw_amount = amount.peek();
-                T::Currency::resolve_creating(&staker, amount);
-                let _ = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount);
-            };
+            let raw_amount = amount.peek();
+            T::Currency::resolve_creating(&staker, amount);
+            let _ = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount);
+        };
 
         if dividend.peek() != 0 {
             let fixed_dividend = dividend.peek();
@@ -417,12 +417,12 @@ fn linear_rewards<T: Config>(
 }
 
 struct Emissions<T: Config> {
-    dividends: Vec<<T::Currency as Currency<T::AccountId>>::NegativeImbalance>,
-    incentives: Vec<<T::Currency as Currency<T::AccountId>>::NegativeImbalance>,
+    dividends: Vec<NegativeImbalanceOf<T>>,
+    incentives: Vec<NegativeImbalanceOf<T>>,
 }
 
 fn compute_emissions<T: Config>(
-    emission: &mut <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+    emission: &mut NegativeImbalanceOf<T>,
     stake: &[FixedU128],
     incentives: Vec<FixedU128>,
     dividends: Vec<FixedU128>,

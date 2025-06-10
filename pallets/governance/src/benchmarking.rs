@@ -123,11 +123,12 @@ mod benchmarks {
     fn penalize_agent() {
         let module_key: T::AccountId = account("ModuleKey", 0, 2);
 
-        <pallet_torus0::Pallet<T> as Torus0Api<
-            T::AccountId,
-            <<T as pallet_torus0::Config>::Currency as Currency<T::AccountId>>::Balance,
-            <<T as pallet_torus0::Config>::Currency as Currency<T::AccountId>>::NegativeImbalance,
-        >>::force_register_agent(&module_key, vec![], vec![], vec![])
+        <pallet_torus0::Pallet<T> as Torus0Api<T::AccountId, BalanceOf<T>>>::force_register_agent(
+            &module_key,
+            vec![],
+            vec![],
+            vec![],
+        )
         .expect("failed to register agent");
 
         #[extrinsic_call]
@@ -141,10 +142,10 @@ mod benchmarks {
         let params = proposal::GlobalParamsData {
             min_name_length: 2,
             max_name_length: (T::MaxAgentNameLengthConstraint::get() as u16).saturating_sub(1),
-            max_allowed_agents: 1,
             min_weight_control_fee: 1,
             min_staking_fee: 1,
             dividends_participation_weight: Percent::zero(),
+            namespace_pricing_config: T::DefaultNamespacePricingConfig::get(),
             proposal_cost: 0,
         };
         let data = vec![0];

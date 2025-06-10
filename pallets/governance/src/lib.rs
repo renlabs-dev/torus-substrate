@@ -41,7 +41,7 @@ use crate::{
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(5);
 
     use pallet_permission0_api::{CuratorPermissions, Permission0Api, Permission0CuratorApi};
     use proposal::GlobalParamsData;
@@ -149,13 +149,8 @@ pub mod pallet {
 
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
 
-        type Permission0: Permission0Api<
-            Self::AccountId,
-            OriginFor<Self>,
-            BlockNumberFor<Self>,
-            crate::BalanceOf<Self>,
-            <<Self as Config>::Currency as Currency<Self::AccountId>>::NegativeImbalance,
-        >;
+        type Permission0: Permission0Api<OriginFor<Self>>
+            + Permission0CuratorApi<Self::AccountId, OriginFor<Self>, BlockNumberFor<Self>>;
 
         type WeightInfo: WeightInfo;
     }
@@ -498,8 +493,6 @@ pub mod pallet {
         InvalidMinNameLength,
         /// Invalid maximum name length in proposal
         InvalidMaxNameLength,
-        /// Invalid maximum allowed agents in proposal
-        InvalidMaxAllowedAgents,
         /// Invalid maximum allowed weights in proposal
         InvalidMaxAllowedWeights,
         /// Invalid minimum weight control fee in proposal

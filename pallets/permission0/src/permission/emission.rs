@@ -7,8 +7,6 @@ use polkadot_sdk::{
     sp_runtime::traits::{Saturating, Zero},
 };
 
-use crate::{AccumulatedStreamAmounts, Event, Pallet};
-
 use super::*;
 
 /// Type for stream ID
@@ -76,7 +74,7 @@ pub enum DistributionControl<T: Config> {
 pub(crate) fn do_accumulate_emissions<T: Config>(
     agent: &T::AccountId,
     stream: &StreamId,
-    imbalance: &mut <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+    imbalance: &mut NegativeImbalanceOf<T>,
 ) {
     let initial_balance = imbalance.peek();
     let total_initial_amount =
@@ -248,7 +246,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
                 WithdrawReasons::TRANSFER,
                 ExistenceRequirement::KeepAlive,
             )
-            .unwrap_or_else(|_| <T::Currency as Currency<T::AccountId>>::NegativeImbalance::zero());
+            .unwrap_or_else(|_| NegativeImbalanceOf::<T>::zero());
 
             do_distribute_to_targets(
                 &mut imbalance,
@@ -271,7 +269,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
 }
 
 fn do_distribute_to_targets<T: Config>(
-    imbalance: &mut <<T as Config>::Currency as Currency<T::AccountId>>::NegativeImbalance,
+    imbalance: &mut NegativeImbalanceOf<T>,
     permission_id: PermissionId,
     contract: &PermissionContract<T>,
     emission_scope: &EmissionScope<T>,

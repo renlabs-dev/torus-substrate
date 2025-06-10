@@ -31,7 +31,7 @@ pub mod pallet {
     use frame::prelude::BlockNumberFor;
     use frame_system::ensure_signed;
     use pallet_governance_api::GovernanceApi;
-    use pallet_permission0_api::Permission0Api;
+    use pallet_permission0_api::{Permission0Api, Permission0EmissionApi};
     use pallet_torus0_api::Torus0Api;
     use polkadot_sdk::sp_std;
     use weights::WeightInfo;
@@ -94,21 +94,18 @@ pub mod pallet {
 
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
 
-        type Torus: Torus0Api<
-            Self::AccountId,
-            <Self::Currency as Currency<Self::AccountId>>::Balance,
-            <Self::Currency as Currency<Self::AccountId>>::NegativeImbalance,
-        >;
+        type Torus: Torus0Api<Self::AccountId, BalanceOf<Self>>;
 
         type Governance: GovernanceApi<Self::AccountId>;
 
-        type Permission0: Permission0Api<
-            Self::AccountId,
-            OriginFor<Self>,
-            BlockNumberFor<Self>,
-            crate::BalanceOf<Self>,
-            <Self::Currency as Currency<Self::AccountId>>::NegativeImbalance,
-        >;
+        type Permission0: Permission0Api<OriginFor<Self>>
+            + Permission0EmissionApi<
+                Self::AccountId,
+                OriginFor<Self>,
+                BlockNumberFor<Self>,
+                BalanceOf<Self>,
+                NegativeImbalanceOf<Self>,
+            >;
 
         type WeightInfo: WeightInfo;
     }

@@ -162,7 +162,7 @@ fn penalize_agent_successfully() {
 
         grant_curator_permission(curator_key, CuratorPermissions::PENALTY_CONTROL, None);
 
-        register(module_key, 0, module_key, to_nano(100));
+        register(module_key, 0, module_key, as_tors(100));
 
         Whitelist::<Test>::set(module_key, Some(()));
 

@@ -76,10 +76,9 @@ pub mod pallet {
     const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
     /// Configuration trait for the faucet pallet
-    #[pallet::config(with_default)]
+    #[pallet::config]
     pub trait Config: polkadot_sdk::frame_system::Config {
         /// The overarching event type
-        #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
 
@@ -87,11 +86,7 @@ pub mod pallet {
         type Currency: Currency<Self::AccountId> + Send + Sync;
 
         /// The Torus interface for accessing network functions
-        type Torus: Torus0Api<
-            Self::AccountId,
-            <Self::Currency as Currency<Self::AccountId>>::Balance,
-            <Self::Currency as Currency<Self::AccountId>>::NegativeImbalance,
-        >;
+        type Torus: Torus0Api<Self::AccountId, BalanceOf<Self>>;
     }
 
     /// Implementation of the unsigned transaction validation for the faucet pallet

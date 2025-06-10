@@ -1,4 +1,5 @@
 use codec::{Decode, Encode, MaxEncodedLen};
+use pallet_torus0::namespace::NamespacePricingConfig;
 use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::{
@@ -97,16 +98,15 @@ impl<T: crate::Config> Proposal<T> {
                 let GlobalParamsData {
                     min_name_length,
                     max_name_length,
-                    max_allowed_agents,
                     min_weight_control_fee,
                     min_staking_fee,
                     dividends_participation_weight,
+                    namespace_pricing_config,
                     proposal_cost,
                 } = data;
 
                 pallet_torus0::MinNameLength::<T>::set(min_name_length);
                 pallet_torus0::MaxNameLength::<T>::set(max_name_length);
-                pallet_torus0::MaxAllowedAgents::<T>::set(max_allowed_agents);
                 pallet_torus0::DividendsParticipationWeight::<T>::set(
                     dividends_participation_weight,
                 );
@@ -115,6 +115,7 @@ impl<T: crate::Config> Proposal<T> {
                         Percent::from_percent(min_weight_control_fee);
                     constraints.min_staking_fee = Percent::from_percent(min_staking_fee);
                 });
+                pallet_torus0::NamespacePricingConfig::<T>::set(namespace_pricing_config);
                 crate::GlobalGovernanceConfig::<T>::mutate(|config| {
                     config.proposal_cost = proposal_cost;
                 });
@@ -230,26 +231,11 @@ pub enum ProposalStatus<T: crate::Config> {
 pub struct GlobalParamsData<T: crate::Config> {
     pub min_name_length: u16,
     pub max_name_length: u16,
-    pub max_allowed_agents: u16,
     pub min_weight_control_fee: u8,
     pub min_staking_fee: u8,
     pub dividends_participation_weight: Percent,
+    pub namespace_pricing_config: NamespacePricingConfig<T>,
     pub proposal_cost: BalanceOf<T>,
-}
-
-impl<T: crate::Config> Default for GlobalParamsData<T> {
-    fn default() -> Self {
-        Self {
-            min_name_length: T::DefaultMinNameLength::get(),
-            max_name_length: T::DefaultMaxNameLength::get(),
-            max_allowed_agents: T::DefaultMaxAllowedAgents::get(),
-            min_weight_control_fee: T::DefaultMinWeightControlFee::get(),
-            min_staking_fee: T::DefaultMinStakingFee::get(),
-            dividends_participation_weight:
-                <T as pallet_torus0::Config>::DefaultDividendsParticipationWeight::get(),
-            proposal_cost: T::DefaultProposalCost::get(),
-        }
-    }
 }
 
 impl<T: crate::Config> GlobalParamsData<T> {
@@ -262,11 +248,6 @@ impl<T: crate::Config> GlobalParamsData<T> {
         ensure!(
             (self.max_name_length as u32) < T::MaxAgentNameLengthConstraint::get(),
             crate::Error::<T>::InvalidMaxNameLength
-        );
-
-        ensure!(
-            self.max_allowed_agents <= 50000,
-            crate::Error::<T>::InvalidMaxAllowedAgents
         );
 
         ensure!(

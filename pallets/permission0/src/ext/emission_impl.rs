@@ -1,9 +1,6 @@
 use crate::{
-    generate_permission_id, get_total_allocated_percentage, pallet,
     permission::{emission::*, *},
-    update_permission_indices, AccumulatedStreamAmounts, BalanceOf, Config, DistributionControl,
-    EmissionAllocation, EmissionScope, EnforcementTracking, Error, Event, Pallet,
-    PermissionContract, PermissionDuration, PermissionId, PermissionScope, Permissions,
+    *,
 };
 
 use pallet_permission0_api::{
@@ -12,11 +9,7 @@ use pallet_permission0_api::{
     PermissionDuration as ApiPermissionDuration, RevocationTerms as ApiRevocationTerms, StreamId,
 };
 use polkadot_sdk::{
-    frame_support::{
-        dispatch::DispatchResult,
-        ensure,
-        traits::{Currency, ReservableCurrency},
-    },
+    frame_support::{dispatch::DispatchResult, ensure, traits::ReservableCurrency},
     frame_system::{self, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{Get, TryCollect},
@@ -34,7 +27,7 @@ impl<T: Config>
         OriginFor<T>,
         BlockNumberFor<T>,
         crate::BalanceOf<T>,
-        <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+        NegativeImbalanceOf<T>,
     > for pallet::Pallet<T>
 {
     fn grant_emission_permission(
@@ -90,7 +83,7 @@ impl<T: Config>
     fn accumulate_emissions(
         agent: &T::AccountId,
         stream: &StreamId,
-        amount: &mut <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+        amount: &mut NegativeImbalanceOf<T>,
     ) {
         crate::permission::emission::do_accumulate_emissions::<T>(agent, stream, amount);
     }
