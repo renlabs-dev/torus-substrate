@@ -3,7 +3,10 @@
 extern crate alloc;
 extern crate polkadot_sdk;
 
-use core::str::FromStr;
+use core::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
@@ -12,6 +15,8 @@ use polkadot_sdk::{
     sp_std::vec::Vec,
 };
 use scale_info::TypeInfo;
+
+pub mod api;
 
 /// The Torus0 pallet API.
 pub trait Torus0Api<AccountId, Balance> {
@@ -66,7 +71,7 @@ pub const NAMESPACE_SEPARATOR: u8 = b'.';
 
 pub type NamespacePathInner = BoundedVec<u8, ConstU32<{ MAX_NAMESPACE_PATH_LENGTH as u32 }>>;
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, TypeInfo, MaxEncodedLen, Debug)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, TypeInfo, MaxEncodedLen)]
 pub struct NamespacePath(NamespacePathInner);
 
 impl NamespacePath {
@@ -168,6 +173,20 @@ impl NamespacePath {
         }
 
         parents
+    }
+}
+
+impl Debug for NamespacePath {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("NamespacePath")
+            .field(&core::str::from_utf8(&self.0))
+            .finish()
+    }
+}
+
+impl Display for NamespacePath {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str(core::str::from_utf8(&self.0).unwrap_or("invalid path"))
     }
 }
 

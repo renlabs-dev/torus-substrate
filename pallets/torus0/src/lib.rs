@@ -394,33 +394,9 @@ pub mod pallet {
                 Error::<T>::NamespaceAlreadyExists
             );
 
-            let mut paths_to_create = namespace_path.parents();
-            paths_to_create.insert(0, namespace_path.clone());
-
-            let mut missing_paths = paths_to_create.as_slice();
-            for (i, segment) in paths_to_create.iter().skip(1).enumerate().rev() {
-                if !Namespaces::<T>::contains_key(&owner, segment) {
-                    missing_paths = paths_to_create
-                        .get(..i.saturating_add(1))
-                        .unwrap_or(&paths_to_create);
-                    break;
-                }
-            }
-
-            let current_count = NamespaceCount::<T>::get(&owner);
-
-            let pricing_config = NamespacePricingConfig::<T>::get();
-            let mut total_fee = BalanceOf::<T>::zero();
-            let mut total_deposit = BalanceOf::<T>::zero();
-
-            for (index, path) in missing_paths.iter().enumerate() {
-                let count = current_count.saturating_add(index as u32);
-                let fee = pricing_config.namespace_fee(count)?;
-                let deposit = pricing_config.namespace_deposit(path);
-
-                total_fee = total_fee.saturating_add(fee);
-                total_deposit = total_deposit.saturating_add(deposit);
-            }
+            let missing_paths = namespace::find_missing_paths::<T>(&owner, &namespace_path);
+            let (total_fee, total_deposit) =
+                namespace::calculate_cost::<T>(&owner, &missing_paths)?;
 
             T::Currency::reserve(&owner, total_deposit)?;
 
@@ -433,6 +409,7 @@ pub mod pallet {
             .map_err(|_| crate::Error::<T>::NotEnoughBalanceToRegisterAgent)?;
 
             let current_block = <frame_system::Pallet<T>>::block_number();
+            let pricing_config = crate::NamespacePricingConfig::<T>::get();
 
             for path in missing_paths.iter() {
                 let deposit = pricing_config.namespace_deposit(path);

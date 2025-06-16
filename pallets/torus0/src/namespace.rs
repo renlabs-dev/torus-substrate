@@ -3,7 +3,7 @@ use polkadot_sdk::{
     frame_support::{CloneNoBound, DebugNoBound, EqNoBound, PartialEqNoBound},
     frame_system::pallet_prelude::BlockNumberFor,
     sp_runtime::{
-        traits::{One, Saturating},
+        traits::{One, Saturating, Zero},
         FixedPointNumber, FixedU128,
     },
 };
@@ -111,4 +111,43 @@ pub struct NamespaceMetadata<T: Config> {
     pub created_at: BlockNumberFor<T>,
     /// Storage deposit paid for this namespace
     pub deposit: BalanceOf<T>,
+}
+
+pub fn find_missing_paths<T: Config>(
+    owner: &T::AccountId,
+    path: &NamespacePath,
+) -> Vec<NamespacePath> {
+    let mut paths_to_create = path.parents();
+    paths_to_create.insert(0, path.clone());
+
+    for (i, segment) in paths_to_create.iter().enumerate().rev() {
+        if !Namespaces::<T>::contains_key(owner, segment) {
+            return paths_to_create.get(..=i).unwrap_or_default().to_vec();
+        }
+    }
+
+    Default::default()
+}
+
+/// Calculates the total cost for registering, (Fee, Deposit)
+pub fn calculate_cost<T: Config>(
+    owner: &T::AccountId,
+    missing_paths: &[NamespacePath],
+) -> Result<(BalanceOf<T>, BalanceOf<T>), DispatchError> {
+    let current_count = NamespaceCount::<T>::get(owner);
+
+    let pricing_config = crate::NamespacePricingConfig::<T>::get();
+    let mut total_fee = BalanceOf::<T>::zero();
+    let mut total_deposit = BalanceOf::<T>::zero();
+
+    for (index, path) in missing_paths.iter().enumerate() {
+        let count = current_count.saturating_add(index as u32);
+        let fee = pricing_config.namespace_fee(count)?;
+        let deposit = pricing_config.namespace_deposit(path);
+
+        total_fee = total_fee.saturating_add(fee);
+        total_deposit = total_deposit.saturating_add(deposit);
+    }
+
+    Ok((total_fee, total_deposit))
 }
