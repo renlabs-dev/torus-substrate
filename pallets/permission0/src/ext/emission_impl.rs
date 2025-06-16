@@ -131,7 +131,6 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
         T::Torus::is_agent_registered(&grantee),
         Error::<T>::NotRegisteredAgent
     );
-    ensure!(grantor != grantee, Error::<T>::SelfPermissionNotAllowed);
 
     validate_emission_permission_target_weights::<T>(&targets)?;
 
