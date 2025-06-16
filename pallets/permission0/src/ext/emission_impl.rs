@@ -1,5 +1,6 @@
 use crate::{
-    generate_permission_id, get_total_allocated_percentage, pallet,
+    generate_permission_id, get_total_allocated_percentage,
+    get_total_allocated_percentage_ignoring, pallet,
     permission::{self, emission::*, *},
     permission::{emission::*, *},
     update_permission_indices, AccumulatedStreamAmounts, BalanceOf, Config, DistributionControl,
@@ -382,7 +383,7 @@ pub fn update_emission_permission<T: Config>(
         };
 
         if permission.grantor == who {
-            if permission.is_updatable() {
+            if !permission.is_updatable() {
                 return Err(Error::<T>::NotEditable.into());
             }
         } else if permission.grantee != who {
@@ -417,8 +418,11 @@ pub fn update_emission_permission<T: Config>(
                     for (stream, percentage) in &new_streams {
                         ensure!(*percentage <= Percent::one(), Error::<T>::InvalidPercentage);
 
-                        let total_allocated =
-                            get_total_allocated_percentage::<T>(&permission.grantor, stream);
+                        let total_allocated = get_total_allocated_percentage_ignoring::<T>(
+                            &permission.grantor,
+                            stream,
+                            &permission_id,
+                        );
                         let new_total_allocated = match total_allocated.checked_add(percentage) {
                             Some(new_total_allocated) => new_total_allocated,
                             None => return Err(Error::<T>::TotalAllocationExceeded.into()),

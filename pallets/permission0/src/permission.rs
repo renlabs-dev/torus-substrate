@@ -225,7 +225,7 @@ impl<T: Config> PermissionContract<T> {
 
         match &self.revocation {
             RevocationTerms::RevocableByGrantor => true,
-            RevocationTerms::RevocableAfter(block) => return &current_block > block,
+            RevocationTerms::RevocableAfter(block) => &current_block > block,
             _ => false,
         }
     }
