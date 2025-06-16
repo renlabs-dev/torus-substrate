@@ -219,6 +219,16 @@ impl<T: Config> PermissionContract<T> {
             }
         }
     }
+
+    pub fn is_updatable(&self) -> bool {
+        let current_block = frame_system::Pallet::<T>::block_number();
+
+        match &self.revocation {
+            RevocationTerms::RevocableByGrantor => true,
+            RevocationTerms::RevocableAfter(block) => &current_block > block,
+            _ => false,
+        }
+    }
 }
 
 /// Defines what the permission applies to

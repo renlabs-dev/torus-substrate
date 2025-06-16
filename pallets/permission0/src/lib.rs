@@ -300,6 +300,10 @@ pub mod pallet {
         NamespacePathIsInvalid,
         /// Exceeded amount of total namespaces allowed in a single permission.
         TooManyNamespaces,
+        /// Not authorized to edit a stream emission permission.
+        NotAuthorizedToEdit,
+        /// Stream emission permission is not editable
+        NotEditable,
     }
 
     #[pallet::hooks]
@@ -444,6 +448,27 @@ pub mod pallet {
         ) -> DispatchResult {
             ext::namespace_impl::grant_namespace_permission_impl::<T>(
                 origin, grantee, paths, duration, revocation,
+            )?;
+
+            Ok(())
+        }
+
+        /// Allows Grantor/Grantee to edit stream emission permission
+        #[pallet::call_index(8)]
+        #[pallet::weight(T::WeightInfo::grant_curator_permission())]
+        pub fn update_emission_permission(
+            origin: OriginFor<T>,
+            permission_id: PermissionId,
+            new_targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+            new_streams: Option<BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>>,
+            new_distribution_control: Option<DistributionControl<T>>,
+        ) -> DispatchResult {
+            ext::emission_impl::update_emission_permission(
+                origin,
+                permission_id,
+                new_targets,
+                new_streams,
+                new_distribution_control,
             )?;
 
             Ok(())
