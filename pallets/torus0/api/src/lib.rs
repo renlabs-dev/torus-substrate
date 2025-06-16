@@ -3,6 +3,8 @@
 extern crate alloc;
 extern crate polkadot_sdk;
 
+use core::str::FromStr;
+
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
     sp_core::ConstU32,
@@ -166,6 +168,14 @@ impl NamespacePath {
         }
 
         parents
+    }
+}
+
+impl FromStr for NamespacePath {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::new(s.as_bytes())
     }
 }
 

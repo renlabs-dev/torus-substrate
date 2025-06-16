@@ -9436,6 +9436,7 @@ dependencies = [
 name = "pallet-torus0"
 version = "0.1.0"
 dependencies = [
+ "libm",
  "pallet-emission0-api",
  "pallet-governance-api",
  "pallet-permission0-api",

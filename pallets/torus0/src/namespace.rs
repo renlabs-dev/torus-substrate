@@ -2,6 +2,10 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
     frame_support::{CloneNoBound, DebugNoBound, EqNoBound, PartialEqNoBound},
     frame_system::pallet_prelude::BlockNumberFor,
+    sp_runtime::{
+        traits::{One, Saturating},
+        FixedPointNumber, FixedU128,
+    },
 };
 use scale_info::TypeInfo;
 
@@ -37,33 +41,37 @@ impl<T: Config> NamespacePricingConfig<T> {
     /// Calculate namespace cost using sigmoid pricing model.
     pub fn namespace_fee(
         &self,
-        _account_namespace_count: u32,
+        account_namespace_count: u32,
     ) -> Result<BalanceOf<T>, polkadot_sdk::sp_runtime::DispatchError> {
         let Self {
             base_fee,
-            // count_midpoint,
-            // fee_steepness,
-            // max_fee_multiplier,
+            count_midpoint,
+            fee_steepness,
+            max_fee_multiplier,
             ..
         } = self;
 
-        // let multiplier = {
-        //     let position = (fee_steepness
-        //         .mul_floor(account_namespace_count.saturating_sub(*count_midpoint))
-        //         as i32)
-        //         .checked_neg()
-        //         .unwrap_or_default();
-        //     FixedU128::from_rational(
-        //         (((position as f64).exp()) * FixedU128::DIV as f64) as u128,
-        //         *max_fee_multiplier as u128,
-        //     ).saturating_pow(exp)
-        // };
+        let multiplier = {
+            let fee_steepness = fee_steepness.deconstruct() as f64 / 100.;
+            let position = (account_namespace_count as i64).saturating_sub(*count_midpoint as i64);
+            let adjusted = -fee_steepness * position as f64;
+            let exp = (libm::exp(adjusted) * FixedU128::DIV as f64) as u128;
 
-        // Ok(FixedU128::from_inner(*base_fee)
-        //     .saturating_mul(multiplier)
-        //     .into_inner())
+            let max_fee_multiplier = FixedU128::from_u32(*max_fee_multiplier);
 
-        Ok(*base_fee)
+            FixedU128::one().saturating_add(
+                max_fee_multiplier.saturating_mul(
+                    FixedU128::one()
+                        .const_checked_div(
+                            FixedU128::one().saturating_add(FixedU128::from_inner(exp)),
+                        )
+                        .unwrap_or_default(),
+                ),
+            )
+        };
+
+        let base_fee = FixedU128::from_inner(*base_fee);
+        Ok(base_fee.saturating_mul(multiplier).into_inner())
     }
 
     /// Calculates the deposit needed to register a namespace.
@@ -71,19 +79,27 @@ impl<T: Config> NamespacePricingConfig<T> {
         self.deposit_per_byte
             .saturating_mul((path.as_bytes().len() as u32).into())
     }
-}
 
-// impl<T: Config> Default for NamespacePricingConfig<T> {
-//     fn default() -> Self {
-//         Self {
-//             deposit_per_byte: (),
-//             base_fee: (),
-//             count_midpoint: (),
-//             fee_steepness: (),
-//             max_fee_multiplier: (),
-//         }
-//     }
-// }
+    /// The fee midpoint.
+    pub fn fee_midpoint(&self) -> BalanceOf<T> {
+        self.base_fee.saturating_add(
+            FixedU128::from_u32(self.max_fee_multiplier)
+                .const_checked_div(FixedU128::from_u32(2))
+                .unwrap_or_default()
+                .saturating_mul(FixedU128::from_inner(self.base_fee))
+                .into_inner(),
+        )
+    }
+
+    /// The fee theoretical ceiling.
+    pub fn fee_ceiling(&self) -> BalanceOf<T> {
+        self.base_fee.saturating_add(
+            FixedU128::from_u32(self.max_fee_multiplier)
+                .saturating_mul(FixedU128::from_inner(self.base_fee))
+                .into_inner(),
+        )
+    }
+}
 
 /// Metadata stored for each namespace
 #[derive(

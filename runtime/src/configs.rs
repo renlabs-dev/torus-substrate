@@ -314,9 +314,9 @@ parameter_types! {
         base_fee: as_tors(5),
         deposit_per_byte: as_tors(5),
 
-        count_midpoint: 20,
-        fee_steepness: Percent::from_percent(20),
-        max_fee_multiplier: 5,
+        count_midpoint: 15,
+        fee_steepness: Percent::from_percent(25),
+        max_fee_multiplier: 3,
     };
 }
 

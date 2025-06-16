@@ -477,7 +477,6 @@ pub mod pallet {
                 Error::<T>::NamespaceBeingDelegated
             );
 
-            // Collect all namespaces to delete (target and all children)
             let mut total_deposit = BalanceOf::<T>::zero();
             let namespaces_to_delete: Vec<_> = Namespaces::<T>::iter_prefix(&owner)
                 .filter_map(|(path, metadata)| {
@@ -491,18 +490,15 @@ pub mod pallet {
 
             let deleted_count = namespaces_to_delete.len() as u32;
 
-            // Remove all namespaces and calculate total deposit
             for (path_to_delete, deposit) in namespaces_to_delete {
                 total_deposit = total_deposit.saturating_add(deposit);
                 Namespaces::<T>::remove(&owner, &path_to_delete);
             }
 
-            // Update namespace count
             NamespaceCount::<T>::mutate(&owner, |count| {
                 *count = count.saturating_sub(deleted_count)
             });
 
-            // Unreserve the deposits
             T::Currency::unreserve(&owner, total_deposit);
 
             Self::deposit_event(Event::NamespaceDeleted {
