@@ -26,7 +26,7 @@ fn stream_fails_if_overflow() {
         let agent_1 = 1;
         register_empty_agent(agent_1);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -75,7 +75,7 @@ fn stream_creates() {
         let agent_1 = 1;
         register_empty_agent(agent_1);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -122,7 +122,7 @@ fn stream_manual_executes() {
         let agent_1 = 1;
         register_empty_agent(agent_1);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -142,7 +142,7 @@ fn stream_manual_executes() {
 
         AccumulatedStreamAmounts::<Test>::set(
             (agent_0, stream_id, permission_id),
-            Some(to_nano(10)),
+            Some(as_tors(10)),
         );
 
         assert_ok!(Permission0::execute_permission(
@@ -150,7 +150,7 @@ fn stream_manual_executes() {
             permission_id
         ));
 
-        assert_eq!(get_balance(agent_1), to_nano(10));
+        assert_eq!(get_balance(agent_1), as_tors(10));
     });
 }
 

@@ -35,12 +35,12 @@ fn set_enforcement_authority_by_grantor() {
         register_empty_agent(grantee);
         register_empty_agent(controller);
 
-        add_balance(grantor, to_nano(10) + 1);
+        add_balance(grantor, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             grantor,
             grantee,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(grantee, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -111,7 +111,7 @@ fn toggle_accumulation_by_controller() {
         register_empty_agent(grantee);
         register_empty_agent(controller);
 
-        add_balance(grantor, to_nano(100) + 1);
+        add_balance(grantor, as_tors(100) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             grantor,
@@ -127,7 +127,7 @@ fn toggle_accumulation_by_controller() {
             },
         ));
 
-        distribute_emission(grantor, to_nano(10));
+        distribute_emission(grantor, as_tors(10));
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::toggle_permission_accumulation(
@@ -143,7 +143,7 @@ fn toggle_accumulation_by_controller() {
         }
 
         let balance_before = get_balance(grantee);
-        distribute_emission(grantor, to_nano(10));
+        distribute_emission(grantor, as_tors(10));
 
         assert_eq!(get_balance(grantee), balance_before);
 
@@ -155,7 +155,7 @@ fn toggle_accumulation_by_controller() {
             )
         );
 
-        distribute_emission(grantor, to_nano(10));
+        distribute_emission(grantor, as_tors(10));
 
         assert_ok!(pallet_permission0::Pallet::<Test>::execute_permission(
             get_origin(grantor),
@@ -180,12 +180,12 @@ fn unauthorized_account_cannot_toggle() {
         register_empty_agent(controller);
         register_empty_agent(unauthorized);
 
-        add_balance(grantor, to_nano(10) + 1);
+        add_balance(grantor, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             grantor,
             grantee,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(grantee, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -227,7 +227,7 @@ fn enforcement_execute_permission() {
         register_empty_agent(grantee);
         register_empty_agent(controller);
 
-        add_balance(grantor, to_nano(100) + 1);
+        add_balance(grantor, as_tors(100) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             grantor,
@@ -243,7 +243,7 @@ fn enforcement_execute_permission() {
             },
         ));
 
-        distribute_emission(grantor, to_nano(10));
+        distribute_emission(grantor, as_tors(10));
 
         let balance_before = get_balance(grantee);
 
@@ -272,7 +272,7 @@ fn unauthorized_cannot_enforcement_execute() {
         register_empty_agent(controller);
         register_empty_agent(unauthorized);
 
-        add_balance(grantor, to_nano(100) + 1);
+        add_balance(grantor, as_tors(100) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             grantor,
@@ -288,7 +288,7 @@ fn unauthorized_cannot_enforcement_execute() {
             },
         ));
 
-        distribute_emission(grantor, to_nano(10));
+        distribute_emission(grantor, as_tors(10));
 
         assert_err!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(
@@ -316,7 +316,7 @@ fn multi_controller_voting() {
         register_empty_agent(controller2);
         register_empty_agent(controller3);
 
-        add_balance(grantor, to_nano(100) + 1);
+        add_balance(grantor, as_tors(100) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             grantor,
@@ -332,7 +332,7 @@ fn multi_controller_voting() {
             },
         ));
 
-        distribute_emission(grantor, to_nano(10));
+        distribute_emission(grantor, as_tors(10));
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::toggle_permission_accumulation(
@@ -360,7 +360,7 @@ fn multi_controller_voting() {
             assert!(!emission_scope.accumulating);
         }
 
-        distribute_emission(grantor, to_nano(10));
+        distribute_emission(grantor, as_tors(10));
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(
@@ -392,7 +392,7 @@ fn multi_controller_voting() {
             )
         );
 
-        distribute_emission(grantor, to_nano(10));
+        distribute_emission(grantor, as_tors(10));
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(
@@ -426,7 +426,7 @@ fn enforcement_cannot_execute_non_manual_distribution() {
         register_empty_agent(grantee);
         register_empty_agent(controller);
 
-        add_balance(grantor, to_nano(100) + 1);
+        add_balance(grantor, as_tors(100) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             grantor,
@@ -444,7 +444,7 @@ fn enforcement_cannot_execute_non_manual_distribution() {
             },
         ));
 
-        distribute_emission(grantor, to_nano(10));
+        distribute_emission(grantor, as_tors(10));
 
         assert_err!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(

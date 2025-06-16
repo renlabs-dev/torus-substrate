@@ -5,6 +5,7 @@ pub mod burn;
 mod ext;
 pub mod fee;
 pub mod migrations;
+pub mod namespace;
 pub mod stake;
 
 pub mod benchmarking;
@@ -15,6 +16,7 @@ use frame::{
     arithmetic::Percent,
     prelude::{ensure_root, ensure_signed},
 };
+use namespace::{NamespaceMetadata, NamespacePath};
 pub use pallet::*;
 use polkadot_sdk::{
     frame_support::{
@@ -32,11 +34,18 @@ use crate::{agent::Agent, burn::BurnConfiguration, fee::ValidatorFeeConstraints}
 
 #[frame::pallet]
 pub mod pallet {
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
     use frame::prelude::BlockNumberFor;
     use pallet_emission0_api::Emission0Api;
     use pallet_governance_api::GovernanceApi;
+    use pallet_permission0_api::Permission0NamespacesApi;
+    use pallet_torus0_api::NamespacePathInner;
+    use polkadot_sdk::{
+        frame_support::traits::{ExistenceRequirement, ReservableCurrency},
+        frame_system,
+        sp_runtime::traits::Zero,
+    };
     use weights::WeightInfo;
 
     use super::*;
@@ -62,11 +71,6 @@ pub mod pallet {
     pub type MinValidatorStake<T: Config> =
         StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMinValidatorStake>;
 
-    /// Number of blocks in which an agent is immune to pruning after
-    /// registration.
-    #[pallet::storage]
-    pub type ImmunityPeriod<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultImmunityPeriod>;
-
     /// Number of blocks between emissions.
     #[pallet::storage]
     pub type RewardInterval<T: Config> = StorageValue<_, u16, ValueQuery, T::DefaultRewardInterval>;
@@ -87,12 +91,6 @@ pub mod pallet {
     #[pallet::storage]
     pub type MaxAgentUrlLength<T: Config> =
         StorageValue<_, u16, ValueQuery, T::DefaultMaxAgentUrlLength>;
-
-    /// Maximum number of agents registered at one time. Registering when this
-    /// number is met means new comers will cause pruning of old agents.
-    #[pallet::storage]
-    pub type MaxAllowedAgents<T: Config> =
-        StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedAgents>;
 
     /// Number of agent registrations that happened this block.
     #[pallet::storage]
@@ -144,6 +142,30 @@ pub mod pallet {
     pub type AgentUpdateCooldown<T: Config> =
         StorageValue<_, BlockNumberFor<T>, ValueQuery, T::DefaultAgentUpdateCooldown>;
 
+    /// Namespace registry - maps (owner, path) to metadata
+    #[pallet::storage]
+    pub type Namespaces<T: Config> = StorageDoubleMap<
+        _,
+        Blake2_128Concat,
+        T::AccountId,
+        Blake2_128Concat,
+        NamespacePath,
+        NamespaceMetadata<T>,
+    >;
+
+    /// Count of namespaces registered per account
+    #[pallet::storage]
+    pub type NamespaceCount<T: Config> =
+        StorageMap<_, Blake2_128Concat, T::AccountId, u32, ValueQuery>;
+
+    #[pallet::storage]
+    pub type NamespacePricingConfig<T: Config> = StorageValue<
+        _,
+        namespace::NamespacePricingConfig<T>,
+        ValueQuery,
+        T::DefaultNamespacePricingConfig,
+    >;
+
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(block_number: BlockNumberFor<T>) -> Weight {
@@ -160,17 +182,13 @@ pub mod pallet {
         }
     }
 
-    #[pallet::config(with_default)]
+    #[pallet::config]
     pub trait Config: polkadot_sdk::frame_system::Config {
         #[pallet::constant]
         type DefaultMaxAllowedValidators: Get<u16>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultMinValidatorStake: Get<BalanceOf<Self>>;
-
-        #[pallet::constant]
-        type DefaultImmunityPeriod: Get<u16>;
 
         #[pallet::constant]
         type DefaultRewardInterval: Get<u16>;
@@ -185,13 +203,9 @@ pub mod pallet {
         type DefaultMaxAgentUrlLength: Get<u16>;
 
         #[pallet::constant]
-        type DefaultMaxAllowedAgents: Get<u16>;
-
-        #[pallet::constant]
         type DefaultMaxRegistrationsPerBlock: Get<u16>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultMinAllowedStake: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
@@ -201,26 +215,21 @@ pub mod pallet {
         type DefaultMinWeightControlFee: Get<u8>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultMinBurn: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultMaxBurn: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
         type DefaultAdjustmentAlpha: Get<u64>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultTargetRegistrationsInterval: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultTargetRegistrationsPerInterval: Get<u16>;
 
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultMaxRegistrationsPerInterval: Get<u16>;
 
         /// The storage MaxNameLength should be constrained to be no more than
@@ -242,18 +251,23 @@ pub mod pallet {
 
         /// Default Cooldown (in blocks) in which an agent needs to wait between each `update_agent` call.
         #[pallet::constant]
-        #[pallet::no_default_bounds]
         type DefaultAgentUpdateCooldown: Get<BlockNumberFor<Self>>;
 
-        #[pallet::no_default_bounds]
+        #[pallet::constant]
+        type DefaultNamespacePricingConfig: Get<namespace::NamespacePricingConfig<Self>>;
+
         type RuntimeEvent: From<Event<Self>>
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
 
-        type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
+        type Currency: Currency<Self::AccountId, Balance = u128>
+            + ReservableCurrency<Self::AccountId>
+            + Send
+            + Sync;
 
         type Governance: GovernanceApi<Self::AccountId>;
 
         type Emission: Emission0Api<Self::AccountId>;
+        type Permission0: Permission0NamespacesApi<Self::AccountId, NamespacePath>;
 
         type WeightInfo: WeightInfo;
     }
@@ -360,6 +374,141 @@ pub mod pallet {
             AgentUpdateCooldown::<T>::set(new_cooldown);
             Ok(())
         }
+
+        /// Create a new namespace, automatically creating missing intermediate nodes
+        #[pallet::call_index(7)]
+        #[pallet::weight(Weight::default())]
+        pub fn create_namespace(origin: OriginFor<T>, path: NamespacePathInner) -> DispatchResult {
+            let owner = ensure_signed(origin)?;
+
+            ensure!(
+                Agents::<T>::contains_key(&owner),
+                Error::<T>::AgentDoesNotExist
+            );
+
+            let namespace_path =
+                NamespacePath::new(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
+
+            ensure!(
+                !Namespaces::<T>::contains_key(&owner, &namespace_path),
+                Error::<T>::NamespaceAlreadyExists
+            );
+
+            let mut paths_to_create = namespace_path.parents();
+            paths_to_create.insert(0, namespace_path.clone());
+
+            let mut missing_paths = paths_to_create.as_slice();
+            for (i, segment) in paths_to_create.iter().skip(1).enumerate().rev() {
+                if !Namespaces::<T>::contains_key(&owner, segment) {
+                    missing_paths = paths_to_create
+                        .get(..i.saturating_add(1))
+                        .unwrap_or(&paths_to_create);
+                    break;
+                }
+            }
+
+            let current_count = NamespaceCount::<T>::get(&owner);
+
+            let pricing_config = NamespacePricingConfig::<T>::get();
+            let mut total_fee = BalanceOf::<T>::zero();
+            let mut total_deposit = BalanceOf::<T>::zero();
+
+            for (index, path) in missing_paths.iter().enumerate() {
+                let count = current_count.saturating_add(index as u32);
+                let fee = pricing_config.namespace_fee(count)?;
+                let deposit = pricing_config.namespace_deposit(path);
+
+                total_fee = total_fee.saturating_add(fee);
+                total_deposit = total_deposit.saturating_add(deposit);
+            }
+
+            T::Currency::reserve(&owner, total_deposit)?;
+
+            <T as crate::Config>::Currency::transfer(
+                &owner,
+                &<T as crate::Config>::Governance::dao_treasury_address(),
+                total_fee,
+                ExistenceRequirement::AllowDeath,
+            )
+            .map_err(|_| crate::Error::<T>::NotEnoughBalanceToRegisterAgent)?;
+
+            let current_block = <frame_system::Pallet<T>>::block_number();
+
+            for path in missing_paths.iter() {
+                let deposit = pricing_config.namespace_deposit(path);
+
+                let metadata = NamespaceMetadata {
+                    created_at: current_block,
+                    deposit,
+                };
+
+                Namespaces::<T>::insert(&owner, path, metadata);
+            }
+
+            NamespaceCount::<T>::mutate(&owner, |count| {
+                *count = count.saturating_add(missing_paths.len() as u32)
+            });
+
+            Self::deposit_event(Event::NamespaceCreated {
+                owner,
+                path: namespace_path,
+                deposit: total_deposit,
+            });
+
+            Ok(())
+        }
+
+        /// Delete a namespace and all its children
+        #[pallet::call_index(8)]
+        #[pallet::weight(Weight::default())]
+        pub fn delete_namespace(origin: OriginFor<T>, path: Vec<u8>) -> DispatchResult {
+            let owner = ensure_signed(origin)?;
+
+            let namespace_path =
+                NamespacePath::new(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
+
+            ensure!(
+                Namespaces::<T>::contains_key(&owner, &namespace_path),
+                Error::<T>::NamespaceNotFound
+            );
+
+            ensure!(
+                !T::Permission0::is_delegating_namespace(&owner, &namespace_path),
+                Error::<T>::NamespaceBeingDelegated
+            );
+
+            let mut total_deposit = BalanceOf::<T>::zero();
+            let namespaces_to_delete: Vec<_> = Namespaces::<T>::iter_prefix(&owner)
+                .filter_map(|(path, metadata)| {
+                    if path == namespace_path || namespace_path.is_parent_of(&path) {
+                        Some((path, metadata.deposit))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            let deleted_count = namespaces_to_delete.len() as u32;
+
+            for (path_to_delete, deposit) in namespaces_to_delete {
+                total_deposit = total_deposit.saturating_add(deposit);
+                Namespaces::<T>::remove(&owner, &path_to_delete);
+            }
+
+            NamespaceCount::<T>::mutate(&owner, |count| {
+                *count = count.saturating_sub(deleted_count)
+            });
+
+            T::Currency::unreserve(&owner, total_deposit);
+
+            Self::deposit_event(Event::NamespaceDeleted {
+                owner,
+                path: namespace_path,
+                deposit_released: total_deposit,
+            });
+
+            Ok(())
+        }
     }
 
     #[pallet::event]
@@ -380,6 +529,24 @@ pub mod pallet {
         /// Event created when the agent's updated information is added to the
         /// network
         AgentUpdated(AccountIdOf<T>),
+        /// Namespace created
+        NamespaceCreated {
+            owner: T::AccountId,
+            path: NamespacePath,
+            deposit: BalanceOf<T>,
+        },
+        /// Namespace deleted
+        NamespaceDeleted {
+            owner: T::AccountId,
+            path: NamespacePath,
+            deposit_released: BalanceOf<T>,
+        },
+        /// Namespace transferred
+        NamespaceTransferred {
+            from: T::AccountId,
+            to: T::AccountId,
+            path: NamespacePath,
+        },
     }
 
     #[pallet::error]
@@ -419,9 +586,6 @@ pub mod pallet {
         NotEnoughStakeToRegister,
         /// The entity is still registered and cannot be modified.
         StillRegistered,
-        /// Attempted to set max allowed agents to a value less than the current
-        /// number of registered agents.
-        MaxAllowedAgents,
         /// Insufficient balance to transfer.
         NotEnoughBalanceToTransfer,
         /// The agent metadata is invalid.
@@ -461,15 +625,28 @@ pub mod pallet {
         InvalidWeightControlFee,
         /// The agent already updated recently
         AgentUpdateOnCooldown,
+        /// Invalid namespace path
+        InvalidNamespacePath,
+        /// Namespace already exists
+        NamespaceAlreadyExists,
+        /// Namespace not found
+        NamespaceNotFound,
+        /// Parent namespace not found
+        ParentNamespaceNotFound,
+        /// Not the owner of the namespace
+        NotNamespaceOwner,
+        /// Cannot delete namespace with children
+        NamespaceHasChildren,
+        /// Namespace depth exceeded
+        NamespaceDepthExceeded,
+        /// The namespace is being delegated through a permission. Revoke that first.
+        NamespaceBeingDelegated,
     }
 }
 
 impl<T: Config>
-    pallet_torus0_api::Torus0Api<
-        T::AccountId,
-        <T::Currency as Currency<T::AccountId>>::Balance,
-        <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
-    > for Pallet<T>
+    pallet_torus0_api::Torus0Api<T::AccountId, <T::Currency as Currency<T::AccountId>>::Balance>
+    for Pallet<T>
 {
     fn reward_interval() -> u16 {
         RewardInterval::<T>::get()
@@ -528,6 +705,10 @@ impl<T: Config>
 
     fn is_agent_registered(agent: &T::AccountId) -> bool {
         Agents::<T>::contains_key(agent)
+    }
+
+    fn namespace_exists(agent: &T::AccountId, path: &NamespacePath) -> bool {
+        Namespaces::<T>::contains_key(agent, path)
     }
 
     #[cfg(feature = "runtime-benchmarks")]

@@ -24,7 +24,7 @@ pub fn set_weights<T: crate::Config>(
     );
 
     ensure!(
-        <T::Torus>::is_agent_registered(&acc_id),
+        <T::Torus>::is_agent_registered(&acc_id) && <T::Governance>::is_whitelisted(&acc_id),
         crate::Error::<T>::AgentIsNotRegistered
     );
 
@@ -44,7 +44,7 @@ pub fn set_weights<T: crate::Config>(
         );
 
         ensure!(
-            <T::Torus>::is_agent_registered(target),
+            <T::Torus>::is_agent_registered(target) && <T::Governance>::is_whitelisted(target),
             crate::Error::<T>::AgentIsNotRegistered
         );
     }
@@ -75,12 +75,12 @@ pub fn delegate_weight_control<T: crate::Config>(
     );
 
     ensure!(
-        <T::Torus>::is_agent_registered(&delegator),
+        <T::Torus>::is_agent_registered(&delegator) && <T::Governance>::is_whitelisted(&delegator),
         crate::Error::<T>::AgentIsNotRegistered
     );
 
     ensure!(
-        <T::Torus>::is_agent_registered(&delegatee),
+        <T::Torus>::is_agent_registered(&delegatee) && <T::Governance>::is_whitelisted(&delegatee),
         crate::Error::<T>::AgentIsNotRegistered
     );
 

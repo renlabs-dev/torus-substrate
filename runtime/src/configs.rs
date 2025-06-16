@@ -306,12 +306,22 @@ const fn as_tors(val: u128) -> u128 {
 
 parameter_types! {
     pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
+
+    pub NamespaceBaseFee: Balance = as_tors(5);
+    pub NamespaceDepositPerByte: Balance = as_tors(1);
+
+    pub DefaultNamespacePricingConfig: pallet_torus0::namespace::NamespacePricingConfig<Runtime> = pallet_torus0::namespace::NamespacePricingConfig {
+        base_fee: as_tors(5),
+        deposit_per_byte: as_tors(5),
+
+        count_midpoint: 15,
+        fee_steepness: Percent::from_percent(25),
+        max_fee_multiplier: 3,
+    };
 }
 
 impl pallet_torus0::Config for Runtime {
     type DefaultMinValidatorStake = ConstU128<{ as_tors(50_000) }>;
-
-    type DefaultImmunityPeriod = ConstU16<0>;
 
     type DefaultRewardInterval = ConstU16<100>;
 
@@ -320,8 +330,6 @@ impl pallet_torus0::Config for Runtime {
     type DefaultMaxNameLength = ConstU16<32>;
 
     type DefaultMaxAgentUrlLength = ConstU16<64>;
-
-    type DefaultMaxAllowedAgents = ConstU16<10_000>;
 
     type DefaultMaxAllowedValidators = ConstU16<128>;
 
@@ -334,15 +342,12 @@ impl pallet_torus0::Config for Runtime {
     type DefaultMinWeightControlFee = ConstU8<4>;
 
     type DefaultMinBurn = ConstU128<{ as_tors(10) }>;
-
     type DefaultMaxBurn = ConstU128<{ as_tors(150) }>;
 
     type DefaultAdjustmentAlpha = ConstU64<{ u64::MAX / 2 }>;
 
     type DefaultTargetRegistrationsInterval = ConstU64<142>;
-
     type DefaultTargetRegistrationsPerInterval = ConstU16<3>;
-
     type DefaultMaxRegistrationsPerInterval = ConstU16<32>;
 
     type DefaultAgentUpdateCooldown = ConstU64<32_400>; // 3 days
@@ -350,13 +355,13 @@ impl pallet_torus0::Config for Runtime {
     #[doc = " The storage MaxNameLength should be constrained to be no more than the value of this."]
     #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
     type MaxAgentNameLengthConstraint = ConstU32<256>;
-
     #[doc = " This is needed on agent::Agent to set the `address` field BoundedVec max length."]
     type MaxAgentUrlLengthConstraint = ConstU32<256>;
-
     type MaxAgentMetadataLengthConstraint = ConstU32<256>;
 
     type DefaultDividendsParticipationWeight = DefaultDividendsParticipationWeight;
+
+    type DefaultNamespacePricingConfig = DefaultNamespacePricingConfig;
 
     type RuntimeEvent = RuntimeEvent;
 
@@ -365,6 +370,7 @@ impl pallet_torus0::Config for Runtime {
     type Governance = Governance;
 
     type Emission = Emission0;
+    type Permission0 = Permission0;
 
     type WeightInfo = pallet_torus0::weights::SubstrateWeight<Runtime>;
 }
@@ -380,7 +386,6 @@ impl pallet_governance::Config for Runtime {
     type PalletId = GovernancePalletId;
 
     type MinApplicationDataLength = ConstU32<2>;
-
     type MaxApplicationDataLength = ConstU32<256>;
 
     type ApplicationExpiration = ConstU64<2000>;
@@ -390,17 +395,13 @@ impl pallet_governance::Config for Runtime {
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
     type DefaultProposalCost = ConstU128<{ as_tors(10_000) }>;
-
     type DefaultProposalExpiration = ConstU64<75_600>;
 
     type DefaultAgentApplicationCost = ConstU128<{ as_tors(100) }>;
-
     type DefaultAgentApplicationExpiration = ConstU64<216_000>;
 
     type DefaultProposalRewardTreasuryAllocation = DefaultProposalRewardTreasuryAllocation;
-
     type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<{ as_tors(10_000) }>;
-
     type DefaultProposalRewardInterval = ConstU64<75_600>;
 
     type RuntimeEvent = RuntimeEvent;
@@ -445,11 +446,15 @@ impl pallet_emission0::Config for Runtime {
 
 parameter_types! {
     pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
+
+    pub const MaxControllersPerPermission: u32 = 10;
+    pub const MaxRevokersPerPermission: u32 = 10;
+
     pub const MaxTargetsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
-    pub const MaxRevokersPerPermission: u32 = 10;
-    pub const MaxControllersPerPermission: u32 = 10;
     pub const MinAutoDistributionThreshold: u128 = as_tors(100);
+
+    pub const MaxNamespacesPerPermission: u32 = 16;
 }
 
 impl pallet_permission0::Config for Runtime {
@@ -463,15 +468,14 @@ impl pallet_permission0::Config for Runtime {
 
     type PalletId = PermissionPalletId;
 
-    type MaxTargetsPerPermission = MaxTargetsPerPermission;
-
-    type MaxStreamsPerPermission = MaxStreamsPerPermission;
-
+    type MaxControllersPerPermission = MaxControllersPerPermission;
     type MaxRevokersPerPermission = MaxRevokersPerPermission;
 
-    type MaxControllersPerPermission = MaxControllersPerPermission;
-
+    type MaxTargetsPerPermission = MaxTargetsPerPermission;
+    type MaxStreamsPerPermission = MaxStreamsPerPermission;
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
+
+    type MaxNamespacesPerPermission = MaxNamespacesPerPermission;
 }
 
 impl pallet_faucet::Config for Runtime {
