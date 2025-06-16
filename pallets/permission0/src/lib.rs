@@ -492,26 +492,6 @@ fn get_total_allocated_percentage<T: Config>(grantor: &T::AccountId, stream: &St
         })
 }
 
-fn get_total_allocated_percentage_ignoring<T: Config>(
-    grantor: &T::AccountId,
-    stream: &StreamId,
-    permission_id: &PermissionId,
-) -> Percent {
-    AccumulatedStreamAmounts::<T>::iter_key_prefix((grantor, stream))
-        .filter(|id| id != permission_id)
-        .filter_map(Permissions::<T>::get)
-        .map(|contract| match contract.scope {
-            PermissionScope::Emission(EmissionScope {
-                allocation: EmissionAllocation::Streams(streams),
-                ..
-            }) => streams.get(stream).copied().unwrap_or_default(),
-            _ => Percent::zero(),
-        })
-        .fold(Percent::zero(), |acc, percentage| {
-            acc.saturating_add(percentage)
-        })
-}
-
 /// Update storage indices when creating a new permission
 fn update_permission_indices<T: Config>(
     grantor: &T::AccountId,
