@@ -9457,6 +9457,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-torus0-rpc"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "jsonrpsee",
+ "pallet-torus0-api",
+ "polkadot-sdk",
+ "torus-runtime",
+]
+
+[[package]]
 name = "pallet-transaction-payment"
 version = "38.0.2"
 source = "git+https://github.com/paritytech/polkadot-sdk.git?branch=stable2409#492786da44f1b8ac433f6d98b659d96d2e74e0fc"
@@ -17237,6 +17248,7 @@ dependencies = [
  "futures-timer",
  "jsonrpsee",
  "pallet-permission0-rpc",
+ "pallet-torus0-rpc",
  "polkadot-sdk",
  "serde_json",
  "torus-runtime",

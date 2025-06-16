@@ -1,4 +1,7 @@
+#![allow(clippy::indexing_slicing)]
+
 use pallet_torus0::namespace::NamespacePricingConfig;
+use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::sp_runtime::Percent;
 use test_utils::{as_tors, new_test_ext, Test};
 
@@ -49,7 +52,6 @@ fn namespace_fee_above_midpoint() {
         };
 
         let fee_15 = config.namespace_fee(15).unwrap();
-        dbg!(fee_15, config.fee_midpoint());
         assert!(fee_15 > config.fee_midpoint());
 
         let fee_20 = config.namespace_fee(20).unwrap();
@@ -299,5 +301,313 @@ fn namespace_fee_precision_handling() {
         assert!(fee_0 > as_tors(1));
         assert!(fee_1 > fee_0);
         assert!(fee_2 > fee_1);
+    });
+}
+
+#[test]
+fn find_missing_paths_all_new() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        let path = "v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+
+        assert_eq!(missing.len(), 4);
+        assert_eq!(missing[0].as_bytes(), b"v1.compute.gpu.h100");
+        assert_eq!(missing[1].as_bytes(), b"v1.compute.gpu");
+        assert_eq!(missing[2].as_bytes(), b"v1.compute");
+        assert_eq!(missing[3].as_bytes(), b"v1");
+    });
+}
+
+#[test]
+fn find_missing_paths_partial_exists() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        for segment in ["v1", "v1.compute"] {
+            let path: NamespacePath = segment.parse().unwrap();
+
+            pallet_torus0::Namespaces::<Test>::insert(
+                owner,
+                path,
+                pallet_torus0::namespace::NamespaceMetadata {
+                    created_at: 0,
+                    deposit: 100,
+                },
+            );
+        }
+
+        let path = "v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+
+        assert_eq!(missing.len(), 2);
+        assert_eq!(missing[0].as_bytes(), b"v1.compute.gpu.h100");
+        assert_eq!(missing[1].as_bytes(), b"v1.compute.gpu");
+    });
+}
+
+#[test]
+fn find_missing_paths_all_exists() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        for path in ["v1", "v1.compute", "v1.compute.gpu", "v1.compute.gpu.h100"] {
+            let path: NamespacePath = path.parse().unwrap();
+
+            pallet_torus0::Namespaces::<Test>::insert(
+                owner,
+                path,
+                pallet_torus0::namespace::NamespaceMetadata {
+                    created_at: 0,
+                    deposit: 100,
+                },
+            );
+        }
+
+        let path = "v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+
+        assert_eq!(missing.len(), 0);
+    });
+}
+
+#[test]
+fn find_missing_paths_single_segment() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        let path = "agent".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+
+        assert_eq!(missing.len(), 1);
+        assert_eq!(missing[0].as_bytes(), b"agent");
+    });
+}
+
+#[test]
+fn find_missing_paths_middle_exists() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        for path in ["v1", "v1.compute.gpu"] {
+            let path: NamespacePath = path.parse().unwrap();
+            pallet_torus0::Namespaces::<Test>::insert(
+                owner,
+                path,
+                pallet_torus0::namespace::NamespaceMetadata {
+                    created_at: 0,
+                    deposit: 100,
+                },
+            );
+        }
+
+        let path = "v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+
+        assert_eq!(missing.len(), 3);
+        assert_eq!(missing[0].as_bytes(), b"v1.compute.gpu.h100");
+        assert_eq!(missing[1].as_bytes(), b"v1.compute.gpu");
+        assert_eq!(missing[2].as_bytes(), b"v1.compute");
+    });
+}
+
+#[test]
+fn find_missing_paths_different_branches() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        for path in ["v1", "v1.storage", "v1.storage.disk"] {
+            let path: NamespacePath = path.parse().unwrap();
+
+            pallet_torus0::Namespaces::<Test>::insert(
+                owner,
+                path,
+                pallet_torus0::namespace::NamespaceMetadata {
+                    created_at: 0,
+                    deposit: 100,
+                },
+            );
+        }
+
+        let path = "v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+
+        assert_eq!(missing.len(), 3);
+        assert_eq!(missing[0].as_bytes(), b"v1.compute.gpu.h100");
+        assert_eq!(missing[1].as_bytes(), b"v1.compute.gpu");
+        assert_eq!(missing[2].as_bytes(), b"v1.compute");
+    });
+}
+
+#[test]
+fn calculate_cost_no_existing_namespaces() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        let paths: &[NamespacePath] = &[
+            "v1".parse().unwrap(),
+            "v1.compute".parse().unwrap(),
+            "v1.compute.gpu".parse().unwrap(),
+        ];
+
+        let (fee, deposit) =
+            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+
+        // Using default config: base_fee = 5 TORS, deposit_per_byte = 5 TORS
+        // Fee calculation: each subsequent namespace has higher fee due to increasing count
+        // Count 0: fee_0, Count 1: fee_1, Count 2: fee_2
+        assert!(fee > as_tors(15)); // 3 namespaces * min 5 TORS base fee
+
+        // Deposit: "v1" = 2 bytes, "v1.compute" = 10 bytes, "v1.compute.gpu" = 14 bytes
+        // Total = 26 bytes * 5 TORS = 130 TORS
+        assert_eq!(deposit, as_tors(130));
+    });
+}
+
+#[test]
+fn calculate_cost_with_existing_namespaces() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        // Set namespace count to simulate existing namespaces
+        pallet_torus0::NamespaceCount::<Test>::insert(owner, 10);
+
+        let paths: &[NamespacePath] = &["agent".parse().unwrap(), "agent.alice".parse().unwrap()];
+
+        let (fee, deposit) =
+            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+
+        // Fee should be higher due to existing count of 10
+        // Count 10: at midpoint (20), Count 11: above midpoint
+        let config = pallet_torus0::NamespacePricingConfig::<Test>::get();
+        let fee_10 = config.namespace_fee(10).unwrap();
+        let fee_11 = config.namespace_fee(11).unwrap();
+        assert_eq!(fee, fee_10 + fee_11);
+
+        // Deposit: "agent" = 5 bytes, "agent.alice" = 11 bytes
+        // Total = 16 bytes * 5 TORS = 80 TORS
+        assert_eq!(deposit, as_tors(80));
+    });
+}
+
+#[test]
+fn calculate_cost_progressive_fee_increase() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        // Create a long path to test progressive fee increase
+        let paths: &[NamespacePath] = &[
+            "a".parse().unwrap(),
+            "a.b".parse().unwrap(),
+            "a.b.c".parse().unwrap(),
+            "a.b.c.d".parse().unwrap(),
+            "a.b.c.d.e".parse().unwrap(),
+        ];
+
+        let (fee, _deposit) =
+            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+
+        // Verify progressive increase: calculate individual fees
+        let config = pallet_torus0::NamespacePricingConfig::<Test>::get();
+        let mut expected_fee = 0u128;
+        for i in 0..5 {
+            expected_fee += config.namespace_fee(i as u32).unwrap();
+        }
+        assert_eq!(fee, expected_fee);
+    });
+}
+
+#[test]
+fn calculate_cost_empty_paths() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        let (fee, deposit) = pallet_torus0::namespace::calculate_cost::<Test>(&owner, &[]).unwrap();
+
+        assert_eq!(fee, 0);
+        assert_eq!(deposit, 0);
+    });
+}
+
+#[test]
+fn calculate_cost_different_pricing_config() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        // Update pricing config
+        pallet_torus0::NamespacePricingConfig::<Test>::put(NamespacePricingConfig {
+            base_fee: as_tors(10),
+            deposit_per_byte: as_tors(2),
+            count_midpoint: 5,
+            fee_steepness: Percent::from_percent(50),
+            max_fee_multiplier: 10,
+        });
+
+        let paths: &[NamespacePath] = &["test".parse().unwrap(), "test.namespace".parse().unwrap()];
+
+        let (fee, deposit) =
+            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+
+        // With higher base fee and steeper curve
+        assert!(fee > as_tors(20)); // 2 namespaces * min 10 TORS base fee
+
+        // Deposit: "test" = 4 bytes, "test.namespace" = 14 bytes
+        // Total = 18 bytes * 2 TORS = 36 TORS
+        assert_eq!(deposit, as_tors(36));
+    });
+}
+
+#[test]
+fn calculate_cost_long_path_names() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        let paths: &[NamespacePath] = &[
+            "very-long-namespace-name".parse().unwrap(),
+            "very-long-namespace-name.with-another-segment"
+                .parse()
+                .unwrap(),
+        ];
+
+        let (_fee, deposit) =
+            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+
+        // Deposit calculation based on bytes
+        // "very-long-namespace-name" = 24 bytes
+        // "very-long-namespace-name.with-another-segment" = 45 bytes
+        // Total = 69 bytes * 5 TORS = 345 TORS
+        assert_eq!(deposit, as_tors(345));
+    });
+}
+
+#[test]
+fn calculate_cost_at_fee_ceiling() {
+    new_test_ext().execute_with(|| {
+        let owner = 1;
+        test_utils::register_empty_agent(owner);
+
+        pallet_torus0::NamespaceCount::<Test>::insert(owner, 1000);
+
+        let paths: &[NamespacePath] = &["test".parse().unwrap()];
+
+        let (fee, _deposit) =
+            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+
+        // fee should be at ceiling because of high amount of registered entries
+        let config = pallet_torus0::NamespacePricingConfig::<Test>::get();
+        assert_eq!(fee, config.fee_ceiling());
     });
 }

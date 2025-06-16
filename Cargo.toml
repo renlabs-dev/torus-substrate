@@ -35,6 +35,7 @@ pallet-emission0-api = { path = "./pallets/emission0/api", default-features = fa
 pallet-faucet = { path = "./pallets/faucet", default-features = false }
 pallet-torus0 = { path = "./pallets/torus0", default-features = false }
 pallet-torus0-api = { path = "./pallets/torus0/api", default-features = false }
+pallet-torus0-rpc = { path = "./pallets/torus0/rpc", default-features = false }
 pallet-permission0 = { path = "./pallets/permission0", default-features = false }
 pallet-permission0-api = { path = "./pallets/permission0/api", default-features = false }
 pallet-permission0-rpc = { path = "./pallets/permission0/rpc", default-features = false }

@@ -28,6 +28,7 @@ use eth::EthDeps;
 use futures::channel::mpsc;
 use jsonrpsee::RpcModule;
 use pallet_permission0_rpc::{Permission0Rpc, Permission0StreamApiServer};
+use pallet_torus0_rpc::{Torus0ApiServer, Torus0Rpc};
 use polkadot_sdk::{
     pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer},
     sc_consensus_manual_seal::{
@@ -86,7 +87,8 @@ where
 
     io.merge(System::new(client.clone(), pool).into_rpc())?;
     io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-    io.merge(Permission0Rpc::new(client).into_rpc())?;
+    io.merge(Permission0Rpc::new(client.clone()).into_rpc())?;
+    io.merge(Torus0Rpc::new(client.clone()).into_rpc())?;
 
     if let Some(command_sink) = command_sink {
         io.merge(

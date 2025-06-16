@@ -307,7 +307,7 @@ impl_runtime_apis! {
             nonce: Option<U256>,
             estimate: bool,
             access_list: Option<Vec<(H160, Vec<H256>)>>,
-        ) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
+        ) -> Result<pallet_evm::CallInfo, DispatchError> {
             let config = if estimate {
                 let mut config = <Runtime as pallet_evm::Config>::config().clone();
                 config.estimate = true;
@@ -469,6 +469,19 @@ impl_runtime_apis! {
     impl pallet_permission0_api::Permission0RuntimeApi<Block, AccountId> for Runtime {
         fn root_stream_id_for_account(account_id: AccountId) -> StreamId {
             generate_root_stream_id(&account_id)
+        }
+    }
+
+    impl pallet_torus0_api::api::Torus0RuntimeApi<Block, AccountId, Balance> for Runtime {
+        fn namespace_path_creation_cost(account_id: AccountId, path: pallet_torus0_api::NamespacePathInner) -> Result<(Balance, Balance), DispatchError> {
+            use pallet_torus0::namespace;
+            use pallet_torus0_api::NamespacePath;
+
+            let namespace_path =
+                NamespacePath::new(&path).map_err(|_| pallet_torus0::Error::<Runtime>::InvalidNamespacePath)?;
+
+            let missing_paths = namespace::find_missing_paths::<Runtime>(&account_id, &namespace_path);
+            namespace::calculate_cost::<Runtime>(&account_id, &missing_paths)
         }
     }
 }
