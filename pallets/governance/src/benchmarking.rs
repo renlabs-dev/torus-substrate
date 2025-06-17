@@ -266,4 +266,10 @@ mod benchmarks {
             data,
         )
     }
+
+    #[benchmark]
+    fn toggle_namespace_creation() {
+        #[extrinsic_call]
+        toggle_namespace_creation(RawOrigin::Signed(curator::<T>()))
+    }
 }

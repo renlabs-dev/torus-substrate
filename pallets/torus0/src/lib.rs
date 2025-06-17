@@ -382,6 +382,11 @@ pub mod pallet {
             let owner = ensure_signed(origin)?;
 
             ensure!(
+                <T as pallet::Config>::Governance::can_create_namespace(&owner),
+                Error::<T>::NamespaceCreationDisabled
+            );
+
+            ensure!(
                 Agents::<T>::contains_key(&owner),
                 Error::<T>::AgentDoesNotExist
             );
@@ -618,6 +623,8 @@ pub mod pallet {
         NamespaceDepthExceeded,
         /// The namespace is being delegated through a permission. Revoke that first.
         NamespaceBeingDelegated,
+        /// Namespace Creation was disabled by a curator.
+        NamespaceCreationDisabled,
     }
 }
 

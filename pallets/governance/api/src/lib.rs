@@ -15,6 +15,8 @@ pub trait GovernanceApi<AccountId> {
 
     fn set_allocator(key: &AccountId);
 
+    fn can_create_namespace(key: &AccountId) -> bool;
+
     #[doc(hidden)]
     #[cfg(feature = "runtime-benchmarks")]
     fn force_set_whitelisted(key: &AccountId);

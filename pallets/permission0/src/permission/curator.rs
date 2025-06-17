@@ -25,13 +25,15 @@ bitflags! {
     impl CuratorPermissions: u32 {
         /// Able to appoint other curators. Though not used at the moment,
         /// it will be valuable when we remove the SUDO key/multisig.
-        const ROOT               = 0b0000_0001;
+        const ROOT                        = 0b0000_0001;
         /// Permission to review and process agent applications
-        const APPLICATION_REVIEW = 0b0000_0010;
+        const APPLICATION_REVIEW          = 0b0000_0010;
         /// Permission to manage the whitelist (add/remove accounts)
-        const WHITELIST_MANAGE   = 0b0000_0100;
+        const WHITELIST_MANAGE            = 0b0000_0100;
         /// Permission to apply penalty factors to agents
-        const PENALTY_CONTROL    = 0b0000_1000;
+        const PENALTY_CONTROL             = 0b0000_1000;
+        /// Permission to toggle namespace creation
+        const NAMESPACE_CREATION_TOGGLING = 0b0001_0000;
     }
 }
 
@@ -60,6 +62,11 @@ impl<T: Config> CuratorScope<T> {
     /// Checks for [`CuratorPermissions::PENALTY_CONTROL`]
     pub fn can_control_penalties(&self) -> bool {
         self.has_permission(CuratorPermissions::PENALTY_CONTROL)
+    }
+
+    /// Checks for [`CuratorPermissions::NAMESPACE_CREATION_TOGGLING`]
+    pub fn can_toggle_namespace_creation(&self) -> bool {
+        self.has_permission(CuratorPermissions::NAMESPACE_CREATION_TOGGLING)
     }
 }
 
