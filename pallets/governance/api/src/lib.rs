@@ -17,6 +17,8 @@ pub trait GovernanceApi<AccountId> {
 
     fn can_create_namespace(key: &AccountId) -> bool;
 
+    fn can_register_agent(key: &AccountId) -> bool;
+
     #[doc(hidden)]
     #[cfg(feature = "runtime-benchmarks")]
     fn force_set_whitelisted(key: &AccountId);

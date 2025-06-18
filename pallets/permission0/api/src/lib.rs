@@ -134,8 +134,10 @@ bitflags::bitflags! {
         const WHITELIST_MANAGE   = 0b0000_0100;
         /// Permission to apply penalty factors to agents
         const PENALTY_CONTROL    = 0b0000_1000;
-        /// Permission to toggle namespace creation
-        const NAMESPACE_CREATION_TOGGLING = 0b0001_0000;
+        /// Permission to toggle agent freezing
+        /// - Disables agent creation
+        /// - Disables namespace creation
+        const AGENT_FREEZING_TOGGLING = 0b0001_0000;
     }
 }
 

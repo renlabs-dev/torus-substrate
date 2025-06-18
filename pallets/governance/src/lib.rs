@@ -104,8 +104,7 @@ pub mod pallet {
 
     /// Determines if new namespaces can be created on the chain.
     #[pallet::storage]
-    pub type NamespaceCreationAllowed<T: Config> =
-        StorageValue<_, bool, ValueQuery, ConstBool<true>>;
+    pub type AgentsFrozen<T: Config> = StorageValue<_, bool, ValueQuery, ConstBool<false>>;
 
     #[pallet::config]
     pub trait Config:
@@ -387,16 +386,16 @@ pub mod pallet {
 
         #[pallet::call_index(19)]
         #[pallet::weight((<T as Config>::WeightInfo::toggle_namespace_creation(), DispatchClass::Normal, Pays::No))]
-        pub fn toggle_namespace_creation(origin: OriginFor<T>) -> DispatchResult {
+        pub fn toggle_agent_freezing(origin: OriginFor<T>) -> DispatchResult {
             let curator = <T as pallet::Config>::Permission0::ensure_curator_permission(
                 origin,
-                CuratorPermissions::NAMESPACE_CREATION_TOGGLING,
+                CuratorPermissions::AGENT_FREEZING_TOGGLING,
             )?;
 
-            let new_state = !crate::NamespaceCreationAllowed::<T>::get();
-            NamespaceCreationAllowed::<T>::set(new_state);
+            let new_state = !crate::AgentsFrozen::<T>::get();
+            AgentsFrozen::<T>::set(new_state);
 
-            crate::Pallet::<T>::deposit_event(crate::Event::NamespaceCreationToggled {
+            crate::Pallet::<T>::deposit_event(crate::Event::AgentFreezingToggled {
                 curator,
                 new_state,
             });
@@ -438,8 +437,8 @@ pub mod pallet {
             agent: T::AccountId,
             penalty: Percent,
         },
-        /// The namespace creation feature was toggled by a curator.
-        NamespaceCreationToggled {
+        /// The agent freezing feature was toggled by a curator.
+        AgentFreezingToggled {
             curator: T::AccountId,
             new_state: bool,
         },
@@ -560,7 +559,11 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
     }
 
     fn can_create_namespace(key: &T::AccountId) -> bool {
-        NamespaceCreationAllowed::<T>::get() || Self::is_whitelisted(key)
+        !AgentsFrozen::<T>::get() || Self::is_whitelisted(key)
+    }
+
+    fn can_register_agent(key: &T::AccountId) -> bool {
+        !AgentsFrozen::<T>::get() || Self::is_whitelisted(key)
     }
 
     #[cfg(feature = "runtime-benchmarks")]

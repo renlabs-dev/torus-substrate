@@ -57,6 +57,11 @@ pub fn register<T: crate::Config>(
     let _guard = span.enter();
 
     ensure!(
+        <T as crate::pallet::Config>::Governance::can_register_agent(&payer),
+        crate::pallet::Error::<T>::AgentsFrozen
+    );
+
+    ensure!(
         !exists::<T>(&agent_key),
         crate::Error::<T>::AgentAlreadyRegistered
     );

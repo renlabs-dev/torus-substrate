@@ -268,8 +268,8 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn toggle_namespace_creation() {
+    fn toggle_agent_freezing() {
         #[extrinsic_call]
-        toggle_namespace_creation(RawOrigin::Signed(curator::<T>()))
+        toggle_agent_freezing(RawOrigin::Signed(curator::<T>()))
     }
 }

@@ -32,8 +32,10 @@ bitflags! {
         const WHITELIST_MANAGE            = 0b0000_0100;
         /// Permission to apply penalty factors to agents
         const PENALTY_CONTROL             = 0b0000_1000;
-        /// Permission to toggle namespace creation
-        const NAMESPACE_CREATION_TOGGLING = 0b0001_0000;
+        /// Permission to toggle agent freezing
+        /// - Disables agent creation
+        /// - Disables namespace creation
+        const AGENT_FREEZING_TOGGLING = 0b0001_0000;
     }
 }
 
@@ -64,9 +66,9 @@ impl<T: Config> CuratorScope<T> {
         self.has_permission(CuratorPermissions::PENALTY_CONTROL)
     }
 
-    /// Checks for [`CuratorPermissions::NAMESPACE_CREATION_TOGGLING`]
-    pub fn can_toggle_namespace_creation(&self) -> bool {
-        self.has_permission(CuratorPermissions::NAMESPACE_CREATION_TOGGLING)
+    /// Checks for [`CuratorPermissions::AGENT_FREEZING_TOGGLING`]
+    pub fn can_toggle_agent_freezing(&self) -> bool {
+        self.has_permission(CuratorPermissions::AGENT_FREEZING_TOGGLING)
     }
 }
 
