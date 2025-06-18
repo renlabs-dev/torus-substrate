@@ -408,7 +408,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(20)]
-        #[pallet::weight((<T as Config>::WeightInfo::toggle_agent_freezing(), DispatchClass::Normal, Pays::No))]
+        #[pallet::weight((<T as Config>::WeightInfo::toggle_namespace_freezing(), DispatchClass::Normal, Pays::No))]
         pub fn toggle_namespace_freezing(origin: OriginFor<T>) -> DispatchResult {
             let curator = <T as pallet::Config>::Permission0::ensure_curator_permission(
                 origin,
