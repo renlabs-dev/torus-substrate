@@ -383,7 +383,7 @@ pub mod pallet {
 
             ensure!(
                 <T as pallet::Config>::Governance::can_create_namespace(&owner),
-                Error::<T>::AgentsFrozen
+                Error::<T>::NamespacesFrozen
             );
 
             ensure!(
@@ -623,8 +623,10 @@ pub mod pallet {
         NamespaceDepthExceeded,
         /// The namespace is being delegated through a permission. Revoke that first.
         NamespaceBeingDelegated,
-        /// Namespace and Agent Creation were disabled by a curator.
+        /// Agent Creation was disabled by a curator.
         AgentsFrozen,
+        /// Namespace Creation was disabled by a curator.
+        NamespacesFrozen,
     }
 }
 

@@ -2,8 +2,11 @@
 
 use pallet_torus0::namespace::NamespacePricingConfig;
 use pallet_torus0_api::NamespacePath;
-use polkadot_sdk::sp_runtime::Percent;
-use test_utils::{as_tors, new_test_ext, Test};
+use polkadot_sdk::{
+    frame_support::assert_err,
+    sp_runtime::{BoundedVec, Percent},
+};
+use test_utils::{as_tors, get_origin, new_test_ext, pallet_governance, Test};
 
 #[test]
 fn namespace_fee_at_midpoint() {
@@ -609,5 +612,19 @@ fn calculate_cost_at_fee_ceiling() {
         // fee should be at ceiling because of high amount of registered entries
         let config = pallet_torus0::NamespacePricingConfig::<Test>::get();
         assert_eq!(fee, config.fee_ceiling());
+    });
+}
+
+#[test]
+fn namespace_freezing() {
+    new_test_ext().execute_with(|| {
+        pallet_governance::NamespacesFrozen::<Test>::set(true);
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"new.namespace".to_vec())
+            ),
+            pallet_torus0::Error::<Test>::NamespacesFrozen
+        );
     });
 }
