@@ -33,9 +33,9 @@ bitflags! {
         /// Permission to apply penalty factors to agents
         const PENALTY_CONTROL             = 0b0000_1000;
         /// Permission to toggle agent freezing
-        /// - Disables agent creation
-        /// - Disables namespace creation
-        const AGENT_FREEZING_TOGGLING = 0b0001_0000;
+        const AGENT_FREEZING_TOGGLING     = 0b0001_0000;
+        /// Permission to toggle namespace freezing
+        const NAMESPACE_FREEZING_TOGGLING = 0b0010_0000;
     }
 }
 
@@ -64,11 +64,6 @@ impl<T: Config> CuratorScope<T> {
     /// Checks for [`CuratorPermissions::PENALTY_CONTROL`]
     pub fn can_control_penalties(&self) -> bool {
         self.has_permission(CuratorPermissions::PENALTY_CONTROL)
-    }
-
-    /// Checks for [`CuratorPermissions::AGENT_FREEZING_TOGGLING`]
-    pub fn can_toggle_agent_freezing(&self) -> bool {
-        self.has_permission(CuratorPermissions::AGENT_FREEZING_TOGGLING)
     }
 }
 

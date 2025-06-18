@@ -102,9 +102,13 @@ pub mod pallet {
     pub type TreasuryEmissionFee<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultTreasuryEmissionFee>;
 
-    /// Determines if new namespaces can be created on the chain.
+    /// Determines if new agents can be registered on the chain.
     #[pallet::storage]
     pub type AgentsFrozen<T: Config> = StorageValue<_, bool, ValueQuery, ConstBool<false>>;
+
+    /// Determines if new namespaces can be created on the chain.
+    #[pallet::storage]
+    pub type NamespacesFrozen<T: Config> = StorageValue<_, bool, ValueQuery, ConstBool<false>>;
 
     #[pallet::config]
     pub trait Config:
@@ -402,6 +406,25 @@ pub mod pallet {
 
             Ok(())
         }
+
+        #[pallet::call_index(20)]
+        #[pallet::weight((<T as Config>::WeightInfo::toggle_agent_freezing(), DispatchClass::Normal, Pays::No))]
+        pub fn toggle_namespace_freezing(origin: OriginFor<T>) -> DispatchResult {
+            let curator = <T as pallet::Config>::Permission0::ensure_curator_permission(
+                origin,
+                CuratorPermissions::NAMESPACE_FREEZING_TOGGLING,
+            )?;
+
+            let new_state = !crate::NamespacesFrozen::<T>::get();
+            NamespacesFrozen::<T>::set(new_state);
+
+            crate::Pallet::<T>::deposit_event(crate::Event::NamespaceFreezingToggled {
+                curator,
+                new_state,
+            });
+
+            Ok(())
+        }
     }
 
     #[pallet::event]
@@ -439,6 +462,11 @@ pub mod pallet {
         },
         /// The agent freezing feature was toggled by a curator.
         AgentFreezingToggled {
+            curator: T::AccountId,
+            new_state: bool,
+        },
+        /// The namespace freezing feature was toggled by a curator.
+        NamespaceFreezingToggled {
             curator: T::AccountId,
             new_state: bool,
         },
@@ -559,7 +587,7 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
     }
 
     fn can_create_namespace(key: &T::AccountId) -> bool {
-        !AgentsFrozen::<T>::get() || Self::is_whitelisted(key)
+        !NamespacesFrozen::<T>::get() || Self::is_whitelisted(key)
     }
 
     fn can_register_agent(key: &T::AccountId) -> bool {

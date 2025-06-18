@@ -129,15 +129,15 @@ bitflags::bitflags! {
     #[derive(Clone, Copy, PartialEq, Eq, Debug)]
     pub struct CuratorPermissions: u32 {
         /// Permission to review and process agent applications
-        const APPLICATION_REVIEW = 0b0000_0010;
+        const APPLICATION_REVIEW          = 0b0000_0010;
         /// Permission to manage the whitelist (add/remove accounts)
-        const WHITELIST_MANAGE   = 0b0000_0100;
+        const WHITELIST_MANAGE            = 0b0000_0100;
         /// Permission to apply penalty factors to agents
-        const PENALTY_CONTROL    = 0b0000_1000;
+        const PENALTY_CONTROL             = 0b0000_1000;
         /// Permission to toggle agent freezing
-        /// - Disables agent creation
-        /// - Disables namespace creation
-        const AGENT_FREEZING_TOGGLING = 0b0001_0000;
+        const AGENT_FREEZING_TOGGLING     = 0b0001_0000;
+        /// Permission to toggle namespace freezing
+        const NAMESPACE_FREEZING_TOGGLING = 0b0010_0000;
     }
 }
 
