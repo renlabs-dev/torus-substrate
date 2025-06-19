@@ -266,4 +266,16 @@ mod benchmarks {
             data,
         )
     }
+
+    #[benchmark]
+    fn toggle_agent_freezing() {
+        #[extrinsic_call]
+        toggle_agent_freezing(RawOrigin::Signed(curator::<T>()))
+    }
+
+    #[benchmark]
+    fn toggle_namespace_freezing() {
+        #[extrinsic_call]
+        toggle_namespace_freezing(RawOrigin::Signed(curator::<T>()))
+    }
 }

@@ -636,3 +636,20 @@ fn fails_updating_whitout_waiting_cooldown() {
         );
     });
 }
+
+#[test]
+fn agent_freezing() {
+    test_utils::new_test_ext().execute_with(|| {
+        pallet_governance::AgentsFrozen::<Test>::set(true);
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::register_agent(
+                get_origin(0),
+                0,
+                b"agent name".to_vec(),
+                b"agent url".to_vec(),
+                vec![],
+            ),
+            pallet_torus0::Error::<Test>::AgentsFrozen
+        );
+    });
+}

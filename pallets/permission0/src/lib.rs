@@ -304,6 +304,8 @@ pub mod pallet {
         NotAuthorizedToEdit,
         /// Stream emission permission is not editable
         NotEditable,
+        /// Namespace creation was disabled by a curator.
+        NamespaceCreationDisabled,
     }
 
     #[pallet::hooks]
