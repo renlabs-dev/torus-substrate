@@ -45,7 +45,8 @@ pub fn grant_namespace_permission_impl<T: Config>(
     let paths = paths
         .into_iter()
         .map(|path| {
-            let path = NamespacePath::new(&path).map_err(|_| Error::<T>::NamespacePathIsInvalid)?;
+            let path =
+                NamespacePath::new_agent(&path).map_err(|_| Error::<T>::NamespacePathIsInvalid)?;
             ensure!(
                 T::Torus::namespace_exists(&grantor, &path),
                 Error::<T>::NamespaceDoesNotExist

@@ -478,10 +478,11 @@ impl_runtime_apis! {
             use pallet_torus0_api::NamespacePath;
 
             let namespace_path =
-                NamespacePath::new(&path).map_err(|_| pallet_torus0::Error::<Runtime>::InvalidNamespacePath)?;
+                NamespacePath::new_agent(&path).map_err(|_| pallet_torus0::Error::<Runtime>::InvalidNamespacePath)?;
 
-            let missing_paths = namespace::find_missing_paths::<Runtime>(&account_id, &namespace_path);
-            namespace::calculate_cost::<Runtime>(&account_id, &missing_paths)
+                let owner = namespace::NamespaceOwnership::Account(account_id);
+            let missing_paths = namespace::find_missing_paths::<Runtime>(&owner, &namespace_path);
+            namespace::calculate_cost::<Runtime>(&owner, &missing_paths)
         }
     }
 }

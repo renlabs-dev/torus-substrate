@@ -1,6 +1,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_emission0_api::Emission0Api;
 use pallet_governance_api::GovernanceApi;
+use pallet_torus0_api::{NamespacePath, NAMESPACE_AGENT_PREFIX};
 use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::{
@@ -11,7 +12,7 @@ use polkadot_sdk::{
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
     sp_runtime::{traits::Saturating, BoundedVec, DispatchError, Percent},
-    sp_tracing::debug_span,
+    sp_tracing::{debug_span, warn},
 };
 use scale_info::{prelude::vec::Vec, TypeInfo};
 
@@ -77,7 +78,12 @@ pub fn register<T: crate::Config>(
         crate::Error::<T>::TooManyAgentRegistrationsThisInterval
     );
 
-    validate_agent_name::<T>(&name[..])?;
+    let namespace_path: Vec<_> = [NAMESPACE_AGENT_PREFIX, &name].concat();
+    let namespace_path = NamespacePath::new_agent(&namespace_path).map_err(|err| {
+        warn!("{agent_key:?} tried using invalid name: {err:?}");
+        crate::Error::<T>::InvalidNamespacePath
+    })?;
+
     validate_agent_url::<T>(&url[..])?;
     validate_agent_metadata::<T>(&metadata[..])?;
 
@@ -107,6 +113,11 @@ pub fn register<T: crate::Config>(
         },
     );
 
+    crate::namespace::create_namespace::<T>(
+        crate::namespace::NamespaceOwnership::Account(agent_key.clone()),
+        namespace_path,
+    )?;
+
     crate::RegistrationsThisBlock::<T>::mutate(|value| value.saturating_add(1));
     crate::RegistrationsThisInterval::<T>::mutate(|value| value.saturating_add(1));
 
@@ -127,10 +138,15 @@ pub fn unregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult
     let span = debug_span!("unregister", agent.key = ?agent_key);
     let _guard = span.enter();
 
-    ensure!(
-        exists::<T>(&agent_key),
-        crate::Error::<T>::AgentDoesNotExist
-    );
+    let agent = crate::Agents::<T>::get(&agent_key).ok_or(crate::Error::<T>::AgentDoesNotExist)?;
+
+    let namespace_path: Vec<_> = [NAMESPACE_AGENT_PREFIX, &agent.name].concat();
+    let namespace_path = NamespacePath::new_agent(&namespace_path)
+        .map_err(|_| crate::Error::<T>::InvalidNamespacePath)?;
+    crate::namespace::delete_namespace::<T>(
+        crate::namespace::NamespaceOwnership::Account(agent_key.clone()),
+        namespace_path,
+    )?;
 
     crate::Agents::<T>::remove(&agent_key);
     crate::stake::clear_key::<T>(&agent_key)?;
@@ -143,7 +159,6 @@ pub fn unregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult
 /// Updates the metadata of an existing agent.
 pub fn update<T: crate::Config>(
     agent_key: AccountIdOf<T>,
-    name: Vec<u8>,
     url: Vec<u8>,
     metadata: Option<Vec<u8>>,
     staking_fee: Option<Percent>,
@@ -160,9 +175,6 @@ pub fn update<T: crate::Config>(
         if is_in_update_cooldown::<T>(&agent_key)? {
             return Err(crate::Error::<T>::AgentUpdateOnCooldown.into());
         }
-
-        validate_agent_name::<T>(&name[..])?;
-        agent.name = BoundedVec::truncate_from(name);
 
         validate_agent_url::<T>(&url[..])?;
         agent.url = BoundedVec::truncate_from(url);
@@ -226,31 +238,6 @@ fn set_in_cooldown<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
 
 pub fn exists<T: crate::Config>(key: &AccountIdOf<T>) -> bool {
     crate::Agents::<T>::contains_key(key)
-}
-
-fn validate_agent_name<T: crate::Config>(bytes: &[u8]) -> DispatchResult {
-    let len: u32 = bytes
-        .len()
-        .try_into()
-        .map_err(|_| crate::Error::<T>::AgentNameTooLong)?;
-
-    ensure!(
-        len >= crate::MinNameLength::<T>::get() as u32,
-        crate::Error::<T>::AgentNameTooShort
-    );
-
-    ensure!(
-        len <= (crate::MaxNameLength::<T>::get() as u32)
-            .min(T::MaxAgentNameLengthConstraint::get()),
-        crate::Error::<T>::AgentNameTooLong
-    );
-
-    ensure!(
-        core::str::from_utf8(bytes).is_ok(),
-        crate::Error::<T>::InvalidAgentName
-    );
-
-    Ok(())
 }
 
 fn validate_agent_url<T: crate::Config>(bytes: &[u8]) -> DispatchResult {

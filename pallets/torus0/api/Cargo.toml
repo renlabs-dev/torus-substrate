@@ -18,4 +18,9 @@ try-runtime = ["polkadot-sdk/try-runtime"]
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
-polkadot-sdk = { workspace = true, features = ["sp-runtime"] }
+polkadot-sdk = { workspace = true, features = [
+    "sp-api",
+    "sp-core",
+    "sp-runtime",
+    "sp-std",
+] }

@@ -82,12 +82,36 @@ pub mod v4 {
 }
 
 pub mod v5 {
+    use pallet_torus0_api::{NamespacePath, NAMESPACE_AGENT_PREFIX};
     use polkadot_sdk::{
         frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
+        sp_tracing::{error, info},
         sp_weights::Weight,
     };
 
-    use crate::{burn::BurnConfiguration, BurnConfig, Config, Pallet};
+    use crate::{
+        burn::BurnConfiguration, namespace::NamespaceOwnership, Agents, BurnConfig, Config, Pallet,
+    };
+
+    pub mod storage {
+        use polkadot_sdk::frame_support::{pallet_prelude::*, storage_alias};
+
+        use crate::AccountIdOf;
+
+        #[storage_alias]
+        pub type Namespaces<T: crate::Config> = StorageDoubleMap<
+            crate::Pallet<T>,
+            Blake2_128Concat,
+            AccountIdOf<T>,
+            Blake2_128Concat,
+            pallet_torus0_api::NamespacePath,
+            crate::namespace::NamespaceMetadata<T>,
+        >;
+
+        #[storage_alias]
+        pub type NamespaceCount<T: crate::Config> =
+            StorageMap<crate::Pallet<T>, Blake2_128Concat, AccountIdOf<T>, u32, ValueQuery>;
+    }
 
     pub type Migration<T, W> = VersionedMigration<4, 5, MigrateToV5<T>, Pallet<T>, W>;
     pub struct MigrateToV5<T>(core::marker::PhantomData<T>);
@@ -100,6 +124,47 @@ pub mod v5 {
                 max_registrations_per_interval: 16,
                 ..BurnConfig::<T>::get()
             });
+
+            let _ = storage::Namespaces::<T>::clear(u32::MAX, None);
+            let _ = storage::NamespaceCount::<T>::clear(u32::MAX, None);
+
+            let path = NamespacePath::agent_root();
+            if let Err(err) =
+                crate::namespace::create_namespace::<T>(NamespaceOwnership::System, path)
+            {
+                error!("failed to create root agent namespace: {err:?}");
+                return Weight::default();
+            }
+
+            info!("created root agent namespace");
+
+            for (id, agent) in Agents::<T>::iter() {
+                let Ok(agent_name) = core::str::from_utf8(&agent.name) else {
+                    error!("agent name is not utf-8: {:?}", agent.name);
+                    continue;
+                };
+
+                let path: polkadot_sdk::sp_std::vec::Vec<_> =
+                    [NAMESPACE_AGENT_PREFIX, &agent.name].concat();
+                let path = match NamespacePath::new_agent(&path) {
+                    Ok(path) => path,
+                    Err(err) => {
+                        error!("cannot create path for agent {agent_name:?}: {err:?}");
+                        continue;
+                    }
+                };
+
+                #[allow(deprecated)]
+                if let Err(err) = crate::namespace::create_namespace0::<T>(
+                    NamespaceOwnership::Account(id),
+                    path.clone(),
+                    false,
+                ) {
+                    error!("cannot create namespace for agent {agent_name:?}: {err:?}");
+                } else {
+                    info!("created namespace entry for agent {agent_name:?}: {path:?}");
+                }
+            }
 
             Weight::default()
         }

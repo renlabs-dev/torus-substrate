@@ -16,7 +16,7 @@ use frame::{
     arithmetic::Percent,
     prelude::{ensure_root, ensure_signed},
 };
-use namespace::{NamespaceMetadata, NamespacePath};
+use namespace::{NamespaceMetadata, NamespaceOwnership, NamespacePath};
 pub use pallet::*;
 use polkadot_sdk::{
     frame_support::{
@@ -41,11 +41,7 @@ pub mod pallet {
     use pallet_governance_api::GovernanceApi;
     use pallet_permission0_api::Permission0NamespacesApi;
     use pallet_torus0_api::NamespacePathInner;
-    use polkadot_sdk::{
-        frame_support::traits::{ExistenceRequirement, ReservableCurrency},
-        frame_system,
-        sp_runtime::traits::Zero,
-    };
+    use polkadot_sdk::frame_support::traits::ReservableCurrency;
     use weights::WeightInfo;
 
     use super::*;
@@ -147,7 +143,7 @@ pub mod pallet {
     pub type Namespaces<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
-        T::AccountId,
+        NamespaceOwnership<T>,
         Blake2_128Concat,
         NamespacePath,
         NamespaceMetadata<T>,
@@ -156,7 +152,7 @@ pub mod pallet {
     /// Count of namespaces registered per account
     #[pallet::storage]
     pub type NamespaceCount<T: Config> =
-        StorageMap<_, Blake2_128Concat, T::AccountId, u32, ValueQuery>;
+        StorageMap<_, Blake2_128Concat, NamespaceOwnership<T>, u32, ValueQuery>;
 
     #[pallet::storage]
     pub type NamespacePricingConfig<T: Config> = StorageValue<
@@ -346,21 +342,13 @@ pub mod pallet {
         #[pallet::weight((T::WeightInfo::update_agent(), DispatchClass::Normal, Pays::Yes))]
         pub fn update_agent(
             origin: OriginFor<T>,
-            name: Vec<u8>,
             url: Vec<u8>,
             metadata: Option<Vec<u8>>,
             staking_fee: Option<Percent>,
             weight_control_fee: Option<Percent>,
         ) -> DispatchResult {
             let agent_key = ensure_signed(origin)?;
-            agent::update::<T>(
-                agent_key,
-                name,
-                url,
-                metadata,
-                staking_fee,
-                weight_control_fee,
-            )
+            agent::update::<T>(agent_key, url, metadata, staking_fee, weight_control_fee)
         }
 
         /// Updates origin's key agent metadata.
@@ -392,104 +380,26 @@ pub mod pallet {
             );
 
             let namespace_path =
-                NamespacePath::new(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
+                NamespacePath::new_agent(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
 
-            ensure!(
-                !Namespaces::<T>::contains_key(&owner, &namespace_path),
-                Error::<T>::NamespaceAlreadyExists
-            );
-
-            let missing_paths = namespace::find_missing_paths::<T>(&owner, &namespace_path);
-            let (total_fee, total_deposit) =
-                namespace::calculate_cost::<T>(&owner, &missing_paths)?;
-
-            T::Currency::reserve(&owner, total_deposit)?;
-
-            <T as crate::Config>::Currency::transfer(
-                &owner,
-                &<T as crate::Config>::Governance::dao_treasury_address(),
-                total_fee,
-                ExistenceRequirement::AllowDeath,
-            )
-            .map_err(|_| crate::Error::<T>::NotEnoughBalanceToRegisterAgent)?;
-
-            let current_block = <frame_system::Pallet<T>>::block_number();
-            let pricing_config = crate::NamespacePricingConfig::<T>::get();
-
-            for path in missing_paths.iter() {
-                let deposit = pricing_config.namespace_deposit(path);
-
-                let metadata = NamespaceMetadata {
-                    created_at: current_block,
-                    deposit,
-                };
-
-                Namespaces::<T>::insert(&owner, path, metadata);
-            }
-
-            NamespaceCount::<T>::mutate(&owner, |count| {
-                *count = count.saturating_add(missing_paths.len() as u32)
-            });
-
-            Self::deposit_event(Event::NamespaceCreated {
-                owner,
-                path: namespace_path,
-                deposit: total_deposit,
-            });
-
-            Ok(())
+            namespace::create_namespace::<T>(NamespaceOwnership::Account(owner), namespace_path)
         }
 
         /// Delete a namespace and all its children
         #[pallet::call_index(8)]
         #[pallet::weight(Weight::default())]
-        pub fn delete_namespace(origin: OriginFor<T>, path: Vec<u8>) -> DispatchResult {
+        pub fn delete_namespace(origin: OriginFor<T>, path: NamespacePathInner) -> DispatchResult {
             let owner = ensure_signed(origin)?;
 
             let namespace_path =
-                NamespacePath::new(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
-
-            ensure!(
-                Namespaces::<T>::contains_key(&owner, &namespace_path),
-                Error::<T>::NamespaceNotFound
-            );
+                NamespacePath::new_agent(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
 
             ensure!(
                 !T::Permission0::is_delegating_namespace(&owner, &namespace_path),
                 Error::<T>::NamespaceBeingDelegated
             );
 
-            let mut total_deposit = BalanceOf::<T>::zero();
-            let namespaces_to_delete: Vec<_> = Namespaces::<T>::iter_prefix(&owner)
-                .filter_map(|(path, metadata)| {
-                    if path == namespace_path || namespace_path.is_parent_of(&path) {
-                        Some((path, metadata.deposit))
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-
-            let deleted_count = namespaces_to_delete.len() as u32;
-
-            for (path_to_delete, deposit) in namespaces_to_delete {
-                total_deposit = total_deposit.saturating_add(deposit);
-                Namespaces::<T>::remove(&owner, &path_to_delete);
-            }
-
-            NamespaceCount::<T>::mutate(&owner, |count| {
-                *count = count.saturating_sub(deleted_count)
-            });
-
-            T::Currency::unreserve(&owner, total_deposit);
-
-            Self::deposit_event(Event::NamespaceDeleted {
-                owner,
-                path: namespace_path,
-                deposit_released: total_deposit,
-            });
-
-            Ok(())
+            namespace::delete_namespace::<T>(NamespaceOwnership::Account(owner), namespace_path)
         }
     }
 
@@ -513,20 +423,12 @@ pub mod pallet {
         AgentUpdated(AccountIdOf<T>),
         /// Namespace created
         NamespaceCreated {
-            owner: T::AccountId,
+            owner: NamespaceOwnership<T>,
             path: NamespacePath,
-            deposit: BalanceOf<T>,
         },
         /// Namespace deleted
         NamespaceDeleted {
-            owner: T::AccountId,
-            path: NamespacePath,
-            deposit_released: BalanceOf<T>,
-        },
-        /// Namespace transferred
-        NamespaceTransferred {
-            from: T::AccountId,
-            to: T::AccountId,
+            owner: NamespaceOwnership<T>,
             path: NamespacePath,
         },
     }
@@ -694,7 +596,7 @@ impl<T: Config>
     }
 
     fn namespace_exists(agent: &T::AccountId, path: &NamespacePath) -> bool {
-        Namespaces::<T>::contains_key(agent, path)
+        Namespaces::<T>::contains_key(NamespaceOwnership::Account(agent.clone()), path)
     }
 
     #[cfg(feature = "runtime-benchmarks")]
