@@ -147,7 +147,7 @@ pub mod pallet {
     pub type Namespaces<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
-        T::AccountId,
+        namespace::NamespaceOwner<T>,
         Blake2_128Concat,
         NamespacePath,
         NamespaceMetadata<T>,
@@ -375,10 +375,14 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Create a new namespace, automatically creating missing intermediate nodes
+        /// Create a new agent namespace, automatically creating missing intermediate nodes.
+        /// The path must follow the pattern `agent.<name>.*` where <name> matches the agent's registered name.
         #[pallet::call_index(7)]
         #[pallet::weight(Weight::default())]
-        pub fn create_namespace(origin: OriginFor<T>, path: NamespacePathInner) -> DispatchResult {
+        pub fn create_agent_namespace(
+            origin: OriginFor<T>,
+            path: NamespacePathInner,
+        ) -> DispatchResult {
             let owner = ensure_signed(origin)?;
 
             ensure!(
@@ -394,12 +398,19 @@ pub mod pallet {
             let namespace_path =
                 NamespacePath::new(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
 
+            // Validate that the namespace follows agent.<name> pattern and the agent owns it
+            let agent = Agents::<T>::get(&owner).ok_or(Error::<T>::AgentDoesNotExist)?;
+            namespace::validate_agent_namespace_ownership::<T>(&agent, &namespace_path)?;
+
+            let namespace_owner = namespace::NamespaceOwner::Agent(owner.clone());
+
             ensure!(
-                !Namespaces::<T>::contains_key(&owner, &namespace_path),
+                !Namespaces::<T>::contains_key(&namespace_owner, &namespace_path),
                 Error::<T>::NamespaceAlreadyExists
             );
 
-            let missing_paths = namespace::find_missing_paths::<T>(&owner, &namespace_path);
+            let missing_paths =
+                namespace::find_missing_paths::<T>(&namespace_owner, &namespace_path);
             let (total_fee, total_deposit) =
                 namespace::calculate_cost::<T>(&owner, &missing_paths)?;
 
@@ -424,7 +435,7 @@ pub mod pallet {
                     deposit,
                 };
 
-                Namespaces::<T>::insert(&owner, path, metadata);
+                Namespaces::<T>::insert(&namespace_owner, path, metadata);
             }
 
             NamespaceCount::<T>::mutate(&owner, |count| {
@@ -449,8 +460,14 @@ pub mod pallet {
             let namespace_path =
                 NamespacePath::new(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
 
+            // Validate that the agent owns this namespace
+            let agent = Agents::<T>::get(&owner).ok_or(Error::<T>::AgentDoesNotExist)?;
+            namespace::validate_agent_namespace_ownership::<T>(&agent, &namespace_path)?;
+
+            let namespace_owner = namespace::NamespaceOwner::Agent(owner.clone());
+
             ensure!(
-                Namespaces::<T>::contains_key(&owner, &namespace_path),
+                Namespaces::<T>::contains_key(&namespace_owner, &namespace_path),
                 Error::<T>::NamespaceNotFound
             );
 
@@ -460,7 +477,7 @@ pub mod pallet {
             );
 
             let mut total_deposit = BalanceOf::<T>::zero();
-            let namespaces_to_delete: Vec<_> = Namespaces::<T>::iter_prefix(&owner)
+            let namespaces_to_delete: Vec<_> = Namespaces::<T>::iter_prefix(&namespace_owner)
                 .filter_map(|(path, metadata)| {
                     if path == namespace_path || namespace_path.is_parent_of(&path) {
                         Some((path, metadata.deposit))
@@ -474,7 +491,7 @@ pub mod pallet {
 
             for (path_to_delete, deposit) in namespaces_to_delete {
                 total_deposit = total_deposit.saturating_add(deposit);
-                Namespaces::<T>::remove(&owner, &path_to_delete);
+                Namespaces::<T>::remove(&namespace_owner, &path_to_delete);
             }
 
             NamespaceCount::<T>::mutate(&owner, |count| {
@@ -623,6 +640,8 @@ pub mod pallet {
         NamespaceDepthExceeded,
         /// The namespace is being delegated through a permission. Revoke that first.
         NamespaceBeingDelegated,
+        /// The agent does not own this namespace based on the naming convention.
+        NamespaceNotOwnedByAgent,
         /// Agent Creation was disabled by a curator.
         AgentsFrozen,
         /// Namespace Creation was disabled by a curator.
@@ -694,7 +713,8 @@ impl<T: Config>
     }
 
     fn namespace_exists(agent: &T::AccountId, path: &NamespacePath) -> bool {
-        Namespaces::<T>::contains_key(agent, path)
+        let namespace_owner = namespace::NamespaceOwner::Agent(agent.clone());
+        Namespaces::<T>::contains_key(namespace_owner, path)
     }
 
     #[cfg(feature = "runtime-benchmarks")]

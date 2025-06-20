@@ -16,6 +16,16 @@ pub use pallet_torus0_api::{
     NAMESPACE_SEPARATOR,
 };
 
+/// Represents the owner of a namespace
+#[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, DebugNoBound)]
+#[scale_info(skip_type_params(T))]
+pub enum NamespaceOwner<T: Config> {
+    /// Namespace owned by an agent
+    Agent(T::AccountId),
+    /// System namespace (reserved for future use)
+    None,
+}
+
 #[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub struct NamespacePricingConfig<T: Config> {
@@ -114,7 +124,7 @@ pub struct NamespaceMetadata<T: Config> {
 }
 
 pub fn find_missing_paths<T: Config>(
-    owner: &T::AccountId,
+    owner: &NamespaceOwner<T>,
     path: &NamespacePath,
 ) -> Vec<NamespacePath> {
     let mut paths_to_create = path.parents();
@@ -150,4 +160,41 @@ pub fn calculate_cost<T: Config>(
     }
 
     Ok((total_fee, total_deposit))
+}
+
+/// Extract the agent name from a namespace path that follows the pattern `agent.<name>.*`
+pub fn extract_agent_name_from_path(path: &NamespacePath) -> Result<&str, &'static str> {
+    let segments = path.segments();
+
+    // Must have at least 2 segments: "agent" and the agent name
+    if segments.len() < 2 {
+        return Err("namespace must have at least agent.<name>");
+    }
+
+    // First segment must be "agent"
+    let first_segment =
+        core::str::from_utf8(segments[0]).map_err(|_| "invalid utf8 in namespace")?;
+    if first_segment != "agent" {
+        return Err("namespace must start with 'agent'");
+    }
+
+    // Second segment is the agent name
+    core::str::from_utf8(segments[1]).map_err(|_| "invalid utf8 in agent name")
+}
+
+/// Validate that an agent owns a namespace based on the agent's registered name
+pub fn validate_agent_namespace_ownership<T: Config>(
+    agent: &crate::Agent<T>,
+    path: &NamespacePath,
+) -> Result<(), DispatchError> {
+    let agent_name_in_path =
+        extract_agent_name_from_path(path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
+    let agent_registered_name =
+        core::str::from_utf8(&agent.name).map_err(|_| Error::<T>::InvalidAgentName)?;
+
+    if agent_name_in_path != agent_registered_name {
+        return Err(Error::<T>::NamespaceNotOwnedByAgent.into());
+    }
+
+    Ok(())
 }
