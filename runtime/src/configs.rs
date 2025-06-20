@@ -311,11 +311,11 @@ parameter_types! {
     pub NamespaceDepositPerByte: Balance = as_tors(1);
 
     pub DefaultNamespacePricingConfig: pallet_torus0::namespace::NamespacePricingConfig<Runtime> = pallet_torus0::namespace::NamespacePricingConfig {
-        base_fee: as_tors(5),
-        deposit_per_byte: as_tors(5),
+        base_fee: as_tors(3),
+        deposit_per_byte: as_tors(1).saturating_div(5),
 
-        count_midpoint: 15,
-        fee_steepness: Percent::from_percent(25),
+        count_midpoint: 35,
+        fee_steepness: Percent::from_percent(10),
         max_fee_multiplier: 3,
     };
 }
