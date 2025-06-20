@@ -172,14 +172,20 @@ pub fn extract_agent_name_from_path(path: &NamespacePath) -> Result<&str, &'stat
     }
 
     // First segment must be "agent"
+    let first_segment = segments
+        .get(0)
+        .ok_or("namespace must have at least agent.<name>")?;
     let first_segment =
-        core::str::from_utf8(segments[0]).map_err(|_| "invalid utf8 in namespace")?;
+        core::str::from_utf8(first_segment).map_err(|_| "invalid utf8 in namespace")?;
     if first_segment != "agent" {
         return Err("namespace must start with 'agent'");
     }
 
     // Second segment is the agent name
-    core::str::from_utf8(segments[1]).map_err(|_| "invalid utf8 in agent name")
+    let second_segment = segments
+        .get(1)
+        .ok_or("namespace must have at least agent.<name>")?;
+    core::str::from_utf8(second_segment).map_err(|_| "invalid utf8 in agent name")
 }
 
 /// Validate that an agent owns a namespace based on the agent's registered name
