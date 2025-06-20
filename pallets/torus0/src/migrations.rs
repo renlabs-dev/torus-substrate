@@ -80,3 +80,28 @@ pub mod v4 {
         }
     }
 }
+
+pub mod v5 {
+    use polkadot_sdk::{
+        frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
+        sp_weights::Weight,
+    };
+
+    use crate::{burn::BurnConfiguration, BurnConfig, Config, Pallet};
+
+    pub type Migration<T, W> = VersionedMigration<4, 5, MigrateToV5<T>, Pallet<T>, W>;
+    pub struct MigrateToV5<T>(core::marker::PhantomData<T>);
+
+    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV5<T> {
+        fn on_runtime_upgrade() -> Weight {
+            BurnConfig::<T>::set(BurnConfiguration {
+                min_burn: 15000000000000000000,   // 15tors
+                max_burn: 1000000000000000000000, // 1000tors
+                max_registrations_per_interval: 16,
+                ..BurnConfig::<T>::get()
+            });
+
+            Weight::default()
+        }
+    }
+}

@@ -40,9 +40,7 @@ pub fn generate_permission_id<T: Config>(
 
     data.extend(<frame_system::Pallet<T>>::block_number().encode());
 
-    if !cfg!(debug_assertions) {
-        let extrinsic_index = <frame_system::Pallet<T>>::extrinsic_index()
-            .ok_or(Error::<T>::PermissionCreationOutsideExtrinsic)?;
+    if let Some(extrinsic_index) = <frame_system::Pallet<T>>::extrinsic_index() {
         data.extend(extrinsic_index.encode());
     }
 

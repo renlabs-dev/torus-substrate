@@ -92,6 +92,7 @@ type Migrations = (
     pallet_emission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v3::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v4::Migration<Runtime, RocksDbWeight>,
+    pallet_torus0::migrations::v5::Migration<Runtime, RocksDbWeight>,
 );
 
 /// Executive: handles dispatch to the various modules.
