@@ -338,7 +338,7 @@ fn grantor_cannot_change_irrevocable_permission() {
                 None,
                 None
             ),
-            pallet_permission0::Error::<Test>::NotEditable
+            pallet_permission0::Error::<Test>::NotAuthorizedToEdit
         );
     });
 }
@@ -401,7 +401,7 @@ fn grantor_cannot_change_arbiter_permission() {
                 None,
                 None
             ),
-            pallet_permission0::Error::<Test>::NotEditable
+            pallet_permission0::Error::<Test>::NotAuthorizedToEdit
         );
     });
 }
@@ -461,7 +461,7 @@ fn grantor_cannot_change_permission_before_block() {
                 None,
                 None
             ),
-            pallet_permission0::Error::<Test>::NotEditable
+            pallet_permission0::Error::<Test>::NotAuthorizedToEdit
         );
 
         step_block(6);
@@ -575,10 +575,9 @@ fn updating_works() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let stream_id = generate_root_stream_id(&agent_0);
-
+        let stream = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();
-        streams.insert(stream_id, Percent::from_percent(100));
+        streams.insert(stream, Percent::from_percent(100));
 
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
@@ -597,19 +596,23 @@ fn updating_works() {
 
         assert!(AccumulatedStreamAmounts::<Test>::contains_key((
             &agent_0,
-            &stream_id,
+            &stream,
             &permission_id
         )));
 
         let mut new_targets = BoundedBTreeMap::new();
-        new_targets.try_insert(agent_0, u16::MAX).unwrap();
+        new_targets.try_insert(agent_1, u16::MAX).unwrap();
+
+        let new_stream = generate_root_stream_id(&agent_1);
+        let mut new_streams = BTreeMap::new();
+        new_streams.insert(new_stream, Percent::from_percent(100));
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::update_emission_permission(
                 get_origin(agent_0),
                 permission_id,
                 new_targets.clone(),
-                Some(streams.clone().try_into().unwrap()),
+                Some(new_streams.clone().try_into().unwrap()),
                 Some(pallet_permission0::DistributionControl::Interval(100))
             )
         );
@@ -624,8 +627,20 @@ fn updating_works() {
 
         assert_eq!(
             emission_scope.allocation,
-            pallet_permission0::EmissionAllocation::Streams(streams.try_into().unwrap())
+            pallet_permission0::EmissionAllocation::Streams(new_streams.try_into().unwrap())
         );
+
+        assert!(!AccumulatedStreamAmounts::<Test>::contains_key((
+            &agent_0,
+            &stream,
+            &permission_id
+        )));
+
+        assert!(AccumulatedStreamAmounts::<Test>::contains_key((
+            &agent_0,
+            new_stream,
+            &permission_id,
+        )));
 
         assert_eq!(
             emission_scope.distribution,
@@ -633,5 +648,76 @@ fn updating_works() {
         );
 
         assert_eq!(emission_scope.targets, new_targets);
+    });
+}
+
+#[test]
+fn update_prevents_overarching_update_when_grantor_is_grantee() {
+    test_utils::new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let agent_0 = 0;
+        register_empty_agent(agent_0);
+
+        let agent_1 = 1;
+        register_empty_agent(agent_1);
+
+        let agent_2 = 1;
+        register_empty_agent(agent_2);
+
+        let agent_3 = 1;
+        register_empty_agent(agent_3);
+
+        add_balance(agent_0, as_tors(10) + 1);
+
+        let stream_id = generate_root_stream_id(&agent_0);
+        let mut streams = BTreeMap::new();
+        streams.insert(stream_id, Percent::from_percent(100));
+
+        let permission_id = assert_ok!(grant_emission_permission(
+            agent_0,
+            agent_0,
+            pallet_permission0_api::EmissionAllocation::Streams(streams.clone()),
+            vec![(agent_1, u16::MAX)],
+            pallet_permission0_api::DistributionControl::Manual,
+            pallet_permission0_api::PermissionDuration::Indefinite,
+            pallet_permission0_api::RevocationTerms::RevocableAfter(5),
+            pallet_permission0_api::EnforcementAuthority::None,
+        ));
+
+        let mut new_targets = BoundedBTreeMap::new();
+        new_targets.try_insert(agent_1, u16::MAX).unwrap();
+
+        assert_err!(
+            pallet_permission0::Pallet::<Test>::update_emission_permission(
+                get_origin(agent_0),
+                permission_id,
+                new_targets.clone(),
+                Some(BoundedBTreeMap::new()),
+                None
+            ),
+            pallet_permission0::Error::<Test>::NotAuthorizedToEdit
+        );
+
+        assert_ok!(
+            pallet_permission0::Pallet::<Test>::update_emission_permission(
+                get_origin(agent_0),
+                permission_id,
+                new_targets.clone(),
+                None,
+                None
+            )
+        );
+
+        step_block(6);
+
+        assert_ok!(
+            pallet_permission0::Pallet::<Test>::update_emission_permission(
+                get_origin(agent_0),
+                permission_id,
+                new_targets.clone(),
+                Some(streams.clone().try_into().unwrap()),
+                Some(pallet_permission0::DistributionControl::Interval(100))
+            )
+        );
     });
 }

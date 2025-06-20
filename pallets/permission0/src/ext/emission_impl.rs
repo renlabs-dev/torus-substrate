@@ -131,7 +131,6 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
         T::Torus::is_agent_registered(&grantee),
         Error::<T>::NotRegisteredAgent
     );
-    ensure!(grantor != grantee, Error::<T>::SelfPermissionNotAllowed);
 
     validate_emission_permission_target_weights::<T>(&targets)?;
 
@@ -346,15 +345,11 @@ pub(crate) fn update_emission_permission<T: Config>(
         return Err(Error::<T>::PermissionNotFound.into());
     };
 
-    if permission.grantor == who {
-        if !permission.is_updatable() {
-            return Err(Error::<T>::NotEditable.into());
-        }
-    } else if permission.grantee == who {
-        if new_streams.is_some() || new_distribution_control.is_some() {
-            return Err(Error::<T>::NotAuthorizedToEdit.into());
-        }
-    } else {
+    let allowed_grantor = permission.grantor == who && permission.is_updatable();
+    let allowed_grantee =
+        permission.grantee == who && (new_streams.is_none() && new_distribution_control.is_none());
+
+    if !allowed_grantor && !allowed_grantee {
         return Err(Error::<T>::NotAuthorizedToEdit.into());
     }
 
@@ -385,6 +380,13 @@ pub(crate) fn update_emission_permission<T: Config>(
                 }
 
                 validate_emission_permission_streams::<T>(&new_streams, &permission.grantor)?;
+
+                for stream in new_streams.keys() {
+                    AccumulatedStreamAmounts::<T>::set(
+                        (&permission.grantor, stream, permission_id),
+                        Some(Zero::zero()),
+                    )
+                }
 
                 *streams = new_streams;
             }

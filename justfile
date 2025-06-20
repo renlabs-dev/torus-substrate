@@ -1,4 +1,4 @@
-default: check test
+default: fmt check test
 
 # Build
 
@@ -11,10 +11,13 @@ build-testnet:
 # Development
 
 check:
-  cargo clippy
+  cargo clippy --tests
 
 test:
   cargo test
+
+fmt:
+  cargo fmt
 
 run-localnode profile="--alice":
   cargo xtask run local {{profile}}
