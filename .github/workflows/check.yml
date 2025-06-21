@@ -18,7 +18,7 @@ jobs:
       checks: write
       contents: write
 
-    runs-on: ubuntu-24.04-8core-bakunin
+    runs-on: ubicloud-standard-8
 
     steps:
       - uses: actions/checkout@v4
