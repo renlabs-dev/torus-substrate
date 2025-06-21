@@ -37,7 +37,13 @@ jobs:
 
       - name: Build runtime
         run: |
-          cargo build --release --timings --package torus-runtime
+          if [[ "${{ github.ref }}" == refs/tags/runtime/testnet* ]]; then
+            echo "Building with testnet feature flag"
+            cargo build --release --timings --package torus-runtime --features testnet
+          else
+            echo "Building without testnet feature flag"
+            cargo build --release --timings --package torus-runtime
+          fi
 
           export SHA256SUM=$(sha256sum target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm | cut -d ' ' -f1)
           echo Hash of compact and compressed WASM: $SHA256SUM

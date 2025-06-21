@@ -25,7 +25,7 @@ runtime-benchmarks = [
     "pallet-torus0-api/runtime-benchmarks",
 ]
 try-runtime = ["polkadot-sdk/try-runtime", "pallet-torus0-api/try-runtime"]
-
+testnet = []
 
 [dependencies]
 codec = { workspace = true, features = ["derive"] }

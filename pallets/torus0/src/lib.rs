@@ -374,11 +374,6 @@ pub mod pallet {
                 Error::<T>::NamespacesFrozen
             );
 
-            ensure!(
-                Agents::<T>::contains_key(&owner),
-                Error::<T>::AgentDoesNotExist
-            );
-
             let namespace_path =
                 NamespacePath::new_agent(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
 

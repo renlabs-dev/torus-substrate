@@ -208,6 +208,16 @@ pub(crate) fn create_namespace0<T: Config>(
         Error::<T>::NamespaceAlreadyExists
     );
 
+    if let NamespaceOwnership::Account(owner) = &owner {
+        let path_agent = path
+            .segments()
+            .nth(1)
+            .ok_or(Error::<T>::InvalidNamespacePath)?;
+        let agent = Agents::<T>::get(owner).ok_or(Error::<T>::AgentDoesNotExist)?;
+
+        ensure!(path_agent == *agent.name, Error::<T>::InvalidNamespacePath);
+    }
+
     let missing_paths = find_missing_paths::<T>(&owner, &path);
 
     if charge {

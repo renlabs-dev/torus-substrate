@@ -62,9 +62,10 @@ pub trait Torus0Api<AccountId, Balance> {
 /// This might have to increase in the future, but is a good enough default value.
 /// If it ends up being formalized, the length can be described as a u8.
 pub const MAX_NAMESPACE_PATH_LENGTH: usize = 256;
-/// Number of total bytes a segment can contain.
-pub const MAX_SEGMENT_LENGTH: usize = 64;
-/// Max number of segments in a path.
+/// Number of total bytes a segment can contain. 63 plus dot.
+pub const MAX_SEGMENT_LENGTH: usize = 63;
+/// Max number of segments in a path. In the common prefix case, an agent will have
+/// up to 8 levels of depth to use, 2 being allocated to the agent prefix notation.
 pub const MAX_NAMESPACE_SEGMENTS: usize = 10;
 
 pub const NAMESPACE_SEPARATOR: u8 = b'.';
@@ -103,19 +104,22 @@ impl NamespacePath {
         for segment in &segments {
             let segment = core::str::from_utf8(segment).map_err(|_| "path is invalid itf-8")?;
 
-            let first = segment.chars().next().ok_or("empty namespace segment")?;
-            if !first.is_alphanumeric() {
-                return Err("namespace segment must start with alphanumeric character");
-            }
-
             if segment.len() > MAX_SEGMENT_LENGTH {
                 return Err("namespace segment too long");
             }
 
-            if segment
-                .chars()
-                .any(|c| !c.is_alphanumeric() && c != '-' && c != '_' && c != '+' && c != '=')
-            {
+            let first = segment.chars().next().ok_or("empty namespace segment")?;
+            let last = segment.chars().last().ok_or("empty namespace segment")?;
+            if !first.is_ascii_alphanumeric() || !last.is_ascii_alphanumeric() {
+                return Err("namespace segment must start and end with alphanumeric characters");
+            }
+
+            if segment.chars().any(|c| {
+                !(c.is_ascii_digit() || c.is_ascii_alphabetic() && c.is_ascii_lowercase())
+                    && c != '-'
+                    && c != '_'
+                    && c != '+'
+            }) {
                 return Err("invalid character in namespace segment");
             }
         }
@@ -224,17 +228,23 @@ mod tests {
     #[test]
     fn namespace_creation_validates_paths() {
         assert!(NamespacePath::new_agent(b"agent.alice").is_ok());
-        assert!(NamespacePath::new_agent("agent.alice.tørûs".as_bytes()).is_ok());
-        assert!(NamespacePath::new_agent(b"agent.alice_2.memory-1.key=val+1").is_ok());
+        assert!(NamespacePath::new_agent(b"agent.alice_2.memory-1.func+1").is_ok());
+
+        assert!(NamespacePath::new_agent(format!("agent.alice.{:0<63}", 1).as_bytes()).is_ok());
+        assert!(NamespacePath::new_agent(format!("agent.alice.{:0<64}", 1).as_bytes()).is_err());
 
         assert!(NamespacePath::new_agent(b"").is_err());
         assert!(NamespacePath::new_agent(b"agent").is_err());
         assert!(NamespacePath::new_agent(b".agent").is_err());
         assert!(NamespacePath::new_agent(b"agent.").is_err());
+        assert!(NamespacePath::new_agent(b"agent.Alice").is_err());
         assert!(NamespacePath::new_agent(b"agent..alice").is_err());
         assert!(NamespacePath::new_agent(b"agent.-alice").is_err());
+        assert!(NamespacePath::new_agent(b"agent.alice-").is_err());
+        assert!(NamespacePath::new_agent(b"agent.-alice-").is_err());
         assert!(NamespacePath::new_agent(b"agent.alice!").is_err());
         assert!(NamespacePath::new_agent(b"agent.alice memory").is_err());
+        assert!(NamespacePath::new_agent("agent.alice.tørûs".as_bytes()).is_err());
     }
 
     #[test]

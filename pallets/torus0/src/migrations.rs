@@ -139,28 +139,51 @@ pub mod v5 {
             info!("created root agent namespace");
 
             for (id, agent) in Agents::<T>::iter() {
+                let old_name = agent.name.clone();
                 let Ok(agent_name) = core::str::from_utf8(&agent.name) else {
                     error!("agent name is not utf-8: {:?}", agent.name);
                     continue;
                 };
 
+                let agent_name = if cfg!(feature = "testnet") {
+                    agent_name.to_ascii_lowercase().replace(' ', "-")
+                } else {
+                    agent_name.into()
+                };
+
+                let Ok(bounded_name) = agent_name.as_bytes().to_vec().try_into() else {
+                    error!("cannot lower case agent {agent_name:?}");
+                    continue;
+                };
+
                 let path: polkadot_sdk::sp_std::vec::Vec<_> =
-                    [NAMESPACE_AGENT_PREFIX, &agent.name].concat();
+                    [NAMESPACE_AGENT_PREFIX, agent_name.as_bytes()].concat();
                 let path = match NamespacePath::new_agent(&path) {
                     Ok(path) => path,
                     Err(err) => {
-                        error!("cannot create path for agent {agent_name:?}: {err:?}");
+                        error!(
+                            "cannot create path for agent {agent_name:?} ({:?}): {err:?}",
+                            core::str::from_utf8(&path)
+                        );
                         continue;
                     }
                 };
 
+                Agents::<T>::mutate_extant(id.clone(), |agent| {
+                    agent.name = bounded_name;
+                });
+
                 #[allow(deprecated)]
                 if let Err(err) = crate::namespace::create_namespace0::<T>(
-                    NamespaceOwnership::Account(id),
+                    NamespaceOwnership::Account(id.clone()),
                     path.clone(),
                     false,
                 ) {
                     error!("cannot create namespace for agent {agent_name:?}: {err:?}");
+
+                    Agents::<T>::mutate_extant(id.clone(), |agent| {
+                        agent.name = old_name;
+                    });
                 } else {
                     info!("created namespace entry for agent {agent_name:?}: {path:?}");
                 }

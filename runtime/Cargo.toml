@@ -56,7 +56,7 @@ try-runtime = [
     # Frontier
     "fp-self-contained/try-runtime",
 ]
-testnet = ["pallet-faucet/testnet"]
+testnet = ["pallet-torus0/testnet", "pallet-faucet/testnet"]
 
 [dependencies]
 serde_json = { workspace = true, features = ["alloc"] }
