@@ -3,10 +3,32 @@
 use pallet_torus0::namespace::{NamespaceOwnership, NamespacePricingConfig};
 use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{
-    frame_support::assert_err,
+    frame_support::{assert_err, assert_ok, traits::Currency},
+    pallet_balances,
     sp_runtime::{BoundedVec, Percent},
 };
-use test_utils::{as_tors, get_origin, new_test_ext, pallet_governance, Test};
+use test_utils::{as_tors, get_origin, new_test_ext, pallet_governance, Balances, Test};
+
+/// Helper function to register an agent with a specific name and balance
+fn register_agent_with(account_id: u32, name: &str, balance: u128) {
+    // Register the agent with the specified name
+    pallet_torus0::Agents::<Test>::set(
+        account_id,
+        Some(pallet_torus0::agent::Agent {
+            key: account_id,
+            name: name.as_bytes().to_vec().try_into().unwrap(),
+            url: Default::default(),
+            metadata: Default::default(),
+            weight_penalty_factor: Default::default(),
+            registration_block: <polkadot_sdk::frame_system::Pallet<Test>>::block_number(),
+            fees: Default::default(),
+            last_update_block: Default::default(),
+        }),
+    );
+
+    // Set the balance for the account
+    let _ = Balances::deposit_creating(&account_id, balance);
+}
 
 fn set_namespace_config() {
     pallet_torus0::NamespacePricingConfig::<Test>::set(
@@ -351,9 +373,9 @@ fn find_missing_paths_partial_exists() {
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
-        for segment in ["agent.alice", "agent.alice.v1", "agent.alice.v1.compute"] {
-            let path: NamespacePath = segment.parse().unwrap();
-
+        // Helper closure to insert namespace metadata
+        let insert_namespace = |path_str: &str| {
+            let path: NamespacePath = path_str.parse().unwrap();
             pallet_torus0::Namespaces::<Test>::insert(
                 NamespaceOwnership::Account(owner),
                 path,
@@ -362,6 +384,10 @@ fn find_missing_paths_partial_exists() {
                     deposit: 100,
                 },
             );
+        };
+
+        for segment in ["agent.alice", "agent.alice.v1", "agent.alice.v1.compute"] {
+            insert_namespace(segment);
         }
 
         let path = "agent.alice.v1.compute.gpu.h100".parse().unwrap();
@@ -712,6 +738,161 @@ fn namespace_freezing() {
                 BoundedVec::truncate_from(b"agent.alice.new.namespace".to_vec())
             ),
             pallet_torus0::Error::<Test>::NamespacesFrozen
+        );
+    });
+}
+
+#[test]
+fn namespace_must_start_with_agent_prefix() {
+    new_test_ext().execute_with(|| {
+        // Register alice as an agent with proper name and balance
+        register_agent_with(0, "alice", as_tors(1000));
+
+        // Helper closure to test invalid namespace creation
+        let assert_invalid_namespace = |path: &[u8]| {
+            assert_err!(
+                pallet_torus0::Pallet::<Test>::create_namespace(
+                    get_origin(0),
+                    BoundedVec::truncate_from(path.to_vec())
+                ),
+                pallet_torus0::Error::<Test>::InvalidNamespacePath
+            );
+        };
+
+        // Test various invalid prefixes
+        assert_invalid_namespace(b"foobar.alice");
+        assert_invalid_namespace(b"alice.agent");
+        assert_invalid_namespace(b"agents.alice");
+        assert_invalid_namespace(b"Agent.alice"); // wrong case
+        assert_invalid_namespace(b"agentX.alice"); // extra character
+        assert_invalid_namespace(b""); // empty path
+        assert_invalid_namespace(b"alice"); // no prefix at all
+
+        // Verify that a valid namespace starting with "agent." works
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice".to_vec())
+        ));
+    });
+}
+
+#[test]
+fn create_namespace_simple() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice".to_vec())
+        ));
+
+        // Verify namespace was created
+        assert!(pallet_torus0::Namespaces::<Test>::contains_key(
+            pallet_torus0::namespace::NamespaceOwnership::Account(0),
+            pallet_torus0_api::NamespacePath::new_agent(b"agent.alice").unwrap()
+        ));
+    });
+}
+
+#[test]
+fn create_namespace_with_hierarchy() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.v1.compute.gpu".to_vec())
+        ));
+
+        // Helper closure to check if namespace exists
+        let ownership = pallet_torus0::namespace::NamespaceOwnership::Account(0);
+        let assert_namespace_exists = |path: &str| {
+            assert!(pallet_torus0::Namespaces::<Test>::contains_key(
+                ownership.clone(),
+                path.parse::<pallet_torus0_api::NamespacePath>().unwrap()
+            ));
+        };
+
+        // Verify all hierarchical namespaces were created
+        assert_namespace_exists("agent.alice");
+        assert_namespace_exists("agent.alice.v1");
+        assert_namespace_exists("agent.alice.v1.compute");
+        assert_namespace_exists("agent.alice.v1.compute.gpu");
+    });
+}
+
+#[test]
+fn create_namespace_already_exists() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        // Helper closure for namespace creation
+        let create_namespace = |path: &[u8]| {
+            pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(path.to_vec()),
+            )
+        };
+
+        // Create namespace first time
+        assert_ok!(create_namespace(b"agent.alice"));
+
+        // Try to create same namespace again
+        assert_err!(
+            create_namespace(b"agent.alice"),
+            pallet_torus0::Error::<Test>::NamespaceAlreadyExists
+        );
+    });
+}
+
+#[test]
+fn create_namespace_not_an_agent() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+
+        // Try to create namespace without being registered as agent
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"agent.alice".to_vec())
+            ),
+            pallet_torus0::Error::<Test>::AgentDoesNotExist
+        );
+    });
+}
+
+#[test]
+fn create_namespace_wrong_agent_name() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        // Try to create namespace with different agent name
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"agent.bob".to_vec())
+            ),
+            pallet_torus0::Error::<Test>::InvalidNamespacePath
+        );
+    });
+}
+
+#[test]
+fn create_namespace_insufficient_balance() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1)); // Very low balance
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"agent.alice".to_vec())
+            ),
+            pallet_balances::Error::<Test>::InsufficientBalance
         );
     });
 }
