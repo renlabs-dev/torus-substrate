@@ -94,12 +94,12 @@ parameter_types! {
     pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
 
     pub DefaultNamespacePricingConfig: pallet_torus0::namespace::NamespacePricingConfig<Test> = pallet_torus0::namespace::NamespacePricingConfig {
-        base_fee: as_tors(5),
-        deposit_per_byte: as_tors(5),
+        base_fee: as_tors(0),
+        deposit_per_byte: as_tors(0),
 
         count_midpoint: 20,
         fee_steepness: Percent::from_percent(20),
-        max_fee_multiplier: 5,
+        max_fee_multiplier: 0,
     };
 }
 

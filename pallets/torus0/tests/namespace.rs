@@ -1,12 +1,47 @@
 #![allow(clippy::indexing_slicing)]
 
-use pallet_torus0::namespace::NamespacePricingConfig;
+use pallet_torus0::namespace::{NamespaceOwnership, NamespacePricingConfig};
 use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{
-    frame_support::assert_err,
+    frame_support::{assert_err, assert_ok, traits::Currency},
+    pallet_balances,
     sp_runtime::{BoundedVec, Percent},
 };
-use test_utils::{as_tors, get_origin, new_test_ext, pallet_governance, Test};
+use test_utils::{as_tors, get_origin, new_test_ext, pallet_governance, Balances, Test};
+
+/// Helper function to register an agent with a specific name and balance
+fn register_agent_with(account_id: u32, name: &str, balance: u128) {
+    // Register the agent with the specified name
+    pallet_torus0::Agents::<Test>::set(
+        account_id,
+        Some(pallet_torus0::agent::Agent {
+            key: account_id,
+            name: name.as_bytes().to_vec().try_into().unwrap(),
+            url: Default::default(),
+            metadata: Default::default(),
+            weight_penalty_factor: Default::default(),
+            registration_block: <polkadot_sdk::frame_system::Pallet<Test>>::block_number(),
+            fees: Default::default(),
+            last_update_block: Default::default(),
+        }),
+    );
+
+    // Set the balance for the account
+    let _ = Balances::deposit_creating(&account_id, balance);
+}
+
+fn set_namespace_config() {
+    pallet_torus0::NamespacePricingConfig::<Test>::set(
+        pallet_torus0::namespace::NamespacePricingConfig {
+            base_fee: as_tors(5),
+            deposit_per_byte: as_tors(5),
+
+            count_midpoint: 20,
+            fee_steepness: Percent::from_percent(20),
+            max_fee_multiplier: 3,
+        },
+    )
+}
 
 #[test]
 fn namespace_fee_at_midpoint() {
@@ -87,7 +122,7 @@ fn namespace_fee_steepness_effect() {
         let fee_high_5 = config_high_steep.namespace_fee(5).unwrap();
         assert!(
             fee_high_5 < fee_low_5,
-            "higher steepness should result in lower fee below midpoint"
+            "agent.alice.higher steepness should result in lower fee below midpoint"
         );
 
         // Above midpoint: higher steepness = lower fee
@@ -95,7 +130,7 @@ fn namespace_fee_steepness_effect() {
         let fee_high_15 = config_high_steep.namespace_fee(15).unwrap();
         assert!(
             fee_high_15 > fee_low_15,
-            "higher steepness should result in higher fee above midpoint"
+            "agent.alice.higher steepness should result in higher fee above midpoint"
         );
     });
 }
@@ -143,8 +178,8 @@ fn namespace_fee_high_steepness() {
 
         let diff_before = fee_10.saturating_sub(fee_9);
         let diff_after = fee_11.saturating_sub(fee_10);
-        assert!(diff_before > 100, "steep curve is not steep");
-        assert!(diff_after > 100, "steep curve is not steep");
+        assert!(diff_before > 100, "agent.alice.steep curve is not steep");
+        assert!(diff_after > 100, "agent.alice.steep curve is not steep");
     });
 }
 
@@ -164,7 +199,7 @@ fn namespace_fee_monotonic_increase() {
             let current_fee = config.namespace_fee(count).unwrap();
             assert!(
                 current_fee >= prev_fee,
-                "fee should increase or stay same as count increases: {} > {} at count {}",
+                "agent.alice.fee should increase or stay same as count increases: {} > {} at count {}",
                 current_fee,
                 prev_fee,
                 count
@@ -204,17 +239,21 @@ fn namespace_deposit_basic() {
             max_fee_multiplier: 100,
         };
 
+        // The simple agent path
+        let path_agent = "agent.alice".parse().unwrap();
+        assert_eq!(config.namespace_deposit(&path_agent), 1100);
+
         // Single character
-        let path_a = "a".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_a), 100);
+        let path_a = "agent.alice.a".parse().unwrap();
+        assert_eq!(config.namespace_deposit(&path_a), 1300);
 
         // 5 characters
-        let path_hello = "hello".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_hello), 500);
+        let path_hello = "agent.alice.hello".parse().unwrap();
+        assert_eq!(config.namespace_deposit(&path_hello), 1700);
 
         // With dots (24 characters total)
-        let path_long = "very.long.namespace.path".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_long), 2400);
+        let path_long = "agent.alice.very.long.namespace.path".parse().unwrap();
+        assert_eq!(config.namespace_deposit(&path_long), 3600);
     });
 }
 
@@ -229,13 +268,13 @@ fn namespace_deposit_with_separators() {
             max_fee_multiplier: 100,
         };
 
-        // "a.b.c" = 5 bytes
-        let path_dots = "a.b.c".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_dots), 250);
+        // "agent.alice.a.b.c" = 5 bytes
+        let path_dots = "agent.alice.a.b.c".parse().unwrap();
+        assert_eq!(config.namespace_deposit(&path_dots), 850);
 
-        // "abc" = 3 bytes
-        let path_no_dots = "abc".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_no_dots), 150);
+        // "agent.alice.abc" = 3 bytes
+        let path_no_dots = "agent.alice.abc".parse().unwrap();
+        assert_eq!(config.namespace_deposit(&path_no_dots), 750);
     });
 }
 
@@ -258,9 +297,9 @@ fn namespace_deposit_different_rates() {
             max_fee_multiplier: 100,
         };
 
-        let path = "test.namespace".parse().unwrap(); // 14 bytes
-        assert_eq!(config_low.namespace_deposit(&path), 140);
-        assert_eq!(config_high.namespace_deposit(&path), 14000);
+        let path = "agent.alice.test.namespace".parse().unwrap(); // 14 bytes
+        assert_eq!(config_low.namespace_deposit(&path), 260);
+        assert_eq!(config_high.namespace_deposit(&path), 26000);
     });
 }
 
@@ -275,7 +314,7 @@ fn namespace_deposit_zero_rate() {
             max_fee_multiplier: 100,
         };
 
-        let path = "free.namespace".parse().unwrap();
+        let path = "agent.alice.free.namespace".parse().unwrap();
         assert_eq!(config.namespace_deposit(&path), 0);
     });
 }
@@ -313,14 +352,18 @@ fn find_missing_paths_all_new() {
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
-        let path = "v1.compute.gpu.h100".parse().unwrap();
-        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+        let path = "agent.alice.v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(
+            &NamespaceOwnership::Account(owner),
+            &path,
+        );
 
-        assert_eq!(missing.len(), 4);
-        assert_eq!(missing[0].as_bytes(), b"v1.compute.gpu.h100");
-        assert_eq!(missing[1].as_bytes(), b"v1.compute.gpu");
-        assert_eq!(missing[2].as_bytes(), b"v1.compute");
-        assert_eq!(missing[3].as_bytes(), b"v1");
+        assert_eq!(missing.len(), 5);
+        assert_eq!(missing[0].as_bytes(), b"agent.alice.v1.compute.gpu.h100");
+        assert_eq!(missing[1].as_bytes(), b"agent.alice.v1.compute.gpu");
+        assert_eq!(missing[2].as_bytes(), b"agent.alice.v1.compute");
+        assert_eq!(missing[3].as_bytes(), b"agent.alice.v1");
+        assert_eq!(missing[4].as_bytes(), b"agent.alice");
     });
 }
 
@@ -330,25 +373,32 @@ fn find_missing_paths_partial_exists() {
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
-        for segment in ["v1", "v1.compute"] {
-            let path: NamespacePath = segment.parse().unwrap();
-
+        // Helper closure to insert namespace metadata
+        let insert_namespace = |path_str: &str| {
+            let path: NamespacePath = path_str.parse().unwrap();
             pallet_torus0::Namespaces::<Test>::insert(
-                owner,
+                NamespaceOwnership::Account(owner),
                 path,
                 pallet_torus0::namespace::NamespaceMetadata {
                     created_at: 0,
                     deposit: 100,
                 },
             );
+        };
+
+        for segment in ["agent.alice", "agent.alice.v1", "agent.alice.v1.compute"] {
+            insert_namespace(segment);
         }
 
-        let path = "v1.compute.gpu.h100".parse().unwrap();
-        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+        let path = "agent.alice.v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(
+            &NamespaceOwnership::Account(owner),
+            &path,
+        );
 
         assert_eq!(missing.len(), 2);
-        assert_eq!(missing[0].as_bytes(), b"v1.compute.gpu.h100");
-        assert_eq!(missing[1].as_bytes(), b"v1.compute.gpu");
+        assert_eq!(missing[0].as_bytes(), b"agent.alice.v1.compute.gpu.h100");
+        assert_eq!(missing[1].as_bytes(), b"agent.alice.v1.compute.gpu");
     });
 }
 
@@ -358,11 +408,17 @@ fn find_missing_paths_all_exists() {
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
-        for path in ["v1", "v1.compute", "v1.compute.gpu", "v1.compute.gpu.h100"] {
+        for path in [
+            "agent.alice",
+            "agent.alice.v1",
+            "agent.alice.v1.compute",
+            "agent.alice.v1.compute.gpu",
+            "agent.alice.v1.compute.gpu.h100",
+        ] {
             let path: NamespacePath = path.parse().unwrap();
 
             pallet_torus0::Namespaces::<Test>::insert(
-                owner,
+                NamespaceOwnership::Account(owner),
                 path,
                 pallet_torus0::namespace::NamespaceMetadata {
                     created_at: 0,
@@ -371,8 +427,11 @@ fn find_missing_paths_all_exists() {
             );
         }
 
-        let path = "v1.compute.gpu.h100".parse().unwrap();
-        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+        let path = "agent.alice.v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(
+            &NamespaceOwnership::Account(owner),
+            &path,
+        );
 
         assert_eq!(missing.len(), 0);
     });
@@ -384,11 +443,14 @@ fn find_missing_paths_single_segment() {
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
-        let path = "agent".parse().unwrap();
-        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+        let path = "agent.alice".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(
+            &NamespaceOwnership::Account(owner),
+            &path,
+        );
 
         assert_eq!(missing.len(), 1);
-        assert_eq!(missing[0].as_bytes(), b"agent");
+        assert_eq!(missing[0].as_bytes(), b"agent.alice");
     });
 }
 
@@ -398,10 +460,14 @@ fn find_missing_paths_middle_exists() {
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
-        for path in ["v1", "v1.compute.gpu"] {
+        for path in [
+            "agent.alice",
+            "agent.alice.v1",
+            "agent.alice.v1.compute.gpu",
+        ] {
             let path: NamespacePath = path.parse().unwrap();
             pallet_torus0::Namespaces::<Test>::insert(
-                owner,
+                NamespaceOwnership::Account(owner),
                 path,
                 pallet_torus0::namespace::NamespaceMetadata {
                     created_at: 0,
@@ -410,13 +476,16 @@ fn find_missing_paths_middle_exists() {
             );
         }
 
-        let path = "v1.compute.gpu.h100".parse().unwrap();
-        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+        let path = "agent.alice.v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(
+            &NamespaceOwnership::Account(owner),
+            &path,
+        );
 
         assert_eq!(missing.len(), 3);
-        assert_eq!(missing[0].as_bytes(), b"v1.compute.gpu.h100");
-        assert_eq!(missing[1].as_bytes(), b"v1.compute.gpu");
-        assert_eq!(missing[2].as_bytes(), b"v1.compute");
+        assert_eq!(missing[0].as_bytes(), b"agent.alice.v1.compute.gpu.h100");
+        assert_eq!(missing[1].as_bytes(), b"agent.alice.v1.compute.gpu");
+        assert_eq!(missing[2].as_bytes(), b"agent.alice.v1.compute");
     });
 }
 
@@ -426,11 +495,16 @@ fn find_missing_paths_different_branches() {
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
-        for path in ["v1", "v1.storage", "v1.storage.disk"] {
+        for path in [
+            "agent.alice",
+            "agent.alice.v1",
+            "agent.alice.v1.storage",
+            "agent.alice.v1.storage.disk",
+        ] {
             let path: NamespacePath = path.parse().unwrap();
 
             pallet_torus0::Namespaces::<Test>::insert(
-                owner,
+                NamespaceOwnership::Account(owner),
                 path,
                 pallet_torus0::namespace::NamespaceMetadata {
                     created_at: 0,
@@ -439,55 +513,67 @@ fn find_missing_paths_different_branches() {
             );
         }
 
-        let path = "v1.compute.gpu.h100".parse().unwrap();
-        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(&owner, &path);
+        let path = "agent.alice.v1.compute.gpu.h100".parse().unwrap();
+        let missing = pallet_torus0::namespace::find_missing_paths::<Test>(
+            &NamespaceOwnership::Account(owner),
+            &path,
+        );
 
         assert_eq!(missing.len(), 3);
-        assert_eq!(missing[0].as_bytes(), b"v1.compute.gpu.h100");
-        assert_eq!(missing[1].as_bytes(), b"v1.compute.gpu");
-        assert_eq!(missing[2].as_bytes(), b"v1.compute");
+        assert_eq!(missing[0].as_bytes(), b"agent.alice.v1.compute.gpu.h100");
+        assert_eq!(missing[1].as_bytes(), b"agent.alice.v1.compute.gpu");
+        assert_eq!(missing[2].as_bytes(), b"agent.alice.v1.compute");
     });
 }
 
 #[test]
 fn calculate_cost_no_existing_namespaces() {
     new_test_ext().execute_with(|| {
+        set_namespace_config();
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
         let paths: &[NamespacePath] = &[
-            "v1".parse().unwrap(),
-            "v1.compute".parse().unwrap(),
-            "v1.compute.gpu".parse().unwrap(),
+            "agent.alice.v1".parse().unwrap(),
+            "agent.alice.v1.compute".parse().unwrap(),
+            "agent.alice.v1.compute.gpu".parse().unwrap(),
         ];
 
-        let (fee, deposit) =
-            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+        let (fee, deposit) = pallet_torus0::namespace::calculate_cost::<Test>(
+            &NamespaceOwnership::Account(owner),
+            paths,
+        )
+        .unwrap();
 
         // Using default config: base_fee = 5 TORS, deposit_per_byte = 5 TORS
         // Fee calculation: each subsequent namespace has higher fee due to increasing count
         // Count 0: fee_0, Count 1: fee_1, Count 2: fee_2
         assert!(fee > as_tors(15)); // 3 namespaces * min 5 TORS base fee
 
-        // Deposit: "v1" = 2 bytes, "v1.compute" = 10 bytes, "v1.compute.gpu" = 14 bytes
-        // Total = 26 bytes * 5 TORS = 130 TORS
-        assert_eq!(deposit, as_tors(130));
+        assert_eq!(deposit, as_tors(310));
     });
 }
 
 #[test]
 fn calculate_cost_with_existing_namespaces() {
     new_test_ext().execute_with(|| {
+        set_namespace_config();
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
         // Set namespace count to simulate existing namespaces
-        pallet_torus0::NamespaceCount::<Test>::insert(owner, 10);
+        pallet_torus0::NamespaceCount::<Test>::insert(NamespaceOwnership::Account(owner), 10);
 
-        let paths: &[NamespacePath] = &["agent".parse().unwrap(), "agent.alice".parse().unwrap()];
+        let paths: &[NamespacePath] = &[
+            "agent.alice.agent".parse().unwrap(),
+            "agent.alice.super.names".parse().unwrap(),
+        ];
 
-        let (fee, deposit) =
-            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+        let (fee, deposit) = pallet_torus0::namespace::calculate_cost::<Test>(
+            &NamespaceOwnership::Account(owner),
+            paths,
+        )
+        .unwrap();
 
         // Fee should be higher due to existing count of 10
         // Count 10: at midpoint (20), Count 11: above midpoint
@@ -496,29 +582,32 @@ fn calculate_cost_with_existing_namespaces() {
         let fee_11 = config.namespace_fee(11).unwrap();
         assert_eq!(fee, fee_10 + fee_11);
 
-        // Deposit: "agent" = 5 bytes, "agent.alice" = 11 bytes
-        // Total = 16 bytes * 5 TORS = 80 TORS
-        assert_eq!(deposit, as_tors(80));
+        // Deposit: "agent.alice.agent" = 17 bytes, "agent.alice" = 11 bytes
+        assert_eq!(deposit, as_tors(200));
     });
 }
 
 #[test]
 fn calculate_cost_progressive_fee_increase() {
     new_test_ext().execute_with(|| {
+        set_namespace_config();
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
         // Create a long path to test progressive fee increase
         let paths: &[NamespacePath] = &[
-            "a".parse().unwrap(),
-            "a.b".parse().unwrap(),
-            "a.b.c".parse().unwrap(),
-            "a.b.c.d".parse().unwrap(),
-            "a.b.c.d.e".parse().unwrap(),
+            "agent.alice.a".parse().unwrap(),
+            "agent.alice.a.b".parse().unwrap(),
+            "agent.alice.a.b.c".parse().unwrap(),
+            "agent.alice.a.b.c.d".parse().unwrap(),
+            "agent.alice.a.b.c.d.e".parse().unwrap(),
         ];
 
-        let (fee, _deposit) =
-            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+        let (fee, _deposit) = pallet_torus0::namespace::calculate_cost::<Test>(
+            &NamespaceOwnership::Account(owner),
+            paths,
+        )
+        .unwrap();
 
         // Verify progressive increase: calculate individual fees
         let config = pallet_torus0::NamespacePricingConfig::<Test>::get();
@@ -533,10 +622,15 @@ fn calculate_cost_progressive_fee_increase() {
 #[test]
 fn calculate_cost_empty_paths() {
     new_test_ext().execute_with(|| {
+        set_namespace_config();
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
-        let (fee, deposit) = pallet_torus0::namespace::calculate_cost::<Test>(&owner, &[]).unwrap();
+        let (fee, deposit) = pallet_torus0::namespace::calculate_cost::<Test>(
+            &NamespaceOwnership::Account(owner),
+            &[],
+        )
+        .unwrap();
 
         assert_eq!(fee, 0);
         assert_eq!(deposit, 0);
@@ -546,6 +640,7 @@ fn calculate_cost_empty_paths() {
 #[test]
 fn calculate_cost_different_pricing_config() {
     new_test_ext().execute_with(|| {
+        set_namespace_config();
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
@@ -558,56 +653,66 @@ fn calculate_cost_different_pricing_config() {
             max_fee_multiplier: 10,
         });
 
-        let paths: &[NamespacePath] = &["test".parse().unwrap(), "test.namespace".parse().unwrap()];
+        let paths: &[NamespacePath] = &[
+            "agent.alice.test".parse().unwrap(),
+            "agent.alice.test.namespace".parse().unwrap(),
+        ];
 
-        let (fee, deposit) =
-            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+        let (fee, deposit) = pallet_torus0::namespace::calculate_cost::<Test>(
+            &NamespaceOwnership::Account(owner),
+            paths,
+        )
+        .unwrap();
 
         // With higher base fee and steeper curve
         assert!(fee > as_tors(20)); // 2 namespaces * min 10 TORS base fee
 
-        // Deposit: "test" = 4 bytes, "test.namespace" = 14 bytes
-        // Total = 18 bytes * 2 TORS = 36 TORS
-        assert_eq!(deposit, as_tors(36));
+        assert_eq!(deposit, as_tors(84));
     });
 }
 
 #[test]
 fn calculate_cost_long_path_names() {
     new_test_ext().execute_with(|| {
+        set_namespace_config();
+
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
         let paths: &[NamespacePath] = &[
-            "very-long-namespace-name".parse().unwrap(),
-            "very-long-namespace-name.with-another-segment"
+            "agent.alice.very-long-namespace-name".parse().unwrap(),
+            "agent.alice.very-long-namespace-name.with-another-segment"
                 .parse()
                 .unwrap(),
         ];
 
-        let (_fee, deposit) =
-            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+        let (_fee, deposit) = pallet_torus0::namespace::calculate_cost::<Test>(
+            &NamespaceOwnership::Account(owner),
+            paths,
+        )
+        .unwrap();
 
         // Deposit calculation based on bytes
-        // "very-long-namespace-name" = 24 bytes
-        // "very-long-namespace-name.with-another-segment" = 45 bytes
-        // Total = 69 bytes * 5 TORS = 345 TORS
-        assert_eq!(deposit, as_tors(345));
+        assert_eq!(deposit, as_tors(465));
     });
 }
 
 #[test]
 fn calculate_cost_at_fee_ceiling() {
     new_test_ext().execute_with(|| {
+        set_namespace_config();
         let owner = 1;
         test_utils::register_empty_agent(owner);
 
-        pallet_torus0::NamespaceCount::<Test>::insert(owner, 1000);
+        pallet_torus0::NamespaceCount::<Test>::insert(NamespaceOwnership::Account(owner), 1000);
 
-        let paths: &[NamespacePath] = &["test".parse().unwrap()];
+        let paths: &[NamespacePath] = &["agent.alice.test".parse().unwrap()];
 
-        let (fee, _deposit) =
-            pallet_torus0::namespace::calculate_cost::<Test>(&owner, paths).unwrap();
+        let (fee, _deposit) = pallet_torus0::namespace::calculate_cost::<Test>(
+            &NamespaceOwnership::Account(owner),
+            paths,
+        )
+        .unwrap();
 
         // fee should be at ceiling because of high amount of registered entries
         let config = pallet_torus0::NamespacePricingConfig::<Test>::get();
@@ -622,9 +727,164 @@ fn namespace_freezing() {
         assert_err!(
             pallet_torus0::Pallet::<Test>::create_namespace(
                 get_origin(0),
-                BoundedVec::truncate_from(b"new.namespace".to_vec())
+                BoundedVec::truncate_from(b"agent.alice.new.namespace".to_vec())
             ),
             pallet_torus0::Error::<Test>::NamespacesFrozen
+        );
+    });
+}
+
+#[test]
+fn namespace_must_start_with_agent_prefix() {
+    new_test_ext().execute_with(|| {
+        // Register alice as an agent with proper name and balance
+        register_agent_with(0, "alice", as_tors(1000));
+
+        // Helper closure to test invalid namespace creation
+        let assert_invalid_namespace = |path: &[u8]| {
+            assert_err!(
+                pallet_torus0::Pallet::<Test>::create_namespace(
+                    get_origin(0),
+                    BoundedVec::truncate_from(path.to_vec())
+                ),
+                pallet_torus0::Error::<Test>::InvalidNamespacePath
+            );
+        };
+
+        // Test various invalid prefixes
+        assert_invalid_namespace(b"foobar.alice");
+        assert_invalid_namespace(b"alice.agent");
+        assert_invalid_namespace(b"agents.alice");
+        assert_invalid_namespace(b"Agent.alice"); // wrong case
+        assert_invalid_namespace(b"agentX.alice"); // extra character
+        assert_invalid_namespace(b""); // empty path
+        assert_invalid_namespace(b"alice"); // no prefix at all
+
+        // Verify that a valid namespace starting with "agent." works
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice".to_vec())
+        ));
+    });
+}
+
+#[test]
+fn create_namespace_simple() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice".to_vec())
+        ));
+
+        // Verify namespace was created
+        assert!(pallet_torus0::Namespaces::<Test>::contains_key(
+            pallet_torus0::namespace::NamespaceOwnership::Account(0),
+            pallet_torus0_api::NamespacePath::new_agent(b"agent.alice").unwrap()
+        ));
+    });
+}
+
+#[test]
+fn create_namespace_with_hierarchy() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.v1.compute.gpu".to_vec())
+        ));
+
+        // Helper closure to check if namespace exists
+        let ownership = pallet_torus0::namespace::NamespaceOwnership::Account(0);
+        let assert_namespace_exists = |path: &str| {
+            assert!(pallet_torus0::Namespaces::<Test>::contains_key(
+                ownership.clone(),
+                path.parse::<pallet_torus0_api::NamespacePath>().unwrap()
+            ));
+        };
+
+        // Verify all hierarchical namespaces were created
+        assert_namespace_exists("agent.alice");
+        assert_namespace_exists("agent.alice.v1");
+        assert_namespace_exists("agent.alice.v1.compute");
+        assert_namespace_exists("agent.alice.v1.compute.gpu");
+    });
+}
+
+#[test]
+fn create_namespace_already_exists() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        // Helper closure for namespace creation
+        let create_namespace = |path: &[u8]| {
+            pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(path.to_vec()),
+            )
+        };
+
+        // Create namespace first time
+        assert_ok!(create_namespace(b"agent.alice"));
+
+        // Try to create same namespace again
+        assert_err!(
+            create_namespace(b"agent.alice"),
+            pallet_torus0::Error::<Test>::NamespaceAlreadyExists
+        );
+    });
+}
+
+#[test]
+fn create_namespace_not_an_agent() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+
+        // Try to create namespace without being registered as agent
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"agent.alice".to_vec())
+            ),
+            pallet_torus0::Error::<Test>::AgentDoesNotExist
+        );
+    });
+}
+
+#[test]
+fn create_namespace_wrong_agent_name() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        // Try to create namespace with different agent name
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"agent.bob".to_vec())
+            ),
+            pallet_torus0::Error::<Test>::InvalidNamespacePath
+        );
+    });
+}
+
+#[test]
+fn create_namespace_insufficient_balance() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1)); // Very low balance
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"agent.alice".to_vec())
+            ),
+            pallet_balances::Error::<Test>::InsufficientBalance
         );
     });
 }

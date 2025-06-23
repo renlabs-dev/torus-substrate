@@ -109,7 +109,6 @@ mod benchmarks {
 
         AgentUpdateCooldown::<T>::set(Default::default());
 
-        let name = vec![4, 5, 6];
         let url = vec![4, 5, 6];
         let metadata = Some(vec![4, 5, 6]);
         let staking_fee = Some(Percent::from_percent(10));
@@ -118,7 +117,6 @@ mod benchmarks {
         #[extrinsic_call]
         update_agent(
             RawOrigin::Signed(agent),
-            name,
             url,
             metadata,
             staking_fee,

@@ -23,7 +23,10 @@ The path validation ensures consistency across the network:
 - Maximum 255 bytes total length
 - Maximum 10 segments (depth limitation)
 - Each segment between 1-63 characters
-- Valid characters: unicode alphanumerics, `-`, `_`
+- Segments must begin and end with alphanumerics
+- Valid characters: ASCII alphanumerics, `-`, `_`, and `+`
+
+> Implementations MUST NOT assume the character set will be ASCII only forever. Paths are UTF-8 encoded strings.
 
 This structure creates clear ownership: `agent.alice` owns all paths under that prefix, from `agent.alice.api` to `agent.alice.memory.twitter.v2`. The depth limitation prevents excessive nesting while still allowing meaningful organization.
 
