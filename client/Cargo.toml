@@ -23,7 +23,7 @@ tokio = { version = "1.35", features = ["macros", "time", "rt-multi-thread"] }
 hex = "0.4.3"
 
 # Local dependencies
-torus-runtime = { path = "../runtime", default-features = false }
+# torus-runtime = { path = "../runtime", default-features = false }
 
 rand = { workspace = true }
 
@@ -37,13 +37,7 @@ sha2 = "0.10.9"
 [features]
 
 default = ["std", "mainnet"]
-std = [
-    "codec/std",
-    "codec/derive",
-    "codec/max-encoded-len",
-    "scale-info/std",
-    "torus-runtime/std",
-]
+std = ["codec/std", "codec/derive", "codec/max-encoded-len", "scale-info/std"]
 
 # Network-specific features
 mainnet = []

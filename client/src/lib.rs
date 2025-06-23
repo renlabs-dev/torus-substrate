@@ -7,7 +7,6 @@ pub mod utils;
 // Generated interfaces for different networks
 pub mod interfaces {
     // These modules will be populated by the `just gen_interfaces` command
-    #[cfg(feature = "mainnet")]
     pub mod mainnet;
 
     #[cfg(feature = "testnet")]
@@ -20,11 +19,12 @@ pub mod interfaces {
 // Tests
 #[cfg(test)]
 mod test_balance_sum;
-#[cfg(test)]
+
+// #[cfg(test)]
 mod test_mainnet;
 
-#[cfg(feature = "testnet")]
-mod faucet;
+// #[cfg(feature = "testnet")]
+// mod faucet;
 
 use subxt::{config::Header, OnlineClient, PolkadotConfig};
 
@@ -40,7 +40,7 @@ impl Network {
     /// Get the URL for this network
     pub fn url(&self) -> &'static str {
         match self {
-            Network::Mainnet => "wss://api.torus.network",
+            Network::Mainnet => "wss://archive.torus.network",
             Network::Testnet => "wss://api.testnet.torus.network",
             Network::Dev => "ws://localhost:9944",
         }

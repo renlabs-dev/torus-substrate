@@ -1,11 +1,11 @@
 [workspace]
 members = [
-    "node",
-    "runtime",
-    "pallets/*",
-    "pallets/*/api",
-    "test-utils",
-    "xtask",
+    # "node",
+    # "runtime",
+    # "pallets/*",
+    # "pallets/*/api",
+    # "test-utils",
+    # "xtask",
     "client",
 ]
 resolver = "2"
