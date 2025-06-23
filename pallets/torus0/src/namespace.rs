@@ -94,18 +94,8 @@ impl<T: Config> NamespacePricingConfig<T> {
     /// is provided and contains more segments, the prefix (agent literal and agent name)
     /// will be dropped.
     pub fn namespace_deposit(&self, path: &NamespacePath) -> BalanceOf<T> {
-        let segments: Vec<_> = path.segments().collect();
-        let mut segments = &segments[..];
-
-        if segments.first() == Some(&&b"agent"[..]) && segments.len() > 2 {
-            segments = segments.get(2..).unwrap_or(segments);
-        }
-
-        let bytes: u32 = segments.iter().map(|segment| segment.len() as u32).sum();
-        let dots = segments.len().saturating_sub(1) as u32;
-
         self.deposit_per_byte
-            .saturating_mul(bytes.saturating_add(dots).into())
+            .saturating_mul((path.as_bytes().len() as u32).into())
     }
 
     /// The fee midpoint.

@@ -245,15 +245,15 @@ fn namespace_deposit_basic() {
 
         // Single character
         let path_a = "agent.alice.a".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_a), 100);
+        assert_eq!(config.namespace_deposit(&path_a), 1300);
 
         // 5 characters
         let path_hello = "agent.alice.hello".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_hello), 500);
+        assert_eq!(config.namespace_deposit(&path_hello), 1700);
 
         // With dots (24 characters total)
         let path_long = "agent.alice.very.long.namespace.path".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_long), 2400);
+        assert_eq!(config.namespace_deposit(&path_long), 3600);
     });
 }
 
@@ -270,11 +270,11 @@ fn namespace_deposit_with_separators() {
 
         // "agent.alice.a.b.c" = 5 bytes
         let path_dots = "agent.alice.a.b.c".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_dots), 250);
+        assert_eq!(config.namespace_deposit(&path_dots), 850);
 
         // "agent.alice.abc" = 3 bytes
         let path_no_dots = "agent.alice.abc".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_no_dots), 150);
+        assert_eq!(config.namespace_deposit(&path_no_dots), 750);
     });
 }
 
@@ -298,8 +298,8 @@ fn namespace_deposit_different_rates() {
         };
 
         let path = "agent.alice.test.namespace".parse().unwrap(); // 14 bytes
-        assert_eq!(config_low.namespace_deposit(&path), 140);
-        assert_eq!(config_high.namespace_deposit(&path), 14000);
+        assert_eq!(config_low.namespace_deposit(&path), 260);
+        assert_eq!(config_high.namespace_deposit(&path), 26000);
     });
 }
 
@@ -550,9 +550,7 @@ fn calculate_cost_no_existing_namespaces() {
         // Count 0: fee_0, Count 1: fee_1, Count 2: fee_2
         assert!(fee > as_tors(15)); // 3 namespaces * min 5 TORS base fee
 
-        // Deposit: "agent.alice.v1" = 2 bytes, "agent.alice.v1.compute" = 10 bytes, "agent.alice.v1.compute.gpu" = 14 bytes
-        // Total = 26 bytes * 5 TORS = 130 TORS
-        assert_eq!(deposit, as_tors(130));
+        assert_eq!(deposit, as_tors(310));
     });
 }
 
@@ -584,9 +582,8 @@ fn calculate_cost_with_existing_namespaces() {
         let fee_11 = config.namespace_fee(11).unwrap();
         assert_eq!(fee, fee_10 + fee_11);
 
-        // Deposit: "agent.alice.agent" = 5 bytes, "agent.alice" = 11 bytes
-        // Total = 16 bytes * 5 TORS = 80 TORS
-        assert_eq!(deposit, as_tors(80));
+        // Deposit: "agent.alice.agent" = 17 bytes, "agent.alice" = 11 bytes
+        assert_eq!(deposit, as_tors(200));
     });
 }
 
@@ -670,9 +667,7 @@ fn calculate_cost_different_pricing_config() {
         // With higher base fee and steeper curve
         assert!(fee > as_tors(20)); // 2 namespaces * min 10 TORS base fee
 
-        // Deposit: "agent.alice.test" = 4 bytes, "agent.alice.test.namespace" = 14 bytes
-        // Total = 18 bytes * 2 TORS = 36 TORS
-        assert_eq!(deposit, as_tors(36));
+        assert_eq!(deposit, as_tors(84));
     });
 }
 
@@ -698,10 +693,7 @@ fn calculate_cost_long_path_names() {
         .unwrap();
 
         // Deposit calculation based on bytes
-        // "agent.alice.very-long-namespace-name" = 24 bytes
-        // "agent.alice.very-long-namespace-name.with-another-segment" = 45 bytes
-        // Total = 69 bytes * 5 TORS = 345 TORS
-        assert_eq!(deposit, as_tors(345));
+        assert_eq!(deposit, as_tors(465));
     });
 }
 

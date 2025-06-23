@@ -23,7 +23,7 @@ The path validation ensures consistency across the network:
 - Maximum 255 bytes total length
 - Maximum 10 segments (depth limitation)
 - Each segment between 1-63 characters
-- Segments must begin with alphanumerics
+- Segments must begin and end with alphanumerics
 - Valid characters: ASCII alphanumerics, `-`, `_`, and `+`
 
 > Implementations MUST NOT assume the character set will be ASCII only forever. Paths are UTF-8 encoded strings.
