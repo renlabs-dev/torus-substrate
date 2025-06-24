@@ -1,4 +1,4 @@
-#![allow(non_camel_case_types)]
+#![allow(non_camel_case_types, unexpected_cfgs)]
 
 use std::{cell::RefCell, num::NonZeroU128};
 

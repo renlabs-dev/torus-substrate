@@ -4,7 +4,7 @@ use polkadot_sdk::frame_support::{
 
 use crate::{Config, Pallet};
 
-pub mod v3 {
+pub mod v4 {
     use super::*;
     use crate::{Agent, Agents};
     use scale_info::prelude::vec::Vec;
@@ -35,9 +35,9 @@ pub mod v3 {
             StorageMap<crate::Pallet<T>, Identity, AccountIdOf<T>, Agent<T>>;
     }
 
-    pub type Migration<T, W> = VersionedMigration<2, 3, MigrateToV3<T>, Pallet<T>, W>;
-    pub struct MigrateToV3<T>(core::marker::PhantomData<T>);
-    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV3<T> {
+    pub type Migration<T, W> = VersionedMigration<3, 4, MigrateToV4<T>, Pallet<T>, W>;
+    pub struct MigrateToV4<T>(core::marker::PhantomData<T>);
+    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV4<T> {
         fn on_runtime_upgrade() -> Weight {
             let old_agents = storage::Agents::<T>::iter().collect::<Vec<_>>();
             let _ = storage::Agents::<T>::clear(u32::MAX, None);
@@ -58,24 +58,6 @@ pub mod v3 {
                 )
             }
 
-            Weight::zero()
-        }
-    }
-}
-
-pub mod v4 {
-    use polkadot_sdk::{
-        frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
-        sp_weights::Weight,
-    };
-
-    use crate::{Config, Pallet};
-
-    pub type Migration<T, W> = VersionedMigration<3, 4, MigrateToV4<T>, Pallet<T>, W>;
-    pub struct MigrateToV4<T>(core::marker::PhantomData<T>);
-
-    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV4<T> {
-        fn on_runtime_upgrade() -> Weight {
             Weight::zero()
         }
     }

@@ -137,11 +137,11 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
     // Base: 1 token + (88 bytes * 0.01 token)
-    pub const DepositBase: Balance = 10u128.saturating_pow(TOKEN_DECIMALS)  // 1 token
-        .saturating_add(88u128.saturating_mul(10u128.saturating_pow(TOKEN_DECIMALS - 2)));  // 0.01 token per byte
+    pub const DepositBase: Balance = 10u128.saturating_pow(TOKEN_DECIMALS) // 1 token
+        .saturating_add(88u128.saturating_mul(10u128.saturating_pow(TOKEN_DECIMALS.saturating_sub(2))));  // 0.01 token per byte
     // Factor: (32 bytes * 0.01 token)
     pub const DepositFactor: Balance =
-        32u128.saturating_mul(10u128.saturating_pow(TOKEN_DECIMALS - 2));  // 0.01 token per byte
+        32u128.saturating_mul(10u128.saturating_pow(TOKEN_DECIMALS.saturating_sub(2)));  // 0.01 token per byte
 }
 
 impl pallet_multisig::Config for Runtime {

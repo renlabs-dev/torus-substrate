@@ -38,7 +38,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("torus-runtime"),
     impl_name: create_runtime_str!("torus-runtime"),
     authoring_version: 1,
-    spec_version: 20,
+    spec_version: 21,
     impl_version: 1,
     apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -90,7 +90,6 @@ type Migrations = (
     pallet_permission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
     pallet_permission0::migrations::v3::Migration<Runtime, RocksDbWeight>,
     pallet_emission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
-    pallet_torus0::migrations::v3::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v4::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v5::Migration<Runtime, RocksDbWeight>,
 );

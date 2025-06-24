@@ -32,13 +32,10 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
     where
         I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
     {
-        let authority_id = F::find_author(digests).and_then(|author_index| {
-            pallet_aura::Authorities::<Runtime>::get()
-                .get(author_index as usize)
-                .cloned()
-        })?;
-
-        authority_id.to_raw_vec().get(4..24).map(H160::from_slice)
+        use pallet_aura::Authorities;
+        F::find_author(digests)
+            .and_then(|index| Authorities::<Runtime>::get().get(index as usize).cloned())
+            .and_then(|id| id.to_raw_vec().get(4..24).map(H160::from_slice))
     }
 }
 
@@ -63,7 +60,7 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(WEIGHT_REF_TIME_PER_
 
 parameter_types! {
     pub BlockGasLimit: U256
-        = U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS);
+        = U256::from((NORMAL_DISPATCH_RATIO.deconstruct() as u64).saturating_mul(MAXIMUM_BLOCK_WEIGHT.ref_time()).checked_div(WEIGHT_PER_GAS).unwrap_or(0));
     pub const GasLimitPovSizeRatio: u64 = 16;
     /// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
     /// The current definition of BLOCK_STORAGE_LIMIT is 160 KB, resulting in a value of 366.

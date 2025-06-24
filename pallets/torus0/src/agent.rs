@@ -148,8 +148,9 @@ pub fn unregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult
         namespace_path,
     )?;
 
-    crate::Agents::<T>::remove(&agent_key);
     crate::stake::clear_key::<T>(&agent_key)?;
+
+    crate::Agents::<T>::remove(&agent_key);
 
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::AgentUnregistered(agent_key));
 

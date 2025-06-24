@@ -74,9 +74,7 @@ pub fn get_total_emission_per_block<T: Config>() -> BalanceOf<T> {
     }
 
     let interval = T::HalvingInterval::get();
-    let halving_count = total_issuance
-        .checked_div(interval.get())
-        .unwrap_or_default();
+    let halving_count = total_issuance.checked_div(interval.get()).unwrap_or(0);
     let emission = T::BlockEmission::get() >> halving_count;
 
     let not_recycled =
