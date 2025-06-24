@@ -152,6 +152,7 @@ type InherentDataProviders = (
     fp_dynamic_fee::InherentDataProvider,
 );
 
+#[allow(clippy::type_complexity)]
 fn aura_data_provider(
     slot_duration: sp_consensus_aura::SlotDuration,
     eth_config: &EthConfiguration,

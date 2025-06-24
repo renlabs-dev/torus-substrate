@@ -27,7 +27,7 @@ use scale_info::prelude::vec::Vec;
 
 #[frame::pallet]
 pub mod pallet {
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
 
     use frame::prelude::BlockNumberFor;
     use pallet_emission0_api::Emission0Api;
