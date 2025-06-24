@@ -188,7 +188,7 @@ fn stream_accumulates_and_executes_at_threshold() {
 
         let permission_id = assert_ok!(grant_emission_permission(
             miner,
-            val,
+            miner,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
             vec![(val, u16::MAX)],
             pallet_permission0_api::DistributionControl::Automatic(total_incentives),

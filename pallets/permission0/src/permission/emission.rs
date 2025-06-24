@@ -205,6 +205,14 @@ pub(crate) fn do_distribute_emission<T: Config>(
             let streams = streams.keys().filter_map(|id| {
                 let acc =
                     AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))?;
+
+                // You cannot remove the stream from the storage as
+                // it's needed in the accumulation code
+                AccumulatedStreamAmounts::<T>::set(
+                    (&contract.grantor, id, permission_id),
+                    Some(Zero::zero()),
+                );
+
                 if acc.is_zero() {
                     None
                 } else {
@@ -226,10 +234,19 @@ pub(crate) fn do_distribute_emission<T: Config>(
                     reason,
                 );
 
-                AccumulatedStreamAmounts::<T>::set(
-                    (&contract.grantor, stream, permission_id),
-                    Some(imbalance.peek()),
-                );
+                let remainder = imbalance.peek();
+                if !remainder.is_zero() {
+                    AccumulatedStreamAmounts::<T>::mutate(
+                        (&contract.grantor, stream, permission_id),
+                        |acc| {
+                            if let Some(acc_value) = acc {
+                                *acc_value = acc_value.saturating_add(remainder);
+                            } else {
+                                *acc = Some(remainder)
+                            }
+                        },
+                    );
+                }
             }
         }
         EmissionAllocation::FixedAmount(amount) => {
