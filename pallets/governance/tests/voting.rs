@@ -1,3 +1,5 @@
+#![allow(clippy::arithmetic_side_effects)]
+
 use pallet_emission0::PendingEmission;
 use pallet_governance::{
     config::GovernanceConfiguration,

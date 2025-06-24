@@ -442,7 +442,7 @@ impl_runtime_apis! {
                 let _ = RuntimeExecutive::apply_extrinsic(ext);
             }
 
-            Ethereum::on_finalize(System::block_number() + 1);
+            Ethereum::on_finalize(System::block_number().saturating_add(1));
 
             (
                 pallet_ethereum::CurrentBlock::<Runtime>::get(),

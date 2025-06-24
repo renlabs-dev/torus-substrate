@@ -72,10 +72,11 @@ pub fn get_total_emission_per_block<T: Config>() -> BalanceOf<T> {
     }
 
     let interval = T::HalvingInterval::get();
-    let halving_count = total_issuance.saturating_div(interval.get());
+    let halving_count = total_issuance.checked_div(interval.get()).unwrap_or(0);
     let emission = T::BlockEmission::get() >> halving_count;
 
-    let not_recycled = Percent::one() - crate::EmissionRecyclingPercentage::<T>::get();
+    let not_recycled =
+        Percent::one().saturating_sub(crate::EmissionRecyclingPercentage::<T>::get());
     not_recycled.mul_floor(emission)
 }
 
@@ -180,7 +181,8 @@ impl<T: Config> ConsensusMemberInput<T> {
         member: ConsensusMember<T>,
         min_validator_stake: u128,
     ) -> ConsensusMemberInput<T> {
-        let weight_factor = Percent::one() - <T::Torus>::weight_penalty_factor(&agent_id);
+        let weight_factor =
+            Percent::one().saturating_sub(<T::Torus>::weight_penalty_factor(&agent_id));
 
         let mut total_stake = 0;
         let stakes = <T::Torus>::staked_by(&agent_id)
@@ -462,17 +464,17 @@ fn compute_emissions<'a, T: Config>(
     let dividends_to_be_emitted;
 
     if let Some(incentives_ratio) = incentives_ratio.checked_sub(50) {
-        let incentives_percentage = Percent::from_parts(incentives_ratio * 2);
+        let incentives_percentage = Percent::from_parts(incentives_ratio.saturating_mul(2));
         let incentives = incentives_percentage.mul_floor(to_be_emitted);
         incentives_to_be_emitted = to_be_emitted.saturating_add(incentives);
         dividends_to_be_emitted = to_be_emitted.saturating_sub(incentives);
-    } else if let Some(dividends_ratio) = 50u8.checked_sub(incentives_ratio) {
-        let dividends_percentage = Percent::from_parts(dividends_ratio * 2);
+    } else {
+        let dividends_ratio = 50u8.saturating_sub(incentives_ratio);
+
+        let dividends_percentage = Percent::from_parts(dividends_ratio.saturating_mul(2));
         let dividends = dividends_percentage.mul_floor(to_be_emitted);
         dividends_to_be_emitted = to_be_emitted.saturating_add(dividends);
         incentives_to_be_emitted = to_be_emitted.saturating_sub(dividends);
-    } else {
-        unreachable!()
     }
 
     let incentives =
