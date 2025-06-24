@@ -83,13 +83,7 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 /// All migrations of the runtime, aside from the ones declared in the pallets.
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
-type Migrations = (
-    pallet_governance::migrations::v1::Migration<Runtime, RocksDbWeight>,
-    pallet_governance::migrations::v2::Migration<Runtime, RocksDbWeight>,
-    pallet_emission0::migrations::v1::Migration<Runtime, RocksDbWeight>,
-    pallet_torus0::migrations::v1::Migration<Runtime, RocksDbWeight>,
-    pallet_torus0::migrations::v2::Migration<Runtime, RocksDbWeight>,
-);
+type Migrations = (pallet_torus0::migrations::v3::Migration<Runtime, RocksDbWeight>,);
 
 /// Executive: handles dispatch to the various modules.
 pub type RuntimeExecutive = frame_executive::Executive<

@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing)]
+
 use std::array::from_fn;
 
 use pallet_emission0::{

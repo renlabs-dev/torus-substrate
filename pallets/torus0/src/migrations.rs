@@ -100,6 +100,7 @@ pub mod v3 {
         let imbalance = total_stake.saturating_sub(sum_staking_to);
         if imbalance == 0 {
             error!("no imbalance between TotalStake and stake maps");
+            return;
         }
 
         info!("imbalance between TotalStake - sum(stake) = {imbalance}");
@@ -110,10 +111,11 @@ pub mod v3 {
         });
 
         let new_total_stake = crate::TotalStake::<T>::get();
-        if new_total_stake == sum_staking_to {
-            info!("imbalance refunded to {account:?}, {new_total_stake} == {sum_staking_to}");
-        } else {
+        if new_total_stake != sum_staking_to {
             error!("imbalance remained, {new_total_stake} != {sum_staking_to}");
-        }
+            return;
+        };
+
+        info!("imbalance refunded to {account:?}, {new_total_stake} == {sum_staking_to}");
     }
 }

@@ -6,6 +6,9 @@ license = "MIT-0"
 authors.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [features]
 default = ["std"]
 std = [

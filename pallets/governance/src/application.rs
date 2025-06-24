@@ -91,7 +91,7 @@ pub fn submit_application<T: crate::Config>(
             .ok()
             .expect("blockchain will not exceed 2^64 blocks; QED.");
 
-    let expires_at = current_block + config.agent_application_expiration;
+    let expires_at = current_block.saturating_add(config.agent_application_expiration);
 
     let next_id = AgentApplications::<T>::iter()
         .count()
