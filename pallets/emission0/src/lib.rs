@@ -6,63 +6,65 @@ pub mod migrations;
 pub(crate) use ext::*;
 pub use pallet::*;
 use pallet_emission0_api::Emission0Api;
-use polkadot_sdk::frame_support::dispatch::DispatchResult;
-use polkadot_sdk::frame_support::{pallet_prelude::*, DefaultNoBound};
-use polkadot_sdk::frame_system;
-use polkadot_sdk::frame_system::pallet_prelude::OriginFor;
-use polkadot_sdk::polkadot_sdk_frame::{self as frame, traits::Currency};
-use polkadot_sdk::sp_runtime::Percent;
+use polkadot_sdk::{
+    frame_support::{dispatch::DispatchResult, pallet_prelude::*, DefaultNoBound},
+    frame_system,
+    frame_system::pallet_prelude::OriginFor,
+    polkadot_sdk_frame::{self as frame, traits::Currency},
+    sp_runtime::Percent,
+};
 
 #[doc(hidden)]
 pub mod distribute;
 #[doc(hidden)]
 pub mod weight_control;
 
-#[cfg(feature = "runtime-benchmarks")]
-pub mod benchmarks;
+pub mod benchmarking;
 pub mod weights;
 
 #[frame::pallet]
 pub mod pallet {
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
     use core::num::NonZeroU128;
 
     use frame::prelude::BlockNumberFor;
+    use frame_system::ensure_signed;
     use pallet_governance_api::GovernanceApi;
+    use pallet_permission0_api::{Permission0Api, Permission0EmissionApi};
     use pallet_torus0_api::Torus0Api;
     use polkadot_sdk::sp_std;
     use weights::WeightInfo;
 
     use super::*;
 
+    /// Map of consensus members indexed by their keys. A consensus member is
+    /// any agent eligible for emissions in the next epoch. This means
+    /// unregistered agents will also receive emissions.
     #[pallet::storage]
     pub type ConsensusMembers<T: Config> =
         StorageMap<_, Identity, AccountIdOf<T>, ConsensusMember<T>>;
 
+    /// Map of agents delegating weight control to other agents. Emissions
+    /// derived from weight delegation are taxed and the fees go the original
+    /// weight setter.
     #[pallet::storage]
     pub type WeightControlDelegation<T: Config> =
         StorageMap<_, Identity, T::AccountId, T::AccountId>;
 
-    #[pallet::storage]
-    pub type MinAllowedWeights<T: Config> =
-        StorageValue<_, u16, ValueQuery, T::DefaultMinAllowedWeights>;
-
-    #[pallet::storage]
-    pub type MaxAllowedWeights<T: Config> =
-        StorageValue<_, u16, ValueQuery, T::DefaultMaxAllowedWeights>;
-
-    #[pallet::storage]
-    pub type MinStakePerWeight<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
+    /// Percentage of issued tokens to be burned every epoch.
     #[pallet::storage]
     pub type EmissionRecyclingPercentage<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultEmissionRecyclingPercentage>;
 
+    /// Ratio between incentives and dividends on distribution. 50% means they
+    /// are distributed equally.
     #[pallet::storage]
     pub type IncentivesRatio<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultIncentivesRatio>;
 
+    /// Amount of tokens accumulated since the last epoch. This increases on
+    /// every block. See [`distribute::get_total_emission_per_block`].
     #[pallet::storage]
     pub type PendingEmission<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
@@ -79,15 +81,10 @@ pub mod pallet {
         #[pallet::constant]
         type MaxSupply: Get<NonZeroU128>;
 
-        /// Emissions per block in NANOs. Not taking into account halving and recycling.
+        /// Emissions per block in NANOs. Not taking into account halving and
+        /// recycling.
         #[pallet::constant]
         type BlockEmission: Get<u128>;
-
-        #[pallet::constant]
-        type DefaultMinAllowedWeights: Get<u16>;
-
-        #[pallet::constant]
-        type DefaultMaxAllowedWeights: Get<u16>;
 
         #[pallet::constant]
         type DefaultEmissionRecyclingPercentage: Get<Percent>;
@@ -97,13 +94,18 @@ pub mod pallet {
 
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
 
-        type Torus: Torus0Api<
-            Self::AccountId,
-            <Self::Currency as Currency<Self::AccountId>>::Balance,
-            <Self::Currency as Currency<Self::AccountId>>::NegativeImbalance,
-        >;
+        type Torus: Torus0Api<Self::AccountId, BalanceOf<Self>>;
 
         type Governance: GovernanceApi<Self::AccountId>;
+
+        type Permission0: Permission0Api<OriginFor<Self>>
+            + Permission0EmissionApi<
+                Self::AccountId,
+                OriginFor<Self>,
+                BlockNumberFor<Self>,
+                BalanceOf<Self>,
+                NegativeImbalanceOf<Self>,
+            >;
 
         type WeightInfo: WeightInfo;
     }
@@ -143,6 +145,9 @@ pub mod pallet {
 
         /// Agent does not have enough stake to set weights.
         NotEnoughStakeToSetWeights,
+
+        /// At the current state, agents cannot control their own weight.
+        WeightControlNotEnabled,
     }
 
     #[pallet::event]
@@ -156,7 +161,6 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        // TODO: configure price
         #[pallet::call_index(0)]
         #[pallet::weight((T::WeightInfo::set_weights(), DispatchClass::Normal, Pays::Yes))]
         pub fn set_weights(
@@ -172,6 +176,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             target: AccountIdOf<T>,
         ) -> DispatchResult {
+            let origin = ensure_signed(origin)?;
             weight_control::delegate_weight_control::<T>(origin, target)
         }
 
@@ -210,5 +215,12 @@ impl<T: Config> Emission0Api<T::AccountId> for Pallet<T> {
                 incentives: member.last_incentives,
             }
         })
+    }
+
+    fn delegate_weight_control(
+        delegator: &T::AccountId,
+        delegatee: &T::AccountId,
+    ) -> DispatchResult {
+        weight_control::delegate_weight_control::<T>(delegator.clone(), delegatee.clone())
     }
 }

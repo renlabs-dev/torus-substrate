@@ -61,7 +61,7 @@ xflags::xflags! {
             optional -c, --base-chain-spec base_chain_spec: PathBuf
 
             /// Output file for the chain spec.
-            required -o, --out output: PathBuf
+            optional -o, --out output: PathBuf
 
             repeated --gran gran_keys: String
 
@@ -70,6 +70,22 @@ xflags::xflags! {
             repeated --balance balances: String
 
             optional --sudo sudo_key: String
+
+            /// Creates a replica of the mainnet
+            cmd gen-replica {
+                /// The API URL to use for fetching chain state.
+                optional --api-url api_url: String
+            }
+
+            /// Creates a new empty chain spec with only the specified values
+            cmd gen-new {
+                /// The name of the new chain
+                optional --name chain_name: String
+            }
+        }
+
+        cmd coverage {
+            optional --html
         }
     }
 }
@@ -86,6 +102,7 @@ pub struct Xtask {
 pub enum XtaskCmd {
     Run(Run),
     GenerateSpec(GenerateSpec),
+    Coverage(Coverage),
 }
 
 #[derive(Debug)]
@@ -125,11 +142,33 @@ pub struct Replica {
 #[derive(Debug)]
 pub struct GenerateSpec {
     pub base_chain_spec: Option<PathBuf>,
-    pub out: PathBuf,
+    pub out: Option<PathBuf>,
     pub gran: Vec<String>,
     pub aura: Vec<String>,
     pub balance: Vec<String>,
     pub sudo: Option<String>,
+    pub subcommand: GenerateSpecCmd,
+}
+
+#[derive(Debug)]
+pub enum GenerateSpecCmd {
+    GenReplica(GenReplica),
+    GenNew(GenNew),
+}
+
+#[derive(Debug)]
+pub struct GenReplica {
+    pub api_url: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct GenNew {
+    pub name: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct Coverage {
+    pub html: bool,
 }
 
 impl Xtask {

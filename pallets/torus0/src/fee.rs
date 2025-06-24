@@ -1,8 +1,9 @@
 use core::marker::PhantomData;
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::{frame_support::DebugNoBound, sp_runtime::Percent};
+use polkadot_sdk::{
+    frame_election_provider_support::Get, frame_support::DebugNoBound, sp_runtime::Percent,
+};
 use scale_info::TypeInfo;
 
 #[derive(DebugNoBound, Decode, Encode, MaxEncodedLen, PartialEq, Eq, TypeInfo)]

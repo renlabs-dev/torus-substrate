@@ -1,80 +1,48 @@
-use std::{borrow::Cow, net::IpAddr, path::Path};
+use std::{borrow::Cow, net::IpAddr, os::unix::process::CommandExt};
 
 use polkadot_sdk::sp_keyring;
 
-mod build_spec;
 mod flags;
+mod generate_spec;
 mod run;
 
 fn main() {
     let cmd = flags::Xtask::from_env_or_exit();
     match cmd.subcommand {
         flags::XtaskCmd::Run(run) => run::run(run),
-        flags::XtaskCmd::GenerateSpec(cmd) => {
-            let chain_spec = cmd
-                .base_chain_spec
-                .unwrap_or_else(|| Path::new("dev").to_path_buf());
+        flags::XtaskCmd::GenerateSpec(cmd) => generate_spec::generate_spec(cmd),
+        flags::XtaskCmd::Coverage(coverage) => {
+            const PALLETS: &[&str] = &[
+                "pallet-emission0",
+                "pallet-governance",
+                "pallet-torus0",
+                "pallet-permission0",
+            ];
 
-            let out = torus_node!("build-spec", "--chain", chain_spec)
-                .output()
-                .expect("failed to run torus node");
+            let mut cmd = std::process::Command::new("cargo");
+            let mut args = vec![
+                "llvm-cov",
+                "--no-clean",
+                "--exclude-from-report",
+                "test-utils",
+                "--ignore-filename-regex",
+                "test-utils|weights.rs|migrations.rs|benchmarks.rs",
+            ];
 
-            let out = if !cmd.aura.is_empty()
-                || !cmd.gran.is_empty()
-                || !cmd.balance.is_empty()
-                || cmd.sudo.is_some()
-            {
-                use serde_json::{Number, Value};
+            for pallet in PALLETS {
+                args.extend_from_slice(&["-p", pallet]);
+            }
 
-                let mut json: Value =
-                    serde_json::from_slice(&out.stdout).expect("failed to parse spec file");
-
-                let patch = &mut json["genesis"]["runtimeGenesis"]["patch"];
-
-                if !cmd.aura.is_empty() {
-                    let aura_keys = &mut patch["aura"]["authorities"]
-                        .as_array_mut()
-                        .expect("missing aura keys");
-                    aura_keys.clear();
-
-                    for aura in cmd.aura {
-                        aura_keys.push(aura.into());
-                    }
-                }
-
-                if !cmd.gran.is_empty() {
-                    let gran_keys = patch["grandpa"]["authorities"]
-                        .as_array_mut()
-                        .expect("missing grandpa keys");
-                    gran_keys.clear();
-
-                    for gran in cmd.gran {
-                        gran_keys.push([Value::from(gran), 1i32.into()].into());
-                    }
-                }
-
-                for balance in cmd.balance {
-                    let (account, amount) = balance
-                        .split_once('=')
-                        .expect("malformed balance entry, format: <account>=<amount>");
-                    let amount: u128 = amount.parse().expect("balance amount must be a number");
-
-                    patch["balances"]["balances"]
-                        .as_array_mut()
-                        .expect("missing grandpa keys")
-                        .push([Value::from(account), Number::from_u128(amount).into()].into());
-                }
-
-                if let Some(sudo) = cmd.sudo {
-                    patch["sudo"]["key"] = sudo.into();
-                }
-
-                serde_json::to_vec(&json).expect("failed to generate spec file")
+            if coverage.html {
+                let dev_args = ["--html"];
+                args.extend_from_slice(&dev_args);
             } else {
-                out.stdout
-            };
+                let ci_args = ["--cobertura", "--output-path", "target/cov.xml"];
+                args.extend_from_slice(&ci_args);
+            }
 
-            std::fs::write(cmd.out, out).expect("failed to write resulting ");
+            cmd.args(args);
+            let _ = cmd.exec();
         }
     }
 }

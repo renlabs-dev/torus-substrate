@@ -11,7 +11,14 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ubuntu-24.04-8core-bakunin
+    permissions:
+      pull-requests: write
+      id-token: write
+      pages: write
+      checks: write
+      contents: write
+
+    runs-on: ubicloud-standard-8
 
     steps:
       - uses: actions/checkout@v4
@@ -44,8 +51,86 @@ jobs:
           args: --color=always --tests -- -D warnings
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run tests
+      # - name: Run tests
+      #   env:
+      #     RUST_BACKTRACE: 1
+      #     SKIP_WASM_BUILD: 1
+      #   run: cargo test
+
+      - uses: jwalton/gh-find-current-pr@v1
+        id: findPr
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extractBranch
+
+      - name: Install cargo-llvm-cov
+        if: success() && steps.findPr.outputs.number && steps.extractBranch.outputs.branch
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Install cargo-xtask
+        if: success() && steps.findPr.outputs.number && steps.extractBranch.outputs.branch
+        run: cargo install cargo-xtask
+
+      - name: Generate lcov code coverage
+        if: success() && steps.findPr.outputs.number && steps.extractBranch.outputs.branch
+        run: cargo xtask coverage
         env:
           RUST_BACKTRACE: 1
           SKIP_WASM_BUILD: 1
-        run: cargo test
+
+      - name: Generate coverage summary report
+        if: success() && steps.findPr.outputs.number && steps.extractBranch.outputs.branch
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: target/cov.xml
+          badge: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+
+      - name: Generate html code coverage
+        if: success() && steps.findPr.outputs.number && steps.extractBranch.outputs.branch
+        run: cargo xtask coverage --html
+        env:
+          RUST_BACKTRACE: 1
+          SKIP_WASM_BUILD: 1
+
+      - name: Upload html report to S3 Bucket
+        if: success() && steps.findPr.outputs.number && steps.extractBranch.outputs.branch
+        id: htmlUpload
+        continue-on-error: true
+        run: |
+          aws --endpoint-url $ENDPOINT s3 sync ./target/llvm-cov/html s3://$BUCKET_NAME/$BRANCH --acl public-read
+          echo "link=https://$BUCKET_NAME.$REGION.$ENDPOINT_DOMAIN/$BRANCH/index.html" >> $GITHUB_OUTPUT
+        env:
+          BRANCH: ${{ steps.extractBranch.outputs.branch }}
+          ENDPOINT: ${{ vars.COV_ENDPOINT_URL }}
+          BUCKET_NAME: ${{ vars.COV_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.COV_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.COV_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ vars.COV_DEFAULT_REGION }}
+          REGION: nyc3
+          ENDPOINT_DOMAIN: "digitaloceanspaces.com"
+
+      - name: Add coverage PR report comment
+        if: success() && steps.findPr.outputs.number
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: report
+          number: ${{ steps.findPr.outputs.pr }}
+          recreate: true
+          path: code-coverage-results.md
+
+      - name: Add coverage PR html comment
+        if: success() && steps.findPr.outputs.number
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: html
+          number: ${{ steps.findPr.outputs.pr }}
+          recreate: true
+          message: |
+            [Detailed coverage report](${{ steps.htmlUpload.outputs.link }})

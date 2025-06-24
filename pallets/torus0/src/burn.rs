@@ -1,11 +1,13 @@
-use crate::BalanceOf;
 use codec::{Decode, Encode, MaxEncodedLen};
-use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::frame_support::DebugNoBound;
-use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
-use scale_info::prelude::marker::PhantomData;
-use scale_info::TypeInfo;
-use substrate_fixed::types::I110F18;
+use polkadot_sdk::{
+    frame_election_provider_support::Get,
+    frame_support::DebugNoBound,
+    polkadot_sdk_frame::prelude::BlockNumberFor,
+    sp_runtime::{traits::Saturating, FixedU128},
+};
+use scale_info::{prelude::marker::PhantomData, TypeInfo};
+
+use crate::BalanceOf;
 
 #[derive(Clone, TypeInfo, Decode, Encode, PartialEq, Eq, DebugNoBound, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
@@ -36,6 +38,11 @@ where
     }
 }
 
+/// Adjusts registration burn for the current block.
+///
+/// The next burn is calculated by analyzing the last N
+/// (`target_registrations_interval`) blocks and increases if the target
+/// registrations per interval was reached.
 pub fn adjust_burn<T: crate::Config>(current_block: u64) {
     let BurnConfiguration {
         min_burn,
@@ -61,36 +68,36 @@ pub fn adjust_burn<T: crate::Config>(current_block: u64) {
         return;
     }
 
-    let updated_burn: I110F18 = I110F18::from_num(current_burn)
-        .checked_mul(I110F18::from_num(
-            registrations_this_interval.saturating_add(target_registrations_per_interval),
+    let updated_burn = FixedU128::from_inner(current_burn)
+        .const_checked_mul(FixedU128::from_u32(
+            registrations_this_interval.saturating_add(target_registrations_per_interval) as u32,
         ))
         .unwrap_or_default()
-        .checked_div(I110F18::from_num(
-            target_registrations_per_interval.saturating_add(target_registrations_per_interval),
+        .const_checked_div(FixedU128::from_u32(
+            target_registrations_per_interval.saturating_mul(2) as u32,
         ))
         .unwrap_or_default();
 
-    let alpha: I110F18 = I110F18::from_num(adjustment_alpha)
-        .checked_div(I110F18::from_num(u64::MAX))
-        .unwrap_or_else(|| I110F18::from_num(0));
+    let alpha = FixedU128::from_inner(adjustment_alpha as u128)
+        .const_checked_div(FixedU128::from_inner(u64::MAX as u128))
+        .unwrap_or_else(|| FixedU128::from_inner(0));
 
-    let next_value: I110F18 = alpha
-        .checked_mul(I110F18::from_num(current_burn))
-        .unwrap_or_else(|| I110F18::from_num(0))
+    let next_value = alpha
+        .const_checked_mul(FixedU128::from_inner(current_burn))
+        .unwrap_or_else(|| FixedU128::from_inner(0))
         .saturating_add(
-            I110F18::from_num(1.0)
+            FixedU128::from_u32(1)
                 .saturating_sub(alpha)
-                .checked_mul(updated_burn)
-                .unwrap_or_else(|| I110F18::from_num(0)),
+                .const_checked_mul(updated_burn)
+                .unwrap_or_else(|| FixedU128::from_inner(0)),
         );
 
-    let new_burn = if next_value >= I110F18::from_num(max_burn) {
+    let new_burn = if next_value >= FixedU128::from_inner(max_burn) {
         max_burn
-    } else if next_value <= I110F18::from_num(min_burn) {
+    } else if next_value <= FixedU128::from_inner(min_burn) {
         min_burn
     } else {
-        next_value.to_num::<BalanceOf<T>>()
+        next_value.into_inner()
     };
 
     crate::Burn::<T>::set(new_burn);
