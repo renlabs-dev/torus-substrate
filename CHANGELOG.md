@@ -41,7 +41,7 @@ Because those storage items no longer existed, `remove_stake` exited early and t
 
 #### Fix
 
-We moved the `StakingTo` and `StakedBy` removals **after** the call to `remove_stake`, ensuring the unstake happens first.
+The code was changed entirely to a generic function that correctly removes stake, remove_stake0
 
 #### Migration script
 
