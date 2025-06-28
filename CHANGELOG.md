@@ -1,11 +1,6 @@
 # Changelog
 
-## Spec 2
-
-- fix: expired expire applications only if they are Open
-- fix: `torus0` on_initialize hook
-
-## Spec 12
+## Spec version 12
 
 ### Critical Migration & Bug Fix
 
@@ -86,6 +81,11 @@ The account address was **not** hard-coded. The script calculates the difference
 - Updated runtime and storage version numbers to reflect the latest changes.
 - Introduced workspace-wide linting configurations for consistent code quality.
 - Enforced stricter Clippy lint rules across the workspace.
+
+## Spec version 2
+
+- fix: expired expire applications only if they are Open
+- fix: `torus0` on_initialize hook
 - Applied saturating arithmetic in various runtime and pallet modules to prevent overflow issues.
 - Improved arithmetic safety and robustness in emission and governance modules.
 - Refined author identification and gas limit calculations with safer arithmetic operations.
