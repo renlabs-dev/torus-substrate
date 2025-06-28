@@ -43,9 +43,14 @@ Because those storage items no longer existed, `remove_stake` exited early and t
 
 We moved the `StakingTo` and `StakedBy` removals **after** the call to `remove_stake`, ensuring the unstake happens first.
 
-#### Reimbursement
+#### Migration script
 
-All balances lost to this bug have been restored. Funds were sent to a recovery account, then redistributed to the original stakers via script:
+You can find the migration here:
+[https://github.com/renlabs-dev/torus-substrate/blob/954a2485badc49c1ed35e8015b396fb8bad8e4c7/pallets/torus0/src/migrations.rs#L68](https://github.com/renlabs-dev/torus-substrate/blob/954a2485badc49c1ed35e8015b396fb8bad8e4c7/pallets/torus0/src/migrations.rs#L68)
+
+The migration calculates the difference between `TotalStake` (which remained **correctly** unchanged) and sums all actual stakes on the network. The difference is then sent to a recovery account, and redistributed to the original stakers via script
+
+**Original Stakers (OS)** 
 
 ```text
 5CuBSdUuBeLVxtzrTtrdiCjipEgjbvUoMJjxrss4T9f1MEoZ: 178467095451535513057748
@@ -58,13 +63,6 @@ All balances lost to this bug have been restored. Funds were sent to a recovery 
 5Gubvc4bG9LzzxWBtx6MWXgHb27YvMKPjJ99YSyfMh1hf4RN: 207368595393608853664012
 5GvBntw5j45K7kMwj9XahfwEW7ByJHRNPrSFmBzUyHcnaYNT: 8826118395848226775843
 ```
-
-#### Migration script
-
-You can find the migration here:
-[https://github.com/renlabs-dev/torus-substrate/blob/954a2485badc49c1ed35e8015b396fb8bad8e4c7/pallets/torus0/src/migrations.rs#L68](https://github.com/renlabs-dev/torus-substrate/blob/954a2485badc49c1ed35e8015b396fb8bad8e4c7/pallets/torus0/src/migrations.rs#L68)
-
-The account address was **not** hard-coded. The script calculates the difference between `TotalStake` (which remained unchanged) and the sum of all actual stakes, then transfers that difference back to each staker.
 
 ### Refactor
 
