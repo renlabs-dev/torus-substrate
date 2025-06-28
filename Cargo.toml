@@ -7,6 +7,7 @@ members = [
     "test-utils",
     "xtask",
     "client",
+    # "cli", # Commented out until cli directory exists
 ]
 resolver = "2"
 
@@ -20,6 +21,7 @@ edition = "2021"
 torus-node = { path = "./node", default-features = false }
 torus-runtime = { path = "./runtime", default-features = false }
 torus-client = { path = "./client", default-features = false }
+# torus-cli = { path = "./cli", default-features = false } # Commented out until cli directory exists
 pallet-governance = { path = "./pallets/governance", default-features = false }
 pallet-governance-api = { path = "./pallets/governance/api", default-features = false }
 pallet-emission0 = { path = "./pallets/emission0", default-features = false }
@@ -30,6 +32,7 @@ pallet-torus0-api = { path = "./pallets/torus0/api", default-features = false }
 pallet-permission0 = { path = "./pallets/permission0", default-features = false }
 pallet-permission0-api = { path = "./pallets/permission0/api", default-features = false }
 test-utils.path = "./test-utils"
+
 
 # Substrate
 codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }

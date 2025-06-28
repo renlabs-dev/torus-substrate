@@ -1,5 +1,15 @@
 //! Utilities for working with Substrate metadata.
 
+pub mod codegen;
+pub mod metadata;
+pub mod parser;
+
+#[cfg(test)]
+mod codegen_tests;
+
+#[cfg(test)]
+mod parser_tests;
+
 use std::{fs, io, path::Path};
 
 /// Load metadata bytes from a file

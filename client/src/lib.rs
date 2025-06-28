@@ -1,7 +1,6 @@
 //! # Torus Client
 //!
 //! A client library for interacting with the Torus blockchain network using subxt.
-
 pub mod utils;
 
 // Generated interfaces for different networks
@@ -20,6 +19,7 @@ pub mod interfaces {
 // Tests
 #[cfg(test)]
 mod test_balance_sum;
+
 #[cfg(test)]
 mod test_mainnet;
 

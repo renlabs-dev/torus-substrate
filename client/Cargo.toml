@@ -6,8 +6,14 @@ authors = ["Renlabs <contact@renlabs.dev>"]
 description = "Torus substrate client library using subxt"
 license = "MIT"
 
+[build-dependencies]
 
 [dependencies]
+# Parser dependencies for code generation
+syn = { version = "2.0", features = ["full", "parsing"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+thiserror = "1.0"
 
 codec = { workspace = true }
 scale-info = { workspace = true }
@@ -21,6 +27,7 @@ tokio = { version = "1.35", features = ["macros", "time", "rt-multi-thread"] }
 
 # Utilities
 hex = "0.4.3"
+paste = "1.0"
 
 # Local dependencies
 torus-runtime = { path = "../runtime", default-features = false }
