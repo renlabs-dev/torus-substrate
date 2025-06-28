@@ -62,7 +62,7 @@ All balances lost to this bug have been restored. Funds were sent to a recovery 
 #### Migration script
 
 You can find the migration here:
-[https://github.com/renlabs-dev/torus-substrate/blob/main/pallets/torus0/src/migrations.rs#L68](https://github.com/renlabs-dev/torus-substrate/blob/main/pallets/torus0/src/migrations.rs#L68)
+[https://github.com/renlabs-dev/torus-substrate/blob/954a2485badc49c1ed35e8015b396fb8bad8e4c7/pallets/torus0/src/migrations.rs#L68](https://github.com/renlabs-dev/torus-substrate/blob/954a2485badc49c1ed35e8015b396fb8bad8e4c7/pallets/torus0/src/migrations.rs#L68)
 
 The account address was **not** hard-coded. The script calculates the difference between `TotalStake` (which remained unchanged) and the sum of all actual stakes, then transfers that difference back to each staker.
 
