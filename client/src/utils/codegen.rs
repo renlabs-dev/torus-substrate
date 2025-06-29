@@ -1,4 +1,5 @@
 use crate::utils::parser::StoragePattern;
+//use crate::utils::type_shortening::TypeShortener;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use syn::{parse_str, Type};
@@ -17,7 +18,16 @@ impl WrapperGenerator {
         patterns: &[StoragePattern],
         network: &str,
     ) -> TokenStream {
-        let functions: Vec<TokenStream> = patterns
+        // Sort patterns to ensure deterministic output:
+        // First by pallet name, then by storage name alphabetically
+        let mut sorted_patterns = patterns.to_vec();
+        sorted_patterns.sort_by(|a, b| {
+            a.pallet()
+                .cmp(b.pallet())
+                .then_with(|| a.name().cmp(b.name()))
+        });
+
+        let functions: Vec<TokenStream> = sorted_patterns
             .iter()
             .flat_map(|pattern| Self::generate_pattern_wrappers(pattern, network))
             .collect();
