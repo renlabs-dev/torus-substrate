@@ -17922,6 +17922,7 @@ dependencies = [
  "keccak-hash 0.11.0 (git+https://github.com/paritytech/parity-common?rev=f0dade11ac0b2450e6a54f36035f74b2b8ce4c00)",
  "parity-scale-codec",
  "paste",
+ "prettyplease 0.2.25",
  "proc-macro2",
  "quote",
  "rand 0.9.1",

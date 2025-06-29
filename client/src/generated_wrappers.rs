@@ -1,14 +1,14 @@
-#![doc = r" Generated storage wrapper functions"]
-#![doc = r""]
-#![doc = r" This module provides ergonomic access to Substrate storage items."]
-#![doc = r" Functions are automatically generated from the subxt API metadata."]
+//! Generated storage wrapper functions
+//!
+//! This module provides ergonomic access to Substrate storage items.
+//! Functions are automatically generated from the subxt API metadata.
 #![allow(dead_code)]
 use crate::interfaces::mainnet::api;
 use crate::interfaces::mainnet::api::runtime_types;
 use codec::Decode;
 use std::collections::HashMap;
 use subxt::{OnlineClient, PolkadotConfig};
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_aura_authorities(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -23,7 +23,7 @@ pub async fn get_aura_authorities(
     let result = storage.fetch(&api::storage().aura().authorities()).await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_aura_current_slot(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::sp_consensus_slots::Slot>, Box<dyn std::error::Error>> {
@@ -31,7 +31,7 @@ pub async fn get_aura_current_slot(
     let result = storage.fetch(&api::storage().aura().current_slot()).await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_balances_account_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -45,7 +45,7 @@ pub async fn get_balances_account_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_balances_account(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -66,7 +66,7 @@ pub async fn query_map_balances_account(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_balances_freezes_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -87,7 +87,7 @@ pub async fn get_balances_freezes_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_balances_freezes(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -116,7 +116,7 @@ pub async fn query_map_balances_freezes(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_balances_holds_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -137,7 +137,7 @@ pub async fn get_balances_holds_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_balances_holds(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -164,7 +164,7 @@ pub async fn query_map_balances_holds(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_balances_inactive_issuance(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
@@ -174,7 +174,7 @@ pub async fn get_balances_inactive_issuance(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_balances_locks_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -192,7 +192,7 @@ pub async fn get_balances_locks_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_balances_locks(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -216,7 +216,7 @@ pub async fn query_map_balances_locks(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_balances_reserves_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -234,7 +234,7 @@ pub async fn get_balances_reserves_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_balances_reserves(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -260,7 +260,7 @@ pub async fn query_map_balances_reserves(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_balances_total_issuance(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
@@ -270,7 +270,7 @@ pub async fn get_balances_total_issuance(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_emission0_consensus_members_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -281,7 +281,7 @@ pub async fn get_emission0_consensus_members_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_emission0_consensus_members(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -302,7 +302,7 @@ pub async fn query_map_emission0_consensus_members(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_emission0_emission_recycling_percentage(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::sp_arithmetic::per_things::Percent>, Box<dyn std::error::Error>> {
@@ -312,7 +312,7 @@ pub async fn get_emission0_emission_recycling_percentage(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_emission0_incentives_ratio(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::sp_arithmetic::per_things::Percent>, Box<dyn std::error::Error>> {
@@ -322,7 +322,7 @@ pub async fn get_emission0_incentives_ratio(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_emission0_max_allowed_weights(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -332,7 +332,7 @@ pub async fn get_emission0_max_allowed_weights(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_emission0_min_allowed_weights(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -342,7 +342,7 @@ pub async fn get_emission0_min_allowed_weights(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_emission0_min_stake_per_weight(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
@@ -352,7 +352,7 @@ pub async fn get_emission0_min_stake_per_weight(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_emission0_pending_emission(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
@@ -362,7 +362,7 @@ pub async fn get_emission0_pending_emission(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_emission0_weight_control_delegation_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -377,7 +377,7 @@ pub async fn get_emission0_weight_control_delegation_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_emission0_weight_control_delegation(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ::subxt::ext::subxt_core::utils::AccountId32>, Box<dyn std::error::Error>>
@@ -396,7 +396,7 @@ pub async fn query_map_emission0_weight_control_delegation(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_ethereum_block_hash_by_u256(
     client: &OnlineClient<PolkadotConfig>,
     u256: runtime_types::primitive_types::U256,
@@ -407,7 +407,7 @@ pub async fn get_ethereum_block_hash_by_u256(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_ethereum_block_hash(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ::subxt::ext::subxt_core::utils::H256>, Box<dyn std::error::Error>> {
@@ -423,7 +423,7 @@ pub async fn query_map_ethereum_block_hash(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_ethereum_current_block(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -438,7 +438,7 @@ pub async fn get_ethereum_current_block(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_ethereum_current_receipts(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -451,7 +451,7 @@ pub async fn get_ethereum_current_receipts(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_ethereum_current_transaction_statuses(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -464,7 +464,7 @@ pub async fn get_ethereum_current_transaction_statuses(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_ethereum_pending(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -481,7 +481,7 @@ pub async fn get_ethereum_pending(
     let result = storage.fetch(&api::storage().ethereum().pending()).await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_evm_account_codes_by_h160(
     client: &OnlineClient<PolkadotConfig>,
     h160: ::subxt::ext::subxt_core::utils::H160,
@@ -495,7 +495,7 @@ pub async fn get_evm_account_codes_by_h160(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_evm_account_codes(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -517,7 +517,7 @@ pub async fn query_map_evm_account_codes(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_evm_account_codes_metadata_by_h160(
     client: &OnlineClient<PolkadotConfig>,
     h160: ::subxt::ext::subxt_core::utils::H160,
@@ -528,7 +528,7 @@ pub async fn get_evm_account_codes_metadata_by_h160(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_evm_account_codes_metadata(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -547,7 +547,7 @@ pub async fn query_map_evm_account_codes_metadata(
     }
     Ok(result)
 }
-#[doc = r" Get storage double map value by keys"]
+/// Get storage double map value by keys
 pub async fn get_evm_account_storages_by_h160_by_h256(
     client: &OnlineClient<PolkadotConfig>,
     h160_1: ::subxt::ext::subxt_core::utils::H160,
@@ -559,7 +559,7 @@ pub async fn get_evm_account_storages_by_h160_by_h256(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage double map"]
+/// Query all entries in storage double map
 pub async fn query_map_evm_account_storages(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -588,7 +588,7 @@ pub async fn query_map_evm_account_storages(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_evm_suicided_by_h160(
     client: &OnlineClient<PolkadotConfig>,
     h160: ::subxt::ext::subxt_core::utils::H160,
@@ -597,7 +597,7 @@ pub async fn get_evm_suicided_by_h160(
     let result = storage.fetch(&api::storage().evm().suicided(h160)).await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_evm_suicided(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<::subxt::ext::subxt_core::utils::H160, ()>, Box<dyn std::error::Error>> {
@@ -611,7 +611,7 @@ pub async fn query_map_evm_suicided(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_governance_agent_applications_by_u32(
     client: &OnlineClient<PolkadotConfig>,
     u32: ::core::primitive::u32,
@@ -625,7 +625,7 @@ pub async fn get_governance_agent_applications_by_u32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_governance_agent_applications(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -647,7 +647,7 @@ pub async fn query_map_governance_agent_applications(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_governance_allocators_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -658,7 +658,7 @@ pub async fn get_governance_allocators_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_governance_allocators(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ()>, Box<dyn std::error::Error>> {
@@ -676,7 +676,7 @@ pub async fn query_map_governance_allocators(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_governance_curators_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -687,7 +687,7 @@ pub async fn get_governance_curators_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_governance_curators(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ()>, Box<dyn std::error::Error>> {
@@ -705,7 +705,7 @@ pub async fn query_map_governance_curators(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_governance_dao_treasury_address(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::subxt::ext::subxt_core::utils::AccountId32>, Box<dyn std::error::Error>> {
@@ -715,7 +715,7 @@ pub async fn get_governance_dao_treasury_address(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_governance_global_governance_config(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -728,7 +728,7 @@ pub async fn get_governance_global_governance_config(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_governance_not_delegating_voting_power(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -745,7 +745,7 @@ pub async fn get_governance_not_delegating_voting_power(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_governance_proposals_by_u64(
     client: &OnlineClient<PolkadotConfig>,
     u64: ::core::primitive::u64,
@@ -757,7 +757,7 @@ pub async fn get_governance_proposals_by_u64(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_governance_proposals(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -776,7 +776,7 @@ pub async fn query_map_governance_proposals(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_governance_treasury_emission_fee(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::sp_arithmetic::per_things::Percent>, Box<dyn std::error::Error>> {
@@ -786,7 +786,7 @@ pub async fn get_governance_treasury_emission_fee(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_governance_unrewarded_proposals_by_u64(
     client: &OnlineClient<PolkadotConfig>,
     u64: ::core::primitive::u64,
@@ -800,7 +800,7 @@ pub async fn get_governance_unrewarded_proposals_by_u64(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_governance_unrewarded_proposals(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -819,7 +819,7 @@ pub async fn query_map_governance_unrewarded_proposals(
     }
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_governance_whitelist_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -830,7 +830,7 @@ pub async fn get_governance_whitelist_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_governance_whitelist(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ()>, Box<dyn std::error::Error>> {
@@ -848,7 +848,7 @@ pub async fn query_map_governance_whitelist(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_grandpa_authorities(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -866,7 +866,7 @@ pub async fn get_grandpa_authorities(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_grandpa_current_set_id(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u64>, Box<dyn std::error::Error>> {
@@ -876,7 +876,7 @@ pub async fn get_grandpa_current_set_id(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_grandpa_next_forced(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u64>, Box<dyn std::error::Error>> {
@@ -886,7 +886,7 @@ pub async fn get_grandpa_next_forced(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_grandpa_pending_change(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -899,7 +899,7 @@ pub async fn get_grandpa_pending_change(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_grandpa_set_id_session_by_u64(
     client: &OnlineClient<PolkadotConfig>,
     u64: ::core::primitive::u64,
@@ -910,7 +910,7 @@ pub async fn get_grandpa_set_id_session_by_u64(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_grandpa_set_id_session(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<::core::primitive::u64, ::core::primitive::u32>, Box<dyn std::error::Error>> {
@@ -926,7 +926,7 @@ pub async fn query_map_grandpa_set_id_session(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_grandpa_stalled(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<(::core::primitive::u64, ::core::primitive::u64)>, Box<dyn std::error::Error>> {
@@ -934,7 +934,7 @@ pub async fn get_grandpa_stalled(
     let result = storage.fetch(&api::storage().grandpa().stalled()).await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_grandpa_state(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -945,7 +945,7 @@ pub async fn get_grandpa_state(
     let result = storage.fetch(&api::storage().grandpa().state()).await?;
     Ok(result)
 }
-#[doc = r" Get storage double map value by keys"]
+/// Get storage double map value by keys
 pub async fn get_multisig_multisigs_by_account_id32_by_u8_array(
     client: &OnlineClient<PolkadotConfig>,
     account_id32_1: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -970,7 +970,7 @@ pub async fn get_multisig_multisigs_by_account_id32_by_u8_array(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage double map"]
+/// Query all entries in storage double map
 pub async fn query_map_multisig_multisigs(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -1006,7 +1006,7 @@ pub async fn query_map_multisig_multisigs(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_sudo_key(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::subxt::ext::subxt_core::utils::AccountId32>, Box<dyn std::error::Error>> {
@@ -1014,7 +1014,7 @@ pub async fn get_sudo_key(
     let result = storage.fetch(&api::storage().sudo().key()).await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_system_account_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -1033,7 +1033,7 @@ pub async fn get_system_account_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_system_account(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -1058,7 +1058,7 @@ pub async fn query_map_system_account(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_all_extrinsics_len(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u32>, Box<dyn std::error::Error>> {
@@ -1068,7 +1068,7 @@ pub async fn get_system_all_extrinsics_len(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_authorized_upgrade(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::frame_system::CodeUpgradeAuthorization>, Box<dyn std::error::Error>>
@@ -1079,7 +1079,7 @@ pub async fn get_system_authorized_upgrade(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_system_block_hash_by_u64(
     client: &OnlineClient<PolkadotConfig>,
     u64: ::core::primitive::u64,
@@ -1090,7 +1090,7 @@ pub async fn get_system_block_hash_by_u64(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_system_block_hash(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -1109,7 +1109,7 @@ pub async fn query_map_system_block_hash(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_block_weight(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -1126,7 +1126,7 @@ pub async fn get_system_block_weight(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_digest(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::sp_runtime::generic::digest::Digest>, Box<dyn std::error::Error>>
@@ -1135,7 +1135,7 @@ pub async fn get_system_digest(
     let result = storage.fetch(&api::storage().system().digest()).await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_event_count(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u32>, Box<dyn std::error::Error>> {
@@ -1145,7 +1145,7 @@ pub async fn get_system_event_count(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_system_event_topics_by_h256(
     client: &OnlineClient<PolkadotConfig>,
     h256: ::subxt::ext::subxt_core::utils::H256,
@@ -1161,7 +1161,7 @@ pub async fn get_system_event_topics_by_h256(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_system_event_topics(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -1183,7 +1183,7 @@ pub async fn query_map_system_event_topics(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_events(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -1201,7 +1201,7 @@ pub async fn get_system_events(
     let result = storage.fetch(&api::storage().system().events()).await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_execution_phase(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::frame_system::Phase>, Box<dyn std::error::Error>> {
@@ -1211,7 +1211,7 @@ pub async fn get_system_execution_phase(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_extrinsic_count(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u32>, Box<dyn std::error::Error>> {
@@ -1221,7 +1221,7 @@ pub async fn get_system_extrinsic_count(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_system_extrinsic_data_by_u32(
     client: &OnlineClient<PolkadotConfig>,
     u32: ::core::primitive::u32,
@@ -1235,7 +1235,7 @@ pub async fn get_system_extrinsic_data_by_u32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_system_extrinsic_data(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -1257,7 +1257,7 @@ pub async fn query_map_system_extrinsic_data(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_inherents_applied(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::bool>, Box<dyn std::error::Error>> {
@@ -1267,7 +1267,7 @@ pub async fn get_system_inherents_applied(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_last_runtime_upgrade(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::frame_system::LastRuntimeUpgradeInfo>, Box<dyn std::error::Error>>
@@ -1278,7 +1278,7 @@ pub async fn get_system_last_runtime_upgrade(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_number(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u64>, Box<dyn std::error::Error>> {
@@ -1286,7 +1286,7 @@ pub async fn get_system_number(
     let result = storage.fetch(&api::storage().system().number()).await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_parent_hash(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::subxt::ext::subxt_core::utils::H256>, Box<dyn std::error::Error>> {
@@ -1296,7 +1296,7 @@ pub async fn get_system_parent_hash(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_upgraded_to_triple_ref_count(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::bool>, Box<dyn std::error::Error>> {
@@ -1306,7 +1306,7 @@ pub async fn get_system_upgraded_to_triple_ref_count(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_system_upgraded_to_u32_ref_count(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::bool>, Box<dyn std::error::Error>> {
@@ -1316,7 +1316,7 @@ pub async fn get_system_upgraded_to_u32_ref_count(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_timestamp_did_update(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::bool>, Box<dyn std::error::Error>> {
@@ -1326,7 +1326,7 @@ pub async fn get_timestamp_did_update(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_timestamp_now(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u64>, Box<dyn std::error::Error>> {
@@ -1334,7 +1334,7 @@ pub async fn get_timestamp_now(
     let result = storage.fetch(&api::storage().timestamp().now()).await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_torus0_agents_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -1345,7 +1345,7 @@ pub async fn get_torus0_agents_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_torus0_agents(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, runtime_types::pallet_torus0::agent::Agent>, Box<dyn std::error::Error>>
@@ -1362,7 +1362,7 @@ pub async fn query_map_torus0_agents(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_burn(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
@@ -1370,7 +1370,7 @@ pub async fn get_torus0_burn(
     let result = storage.fetch(&api::storage().torus0().burn()).await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_burn_config(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::pallet_torus0::burn::BurnConfiguration>, Box<dyn std::error::Error>>
@@ -1381,7 +1381,7 @@ pub async fn get_torus0_burn_config(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_dividends_participation_weight(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::sp_arithmetic::per_things::Percent>, Box<dyn std::error::Error>> {
@@ -1391,7 +1391,7 @@ pub async fn get_torus0_dividends_participation_weight(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_fee_constraints(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
@@ -1404,7 +1404,7 @@ pub async fn get_torus0_fee_constraints(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_immunity_period(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1414,7 +1414,7 @@ pub async fn get_torus0_immunity_period(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_max_agent_url_length(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1424,7 +1424,7 @@ pub async fn get_torus0_max_agent_url_length(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_max_allowed_agents(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1434,7 +1434,7 @@ pub async fn get_torus0_max_allowed_agents(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_max_allowed_validators(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1444,7 +1444,7 @@ pub async fn get_torus0_max_allowed_validators(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_max_name_length(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1454,7 +1454,7 @@ pub async fn get_torus0_max_name_length(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_max_registrations_per_block(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1464,7 +1464,7 @@ pub async fn get_torus0_max_registrations_per_block(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_min_allowed_stake(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
@@ -1474,7 +1474,7 @@ pub async fn get_torus0_min_allowed_stake(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_min_name_length(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1484,7 +1484,7 @@ pub async fn get_torus0_min_name_length(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_min_validator_stake(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
@@ -1494,7 +1494,7 @@ pub async fn get_torus0_min_validator_stake(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage map value by key"]
+/// Get storage map value by key
 pub async fn get_torus0_registration_block_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -1505,7 +1505,7 @@ pub async fn get_torus0_registration_block_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage map"]
+/// Query all entries in storage map
 pub async fn query_map_torus0_registration_block(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ::core::primitive::u64>, Box<dyn std::error::Error>> {
@@ -1523,7 +1523,7 @@ pub async fn query_map_torus0_registration_block(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_registrations_this_block(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1533,7 +1533,7 @@ pub async fn get_torus0_registrations_this_block(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_registrations_this_interval(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1543,7 +1543,7 @@ pub async fn get_torus0_registrations_this_interval(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_reward_interval(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u16>, Box<dyn std::error::Error>> {
@@ -1553,7 +1553,7 @@ pub async fn get_torus0_reward_interval(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage double map value by keys"]
+/// Get storage double map value by keys
 pub async fn get_torus0_staked_by_by_account_id32_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32_1: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -1569,7 +1569,7 @@ pub async fn get_torus0_staked_by_by_account_id32_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage double map"]
+/// Query all entries in storage double map
 pub async fn query_map_torus0_staked_by(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, HashMap<String, ::core::primitive::u128>>, Box<dyn std::error::Error>> {
@@ -1592,7 +1592,7 @@ pub async fn query_map_torus0_staked_by(
     }
     Ok(result)
 }
-#[doc = r" Get storage double map value by keys"]
+/// Get storage double map value by keys
 pub async fn get_torus0_staking_to_by_account_id32_by_account_id32(
     client: &OnlineClient<PolkadotConfig>,
     account_id32_1: ::subxt::ext::subxt_core::utils::AccountId32,
@@ -1608,7 +1608,7 @@ pub async fn get_torus0_staking_to_by_account_id32_by_account_id32(
         .await?;
     Ok(result)
 }
-#[doc = r" Query all entries in storage double map"]
+/// Query all entries in storage double map
 pub async fn query_map_torus0_staking_to(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, HashMap<String, ::core::primitive::u128>>, Box<dyn std::error::Error>> {
@@ -1631,7 +1631,7 @@ pub async fn query_map_torus0_staking_to(
     }
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_torus0_total_stake(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
@@ -1641,7 +1641,7 @@ pub async fn get_torus0_total_stake(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_transaction_payment_next_fee_multiplier(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::sp_arithmetic::fixed_point::FixedU128>, Box<dyn std::error::Error>>
@@ -1652,7 +1652,7 @@ pub async fn get_transaction_payment_next_fee_multiplier(
         .await?;
     Ok(result)
 }
-#[doc = r" Get storage value"]
+/// Get storage value
 pub async fn get_transaction_payment_storage_version(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<Option<runtime_types::pallet_transaction_payment::Releases>, Box<dyn std::error::Error>>

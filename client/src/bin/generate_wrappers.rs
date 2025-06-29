@@ -1,5 +1,6 @@
 use clap::Parser;
 use std::path::PathBuf;
+use syn::parse_quote;
 use torus_client::utils::{codegen::WrapperGenerator, parser::StorageParser};
 
 #[derive(Parser)]
@@ -74,8 +75,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let wrappers_tokens =
         WrapperGenerator::generate_wrappers_for_network(&patterns, args.source.to_str());
 
-    // Convert TokenStream to formatted string
-    let wrappers_code = wrappers_tokens.to_string();
+    // Parse the TokenStream into a syn::File and format with prettyplease
+    let wrappers_file: syn::File = parse_quote! {
+        #wrappers_tokens
+    };
+    let wrappers_code = prettyplease::unparse(&wrappers_file);
 
     // Create output directory if it doesn't exist
     if let Some(parent) = args.output.parent() {
