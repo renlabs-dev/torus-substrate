@@ -26,6 +26,8 @@ mod test_mainnet;
 #[cfg(feature = "testnet")]
 mod faucet;
 
+mod generated_wrappers;
+
 use subxt::{config::Header, OnlineClient, PolkadotConfig};
 
 /// Network type to connect to

@@ -38,8 +38,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     let interface_path = match args.source {
-        InterfaceSource::Mainnet => "client/src/interfaces/mainnet.rs",
-        InterfaceSource::Testnet => "client/src/interfaces/testnet.rs",
+        InterfaceSource::Mainnet => "src/interfaces/mainnet.rs",
+        InterfaceSource::Testnet => "src/interfaces/testnet.rs",
     };
 
     // Get the full path for better error reporting
