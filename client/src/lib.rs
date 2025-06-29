@@ -23,10 +23,13 @@ mod test_balance_sum;
 #[cfg(test)]
 mod test_mainnet;
 
+#[cfg(test)]
+mod test_agents_query;
+
 #[cfg(feature = "testnet")]
 mod faucet;
 
-mod generated_wrappers;
+pub mod generated_wrappers;
 
 use subxt::{config::Header, OnlineClient, PolkadotConfig};
 

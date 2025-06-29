@@ -169,7 +169,9 @@ impl WrapperGenerator {
                     key_type_tokens.clone()
                 };
 
-            let key_conversion = if key_type.contains("AccountId32") || key_type.contains("U256") {
+            let key_conversion = if key_type.contains("AccountId32") {
+                quote! { format!("{}", key) }
+            } else if key_type.contains("U256") {
                 quote! { format!("{:?}", key) }
             } else {
                 quote! { key }
@@ -271,15 +273,17 @@ impl WrapperGenerator {
                     key2_type_tokens.clone()
                 };
 
-            let key1_conversion = if key1_type.contains("AccountId32") || key1_type.contains("U256")
-            {
+            let key1_conversion = if key1_type.contains("AccountId32") {
+                quote! { format!("{}", key1) }
+            } else if key1_type.contains("U256") {
                 quote! { format!("{:?}", key1) }
             } else {
                 quote! { key1 }
             };
 
-            let key2_conversion = if key2_type.contains("AccountId32") || key2_type.contains("U256")
-            {
+            let key2_conversion = if key2_type.contains("AccountId32") {
+                quote! { format!("{}", key2) }
+            } else if key2_type.contains("U256") {
                 quote! { format!("{:?}", key2) }
             } else {
                 quote! { key2 }
