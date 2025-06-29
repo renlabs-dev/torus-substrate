@@ -2,7 +2,7 @@ default: check test
 
 # Build
 
-build-mainnet:
+build-manet:
   cargo build --release --timings --package torus-runtime
 
 build-testnet:

@@ -32,24 +32,41 @@ The repository contains a Nix flake that provides a complete development environ
 nix develop
 ```
 
-## Generating Network Interfaces
+## Generating Network Interfaces & Storage Wrappers
 
-This crate uses `subxt` to generate Rust code from blockchain metadata. Generated code enables type-safe interaction with the Torus runtime.
+This crate uses `subxt` to generate Rust code from blockchain metadata and automatically generates ergonomic storage wrapper functions. All generated code is placed in the `src/interfaces/` directory for each network.
 
 ### Available Commands
 
 ```sh
-# Generate interfaces for mainnet (default)
-just gen_interfaces
+# Generate interfaces only
+just gen_interfaces              # mainnet (default)
+just gen_interfaces testnet      # testnet  
+just gen_interfaces dev          # local development node
 
-# Generate interfaces for testnet
-just gen_interfaces testnet
+# Generate storage wrappers only
+just gen_wrappers               # mainnet (default)
+just gen_wrappers testnet       # testnet
 
-# Generate interfaces for local development node
-just gen_interfaces dev
+# Generate both interfaces and wrappers
+just gen_complete               # mainnet (default)
+just gen_complete testnet       # testnet
 
-# Generate interfaces for all live networks (mainnet and testnet)
-just gen_for_live
+# Generate for all live networks
+just gen_for_live              # interfaces only for mainnet + testnet
+just gen_complete_live         # interfaces + wrappers for mainnet + testnet
+```
+
+### Generated Files Structure
+
+```
+src/
+├── interfaces/
+│   ├── mainnet.rs          # Subxt-generated mainnet API
+│   └── testnet.rs          # Subxt-generated testnet API
+└── wrappers/
+    ├── mainnet.rs          # Generated storage wrappers for mainnet
+    └── testnet.rs          # Generated storage wrappers for testnet
 ```
 
 ## Storage Wrapper Generation

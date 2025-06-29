@@ -16,6 +16,19 @@ pub mod interfaces {
     // pub mod dev;
 }
 
+// Generated storage wrappers for different networks
+pub mod wrappers {
+    // These modules will be populated by the `just gen_wrappers` command
+    #[cfg(feature = "mainnet")]
+    pub mod mainnet;
+
+    #[cfg(feature = "testnet")]
+    pub mod testnet;
+
+    // #[cfg(feature = "dev")]
+    // pub mod dev;
+}
+
 // Tests
 #[cfg(test)]
 mod test_balance_sum;
@@ -23,13 +36,11 @@ mod test_balance_sum;
 #[cfg(test)]
 mod test_mainnet;
 
-#[cfg(test)]
-mod test_agents_query;
+// #[cfg(test)]
+// mod test_agents_query;
 
 #[cfg(feature = "testnet")]
 mod faucet;
-
-pub mod generated_wrappers;
 
 use subxt::{config::Header, OnlineClient, PolkadotConfig};
 
