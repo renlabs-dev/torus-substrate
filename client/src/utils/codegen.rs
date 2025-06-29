@@ -32,6 +32,9 @@ impl WrapperGenerator {
             .flat_map(|pattern| Self::generate_pattern_wrappers(pattern, network))
             .collect();
 
+        // Generate helper functions for key decoding
+        let helper_functions = Self::generate_helper_functions();
+
         let api_import = match network {
             "mainnet" => quote! {
                 use crate::interfaces::mainnet::api;
@@ -60,7 +63,38 @@ impl WrapperGenerator {
             use codec::Decode;
             #api_import
 
+            #helper_functions
+
             #(#functions)*
+        }
+    }
+
+    /// Generate helper functions for key decoding
+    fn generate_helper_functions() -> TokenStream {
+        quote! {
+            /// Helper function for decoding single map keys
+            fn decode_map_key<K: Decode>(key_bytes: &[u8]) -> Result<K, codec::Error> {
+                if key_bytes.len() < 32 {
+                    return Err(codec::Error::from("Key bytes too short"));
+                }
+                K::decode(&mut &key_bytes[32..])
+            }
+
+            /// Helper function for decoding double map keys
+            fn decode_double_map_keys<K1: Decode, K2: Decode>(key_bytes: &[u8]) -> Result<(K1, K2), codec::Error> {
+                if key_bytes.len() < 32 {
+                    return Err(codec::Error::from("Key bytes too short"));
+                }
+                <(K1, K2)>::decode(&mut &key_bytes[32..])
+            }
+
+            /// Helper function for decoding n-map keys
+            fn decode_nmap_keys<K: Decode>(key_bytes: &[u8]) -> Result<K, codec::Error> {
+                if key_bytes.len() < 32 {
+                    return Err(codec::Error::from("Key bytes too short"));
+                }
+                K::decode(&mut &key_bytes[32..])
+            }
         }
     }
 
@@ -74,18 +108,21 @@ impl WrapperGenerator {
                 vec![
                     Self::generate_map_getter(pattern),
                     Self::generate_map_query(pattern),
+                    Self::generate_map_query_raw(pattern),
                 ]
             }
             StoragePattern::DoubleMap { .. } => {
                 vec![
                     Self::generate_double_map_getter(pattern),
                     Self::generate_double_map_query(pattern),
+                    Self::generate_double_map_query_raw(pattern),
                 ]
             }
             StoragePattern::NMap { .. } => {
                 vec![
                     Self::generate_nmap_getter(pattern),
                     Self::generate_nmap_query(pattern),
+                    Self::generate_nmap_query_raw(pattern),
                 ]
             }
         }
@@ -180,7 +217,7 @@ impl WrapperGenerator {
                 };
 
             let key_conversion = if key_type.contains("AccountId32") {
-                quote! { format!("{}", key) }
+                quote! { key.to_string() }
             } else if key_type.contains("U256") {
                 quote! { format!("{:?}", key) }
             } else {
@@ -197,8 +234,51 @@ impl WrapperGenerator {
                     let mut iter = storage.iter(api::storage().#pallet_ident().#storage_iter_ident()).await?;
 
                     while let Some(Ok(kv)) = iter.next().await {
-                        if let Ok(key) = #key_type_tokens::decode(&mut &kv.key_bytes[32..]) {
-                            result.insert(#key_conversion, kv.value);
+                        match decode_map_key::<#key_type_tokens>(&kv.key_bytes) {
+                            Ok(key) => {
+                                result.insert(#key_conversion, kv.value);
+                            }
+                            Err(_) => continue, // Skip malformed entries
+                        }
+                    }
+                    Ok(result)
+                }
+            }
+        } else {
+            panic!("Expected StoragePattern::Map");
+        }
+    }
+
+    /// Generate query function for Storage Map (raw variant)
+    fn generate_map_query_raw(pattern: &StoragePattern) -> TokenStream {
+        if let StoragePattern::Map {
+            name,
+            pallet,
+            key_type,
+            return_type,
+        } = pattern
+        {
+            let func_name = format_ident!("query_all_{}_{}_raw", pallet, name);
+            let pallet_ident = format_ident!("{}", pallet);
+            let storage_iter_ident = format_ident!("{}_iter", name);
+            let key_type_tokens = Self::parse_type_string(key_type);
+            let return_type_tokens = Self::parse_type_string(return_type);
+
+            quote! {
+                /// Query all entries in storage map (raw types preserved)
+                pub async fn #func_name(
+                    client: &OnlineClient<PolkadotConfig>,
+                ) -> Result<Vec<(#key_type_tokens, #return_type_tokens)>, Box<dyn std::error::Error>> {
+                    let storage = client.storage().at_latest().await?;
+                    let mut result = Vec::new();
+                    let mut iter = storage.iter(api::storage().#pallet_ident().#storage_iter_ident()).await?;
+
+                    while let Some(Ok(kv)) = iter.next().await {
+                        match decode_map_key::<#key_type_tokens>(&kv.key_bytes) {
+                            Ok(key) => {
+                                result.push((key, kv.value));
+                            }
+                            Err(_) => continue, // Skip malformed entries
                         }
                     }
                     Ok(result)
@@ -284,7 +364,7 @@ impl WrapperGenerator {
                 };
 
             let key1_conversion = if key1_type.contains("AccountId32") {
-                quote! { format!("{}", key1) }
+                quote! { key1.to_string() }
             } else if key1_type.contains("U256") {
                 quote! { format!("{:?}", key1) }
             } else {
@@ -292,7 +372,7 @@ impl WrapperGenerator {
             };
 
             let key2_conversion = if key2_type.contains("AccountId32") {
-                quote! { format!("{}", key2) }
+                quote! { key2.to_string() }
             } else if key2_type.contains("U256") {
                 quote! { format!("{:?}", key2) }
             } else {
@@ -309,8 +389,53 @@ impl WrapperGenerator {
                     let mut iter = storage.iter(api::storage().#pallet_ident().#storage_iter_ident()).await?;
 
                     while let Some(Ok(kv)) = iter.next().await {
-                        if let Ok((key1, key2)) = <(#key1_type_tokens, #key2_type_tokens)>::decode(&mut &kv.key_bytes[32..]) {
-                            result.entry(#key1_conversion).or_insert_with(HashMap::new).insert(#key2_conversion, kv.value);
+                        match decode_double_map_keys::<#key1_type_tokens, #key2_type_tokens>(&kv.key_bytes) {
+                            Ok((key1, key2)) => {
+                                result.entry(#key1_conversion).or_insert_with(HashMap::new).insert(#key2_conversion, kv.value);
+                            }
+                            Err(_) => continue, // Skip malformed entries
+                        }
+                    }
+                    Ok(result)
+                }
+            }
+        } else {
+            panic!("Expected StoragePattern::DoubleMap");
+        }
+    }
+
+    /// Generate query function for Storage Double Map (raw variant)
+    fn generate_double_map_query_raw(pattern: &StoragePattern) -> TokenStream {
+        if let StoragePattern::DoubleMap {
+            name,
+            pallet,
+            key1_type,
+            key2_type,
+            return_type,
+        } = pattern
+        {
+            let func_name = format_ident!("query_all_{}_{}_raw", pallet, name);
+            let pallet_ident = format_ident!("{}", pallet);
+            let storage_iter_ident = format_ident!("{}_iter", name);
+            let key1_type_tokens = Self::parse_type_string(key1_type);
+            let key2_type_tokens = Self::parse_type_string(key2_type);
+            let return_type_tokens = Self::parse_type_string(return_type);
+
+            quote! {
+                /// Query all entries in storage double map (raw types preserved)
+                pub async fn #func_name(
+                    client: &OnlineClient<PolkadotConfig>,
+                ) -> Result<Vec<(#key1_type_tokens, #key2_type_tokens, #return_type_tokens)>, Box<dyn std::error::Error>> {
+                    let storage = client.storage().at_latest().await?;
+                    let mut result = Vec::new();
+                    let mut iter = storage.iter(api::storage().#pallet_ident().#storage_iter_ident()).await?;
+
+                    while let Some(Ok(kv)) = iter.next().await {
+                        match decode_double_map_keys::<#key1_type_tokens, #key2_type_tokens>(&kv.key_bytes) {
+                            Ok((key1, key2)) => {
+                                result.push((key1, key2, kv.value));
+                            }
+                            Err(_) => continue, // Skip malformed entries
                         }
                     }
                     Ok(result)
@@ -399,8 +524,62 @@ impl WrapperGenerator {
                     let mut iter = storage.iter(api::storage().#pallet_ident().#storage_iter_ident()).await?;
 
                     while let Some(Ok(kv)) = iter.next().await {
-                        if let Ok(keys) = <#keys_tuple>::decode(&mut &kv.key_bytes[32..]) {
-                            result.push((keys, kv.value));
+                        match decode_nmap_keys::<#keys_tuple>(&kv.key_bytes) {
+                            Ok(keys) => {
+                                result.push((keys, kv.value));
+                            }
+                            Err(_) => continue, // Skip malformed entries
+                        }
+                    }
+                    Ok(result)
+                }
+            }
+        } else {
+            panic!("Expected StoragePattern::NMap");
+        }
+    }
+
+    /// Generate query function for Storage N Map (raw variant)
+    fn generate_nmap_query_raw(pattern: &StoragePattern) -> TokenStream {
+        if let StoragePattern::NMap {
+            name,
+            pallet,
+            key_types,
+            return_type,
+        } = pattern
+        {
+            let func_name = format_ident!("query_all_{}_{}_raw", pallet, name);
+            let pallet_ident = format_ident!("{}", pallet);
+            let storage_iter_ident = format_ident!("{}_iter", name);
+
+            let key_type_tokens: Vec<TokenStream> = key_types
+                .iter()
+                .map(|t| Self::parse_type_string(t))
+                .collect();
+            let return_type_tokens = Self::parse_type_string(return_type);
+
+            // Generate tuple type for keys
+            let keys_tuple = if key_types.len() == 1 {
+                quote! { #(#key_type_tokens),* }
+            } else {
+                quote! { (#(#key_type_tokens),*) }
+            };
+
+            quote! {
+                /// Query all entries in storage n-map (raw types preserved)
+                pub async fn #func_name(
+                    client: &OnlineClient<PolkadotConfig>,
+                ) -> Result<Vec<(#keys_tuple, #return_type_tokens)>, Box<dyn std::error::Error>> {
+                    let storage = client.storage().at_latest().await?;
+                    let mut result = Vec::new();
+                    let mut iter = storage.iter(api::storage().#pallet_ident().#storage_iter_ident()).await?;
+
+                    while let Some(Ok(kv)) = iter.next().await {
+                        match decode_nmap_keys::<#keys_tuple>(&kv.key_bytes) {
+                            Ok(keys) => {
+                                result.push((keys, kv.value));
+                            }
+                            Err(_) => continue, // Skip malformed entries
                         }
                     }
                     Ok(result)
