@@ -14,6 +14,7 @@ syn = { version = "2.0", features = ["full", "parsing"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 thiserror = "1.0"
+clap = { version = "4.0", features = ["derive"] }
 
 codec = { workspace = true }
 scale-info = { workspace = true }
@@ -40,6 +41,10 @@ schnorrkel = "0.11.4"
 futures = "0.3.31"
 
 sha2 = "0.10.9"
+
+[[bin]]
+name = "generate_wrappers"
+path = "src/bin/generate_wrappers.rs"
 
 [features]
 

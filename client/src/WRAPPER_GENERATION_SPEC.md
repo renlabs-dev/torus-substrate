@@ -2,13 +2,36 @@
 
 ## Overview
 
-Generate ergonomic wrapper functions for Substrate storage items from subxt-generated API code. The system parses the raw `api.rs` file and generates clean, typed wrapper functions that handle key decoding and provide intuitive access patterns.
+Generate ergonomic wrapper functions for Substrate storage items from subxt-generated API code. The system parses interface files (`mainnet.rs` or `testnet.rs`) and generates clean, typed wrapper functions that handle key decoding and provide intuitive access patterns.
 
 ## Architecture
 
 ```
-api.rs (subxt) → Parser → StorageItem[] → CodeGen → wrappers.rs
+interfaces/{mainnet|testnet}.rs → Parser → StorageItem[] → CodeGen → generated_wrappers.rs
 ```
+
+## Command-Based Generation
+
+### Usage
+
+```bash
+# Generate wrappers from mainnet interface
+cargo run --bin generate-wrappers -- --source mainnet --output src/generated_wrappers.rs
+
+# Generate wrappers from testnet interface  
+cargo run --bin generate-wrappers -- --source testnet --output src/generated_wrappers.rs
+
+# Short form
+cargo run --bin generate-wrappers -- -s mainnet -o src/generated_wrappers.rs
+```
+
+### Benefits
+
+- ✅ **No build overhead**: Generate only when needed
+- ✅ **Clear provenance**: Users can see exactly what interfaces generated the code
+- ✅ **Easy debugging**: Generated code is inspectable and can be committed
+- ✅ **IDE friendly**: No build-time code changes that confuse language servers
+- ✅ **Explicit control**: Developers choose when to regenerate
 
 ## Core Components
 
@@ -161,7 +184,69 @@ pub async fn query_map_{storage_name}(
 
 ## Implementation
 
-### Parser Module (`src/parser.rs`)
+### Command-Line Tool (`src/bin/generate_wrappers.rs`)
+
+```rust
+use clap::Parser;
+use std::path::PathBuf;
+
+#[derive(Parser)]
+#[command(name = "generate-wrappers")]
+#[command(about = "Generate storage wrapper functions from subxt interfaces")]
+struct Args {
+    /// Source interface to parse (mainnet or testnet)
+    #[arg(short, long, value_enum)]
+    source: InterfaceSource,
+    
+    /// Output file path
+    #[arg(short, long)]
+    output: PathBuf,
+    
+    /// Force overwrite existing output file
+    #[arg(short, long)]
+    force: bool,
+}
+
+#[derive(clap::ValueEnum, Clone)]
+enum InterfaceSource {
+    Mainnet,
+    Testnet,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
+    
+    let interface_path = match args.source {
+        InterfaceSource::Mainnet => "src/interfaces/mainnet.rs",
+        InterfaceSource::Testnet => "src/interfaces/testnet.rs",
+    };
+    
+    if !std::path::Path::new(interface_path).exists() {
+        eprintln!("Error: Interface file not found: {}", interface_path);
+        std::process::exit(1);
+    }
+    
+    if args.output.exists() && !args.force {
+        eprintln!("Error: Output file already exists: {:?}", args.output);
+        eprintln!("Use --force to overwrite");
+        std::process::exit(1);
+    }
+    
+    println!("Parsing interface: {}", interface_path);
+    let content = std::fs::read_to_string(interface_path)?;
+    let patterns = parser::StorageParser::parse_api_file(&content)?;
+    
+    println!("Found {} storage patterns", patterns.len());
+    let wrappers = codegen::WrapperGenerator::generate_wrappers(&patterns, args.source)?;
+    
+    std::fs::write(&args.output, wrappers)?;
+    println!("Generated wrappers: {:?}", args.output);
+    
+    Ok(())
+}
+```
+
+### Parser Module (`src/utils/parser.rs`)
 
 ```rust
 use syn::{parse_file, Item, ItemMod, ItemFn, FnArg};
@@ -195,7 +280,7 @@ impl StorageParser {
 }
 ```
 
-### Code Generator Module (`src/codegen.rs`)
+### Code Generator Module (`src/utils/codegen.rs`)
 
 ```rust
 use quote::quote;
@@ -204,21 +289,37 @@ use proc_macro2::TokenStream;
 pub struct WrapperGenerator;
 
 impl WrapperGenerator {
-    pub fn generate_wrappers(patterns: &[StoragePattern]) -> TokenStream {
+    pub fn generate_wrappers(
+        patterns: &[StoragePattern], 
+        source: InterfaceSource
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let import_path = match source {
+            InterfaceSource::Mainnet => "crate::interfaces::mainnet::api",
+            InterfaceSource::Testnet => "crate::interfaces::testnet::api",
+        };
+        
         let functions: Vec<TokenStream> = patterns
             .iter()
             .flat_map(|pattern| Self::generate_pattern_wrappers(pattern))
             .collect();
             
-        quote! {
+        let output = quote! {
+            //! Generated storage wrappers
+            //! 
+            //! This file was auto-generated from: #interface_path
+            //! Do not edit manually - regenerate using:
+            //! `cargo run --bin generate-wrappers -- --source #source_name`
+            
             use std::collections::HashMap;
             use subxt::{OnlineClient, PolkadotConfig};
             use subxt::ext::subxt_core::utils::AccountId32;
             use codec::Decode;
-            use crate::interfaces::mainnet::api;
+            use #import_path as api;
             
             #(#functions)*
-        }
+        };
+        
+        Ok(output.to_string())
     }
     
     fn generate_pattern_wrappers(pattern: &StoragePattern) -> Vec<TokenStream> {
@@ -234,33 +335,11 @@ impl WrapperGenerator {
 }
 ```
 
-### Build Integration (`build.rs`)
-
-```rust
-use std::env;
-use std::path::Path;
-
-fn main() {
-    let api_path = "src/interfaces/mainnet.rs"; // or generated api.rs
-    let output_path = "src/generated_wrappers.rs";
-    
-    if Path::new(api_path).exists() {
-        let content = std::fs::read_to_string(api_path).unwrap();
-        let patterns = parser::StorageParser::parse_api_file(&content).unwrap();
-        let wrappers = codegen::WrapperGenerator::generate_wrappers(&patterns);
-        
-        std::fs::write(output_path, wrappers.to_string()).unwrap();
-    }
-    
-    println!("cargo:rerun-if-changed={}", api_path);
-}
-```
-
 ## Usage
-
 ```rust
-// Generated wrappers usage
-use crate::generated_wrappers::*;
+// Include generated wrappers in your module
+mod generated_wrappers;
+use generated_wrappers::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -290,28 +369,65 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## File Structure
 
 ```
-utils/
-│   ├── parser.rs           # Parse api.rs, extract storage patterns
-│   ├── codegen.rs          # Generate wrapper code
-│   ├── generated_wrappers.rs  # Generated output (gitignored)
-│   └── lib.rs             # Re-export generated wrappers
-├── build.rs               # Build-time generation
-└── Cargo.toml            # Dependencies: syn, quote, proc-macro2
+src/
+├── bin/
+│   └── generate_wrappers.rs    # Command-line tool
+├── utils/
+│   ├── parser.rs              # Parse interface files, extract storage patterns
+│   ├── codegen.rs             # Generate wrapper code
+│   └── mod.rs                 # Module declarations
+├── interfaces/
+│   ├── mainnet.rs             # Mainnet interface (input)
+│   └── testnet.rs             # Testnet interface (input)  
+├── generated_wrappers.rs      # Generated output (committed to git)
+└── lib.rs                     # Include generated wrappers
 ```
 
 ## Dependencies
 
 ```toml
-[build-dependencies]
-syn = { version = "2.0", features = ["full"] }
-quote = "1.0"
-proc-macro2 = "1.0"
-
 [dependencies]
 subxt = "0.37"
 codec = "3.6"
 tokio = { version = "1.0", features = ["full"] }
+
+[[bin]]
+name = "generate-wrappers"
+path = "src/bin/generate_wrappers.rs"
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+clap = { version = "4.0", features = ["derive"] }
 ```
+
+## Development Workflow
+
+1. **Initial Generation**:
+   ```bash
+   cargo run --bin generate-wrappers -- --source mainnet --output src/generated_wrappers.rs
+   ```
+
+2. **After Interface Updates**:
+   ```bash
+   # Regenerate from updated interface
+   cargo run --bin generate-wrappers -- --source mainnet --output src/generated_wrappers.rs --force
+   
+   # Review changes
+   git diff src/generated_wrappers.rs
+   
+   # Commit both interface and generated wrapper changes
+   git add src/interfaces/mainnet.rs src/generated_wrappers.rs
+   git commit -m "Update storage interfaces and regenerate wrappers"
+   ```
+
+3. **CI Verification** (optional):
+   ```bash
+   # Check if generated code is up-to-date
+   cargo run --bin generate-wrappers -- --source mainnet --output /tmp/test_wrappers.rs
+   diff src/generated_wrappers.rs /tmp/test_wrappers.rs
+   ```
 
 ## Naming Conventions
 
@@ -320,4 +436,4 @@ tokio = { version = "1.0", features = ["full"] }
 - **Storage Double Maps**: `get_{storage_name}_by_{key1_name}_by_{key2_name}()`, `query_map_{storage_name}()`
 - **Storage N Maps**: `get_{storage_name}_by_{key1}_by_{key2}_by_{keyN}()`, `query_map_{storage_name}()`
 
-Type names are converted from PascalCase to snake_case for parameter names (e.g., `AccountId32` → `account_id`, `ProposalId` → `proposal_id`). 
+Type names are converted from PascalCase to snake_case for parameter names (e.g., `AccountId32` → `account_id`, `ProposalId` → `proposal_id`).

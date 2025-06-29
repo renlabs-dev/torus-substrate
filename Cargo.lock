@@ -17916,6 +17916,7 @@ dependencies = [
 name = "torus-client"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "futures",
  "hex",
  "keccak-hash 0.11.0 (git+https://github.com/paritytech/parity-common?rev=f0dade11ac0b2450e6a54f36035f74b2b8ce4c00)",
