@@ -165,7 +165,7 @@ impl WrapperGenerator {
             return_type,
         } = pattern
         {
-            let func_name = format_ident!("query_map_{}_{}", pallet, name);
+            let func_name = format_ident!("query_all_{}_{}", pallet, name);
             let pallet_ident = format_ident!("{}", pallet);
             let storage_iter_ident = format_ident!("{}_iter", name);
             let key_type_tokens = Self::parse_type_string(key_type);
@@ -261,7 +261,7 @@ impl WrapperGenerator {
             return_type,
         } = pattern
         {
-            let func_name = format_ident!("query_map_{}_{}", pallet, name);
+            let func_name = format_ident!("query_all_{}_{}", pallet, name);
             let pallet_ident = format_ident!("{}", pallet);
             let storage_iter_ident = format_ident!("{}_iter", name);
             let key1_type_tokens = Self::parse_type_string(key1_type);
@@ -372,7 +372,7 @@ impl WrapperGenerator {
             return_type,
         } = pattern
         {
-            let func_name = format_ident!("query_map_{}_{}", pallet, name);
+            let func_name = format_ident!("query_all_{}_{}", pallet, name);
             let pallet_ident = format_ident!("{}", pallet);
             let storage_iter_ident = format_ident!("{}_iter", name);
 

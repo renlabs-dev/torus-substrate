@@ -46,7 +46,7 @@ pub async fn get_balances_account_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_balances_account(
+pub async fn query_all_balances_account(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<String, runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>>,
@@ -88,7 +88,7 @@ pub async fn get_balances_freezes_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_balances_freezes(
+pub async fn query_all_balances_freezes(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -138,7 +138,7 @@ pub async fn get_balances_holds_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_balances_holds(
+pub async fn query_all_balances_holds(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -193,7 +193,7 @@ pub async fn get_balances_locks_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_balances_locks(
+pub async fn query_all_balances_locks(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -235,7 +235,7 @@ pub async fn get_balances_reserves_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_balances_reserves(
+pub async fn query_all_balances_reserves(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -282,7 +282,7 @@ pub async fn get_emission0_consensus_members_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_emission0_consensus_members(
+pub async fn query_all_emission0_consensus_members(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<String, runtime_types::pallet_emission0::ConsensusMember>,
@@ -378,7 +378,7 @@ pub async fn get_emission0_weight_control_delegation_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_emission0_weight_control_delegation(
+pub async fn query_all_emission0_weight_control_delegation(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ::subxt::ext::subxt_core::utils::AccountId32>, Box<dyn std::error::Error>>
 {
@@ -408,7 +408,7 @@ pub async fn get_ethereum_block_hash_by_u256(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_ethereum_block_hash(
+pub async fn query_all_ethereum_block_hash(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ::subxt::ext::subxt_core::utils::H256>, Box<dyn std::error::Error>> {
     let storage = client.storage().at_latest().await?;
@@ -496,7 +496,7 @@ pub async fn get_evm_account_codes_by_h160(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_evm_account_codes(
+pub async fn query_all_evm_account_codes(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -529,7 +529,7 @@ pub async fn get_evm_account_codes_metadata_by_h160(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_evm_account_codes_metadata(
+pub async fn query_all_evm_account_codes_metadata(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<::subxt::ext::subxt_core::utils::H160, runtime_types::pallet_evm::CodeMetadata>,
@@ -560,7 +560,7 @@ pub async fn get_evm_account_storages_by_h160_by_h256(
     Ok(result)
 }
 /// Query all entries in storage double map
-pub async fn query_map_evm_account_storages(
+pub async fn query_all_evm_account_storages(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -598,7 +598,7 @@ pub async fn get_evm_suicided_by_h160(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_evm_suicided(
+pub async fn query_all_evm_suicided(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<::subxt::ext::subxt_core::utils::H160, ()>, Box<dyn std::error::Error>> {
     let storage = client.storage().at_latest().await?;
@@ -626,7 +626,7 @@ pub async fn get_governance_agent_applications_by_u32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_governance_agent_applications(
+pub async fn query_all_governance_agent_applications(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -659,7 +659,7 @@ pub async fn get_governance_allocators_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_governance_allocators(
+pub async fn query_all_governance_allocators(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ()>, Box<dyn std::error::Error>> {
     let storage = client.storage().at_latest().await?;
@@ -688,7 +688,7 @@ pub async fn get_governance_curators_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_governance_curators(
+pub async fn query_all_governance_curators(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ()>, Box<dyn std::error::Error>> {
     let storage = client.storage().at_latest().await?;
@@ -758,7 +758,7 @@ pub async fn get_governance_proposals_by_u64(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_governance_proposals(
+pub async fn query_all_governance_proposals(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<::core::primitive::u64, runtime_types::pallet_governance::proposal::Proposal>,
@@ -801,7 +801,7 @@ pub async fn get_governance_unrewarded_proposals_by_u64(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_governance_unrewarded_proposals(
+pub async fn query_all_governance_unrewarded_proposals(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<::core::primitive::u64, runtime_types::pallet_governance::proposal::UnrewardedProposal>,
@@ -831,7 +831,7 @@ pub async fn get_governance_whitelist_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_governance_whitelist(
+pub async fn query_all_governance_whitelist(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ()>, Box<dyn std::error::Error>> {
     let storage = client.storage().at_latest().await?;
@@ -911,7 +911,7 @@ pub async fn get_grandpa_set_id_session_by_u64(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_grandpa_set_id_session(
+pub async fn query_all_grandpa_set_id_session(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<::core::primitive::u64, ::core::primitive::u32>, Box<dyn std::error::Error>> {
     let storage = client.storage().at_latest().await?;
@@ -971,7 +971,7 @@ pub async fn get_multisig_multisigs_by_account_id32_by_u8_array(
     Ok(result)
 }
 /// Query all entries in storage double map
-pub async fn query_map_multisig_multisigs(
+pub async fn query_all_multisig_multisigs(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -1034,7 +1034,7 @@ pub async fn get_system_account_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_system_account(
+pub async fn query_all_system_account(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -1091,7 +1091,7 @@ pub async fn get_system_block_hash_by_u64(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_system_block_hash(
+pub async fn query_all_system_block_hash(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<::core::primitive::u64, ::subxt::ext::subxt_core::utils::H256>,
@@ -1162,7 +1162,7 @@ pub async fn get_system_event_topics_by_h256(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_system_event_topics(
+pub async fn query_all_system_event_topics(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -1236,7 +1236,7 @@ pub async fn get_system_extrinsic_data_by_u32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_system_extrinsic_data(
+pub async fn query_all_system_extrinsic_data(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<
     HashMap<
@@ -1346,7 +1346,7 @@ pub async fn get_torus0_agents_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_torus0_agents(
+pub async fn query_all_torus0_agents(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, runtime_types::pallet_torus0::agent::Agent>, Box<dyn std::error::Error>>
 {
@@ -1506,7 +1506,7 @@ pub async fn get_torus0_registration_block_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage map
-pub async fn query_map_torus0_registration_block(
+pub async fn query_all_torus0_registration_block(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, ::core::primitive::u64>, Box<dyn std::error::Error>> {
     let storage = client.storage().at_latest().await?;
@@ -1570,7 +1570,7 @@ pub async fn get_torus0_staked_by_by_account_id32_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage double map
-pub async fn query_map_torus0_staked_by(
+pub async fn query_all_torus0_staked_by(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, HashMap<String, ::core::primitive::u128>>, Box<dyn std::error::Error>> {
     let storage = client.storage().at_latest().await?;
@@ -1609,7 +1609,7 @@ pub async fn get_torus0_staking_to_by_account_id32_by_account_id32(
     Ok(result)
 }
 /// Query all entries in storage double map
-pub async fn query_map_torus0_staking_to(
+pub async fn query_all_torus0_staking_to(
     client: &OnlineClient<PolkadotConfig>,
 ) -> Result<HashMap<String, HashMap<String, ::core::primitive::u128>>, Box<dyn std::error::Error>> {
     let storage = client.storage().at_latest().await?;

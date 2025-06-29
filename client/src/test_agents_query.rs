@@ -1,6 +1,6 @@
 //! Quick test for querying Torus0 agents
 
-use crate::generated_wrappers::{get_torus0_agents_by_account_id32, query_map_torus0_staked_by};
+use crate::generated_wrappers::{get_torus0_agents_by_account_id32, query_all_torus0_staked_by};
 use crate::{Network, TorusClient};
 
 #[tokio::test]
@@ -12,7 +12,7 @@ async fn test_query_staked_by_map() -> Result<(), Box<dyn std::error::Error>> {
         let api = client.client();
 
         println!("Querying staked by map...");
-        let staked_by = query_map_torus0_staked_by(api).await?;
+        let staked_by = query_all_torus0_staked_by(api).await?;
 
         println!("Found {} agents with stakers", staked_by.len());
 

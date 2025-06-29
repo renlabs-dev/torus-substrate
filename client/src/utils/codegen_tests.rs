@@ -55,7 +55,7 @@ mod tests {
         assert!(code.contains("use subxt :: { OnlineClient , PolkadotConfig }"));
         assert!(code.contains("get_total_stake"));
         assert!(code.contains("get_agents_by_account_id32"));
-        assert!(code.contains("query_map_agents"));
+        assert!(code.contains("query_all_agents"));
     }
 
     #[test]
@@ -127,7 +127,7 @@ mod tests {
         // Test that the function names use the automatic conversion
         assert!(code.contains("get_staked_by_by_account_id32_by_permission_id"));
         assert!(code.contains("get_multi_key_storage_by_account_id32_by_stream_id_by_block_number"));
-        assert!(code.contains("query_map_staked_by"));
-        assert!(code.contains("query_map_multi_key_storage"));
+        assert!(code.contains("query_all_staked_by"));
+        assert!(code.contains("query_all_multi_key_storage"));
     }
 }
