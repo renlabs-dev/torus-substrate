@@ -9,6 +9,8 @@ license = "MIT"
 
 [dependencies]
 
+anyhow = { workspace = true }
+
 codec = { workspace = true }
 scale-info = { workspace = true }
 
@@ -33,6 +35,8 @@ schnorrkel = "0.11.4"
 futures = "0.3.31"
 
 sha2 = "0.10.9"
+
+paste = { workspace = true }
 
 [features]
 
