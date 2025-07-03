@@ -402,7 +402,7 @@ fn add_proposal<T: crate::Config>(
         cost,
         ExistenceRequirement::AllowDeath,
     )
-    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToApply)?;
+    .map_err(|err| crate::Error::<T>::NotEnoughBalanceToApply)?;
 
     let proposal_id: u64 = crate::Proposals::<T>::iter()
         .count()
