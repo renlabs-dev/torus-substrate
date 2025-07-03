@@ -5,7 +5,7 @@ use polkadot_sdk::frame_support::{
 use crate::{Config, Pallet};
 
 pub mod v2 {
-    use polkadot_sdk::sp_std::collections::btree_set::BTreeSet;
+    use polkadot_sdk::{sp_std::collections::btree_set::BTreeSet, sp_tracing::error};
 
     use pallet_emission0_api::Emission0Api;
     use pallet_governance_api::GovernanceApi;
@@ -30,13 +30,13 @@ pub mod v2 {
                             &agent, allocator,
                         )
                     {
-                        polkadot_sdk::sp_tracing::error!(
+                        error!(
                             "failed to delegate weight control from {agent:?} to {allocator:?}: {err:?}"
                         );
                     }
                 }
             } else {
-                polkadot_sdk::sp_tracing::error!("no allocators available");
+                error!("no allocators available");
             }
 
             Weight::zero()

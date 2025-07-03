@@ -167,3 +167,66 @@ pub mod v5 {
         }
     }
 }
+
+pub mod v6 {
+
+    use polkadot_sdk::{
+        frame_support::{
+            migrations::VersionedMigration,
+            traits::{Currency, Imbalance, NamedReservableCurrency, UncheckedOnRuntimeUpgrade},
+        },
+        sp_core::Get,
+        sp_std::collections::btree_set::BTreeSet,
+        sp_tracing::{error, info},
+        sp_weights::Weight,
+    };
+
+    use crate::{stake::STAKE_IDENTIFIER, Config, Pallet};
+
+    pub type Migration<T, W> = VersionedMigration<5, 6, MigrateToV6<T>, Pallet<T>, W>;
+    pub struct MigrateToV6<T>(core::marker::PhantomData<T>);
+
+    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV6<T> {
+        fn on_runtime_upgrade() -> Weight {
+            let mut minted = 0u128;
+            for (staker, _, amount) in crate::StakingTo::<T>::iter() {
+                let to_mint = if T::Currency::free_balance(&staker) == 0 {
+                    amount.saturating_add(T::ExistentialDeposit::get())
+                } else {
+                    amount
+                };
+
+                let imbalance = T::Currency::deposit_creating(&staker, to_mint);
+                if imbalance.peek() != to_mint {
+                    error!(
+                        "failed to mint {to_mint} stake tokens for account {staker:?}: actual {}",
+                        imbalance.peek()
+                    );
+                    continue;
+                }
+                if let Err(err) = T::Currency::reserve_named(STAKE_IDENTIFIER, &staker, amount) {
+                    error!("failed to reserve minted {amount} stake tokens for account {staker:?}: {err:?}");
+                }
+                minted = minted.saturating_add(amount);
+            }
+
+            info!("total stake minted: {minted}");
+
+            let total_reserved: u128 = crate::StakingTo::<T>::iter_keys()
+                .map(|(staker, _)| staker)
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .map(|staker| T::Currency::reserved_balance_named(STAKE_IDENTIFIER, &staker))
+                .sum();
+            let total_staked = crate::TotalStake::<T>::get();
+
+            if total_reserved != total_staked {
+                error!("total reserved balance does not match total tracked state: {total_reserved} != {total_staked}");
+            } else {
+                info!("all stake was minted and reserved correctly");
+            }
+
+            Weight::default()
+        }
+    }
+}

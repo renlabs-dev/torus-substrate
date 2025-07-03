@@ -148,6 +148,7 @@ impl pallet_torus0::Config for Test {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type ExistentialDeposit = ExistentialDeposit;
 
     type Governance = Governance;
 
@@ -273,7 +274,7 @@ impl pallet_balances::Config for Test {
     type MaxLocks = MaxLocks;
     type WeightInfo = ();
     type MaxReserves = MaxReserves;
-    type ReserveIdentifier = ();
+    type ReserveIdentifier = [u8; 8];
     type RuntimeHoldReason = ();
     type FreezeIdentifier = ();
     type MaxFreezes = polkadot_sdk::frame_support::traits::ConstU32<16>;
