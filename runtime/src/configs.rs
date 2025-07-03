@@ -105,7 +105,7 @@ impl pallet_balances::Config for Runtime {
     /// 0.1 Unit
     type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
     /// The identifier for reserved tokens
-    type ReserveIdentifier = ();
+    type ReserveIdentifier = [u8; 8];
     /// The identifier for frozen tokens
     type FreezeIdentifier = Self::RuntimeFreezeReason;
     /// Handler for the unspent dust that gets burned
@@ -366,6 +366,7 @@ impl pallet_torus0::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
 
     type Governance = Governance;
 
