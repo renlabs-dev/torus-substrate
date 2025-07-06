@@ -204,9 +204,11 @@ impl<T: Config> ConsensusMemberInput<T> {
 
         let validator_permit = total_stake >= min_validator_stake && !weights.is_empty();
 
-        let weights = validator_permit
-            .then(|| Self::prepare_weights(weights, &agent_id))
-            .unwrap_or_default();
+        let weights = if validator_permit {
+            Self::prepare_weights(weights, &agent_id)
+        } else {
+            Default::default()
+        };
 
         ConsensusMemberInput {
             registered: <T::Torus>::is_agent_registered(&agent_id)

@@ -64,7 +64,7 @@ pub mod v4 {
 }
 
 pub mod v5 {
-    use pallet_torus0_api::{NamespacePath, NAMESPACE_AGENT_PREFIX};
+    use pallet_torus0_api::NamespacePath;
     use polkadot_sdk::{
         frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
         sp_tracing::{error, info},
@@ -138,15 +138,10 @@ pub mod v5 {
                     continue;
                 };
 
-                let path: polkadot_sdk::sp_std::vec::Vec<_> =
-                    [NAMESPACE_AGENT_PREFIX, agent_name.as_bytes()].concat();
-                let path = match NamespacePath::new_agent(&path) {
+                let path = match NamespacePath::new_agent_root(agent_name.as_bytes()) {
                     Ok(path) => path,
                     Err(err) => {
-                        error!(
-                            "cannot create path for agent {agent_name:?} ({:?}): {err:?}",
-                            core::str::from_utf8(&path)
-                        );
+                        error!("cannot create path for agent {agent_name:?}: {err:?}");
                         continue;
                     }
                 };

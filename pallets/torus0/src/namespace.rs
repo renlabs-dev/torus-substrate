@@ -1,5 +1,6 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_governance_api::GovernanceApi;
+use pallet_permission0_api::Permission0NamespacesApi;
 use polkadot_sdk::{
     frame_support::{
         traits::{ExistenceRequirement, ReservableCurrency},
@@ -261,6 +262,13 @@ pub fn delete_namespace<T: Config>(
         Namespaces::<T>::contains_key(&owner, &path),
         Error::<T>::NamespaceNotFound
     );
+
+    if let NamespaceOwnership::Account(owner) = &owner {
+        ensure!(
+            !T::Permission0::is_delegating_namespace(owner, &path),
+            Error::<T>::NamespaceBeingDelegated
+        );
+    }
 
     let mut total_deposit = BalanceOf::<T>::zero();
     let namespaces_to_delete: Vec<_> = Namespaces::<T>::iter_prefix(&owner)

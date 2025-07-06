@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 //! The Torus node implementation.
 
 mod chain_spec;

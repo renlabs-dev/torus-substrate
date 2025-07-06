@@ -199,10 +199,7 @@ fn namespace_fee_monotonic_increase() {
             let current_fee = config.namespace_fee(count).unwrap();
             assert!(
                 current_fee >= prev_fee,
-                "agent.alice.fee should increase or stay same as count increases: {} > {} at count {}",
-                current_fee,
-                prev_fee,
-                count
+                "agent.alice.fee should increase or stay same as count increases: {current_fee} > {prev_fee} at count {count}"
             );
             prev_fee = current_fee;
         }
@@ -886,5 +883,283 @@ fn create_namespace_insufficient_balance() {
             ),
             pallet_balances::Error::<Test>::InsufficientBalance
         );
+    });
+}
+
+#[test]
+fn delete_namespace_not_exists() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::delete_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"agent.alice.nonexistent".to_vec())
+            ),
+            pallet_torus0::Error::<Test>::NamespaceNotFound
+        );
+    });
+}
+
+#[test]
+fn delete_namespace_root_agent_entry() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
+        ));
+
+        assert!(pallet_torus0::Namespaces::<Test>::contains_key(
+            pallet_torus0::namespace::NamespaceOwnership::Account(0),
+            "agent.alice.compute".parse::<NamespacePath>().unwrap()
+        ));
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::delete_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"agent.alice".to_vec())
+            ),
+            pallet_torus0::Error::<Test>::InvalidNamespacePath
+        );
+    });
+}
+
+#[test]
+fn delete_namespace_being_delegated() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
+        ));
+
+        let mut paths = polkadot_sdk::sp_runtime::BoundedBTreeSet::new();
+        paths
+            .try_insert(b"agent.alice.compute".to_vec().try_into().unwrap())
+            .unwrap();
+
+        assert_ok!(test_utils::Permission0::grant_namespace_permission(
+            get_origin(0),
+            1,
+            paths,
+            test_utils::pallet_permission0::PermissionDuration::Indefinite,
+            test_utils::pallet_permission0::RevocationTerms::RevocableByGrantor,
+        ));
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::delete_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
+            ),
+            pallet_torus0::Error::<Test>::NamespaceBeingDelegated
+        );
+    });
+}
+
+#[test]
+fn delete_namespace_deposit_refund() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        let initial_balance = as_tors(1000);
+        register_agent_with(0, "alice", initial_balance);
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
+        ));
+
+        let balance_after_creation = Balances::free_balance(0);
+        let reserved_after_creation = Balances::reserved_balance(0);
+
+        assert!(balance_after_creation < initial_balance);
+        assert!(reserved_after_creation > 0);
+
+        // Sum deposits from all created namespaces
+        let ownership = pallet_torus0::namespace::NamespaceOwnership::Account(0);
+        let mut total_deposit_from_storage = 0u128;
+        for (_, metadata) in pallet_torus0::Namespaces::<Test>::iter_prefix(&ownership) {
+            total_deposit_from_storage += metadata.deposit;
+        }
+        assert_eq!(reserved_after_creation, total_deposit_from_storage);
+
+        // Get deposit amount for the namespace being deleted
+        let compute_path = "agent.alice.compute".parse::<NamespacePath>().unwrap();
+        let compute_deposit = pallet_torus0::Namespaces::<Test>::get(&ownership, &compute_path)
+            .map(|m| m.deposit)
+            .unwrap_or(0);
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::delete_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
+        ));
+
+        let balance_after_deletion = Balances::free_balance(0);
+        let reserved_after_deletion = Balances::reserved_balance(0);
+
+        // Verify the compute namespace deposit was refunded
+        assert_eq!(
+            reserved_after_deletion,
+            reserved_after_creation - compute_deposit
+        );
+        assert_eq!(
+            balance_after_deletion,
+            balance_after_creation + compute_deposit
+        );
+
+        // Verify remaining deposits match what's in storage
+        let mut remaining_deposit = 0u128;
+        for (_, metadata) in pallet_torus0::Namespaces::<Test>::iter_prefix(&ownership) {
+            remaining_deposit += metadata.deposit;
+        }
+        assert_eq!(reserved_after_deletion, remaining_deposit);
+    });
+}
+
+#[test]
+fn delete_namespace_hierarchy_deposit_refund() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        let initial_balance = as_tors(1000);
+        register_agent_with(0, "alice", initial_balance);
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.v1.compute.gpu".to_vec())
+        ));
+
+        let reserved_after_creation = Balances::reserved_balance(0);
+        let balance_after_creation = Balances::free_balance(0);
+
+        let ownership = pallet_torus0::namespace::NamespaceOwnership::Account(0);
+        let mut total_deposit_from_storage = 0u128;
+        for (_, metadata) in pallet_torus0::Namespaces::<Test>::iter_prefix(&ownership) {
+            total_deposit_from_storage += metadata.deposit;
+        }
+        assert_eq!(reserved_after_creation, total_deposit_from_storage);
+
+        let paths_to_delete = [
+            "agent.alice.v1",
+            "agent.alice.v1.compute",
+            "agent.alice.v1.compute.gpu",
+        ];
+        let mut deposits_to_refund = 0u128;
+        for path_str in &paths_to_delete {
+            let path = path_str.parse::<NamespacePath>().unwrap();
+            if let Some(metadata) = pallet_torus0::Namespaces::<Test>::get(&ownership, &path) {
+                deposits_to_refund += metadata.deposit;
+            }
+        }
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::delete_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.v1".to_vec())
+        ));
+
+        let reserved_after_deletion = Balances::reserved_balance(0);
+        let balance_after_deletion = Balances::free_balance(0);
+
+        assert_eq!(
+            reserved_after_deletion,
+            reserved_after_creation - deposits_to_refund
+        );
+        assert_eq!(
+            balance_after_deletion,
+            balance_after_creation + deposits_to_refund
+        );
+
+        for path in paths_to_delete {
+            assert!(!pallet_torus0::Namespaces::<Test>::contains_key(
+                ownership.clone(),
+                path.parse::<NamespacePath>().unwrap()
+            ));
+        }
+
+        let mut remaining_deposit = 0u128;
+        for (_, metadata) in pallet_torus0::Namespaces::<Test>::iter_prefix(&ownership) {
+            remaining_deposit += metadata.deposit;
+        }
+        assert_eq!(reserved_after_deletion, remaining_deposit);
+    });
+}
+
+#[test]
+fn delete_namespace_not_owner() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+        register_agent_with(1, "bob", as_tors(1000));
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
+        ));
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::delete_namespace(
+                get_origin(1),
+                BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
+            ),
+            pallet_torus0::Error::<Test>::NamespaceNotFound
+        );
+    });
+}
+
+#[test]
+fn delete_namespace_partial_hierarchy() {
+    new_test_ext().execute_with(|| {
+        set_namespace_config();
+        register_agent_with(0, "alice", as_tors(1000));
+
+        for path in [
+            "agent.alice.v1.compute.gpu",
+            "agent.alice.v1.storage.disk",
+            "agent.alice.v2.network",
+        ] {
+            assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(path.as_bytes().to_vec())
+            ));
+        }
+
+        let initial_count = pallet_torus0::NamespaceCount::<Test>::get(
+            pallet_torus0::namespace::NamespaceOwnership::Account(0),
+        );
+        assert_eq!(initial_count, 8); // agent.alice + 7 other namespaces
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::delete_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.v1.compute".to_vec())
+        ));
+
+        let count_after = pallet_torus0::NamespaceCount::<Test>::get(
+            pallet_torus0::namespace::NamespaceOwnership::Account(0),
+        );
+        assert_eq!(count_after, 6);
+
+        for path in ["agent.alice.v1.compute", "agent.alice.v1.compute.gpu"] {
+            assert!(!pallet_torus0::Namespaces::<Test>::contains_key(
+                pallet_torus0::namespace::NamespaceOwnership::Account(0),
+                path.parse::<NamespacePath>().unwrap()
+            ));
+        }
+
+        for path in [
+            "agent.alice.v1",
+            "agent.alice.v1.storage",
+            "agent.alice.v1.storage.disk",
+            "agent.alice.v2",
+            "agent.alice.v2.network",
+        ] {
+            assert!(pallet_torus0::Namespaces::<Test>::contains_key(
+                pallet_torus0::namespace::NamespaceOwnership::Account(0),
+                path.parse::<NamespacePath>().unwrap()
+            ));
+        }
     });
 }
