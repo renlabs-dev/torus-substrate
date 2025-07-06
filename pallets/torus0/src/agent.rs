@@ -1,7 +1,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_emission0_api::Emission0Api;
 use pallet_governance_api::GovernanceApi;
-use pallet_torus0_api::{NamespacePath, NAMESPACE_AGENT_PREFIX};
+use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::{
@@ -78,8 +78,7 @@ pub fn register<T: crate::Config>(
         crate::Error::<T>::TooManyAgentRegistrationsThisInterval
     );
 
-    let namespace_path: Vec<_> = [NAMESPACE_AGENT_PREFIX, &name].concat();
-    let namespace_path = NamespacePath::new_agent(&namespace_path).map_err(|err| {
+    let namespace_path = NamespacePath::new_agent_root(&name).map_err(|err| {
         warn!("{agent_key:?} tried using invalid name: {err:?}");
         crate::Error::<T>::InvalidNamespacePath
     })?;
@@ -140,8 +139,7 @@ pub fn unregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult
 
     let agent = crate::Agents::<T>::get(&agent_key).ok_or(crate::Error::<T>::AgentDoesNotExist)?;
 
-    let namespace_path: Vec<_> = [NAMESPACE_AGENT_PREFIX, &agent.name].concat();
-    let namespace_path = NamespacePath::new_agent(&namespace_path)
+    let namespace_path = NamespacePath::new_agent_root(&agent.name)
         .map_err(|_| crate::Error::<T>::InvalidNamespacePath)?;
     crate::namespace::delete_namespace::<T>(
         crate::namespace::NamespaceOwnership::Account(agent_key.clone()),

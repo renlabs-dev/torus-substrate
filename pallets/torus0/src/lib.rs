@@ -390,8 +390,8 @@ pub mod pallet {
                 NamespacePath::new_agent(&path).map_err(|_| Error::<T>::InvalidNamespacePath)?;
 
             ensure!(
-                !T::Permission0::is_delegating_namespace(&owner, &namespace_path),
-                Error::<T>::NamespaceBeingDelegated
+                !namespace_path.is_agent_root(),
+                Error::<T>::InvalidNamespacePath
             );
 
             namespace::delete_namespace::<T>(NamespaceOwnership::Account(owner), namespace_path)

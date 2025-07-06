@@ -82,6 +82,12 @@ impl NamespacePath {
         NamespacePath(b"agent".to_vec().try_into().unwrap())
     }
 
+    /// Create a new root agent namespace path from the agent name
+    pub fn new_agent_root(agent_name: &[u8]) -> Result<Self, &'static str> {
+        let namespace_path: Vec<_> = [NAMESPACE_AGENT_PREFIX, agent_name].concat();
+        Self::new_agent(&namespace_path)
+    }
+
     /// Create a new namespace path from bytes with validation
     pub fn new_agent(bytes: &[u8]) -> Result<Self, &'static str> {
         if bytes.is_empty() {
@@ -192,6 +198,19 @@ impl NamespacePath {
 
         parents
     }
+
+    /// Wether the namespace is an agent root path: "agent.<name>".
+    pub fn is_agent_root(&self) -> bool {
+        if self.depth() != 2 {
+            return false;
+        }
+
+        if let Some(root) = self.segments().next() {
+            root == b"agent"
+        } else {
+            false
+        }
+    }
 }
 
 impl Debug for NamespacePath {
@@ -292,5 +311,48 @@ mod tests {
         assert_eq!(parents[0].as_bytes(), b"agent.alice.memory");
         assert_eq!(parents[1].as_bytes(), b"agent.alice");
         assert_eq!(parents[2].as_bytes(), b"agent");
+    }
+
+    #[test]
+    fn test_is_agent_root() {
+        let agent_alice = NamespacePath::new_agent(b"agent.alice").unwrap();
+        assert!(agent_alice.is_agent_root());
+
+        let agent_bob = NamespacePath::new_agent(b"agent.bob").unwrap();
+        assert!(agent_bob.is_agent_root());
+
+        let deeper = NamespacePath::new_agent(b"agent.alice.memory").unwrap();
+        assert!(!deeper.is_agent_root());
+
+        let just_agent = NamespacePath::agent_root();
+        assert!(!just_agent.is_agent_root());
+    }
+
+    #[test]
+    fn test_new_agent_root() {
+        let alice_root = NamespacePath::new_agent_root(b"alice").unwrap();
+        assert_eq!(alice_root.as_bytes(), b"agent.alice");
+        assert!(alice_root.is_agent_root());
+
+        let bob_root = NamespacePath::new_agent_root(b"bob").unwrap();
+        assert_eq!(bob_root.as_bytes(), b"agent.bob");
+        assert!(bob_root.is_agent_root());
+
+        assert!(NamespacePath::new_agent_root(b"alice123").is_ok());
+        assert!(NamespacePath::new_agent_root(b"alice-test").is_ok());
+        assert!(NamespacePath::new_agent_root(b"alice_test").is_ok());
+
+        assert!(
+            NamespacePath::new_agent_root(b"Alice").is_err(),
+            "uppercase should fail"
+        );
+        assert!(
+            NamespacePath::new_agent_root(b"alice!").is_err(),
+            "special chars should fail"
+        );
+        assert!(
+            NamespacePath::new_agent_root(b"").is_err(),
+            "empty name should fail"
+        );
     }
 }

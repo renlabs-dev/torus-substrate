@@ -1,5 +1,6 @@
 use pallet_governance_api::GovernanceApi;
 use pallet_torus0::{agent::Agent, AgentUpdateCooldown, Agents, Burn, Error};
+use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
 use test_utils::{
     assert_ok, clear_cooldown, get_balance, get_origin,
@@ -18,7 +19,7 @@ fn register_correctly() {
         let agent_id = 0;
         let allocator_id = 1;
 
-        let name = b"agent".to_vec();
+        let name = b"alice".to_vec();
         let url = b"idk://agent".to_vec();
         let metadata = b"idk://agent".to_vec();
 
@@ -63,6 +64,11 @@ fn register_correctly() {
             WeightControlDelegation::<Test>::get(agent.key),
             Some(allocator_id)
         );
+
+        assert!(pallet_torus0::Namespaces::<Test>::contains_key(
+            pallet_torus0::namespace::NamespaceOwnership::Account(agent_id),
+            "agent.alice".parse::<NamespacePath>().unwrap()
+        ));
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
@@ -339,7 +345,7 @@ fn register_more_than_registrations_per_interval() {
 fn unregister_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
-        let name = b"agent".to_vec();
+        let name = b"alice".to_vec();
         let url = b"idk://agent".to_vec();
         let metadata = b"idk://agent".to_vec();
 
@@ -355,9 +361,19 @@ fn unregister_correctly() {
             metadata.clone(),
         ));
 
+        assert!(pallet_torus0::Namespaces::<Test>::contains_key(
+            pallet_torus0::namespace::NamespaceOwnership::Account(agent),
+            "agent.alice".parse::<NamespacePath>().unwrap()
+        ));
+
         assert_ok!(pallet_torus0::Pallet::<Test>::unregister_agent(get_origin(
             agent
         )));
+
+        assert!(!pallet_torus0::Namespaces::<Test>::contains_key(
+            pallet_torus0::namespace::NamespaceOwnership::Account(agent),
+            "agent.alice".parse::<NamespacePath>().unwrap()
+        ));
 
         assert!(pallet_torus0::Agents::<Test>::get(agent).is_none());
     });
