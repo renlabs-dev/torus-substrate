@@ -39,7 +39,7 @@ pub enum EmissionAllocation<Balance> {
 /// Distribution control parameters
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
 pub enum DistributionControl<Balance, BlockNumber> {
-    /// Manual distribution by the grantee
+    /// Manual distribution by the recipient
     Manual,
     /// Automatic distribution after accumulation threshold
     Automatic(Balance),
@@ -65,8 +65,8 @@ pub enum RevocationTerms<AccountId, BlockNumber> {
     /// Cannot be revoked
     #[default]
     Irrevocable,
-    /// Can be revoked by the grantor at any time
-    RevocableByGrantor,
+    /// Can be revoked by the delegator at any time
+    RevocableByDelegator,
     /// Can be revoked by third party arbiters
     RevocableByArbiters {
         accounts: Vec<AccountId>,
@@ -102,11 +102,11 @@ pub trait Permission0Api<Origin> {
 }
 
 pub trait Permission0EmissionApi<AccountId, Origin, BlockNumber, Balance, NegativeImbalance> {
-    /// Grant a permission for emission delegation
+    /// Delegate a permission for emission delegation
     #[allow(clippy::too_many_arguments)]
-    fn grant_emission_permission(
-        grantor: AccountId,
-        grantee: AccountId,
+    fn delegate_emission_permission(
+        delegator: AccountId,
+        recipient: AccountId,
         allocation: EmissionAllocation<Balance>,
         targets: Vec<(AccountId, u16)>,
         distribution: DistributionControl<Balance, BlockNumber>,
@@ -142,31 +142,31 @@ bitflags::bitflags! {
 }
 
 pub trait Permission0CuratorApi<AccountId, Origin, BlockNumber> {
-    /// Grants a curator permission, bounded by the given flags.
+    /// Delegates a curator permission, bounded by the given flags.
     /// Only available for the root key, currently.
-    fn grant_curator_permission(
-        grantor: Origin,
-        grantee: AccountId,
+    fn delegate_curator_permission(
+        delegator: Origin,
+        recipient: AccountId,
         flags: CuratorPermissions,
         cooldown: Option<BlockNumber>,
         duration: PermissionDuration<BlockNumber>,
         revocation: RevocationTerms<AccountId, BlockNumber>,
     ) -> Result<PermissionId, DispatchError>;
 
-    /// Verifies the grantee's curator permission and returns the registered
+    /// Verifies the recipient's curator permission and returns the registered
     /// cooldown between actions.
     fn ensure_curator_permission(
-        grantee: Origin,
+        recipient: Origin,
         flags: CuratorPermissions,
     ) -> Result<AccountId, DispatchError>;
 
-    /// Finds the curator permission granted to [`grantee`].
-    fn get_curator_permission(grantee: &AccountId) -> Option<PermissionId>;
+    /// Finds the curator permission delegated to [`recipient`].
+    fn get_curator_permission(recipient: &AccountId) -> Option<PermissionId>;
 }
 
 pub trait Permission0NamespacesApi<AccountId, NamespacePath> {
-    /// Wether the given grantor is delegating a permission over the namespace.
-    fn is_delegating_namespace(grantor: &AccountId, path: &NamespacePath) -> bool;
+    /// Wether the given delegator is delegating a permission over the namespace.
+    fn is_delegating_namespace(delegator: &AccountId, path: &NamespacePath) -> bool;
 }
 
 polkadot_sdk::sp_api::decl_runtime_apis! {

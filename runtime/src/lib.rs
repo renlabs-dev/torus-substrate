@@ -86,6 +86,7 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 type Migrations = (
     pallet_governance::migrations::v5::Migration<Runtime, RocksDbWeight>,
     pallet_emission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
+    pallet_permission0::migrations::v4::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v4::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v5::Migration<Runtime, RocksDbWeight>,
 );
