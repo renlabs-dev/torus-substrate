@@ -548,16 +548,12 @@ fn create_unrewarded_proposal<T: crate::Config>(
 ) {
     let mut reward_votes_for = BoundedBTreeMap::new();
     for (key, value) in votes_for {
-        reward_votes_for
-            .try_insert(key, value)
-            .expect("this wont exceed u32::MAX");
+        let _ = reward_votes_for.try_insert(key, value);
     }
 
     let mut reward_votes_against: AccountStakes<T> = BoundedBTreeMap::new();
     for (key, value) in votes_against {
-        reward_votes_against
-            .try_insert(key, value)
-            .expect("this probably wont exceed u32::MAX");
+        let _ = reward_votes_against.try_insert(key, value);
     }
 
     UnrewardedProposals::<T>::insert(
@@ -634,9 +630,7 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: BlockNumberFor<T>) 
             .chain(unrewarded_proposal.votes_against.into_iter())
         {
             let curr_stake = *account_stakes.get(&acc_id).unwrap_or(&0u128);
-            account_stakes
-                .try_insert(acc_id, curr_stake.saturating_add(stake))
-                .expect("infallible");
+            let _ = account_stakes.try_insert(acc_id, curr_stake.saturating_add(stake));
         }
 
         match get_reward_allocation::<T>(&governance_config, n) {
