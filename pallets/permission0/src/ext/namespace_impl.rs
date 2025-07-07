@@ -20,7 +20,7 @@ impl<T: Config> Permission0NamespacesApi<T::AccountId, NamespacePath> for Pallet
                 .filter(|permission| {
                     if let PermissionScope::Namespace(scope) = &permission.scope {
                         for p in &scope.paths {
-                            if p == path || path.is_parent_of(p) {
+                            if p == path || path.is_parent_of(p) || p.is_parent_of(path) {
                                 return true;
                             }
                         }

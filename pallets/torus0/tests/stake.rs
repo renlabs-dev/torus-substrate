@@ -192,7 +192,7 @@ fn remove_stake_correctly() {
 }
 
 #[test]
-fn remove_stake_with_unregistered_agent() {
+fn remove_stake_with_deregistered_agent() {
     test_utils::new_test_ext().execute_with(|| {
         let from = 0;
         let to = 1;
@@ -225,7 +225,7 @@ fn remove_stake_with_unregistered_agent() {
         assert_eq!(StakingTo::<Test>::get(from, to), Some(stake));
         assert_eq!(StakedBy::<Test>::get(to, from), Some(stake));
 
-        assert_ok!(pallet_torus0::Pallet::<Test>::unregister_agent(get_origin(
+        assert_ok!(pallet_torus0::Pallet::<Test>::deregister_agent(get_origin(
             to
         )));
 
