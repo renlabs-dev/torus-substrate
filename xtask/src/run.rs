@@ -38,7 +38,7 @@ pub(super) fn run(mut r: flags::Run) {
             .suffix(node.name.as_ref().unwrap_or(&Cow::Borrowed("")).as_ref())
             .tempdir()
             .expect("failed to create tempdir")
-            .into_path()
+            .keep()
     });
 
     match (path.exists(), path.is_dir()) {
@@ -47,7 +47,7 @@ pub(super) fn run(mut r: flags::Run) {
         _ => {}
     }
 
-    let (chain_spec, _local_seal) = match &r.subcommand {
+    let (chain_spec, _local_seal) = match &mut r.subcommand {
         flags::RunCmd::Local(local) => {
             let chain_path = local
                 .chain_spec
@@ -65,7 +65,11 @@ pub(super) fn run(mut r: flags::Run) {
             (chain_path, true)
         }
         flags::RunCmd::Replica(replica) => {
-            let chain_path = crate::build_spec::targetchain_spec(replica, &path);
+            if replica.output.is_none() {
+                replica.output = Some(path.join("spec.json"));
+            }
+
+            let chain_path = crate::generate_spec::targetchain_spec(replica).unwrap();
             let chain_path_str = chain_path.to_str().expect("invalid string").to_string();
             (chain_path_str, false)
         }
@@ -80,44 +84,22 @@ pub(super) fn run(mut r: flags::Run) {
         .wait();
 }
 
-#[allow(dead_code)]
 pub mod ops {
-    use super::*;
     use std::{
         ffi::OsStr,
         io::Write,
         process::{Command, Stdio},
     };
 
+    use super::*;
+
     #[macro_export]
     macro_rules! torus_node {
         ($($arg:expr),*) => {{
-            let mut cmd = std::process::Command::new("cargo");
-            cmd.args(["run", "--release", "--package", "torus-node", "--"]);
+            let mut cmd = std::process::Command::new("./target/release/torus-node");
             $(cmd.arg($arg);)*
             cmd
         }};
-    }
-
-    pub fn build_chain_spec(chain_spec: &str) -> Command {
-        torus_node!(
-            "build-spec",
-            "--raw",
-            "--chain",
-            chain_spec,
-            "--disable-default-bootnode"
-        )
-    }
-
-    pub fn key_generate() -> Command {
-        torus_node!(
-            "key",
-            "generate",
-            "--scheme",
-            "sr25519",
-            "--output-type",
-            "json"
-        )
     }
 
     pub fn key_insert_cmd(
@@ -145,18 +127,6 @@ pub mod ops {
         .unwrap()
         .wait()
         .expect("failed to run key insert");
-    }
-
-    pub fn key_inspect_cmd(suri: &str) -> Command {
-        torus_node!(
-            "key",
-            "inspect",
-            "--scheme",
-            "ed25519",
-            "--output-type",
-            "json",
-            suri
-        )
     }
 
     pub fn key_inspect_node_cmd(key: &str) -> String {

@@ -1,40 +1,40 @@
-use crate::frame::traits::ExistenceRequirement;
-use crate::BoundedBTreeSet;
-use crate::BoundedVec;
-use crate::DebugNoBound;
-use crate::TypeInfo;
-use crate::{
-    AccountIdOf, BalanceOf, Block, DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
-    UnrewardedProposals,
-};
-use crate::{GovernanceConfiguration, NotDelegatingVotingPower};
 use codec::{Decode, Encode, MaxEncodedLen};
-use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::frame_support::traits::Currency;
-use polkadot_sdk::polkadot_sdk_frame::traits::CheckedAdd;
-use polkadot_sdk::sp_runtime::SaturatedConversion;
-use polkadot_sdk::sp_std::{collections::btree_set::BTreeSet, vec::Vec};
+use pallet_torus0::namespace::NamespacePricingConfig;
 use polkadot_sdk::{
-    frame_support::{dispatch::DispatchResult, ensure, storage::with_storage_layer},
-    sp_core::ConstU32,
-    sp_runtime::{BoundedBTreeMap, DispatchError, Percent},
+    frame_election_provider_support::Get,
+    frame_support::{
+        dispatch::DispatchResult, ensure, storage::with_storage_layer, traits::Currency,
+    },
+    polkadot_sdk_frame::{prelude::BlockNumberFor, traits::CheckedAdd},
+    sp_core::{ConstU32, U256},
+    sp_runtime::{
+        traits::Saturating, BoundedBTreeMap, DispatchError, FixedPointNumber, FixedU128, Percent,
+    },
+    sp_std::{collections::btree_set::BTreeSet, vec::Vec},
     sp_tracing::error,
 };
-use substrate_fixed::types::I92F36;
+
+use crate::{
+    frame::traits::ExistenceRequirement, AccountIdOf, BalanceOf, BoundedBTreeSet, BoundedVec,
+    DaoTreasuryAddress, DebugNoBound, Error, GlobalGovernanceConfig, GovernanceConfiguration,
+    NotDelegatingVotingPower, Proposals, TypeInfo, UnrewardedProposals,
+};
 
 pub type ProposalId = u64;
 
+/// A network proposal created by the community. Core part of the DAO.
 #[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct Proposal<T: crate::Config> {
     pub id: ProposalId,
     pub proposer: AccountIdOf<T>,
-    pub expiration_block: Block,
+    pub expiration_block: BlockNumberFor<T>,
+    /// The actual data and type of the proposal.
     pub data: ProposalData<T>,
     pub status: ProposalStatus<T>,
     pub metadata: BoundedVec<u8, ConstU32<256>>,
     pub proposal_cost: BalanceOf<T>,
-    pub creation_block: Block,
+    pub creation_block: BlockNumberFor<T>,
 }
 
 impl<T: crate::Config> Proposal<T> {
@@ -44,17 +44,26 @@ impl<T: crate::Config> Proposal<T> {
         matches!(self.status, ProposalStatus::Open { .. })
     }
 
-    pub fn execution_block(&self) -> Block {
+    /// Returns the block in which a proposal should be executed.
+    /// For emission proposals, that is the creation block + 21600 blocks
+    /// (roughly 2 days at 1 block every 8 seconds), as for the others, they
+    /// are only executed on the expiration block.
+    pub fn execution_block(&self) -> BlockNumberFor<T> {
         match self.data {
-            ProposalData::Emission { .. } => self.creation_block.saturating_add(21_600),
+            ProposalData::Emission { .. } => self.creation_block.saturating_add(
+                U256::from(21_600)
+                    .try_into()
+                    .ok()
+                    .expect("this is a safe conversion"),
+            ),
             _ => self.expiration_block,
         }
     }
 
-    /// Marks a proposal as accepted and overrides the storage value.
+    /// Marks a proposal as accepted and executes it.
     pub fn accept(
         mut self,
-        block: Block,
+        block: BlockNumberFor<T>,
         stake_for: BalanceOf<T>,
         stake_against: BalanceOf<T>,
     ) -> DispatchResult {
@@ -74,7 +83,9 @@ impl<T: crate::Config> Proposal<T> {
         Ok(())
     }
 
+    /// Executes the changes.
     fn execute_proposal(self) -> DispatchResult {
+        // Proposal fee is given back to the proposer.
         let _ = <T as crate::Config>::Currency::transfer(
             &crate::DaoTreasuryAddress::<T>::get(),
             &self.proposer,
@@ -87,18 +98,15 @@ impl<T: crate::Config> Proposal<T> {
                 let GlobalParamsData {
                     min_name_length,
                     max_name_length,
-                    max_allowed_agents,
-                    max_allowed_weights,
-                    min_stake_per_weight,
                     min_weight_control_fee,
                     min_staking_fee,
                     dividends_participation_weight,
+                    namespace_pricing_config,
                     proposal_cost,
                 } = data;
 
                 pallet_torus0::MinNameLength::<T>::set(min_name_length);
                 pallet_torus0::MaxNameLength::<T>::set(max_name_length);
-                pallet_torus0::MaxAllowedAgents::<T>::set(max_allowed_agents);
                 pallet_torus0::DividendsParticipationWeight::<T>::set(
                     dividends_participation_weight,
                 );
@@ -107,8 +115,7 @@ impl<T: crate::Config> Proposal<T> {
                         Percent::from_percent(min_weight_control_fee);
                     constraints.min_staking_fee = Percent::from_percent(min_staking_fee);
                 });
-                pallet_emission0::MaxAllowedWeights::<T>::set(max_allowed_weights);
-                pallet_emission0::MinStakePerWeight::<T>::set(min_stake_per_weight);
+                pallet_torus0::NamespacePricingConfig::<T>::set(namespace_pricing_config);
                 crate::GlobalGovernanceConfig::<T>::mutate(|config| {
                     config.proposal_cost = proposal_cost;
                 });
@@ -140,10 +147,10 @@ impl<T: crate::Config> Proposal<T> {
         Ok(())
     }
 
-    /// Marks a proposal as refused and overrides the storage value.
+    /// Marks a proposal as refused.
     pub fn refuse(
         mut self,
-        block: Block,
+        block: BlockNumberFor<T>,
         stake_for: BalanceOf<T>,
         stake_against: BalanceOf<T>,
     ) -> DispatchResult {
@@ -161,8 +168,8 @@ impl<T: crate::Config> Proposal<T> {
         Ok(())
     }
 
-    /// Marks a proposal as expired and overrides the storage value.
-    pub fn expire(mut self, block_number: u64) -> DispatchResult {
+    /// Marks a proposal as expired.
+    pub fn expire(mut self, block_number: BlockNumberFor<T>) -> DispatchResult {
         ensure!(self.is_active(), crate::Error::<T>::ProposalIsFinished);
         ensure!(
             block_number >= self.expiration_block,
@@ -181,55 +188,54 @@ impl<T: crate::Config> Proposal<T> {
 #[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub enum ProposalStatus<T: crate::Config> {
+    /// The proposal is active and being voted upon. The votes values only hold
+    /// accounts and not stake per key, because this is subtle to change
+    /// overtime. The stake values are there to help clients estimate the status
+    /// of the voting, they are updated every few blocks, but are not used in
+    /// the final calculation.
     Open {
+        /// Accounts who have voted for this proposal to be accepted.
         votes_for: BoundedBTreeSet<AccountIdOf<T>, ConstU32<{ u32::MAX }>>,
+        /// Accounts who have voted against this proposal being accepted.
         votes_against: BoundedBTreeSet<AccountIdOf<T>, ConstU32<{ u32::MAX }>>,
+        /// A roughly estimation of the total stake voting for the proposal.
         stake_for: BalanceOf<T>,
+        /// A roughly estimation of the total stake voting against the proposal.
         stake_against: BalanceOf<T>,
     },
+    /// Proposal was accepted.
     Accepted {
-        block: Block,
+        block: BlockNumberFor<T>,
+        /// Total stake that voted for the proposal.
         stake_for: BalanceOf<T>,
+        /// Total stake that voted against the proposal.
         stake_against: BalanceOf<T>,
     },
+    /// Proposal was refused.
     Refused {
-        block: Block,
+        block: BlockNumberFor<T>,
+        /// Total stake that voted for the proposal.
         stake_for: BalanceOf<T>,
+        /// Total stake that voted against the proposal.
         stake_against: BalanceOf<T>,
     },
+    /// Proposal expired without enough network participation.
     Expired,
 }
 
 // TODO: add Agent URL max length
+/// Update the global parameters configuration, like, max and min name lengths,
+/// and other validations. All values are set within default storage values.
 #[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub struct GlobalParamsData<T: crate::Config> {
     pub min_name_length: u16,
     pub max_name_length: u16,
-    pub max_allowed_agents: u16,
-    pub max_allowed_weights: u16,
-    pub min_stake_per_weight: BalanceOf<T>,
     pub min_weight_control_fee: u8,
     pub min_staking_fee: u8,
     pub dividends_participation_weight: Percent,
+    pub namespace_pricing_config: NamespacePricingConfig<T>,
     pub proposal_cost: BalanceOf<T>,
-}
-
-impl<T: crate::Config> Default for GlobalParamsData<T> {
-    fn default() -> Self {
-        Self {
-            min_name_length: T::DefaultMinNameLength::get(),
-            max_name_length: T::DefaultMaxNameLength::get(),
-            max_allowed_agents: T::DefaultMaxAllowedAgents::get(),
-            max_allowed_weights: T::DefaultMaxAllowedWeights::get(),
-            min_stake_per_weight: 0,
-            min_weight_control_fee: T::DefaultMinWeightControlFee::get(),
-            min_staking_fee: T::DefaultMinStakingFee::get(),
-            dividends_participation_weight:
-                <T as pallet_torus0::Config>::DefaultDividendsParticipationWeight::get(),
-            proposal_cost: T::DefaultProposalCost::get(),
-        }
-    }
 }
 
 impl<T: crate::Config> GlobalParamsData<T> {
@@ -242,16 +248,6 @@ impl<T: crate::Config> GlobalParamsData<T> {
         ensure!(
             (self.max_name_length as u32) < T::MaxAgentNameLengthConstraint::get(),
             crate::Error::<T>::InvalidMaxNameLength
-        );
-
-        ensure!(
-            self.max_allowed_agents <= 50000,
-            crate::Error::<T>::InvalidMaxAllowedAgents
-        );
-
-        ensure!(
-            self.max_allowed_weights <= 2000,
-            crate::Error::<T>::InvalidMaxAllowedWeights
         );
 
         ensure!(
@@ -273,16 +269,27 @@ impl<T: crate::Config> GlobalParamsData<T> {
     }
 }
 
+/// The proposal type and data.
 #[derive(Clone, DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub enum ProposalData<T: crate::Config> {
+    /// Applies changes to global parameters.
     GlobalParams(GlobalParamsData<T>),
+    /// A custom proposal with not immediate impact in the chain. Can be used as
+    /// referendums regarding the future of the chain.
     GlobalCustom,
+    /// Changes the emission rates for incentives, recycling and treasury.
     Emission {
+        /// The amount of tokens per block to be recycled ("burned").
         recycling_percentage: Percent,
+        /// The amount of tokens sent to the treasury AFTER recycling fee was
+        /// applied.
         treasury_percentage: Percent,
+        /// This changes how incentives and dividends are distributed. 50% means
+        /// they are distributed equally.
         incentives_ratio: Percent,
     },
+    /// Transfers funds from the treasury account to the specified account.
     TransferDaoTreasury {
         account: AccountIdOf<T>,
         amount: BalanceOf<T>,
@@ -290,6 +297,8 @@ pub enum ProposalData<T: crate::Config> {
 }
 
 impl<T: crate::Config> ProposalData<T> {
+    /// The percentage of total active stake participating in the proposal for
+    /// it to be processes (either approved or refused).
     #[must_use]
     pub fn required_stake(&self) -> Percent {
         match self {
@@ -303,11 +312,12 @@ impl<T: crate::Config> ProposalData<T> {
 #[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen, PartialEq, Eq)]
 #[scale_info(skip_type_params(T))]
 pub struct UnrewardedProposal<T: crate::Config> {
-    pub block: Block,
+    pub block: BlockNumberFor<T>,
     pub votes_for: BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>,
     pub votes_against: BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>,
 }
 
+/// Create global update parameters proposal with metadata.
 #[allow(clippy::too_many_arguments)]
 pub fn add_global_params_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
@@ -320,6 +330,7 @@ pub fn add_global_params_proposal<T: crate::Config>(
     add_proposal::<T>(proposer, data, metadata)
 }
 
+/// Create global custom proposal with metadata.
 pub fn add_global_custom_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     metadata: Vec<u8>,
@@ -327,6 +338,7 @@ pub fn add_global_custom_proposal<T: crate::Config>(
     add_proposal(proposer, ProposalData::<T>::GlobalCustom, metadata)
 }
 
+/// Create a treasury transfer proposal with metadata.
 pub fn add_dao_treasury_transfer_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     value: BalanceOf<T>,
@@ -341,6 +353,8 @@ pub fn add_dao_treasury_transfer_proposal<T: crate::Config>(
     add_proposal::<T>(proposer, data, metadata)
 }
 
+/// Creates a new emissions proposal. Only valid if `recycling_percentage +
+/// treasury_percentage <= u128::MAX`.
 pub fn add_emission_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     recycling_percentage: Percent,
@@ -364,6 +378,7 @@ pub fn add_emission_proposal<T: crate::Config>(
     add_proposal::<T>(proposer, data, metadata)
 }
 
+/// Creates a new proposal and saves it. Internally used.
 fn add_proposal<T: crate::Config>(
     proposer: AccountIdOf<T>,
     data: ProposalData<T>,
@@ -394,10 +409,7 @@ fn add_proposal<T: crate::Config>(
         .try_into()
         .map_err(|_| crate::Error::<T>::InternalError)?;
 
-    let current_block: u64 =
-        TryInto::try_into(<polkadot_sdk::frame_system::Pallet<T>>::block_number())
-            .ok()
-            .expect("blockchain will not exceed 2^64 blocks; QED.");
+    let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
 
     let proposal = Proposal::<T> {
         id: proposal_id,
@@ -420,14 +432,20 @@ fn add_proposal<T: crate::Config>(
     Ok(())
 }
 
-pub fn tick_proposals<T: crate::Config>(block_number: Block) {
+/// Every 100 blocks, iterates through all pending proposals and executes the
+/// ones eligible.
+pub fn tick_proposals<T: crate::Config>(block_number: BlockNumberFor<T>) {
+    let block_number_u64: u64 = block_number
+        .try_into()
+        .ok()
+        .expect("blocknumber wont be greater than 2^64");
+    if block_number_u64 % 100 != 0 {
+        return;
+    }
+
     let not_delegating = NotDelegatingVotingPower::<T>::get().into_inner();
 
     let proposals = Proposals::<T>::iter().filter(|(_, p)| p.is_active());
-
-    if block_number % 100 != 0 {
-        return;
-    }
 
     for (id, proposal) in proposals {
         let res = with_storage_layer(|| tick_proposal(&not_delegating, block_number, proposal));
@@ -437,22 +455,20 @@ pub fn tick_proposals<T: crate::Config>(block_number: Block) {
     }
 }
 
-pub fn get_minimal_stake_to_execute_with_percentage<T: crate::Config>(
+/// Returns the minimum amount of active stake needed for a proposal be executed
+/// based on the given percentage.
+fn get_minimum_stake_to_execute_with_percentage<T: crate::Config>(
     threshold: Percent,
 ) -> BalanceOf<T> {
     let stake = pallet_torus0::TotalStake::<T>::get();
-
-    stake
-        .saturated_into::<BalanceOf<T>>()
-        .checked_mul(threshold.deconstruct() as u128)
-        .unwrap_or_default()
-        .checked_div(100)
-        .unwrap_or_default()
+    threshold.mul_floor(stake)
 }
 
+/// Sums all stakes for votes in favor and against. The biggest value wins and
+/// the proposal is processes and executed. expiration block.
 fn tick_proposal<T: crate::Config>(
     not_delegating: &BTreeSet<T::AccountId>,
-    block_number: u64,
+    block_number: BlockNumberFor<T>,
     mut proposal: Proposal<T>,
 ) -> DispatchResult {
     let ProposalStatus::Open {
@@ -503,7 +519,7 @@ fn tick_proposal<T: crate::Config>(
 
     let total_stake = stake_for_sum.saturating_add(stake_against_sum);
     let minimal_stake_to_execute =
-        get_minimal_stake_to_execute_with_percentage::<T>(proposal.data.required_stake());
+        get_minimum_stake_to_execute_with_percentage::<T>(proposal.data.required_stake());
 
     if total_stake >= minimal_stake_to_execute {
         create_unrewarded_proposal::<T>(proposal.id, block_number, votes_for, votes_against);
@@ -520,28 +536,24 @@ fn tick_proposal<T: crate::Config>(
     }
 }
 
+type AccountStakes<T> = BoundedBTreeMap<AccountIdOf<T>, BalanceOf<T>, ConstU32<{ u32::MAX }>>;
+
+/// Put the proposal in the reward queue, which will be processed by
+/// [tick_proposal_rewards].
 fn create_unrewarded_proposal<T: crate::Config>(
     proposal_id: u64,
-    block_number: Block,
+    block_number: BlockNumberFor<T>,
     votes_for: Vec<(AccountIdOf<T>, BalanceOf<T>)>,
     votes_against: Vec<(AccountIdOf<T>, BalanceOf<T>)>,
 ) {
     let mut reward_votes_for = BoundedBTreeMap::new();
     for (key, value) in votes_for {
-        reward_votes_for
-            .try_insert(key, value)
-            .expect("this wont exceed u32::MAX");
+        let _ = reward_votes_for.try_insert(key, value);
     }
 
-    let mut reward_votes_against: BoundedBTreeMap<
-        T::AccountId,
-        BalanceOf<T>,
-        ConstU32<{ u32::MAX }>,
-    > = BoundedBTreeMap::new();
+    let mut reward_votes_against: AccountStakes<T> = BoundedBTreeMap::new();
     for (key, value) in votes_against {
-        reward_votes_against
-            .try_insert(key, value)
-            .expect("this probably wont exceed u32::MAX");
+        let _ = reward_votes_against.try_insert(key, value);
     }
 
     UnrewardedProposals::<T>::insert(
@@ -554,6 +566,8 @@ fn create_unrewarded_proposal<T: crate::Config>(
     );
 }
 
+/// Calculates the stake for a voter. This function takes into account all
+/// accounts delegating voting power to the voter.
 #[inline]
 fn calc_stake<T: crate::Config>(
     not_delegating: &BTreeSet<T::AccountId>,
@@ -574,23 +588,39 @@ fn calc_stake<T: crate::Config>(
     own_stake.saturating_add(delegated_stake)
 }
 
-pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
+/// Processes the proposal reward queue and distributes rewards for all voters.
+pub fn tick_proposal_rewards<T: crate::Config>(block_number: BlockNumberFor<T>) {
     let governance_config = crate::GlobalGovernanceConfig::<T>::get();
+
+    let block_number: u64 = block_number
+        .try_into()
+        .ok()
+        .expect("blocknumber wont be greater than 2^64");
+    let proposal_reward_interval: u64 = governance_config
+        .proposal_reward_interval
+        .try_into()
+        .ok()
+        .expect("blocknumber wont be greater than 2^64");
+
     let reached_interval = block_number
-        .checked_rem(governance_config.proposal_reward_interval)
+        .checked_rem(proposal_reward_interval)
         .is_some_and(|r| r == 0);
     if !reached_interval {
         return;
     }
 
-    let mut n: u16 = 0;
-    let mut account_stakes: BoundedBTreeMap<T::AccountId, BalanceOf<T>, ConstU32<{ u32::MAX }>> =
-        BoundedBTreeMap::new();
-    let mut total_allocation: I92F36 = I92F36::from_num(0);
+    let mut n = 0u16;
+    let mut account_stakes: AccountStakes<T> = BoundedBTreeMap::new();
+    let mut total_allocation = FixedU128::from_inner(0);
     for (proposal_id, unrewarded_proposal) in UnrewardedProposals::<T>::iter() {
-        if unrewarded_proposal.block
-            < block_number.saturating_sub(governance_config.proposal_reward_interval)
-        {
+        let proposal_block: u64 = unrewarded_proposal
+            .block
+            .try_into()
+            .ok()
+            .expect("blocknumber wont be greater than 2^64");
+
+        // Just checking if it's in the chain interval
+        if proposal_block < block_number.saturating_sub(proposal_reward_interval) {
             continue;
         }
 
@@ -600,15 +630,11 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
             .chain(unrewarded_proposal.votes_against.into_iter())
         {
             let curr_stake = *account_stakes.get(&acc_id).unwrap_or(&0u128);
-            account_stakes
-                .try_insert(acc_id, curr_stake.saturating_add(stake))
-                .expect("infallible");
+            let _ = account_stakes.try_insert(acc_id, curr_stake.saturating_add(stake));
         }
 
         match get_reward_allocation::<T>(&governance_config, n) {
-            Ok(allocation) => {
-                total_allocation = total_allocation.saturating_add(allocation);
-            }
+            Ok(allocation) => total_allocation = total_allocation.saturating_add(allocation),
             Err(err) => {
                 error!("could not get reward allocation for proposal {proposal_id}: {err:?}");
                 continue;
@@ -626,51 +652,51 @@ pub fn tick_proposal_rewards<T: crate::Config>(block_number: u64) {
     );
 }
 
+/// Calculates the total balance to be rewarded for a proposal.
 pub fn get_reward_allocation<T: crate::Config>(
     governance_config: &GovernanceConfiguration<T>,
     n: u16,
-) -> Result<I92F36, DispatchError> {
+) -> Result<FixedU128, DispatchError> {
     let treasury_address = DaoTreasuryAddress::<T>::get();
     let treasury_balance = <T as crate::Config>::Currency::free_balance(&treasury_address);
-    let treasury_balance = I92F36::from_num(treasury_balance);
 
-    let allocation_percentage = I92F36::from_num(
-        governance_config
-            .proposal_reward_treasury_allocation
-            .deconstruct(),
+    let allocation_percentage = governance_config.proposal_reward_treasury_allocation;
+    let max_allocation = governance_config.max_proposal_reward_treasury_allocation;
+
+    let mut allocation = FixedU128::from_inner(
+        allocation_percentage
+            .mul_floor(treasury_balance)
+            .min(max_allocation),
     );
-    let max_allocation =
-        I92F36::from_num(governance_config.max_proposal_reward_treasury_allocation);
 
-    let mut allocation = treasury_balance
-        .checked_mul(allocation_percentage)
-        .unwrap_or_default()
-        .min(max_allocation);
     if n > 0 {
-        let mut base = I92F36::from_num(1.5);
-        let mut result = I92F36::from_num(1);
+        let mut base = FixedU128::from_inner((1.5 * FixedU128::DIV as f64) as u128);
+        let mut result = FixedU128::from_u32(1);
         let mut remaining = n;
 
         while remaining > 0 {
             if remaining % 2 == 1 {
-                result = result.checked_mul(base).unwrap_or(result);
+                result = result.const_checked_mul(base).unwrap_or(result);
             }
-            base = base.checked_mul(base).unwrap_or_default();
+            base = base.const_checked_mul(base).unwrap_or_default();
             remaining /= 2;
         }
 
-        allocation = allocation.checked_div(result).unwrap_or(allocation);
+        allocation = allocation.const_checked_div(result).unwrap_or(allocation);
     }
+
     Ok(allocation)
 }
 
+/// Distributes the proposal rewards in a quadratic formula to all voters.
 fn distribute_proposal_rewards<T: crate::Config>(
-    account_stakes: BoundedBTreeMap<T::AccountId, BalanceOf<T>, ConstU32<{ u32::MAX }>>,
-    total_allocation: I92F36,
+    account_stakes: AccountStakes<T>,
+    total_allocation: FixedU128,
     max_proposal_reward_treasury_allocation: BalanceOf<T>,
 ) {
-    // This is just a sanity check, making sure we can never allocate more than the max
-    if total_allocation > I92F36::from_num(max_proposal_reward_treasury_allocation) {
+    // This is just a sanity check, making sure we can never allocate more than the
+    // max
+    if total_allocation > FixedU128::from_inner(max_proposal_reward_treasury_allocation) {
         error!("total allocation exceeds max proposal reward treasury allocation");
         return;
     }
@@ -684,17 +710,17 @@ fn distribute_proposal_rewards<T: crate::Config>(
         .collect();
 
     let total_stake: BalanceOf<T> = account_sqrt_stakes.iter().map(|(_, stake)| *stake).sum();
-    let total_stake = I92F36::from_num(total_stake);
+    let total_stake = FixedU128::from_inner(total_stake);
 
     for (acc_id, stake) in account_sqrt_stakes.into_iter() {
-        let percentage = I92F36::from_num(stake)
-            .checked_div(total_stake)
+        let percentage = FixedU128::from_inner(stake)
+            .const_checked_div(total_stake)
             .unwrap_or_default();
 
-        let reward: BalanceOf<T> = total_allocation
-            .checked_mul(percentage)
+        let reward = total_allocation
+            .const_checked_mul(percentage)
             .unwrap_or_default()
-            .to_num();
+            .into_inner();
 
         // Transfer the proposal reward to the accounts from treasury
         if let Err(err) = <T as crate::Config>::Currency::transfer(

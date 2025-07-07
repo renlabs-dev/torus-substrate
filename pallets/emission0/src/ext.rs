@@ -1,7 +1,10 @@
-use polkadot_sdk::frame_support::traits::Currency;
+use polkadot_sdk::{frame_support::traits::Currency, frame_system};
 
-pub(super) type BalanceOf<T> = <<T as crate::Config>::Currency as Currency<
-    <T as polkadot_sdk::frame_system::Config>::AccountId,
->>::Balance;
+pub type BalanceOf<T> =
+    <<T as crate::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-pub(super) type AccountIdOf<T> = <T as polkadot_sdk::frame_system::Config>::AccountId;
+pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+
+pub type NegativeImbalanceOf<T> = <<T as crate::Config>::Currency as Currency<
+    <T as frame_system::Config>::AccountId,
+>>::NegativeImbalance;

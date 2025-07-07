@@ -15,25 +15,28 @@ std = [
     "codec/std",
     "polkadot-sdk/std",
     "scale-info/std",
-    "substrate-fixed/std",
     "pallet-torus0-api/std",
+    "pallet-emission0-api/std",
+    "pallet-governance-api/std",
+    "pallet-permission0-api/std",
 ]
 runtime-benchmarks = [
     "polkadot-sdk/runtime-benchmarks",
     "pallet-torus0-api/runtime-benchmarks",
 ]
 try-runtime = ["polkadot-sdk/try-runtime", "pallet-torus0-api/try-runtime"]
-
+testnet = []
 
 [dependencies]
 codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 polkadot-sdk = { workspace = true, features = ["experimental", "runtime"] }
-substrate-fixed = { workspace = true }
+libm.workspace = true
 
 pallet-torus0-api.workspace = true
 pallet-emission0-api.workspace = true
 pallet-governance-api.workspace = true
+pallet-permission0-api.workspace = true
 
 
 [dev-dependencies]

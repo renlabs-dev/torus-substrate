@@ -1,14 +1,20 @@
-use crate::frame::traits::ExistenceRequirement;
-use crate::{whitelist, AccountIdOf, AgentApplications, BalanceOf, Block};
 use codec::{Decode, Encode, MaxEncodedLen};
-use polkadot_sdk::frame_election_provider_support::Get;
-use polkadot_sdk::frame_support::dispatch::DispatchResult;
-use polkadot_sdk::frame_support::traits::Currency;
-use polkadot_sdk::frame_support::DebugNoBound;
-use polkadot_sdk::sp_runtime::BoundedVec;
-use polkadot_sdk::sp_std::vec::Vec;
+use polkadot_sdk::{
+    frame_election_provider_support::Get,
+    frame_support::{dispatch::DispatchResult, traits::Currency, DebugNoBound},
+    polkadot_sdk_frame::prelude::BlockNumberFor,
+    sp_runtime::{traits::Saturating, BoundedVec},
+    sp_std::vec::Vec,
+};
 use scale_info::TypeInfo;
 
+use crate::{
+    frame::traits::ExistenceRequirement, whitelist, AccountIdOf, AgentApplications, BalanceOf,
+};
+
+/// Decentralized autonomous organization application, it's used to do agent
+/// operations on the network, like creating or removing, and needs to be
+/// approved by other peers.
 #[derive(DebugNoBound, TypeInfo, Decode, Encode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct AgentApplication<T: crate::Config> {
@@ -17,11 +23,12 @@ pub struct AgentApplication<T: crate::Config> {
     pub agent_key: AccountIdOf<T>,
     pub data: BoundedVec<u8, T::MaxApplicationDataLength>,
     pub cost: BalanceOf<T>,
-    pub expires_at: Block,
+    pub expires_at: BlockNumberFor<T>,
     pub action: ApplicationAction,
     pub status: ApplicationStatus,
 }
 
+/// Possible operations are adding or removing applications.
 #[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
 pub enum ApplicationAction {
     Add,
@@ -31,7 +38,11 @@ pub enum ApplicationAction {
 #[derive(DebugNoBound, Decode, Encode, TypeInfo, MaxEncodedLen, PartialEq, Eq)]
 pub enum ApplicationStatus {
     Open,
-    Resolved { accepted: bool },
+    /// The application was processed before expiration, can be either accepted
+    /// or rejected.
+    Resolved {
+        accepted: bool,
+    },
     Expired,
 }
 
@@ -43,6 +54,9 @@ impl<T: crate::Config> AgentApplication<T> {
     }
 }
 
+/// Creates a new agent application if the key is not yet whitelisted. It
+/// withdraws a fee from the payer account, which is given back if the
+/// application is accepted. The fee avoids actors spamming applications.
 pub fn submit_application<T: crate::Config>(
     payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
@@ -86,12 +100,8 @@ pub fn submit_application<T: crate::Config>(
         return Err(crate::Error::<T>::InvalidApplicationDataLength.into());
     }
 
-    let current_block: u64 =
-        TryInto::try_into(<polkadot_sdk::frame_system::Pallet<T>>::block_number())
-            .ok()
-            .expect("blockchain will not exceed 2^64 blocks; QED.");
-
-    let expires_at = current_block.saturating_add(config.agent_application_expiration);
+    let expires_at = <polkadot_sdk::frame_system::Pallet<T>>::block_number()
+        .saturating_add(config.agent_application_expiration);
 
     let next_id = AgentApplications::<T>::iter()
         .count()
@@ -115,6 +125,8 @@ pub fn submit_application<T: crate::Config>(
     Ok(())
 }
 
+/// Accepts an agent application and executes it if it's still open, fails
+/// otherwise.
 pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResult {
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
@@ -144,6 +156,7 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
         }
     });
 
+    // Give the application fee back to the payer key.
     let _ = <T as crate::Config>::Currency::transfer(
         &crate::DaoTreasuryAddress::<T>::get(),
         &application.payer_key,
@@ -156,6 +169,7 @@ pub fn accept_application<T: crate::Config>(application_id: u32) -> DispatchResu
     Ok(())
 }
 
+/// Rejects an open application.
 pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult {
     let application = crate::AgentApplications::<T>::get(application_id)
         .ok_or(crate::Error::<T>::ApplicationNotFound)?;
@@ -175,9 +189,11 @@ pub fn deny_application<T: crate::Config>(application_id: u32) -> DispatchResult
     Ok(())
 }
 
-pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Block) {
+/// Iterates through all open applications checking if the current block is
+/// greater or equal to the former's expiration block. If so, marks the
+/// application as Expired.
+pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: BlockNumberFor<T>) {
     for application in crate::AgentApplications::<T>::iter_values() {
-        // Skip if not expired yet or if not in Open status
         if current_block < application.expires_at
             || !matches!(application.status, ApplicationStatus::Open)
         {
@@ -196,6 +212,7 @@ pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Bloc
     }
 }
 
+/// If any applications for this agent and action are already pending.
 pub(crate) fn exists_for_agent_key<T: crate::Config>(
     key: &AccountIdOf<T>,
     action: &ApplicationAction,

@@ -4,6 +4,7 @@ members = [
     "runtime",
     "pallets/*",
     "pallets/*/api",
+    "pallets/*/rpc",
     "test-utils",
     "xtask",
 ]
@@ -31,8 +32,13 @@ pallet-governance = { path = "./pallets/governance", default-features = false }
 pallet-governance-api = { path = "./pallets/governance/api", default-features = false }
 pallet-emission0 = { path = "./pallets/emission0", default-features = false }
 pallet-emission0-api = { path = "./pallets/emission0/api", default-features = false }
+pallet-faucet = { path = "./pallets/faucet", default-features = false }
 pallet-torus0 = { path = "./pallets/torus0", default-features = false }
 pallet-torus0-api = { path = "./pallets/torus0/api", default-features = false }
+pallet-torus0-rpc = { path = "./pallets/torus0/rpc", default-features = false }
+pallet-permission0 = { path = "./pallets/permission0", default-features = false }
+pallet-permission0-api = { path = "./pallets/permission0/api", default-features = false }
+pallet-permission0-rpc = { path = "./pallets/permission0/rpc", default-features = false }
 test-utils.path = "./test-utils"
 
 # Substrate
@@ -40,12 +46,15 @@ codec = { package = "parity-scale-codec", version = "3.6.12", default-features =
 scale-info = { version = "2.11.1", default-features = false }
 polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "stable2409", default-features = false }
 substrate-wasm-builder = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "stable2409", default-features = false }
-substrate-fixed = { git = "https://github.com/encointer/substrate-fixed.git", branch = "master", default-features = false }
 
 # Utils
+async-trait = "0.1.88"
 num-traits = { version = "0.2.19", default-features = false, features = [
     "libm",
 ] }
+bitflags = { version = "2.9.1", default-features = false }
+rand = { version = "0.9.1", default-features = false }
+libm = { version = "0.2.15", default-features = false }
 
 # Frontier / EVM
 fc-api = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }

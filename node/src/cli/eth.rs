@@ -1,3 +1,5 @@
+#![allow(clippy::result_large_err)]
+
 use std::{
     collections::BTreeMap,
     path::PathBuf,
@@ -25,7 +27,8 @@ pub fn db_config_dir(config: &Configuration) -> PathBuf {
 /// Available frontier backend types.
 #[derive(Debug, Copy, Clone, Default, clap::ValueEnum)]
 pub enum BackendType {
-    /// Either RocksDb or ParityDb as per inherited from the global backend settings.
+    /// Either RocksDb or ParityDb as per inherited from the global backend
+    /// settings.
     #[default]
     KeyValue,
     /// Sql database with custom log indexing.
@@ -50,8 +53,8 @@ pub struct EthConfiguration {
     #[arg(long, default_value = "1")]
     pub target_gas_price: u64,
 
-    /// Maximum allowed gas limit will be `block.gas_limit * execute_gas_limit_multiplier`
-    /// when using eth_call/eth_estimateGas.
+    /// Maximum allowed gas limit will be `block.gas_limit *
+    /// execute_gas_limit_multiplier` when using eth_call/eth_estimateGas.
     #[arg(long, default_value = "2")]
     pub execute_gas_limit_multiplier: u64,
     /// Size in bytes of the LRU cache for block data.

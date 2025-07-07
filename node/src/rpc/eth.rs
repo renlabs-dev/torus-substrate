@@ -1,5 +1,10 @@
 use std::{collections::BTreeMap, sync::Arc};
 
+// Frontier
+pub use fc_rpc::EthBlockDataCacheTask;
+pub use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
+use fc_storage::StorageOverride;
+use fp_rpc::ConvertTransaction;
 use jsonrpsee::RpcModule;
 use polkadot_sdk::{
     sc_network::service::traits::NetworkService,
@@ -11,11 +16,6 @@ use polkadot_sdk::{
     sp_inherents::CreateInherentDataProviders,
     sp_runtime::traits::Block as BlockT,
 };
-// Frontier
-pub use fc_rpc::EthBlockDataCacheTask;
-pub use fc_rpc_core::types::{FeeHistoryCache, FeeHistoryCacheLimit, FilterPool};
-use fc_storage::StorageOverride;
-use fp_rpc::ConvertTransaction;
 use torus_runtime::opaque::Block;
 
 use crate::service::{FullBackend, FullClient};
@@ -52,8 +52,8 @@ pub struct EthDeps<P, A: ChainApi, CT, CIDP> {
     pub fee_history_cache: FeeHistoryCache,
     /// Maximum fee history cache size.
     pub fee_history_cache_limit: FeeHistoryCacheLimit,
-    /// Maximum allowed gas limit will be ` block.gas_limit * execute_gas_limit_multiplier` when
-    /// using eth_call/eth_estimateGas.
+    /// Maximum allowed gas limit will be ` block.gas_limit *
+    /// execute_gas_limit_multiplier` when using eth_call/eth_estimateGas.
     pub execute_gas_limit_multiplier: u64,
     /// Mandated parent hashes for a given block hash.
     pub forced_parent_hashes: Option<BTreeMap<H256, H256>>,
@@ -95,9 +95,8 @@ where
     use fc_rpc::{
         pending::AuraConsensusDataProvider, Debug, DebugApiServer, Eth, EthApiServer, EthDevSigner,
         EthFilter, EthFilterApiServer, EthPubSub, EthPubSubApiServer, EthSigner, Net, NetApiServer,
-        Web3, Web3ApiServer,
+        TxPool, TxPoolApiServer, Web3, Web3ApiServer,
     };
-    use fc_rpc::{TxPool, TxPoolApiServer};
 
     let EthDeps {
         client,

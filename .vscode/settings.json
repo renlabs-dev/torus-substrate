@@ -2,7 +2,25 @@
   // Editor
   "editor.formatOnSave": true,
   // Rust
-  "rust-analyzer.cargo.extraEnv": { "SKIP_WASM_BUILD": "1" },
-  "rust-analyzer.check.extraEnv": { "SKIP_WASM_BUILD": "1" },
-  "rust-analyzer.cargo.features": ["runtime-benchmarks"]
+  "rust-analyzer.cargo.extraEnv": {
+    "SKIP_WASM_BUILD": "1"
+  },
+  "rust-analyzer.check.extraEnv": {
+    "SKIP_WASM_BUILD": "1"
+  },
+  "rust-analyzer.cargo.features": ["runtime-benchmarks", "testnet"],
+  "coverage-gutters.coverageFileNames": ["target/cov.xml"],
+  // Spell checker
+  "cSpell.words": [
+    "alice",
+    "buildx",
+    "devcontainers",
+    "extrinsics",
+    "irongut",
+    "jwalton",
+    "mainnet",
+    "presign",
+    "Swatinem",
+    "wbuild"
+  ]
 }

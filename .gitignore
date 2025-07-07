@@ -1,3 +1,6 @@
+# Local files
+*.local.*
+
 # Temporary files
 /tmp/
 

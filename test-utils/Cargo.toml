@@ -4,6 +4,10 @@ version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 
+[features]
+default = ["std"]
+std = []
+
 [dependencies]
 codec.workspace = true
 scale-info.workspace = true
@@ -16,6 +20,9 @@ polkadot-sdk = { workspace = true, features = [
 pallet-governance.workspace = true
 pallet-torus0.workspace = true
 pallet-emission0.workspace = true
+pallet-permission0.workspace = true
+pallet-faucet.workspace = true
 
 pallet-torus0-api.workspace = true
 pallet-governance-api.workspace = true
+pallet-permission0-api.workspace = true

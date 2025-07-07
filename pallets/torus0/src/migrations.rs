@@ -1,121 +1,169 @@
-use polkadot_sdk::{
-    frame_support::{
-        migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade, weights::Weight,
-    },
-    sp_runtime::Percent,
+use polkadot_sdk::frame_support::{
+    migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade, weights::Weight,
 };
 
 use crate::{Config, Pallet};
 
-pub mod v1 {
+pub mod v4 {
     use super::*;
-
     use crate::{Agent, Agents};
+    use scale_info::prelude::vec::Vec;
 
-    pub type Migration<T, W> = VersionedMigration<0, 1, MigrateToV1<T>, Pallet<T>, W>;
-    pub struct MigrateToV1<T>(core::marker::PhantomData<T>);
+    pub mod storage {
+        use codec::{Decode, Encode, MaxEncodedLen};
+        use polkadot_sdk::frame_support::{storage_alias, DebugNoBound, Identity};
+        use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
+        use polkadot_sdk::sp_runtime::{BoundedVec, Percent};
+        use scale_info::TypeInfo;
 
-    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV1<T> {
+        use crate::AccountIdOf;
+
+        #[derive(DebugNoBound, Encode, Decode, MaxEncodedLen, TypeInfo)]
+        #[scale_info(skip_type_params(T))]
+        pub struct Agent<T: crate::Config> {
+            pub key: AccountIdOf<T>,
+            pub name: BoundedVec<u8, T::MaxAgentNameLengthConstraint>,
+            pub url: BoundedVec<u8, T::MaxAgentUrlLengthConstraint>,
+            pub metadata: BoundedVec<u8, T::MaxAgentMetadataLengthConstraint>,
+            pub weight_penalty_factor: Percent,
+            pub registration_block: BlockNumberFor<T>,
+            pub fees: crate::fee::ValidatorFee<T>,
+        }
+
+        #[storage_alias]
+        pub type Agents<T: crate::Config> =
+            StorageMap<crate::Pallet<T>, Identity, AccountIdOf<T>, Agent<T>>;
+    }
+
+    pub type Migration<T, W> = VersionedMigration<3, 4, MigrateToV4<T>, Pallet<T>, W>;
+    pub struct MigrateToV4<T>(core::marker::PhantomData<T>);
+    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV4<T> {
         fn on_runtime_upgrade() -> Weight {
-            Agents::<T>::translate(|_key, mut agent: Agent<T>| {
-                agent.weight_penalty_factor = Percent::from_percent(0);
-                Some(agent)
-            });
+            let old_agents = storage::Agents::<T>::iter().collect::<Vec<_>>();
+            let _ = storage::Agents::<T>::clear(u32::MAX, None);
+
+            for (id, old_agent) in old_agents {
+                Agents::<T>::insert(
+                    id,
+                    Agent {
+                        key: old_agent.key,
+                        name: old_agent.name,
+                        url: old_agent.url,
+                        metadata: old_agent.metadata,
+                        registration_block: old_agent.registration_block,
+                        weight_penalty_factor: old_agent.weight_penalty_factor,
+                        fees: old_agent.fees,
+                        last_update_block: old_agent.registration_block,
+                    },
+                )
+            }
+
             Weight::zero()
         }
     }
 }
 
-pub mod v2 {
-    use super::*;
-    use crate::{Agent, Agents};
-    pub type Migration<T, W> = VersionedMigration<1, 2, MigrateToV1<T>, Pallet<T>, W>;
-    pub struct MigrateToV1<T>(core::marker::PhantomData<T>);
-    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV1<T> {
-        fn on_runtime_upgrade() -> Weight {
-            Agents::<T>::translate(|_key, mut agent: Agent<T>| {
-                agent.fees = Default::default();
-                Some(agent)
-            });
-            Weight::zero()
-        }
-    }
-}
-
-pub mod v3 {
-    use super::*;
+pub mod v5 {
+    use pallet_torus0_api::NamespacePath;
     use polkadot_sdk::{
-        frame_support::traits::Currency,
+        frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
         sp_tracing::{error, info},
+        sp_weights::Weight,
     };
 
-    pub type Migration<T, W> = VersionedMigration<2, 3, MigrateToV3<T>, Pallet<T>, W>;
-    pub struct MigrateToV3<T>(core::marker::PhantomData<T>);
+    use crate::{
+        burn::BurnConfiguration, namespace::NamespaceOwnership, Agents, BurnConfig, Config, Pallet,
+    };
 
-    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV3<T> {
+    pub mod storage {
+        use polkadot_sdk::frame_support::{pallet_prelude::*, storage_alias};
+
+        use crate::AccountIdOf;
+
+        #[storage_alias]
+        pub type Namespaces<T: crate::Config> = StorageDoubleMap<
+            crate::Pallet<T>,
+            Blake2_128Concat,
+            AccountIdOf<T>,
+            Blake2_128Concat,
+            pallet_torus0_api::NamespacePath,
+            crate::namespace::NamespaceMetadata<T>,
+        >;
+
+        #[storage_alias]
+        pub type NamespaceCount<T: crate::Config> =
+            StorageMap<crate::Pallet<T>, Blake2_128Concat, AccountIdOf<T>, u32, ValueQuery>;
+    }
+
+    pub type Migration<T, W> = VersionedMigration<4, 5, MigrateToV5<T>, Pallet<T>, W>;
+    pub struct MigrateToV5<T>(core::marker::PhantomData<T>);
+
+    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV5<T> {
         fn on_runtime_upgrade() -> Weight {
-            refund_imbalance::<T>();
+            BurnConfig::<T>::set(BurnConfiguration {
+                min_burn: 15000000000000000000,   // 15tors
+                max_burn: 1000000000000000000000, // 1000tors
+                max_registrations_per_interval: 16,
+                ..BurnConfig::<T>::get()
+            });
+
+            let _ = storage::Namespaces::<T>::clear(u32::MAX, None);
+            let _ = storage::NamespaceCount::<T>::clear(u32::MAX, None);
+
+            let path = NamespacePath::agent_root();
+            #[allow(deprecated)]
+            if let Err(err) =
+                crate::namespace::create_namespace0::<T>(NamespaceOwnership::System, path, false)
+            {
+                error!("failed to create root agent namespace: {err:?}");
+                return Weight::default();
+            }
+
+            info!("created root agent namespace");
+
+            for (id, agent) in Agents::<T>::iter() {
+                let old_name = agent.name.clone();
+                let Ok(agent_name) = core::str::from_utf8(&agent.name) else {
+                    error!("agent name is not utf-8: {:?}", agent.name);
+                    continue;
+                };
+
+                let agent_name = agent_name.trim().to_ascii_lowercase().replace(' ', "-");
+
+                let Ok(bounded_name) = agent_name.as_bytes().to_vec().try_into() else {
+                    error!("cannot lower case agent {agent_name:?}");
+                    continue;
+                };
+
+                let path = match NamespacePath::new_agent_root(agent_name.as_bytes()) {
+                    Ok(path) => path,
+                    Err(err) => {
+                        error!("cannot create path for agent {agent_name:?}: {err:?}");
+                        continue;
+                    }
+                };
+
+                Agents::<T>::mutate_extant(id.clone(), |agent| {
+                    agent.name = bounded_name;
+                });
+
+                #[allow(deprecated)]
+                if let Err(err) = crate::namespace::create_namespace0::<T>(
+                    NamespaceOwnership::Account(id.clone()),
+                    path.clone(),
+                    false,
+                ) {
+                    error!("cannot create namespace for agent {agent_name:?}: {err:?}");
+
+                    Agents::<T>::mutate_extant(id.clone(), |agent| {
+                        agent.name = old_name;
+                    });
+                } else {
+                    info!("created namespace entry for agent {agent_name:?}: {path:?}");
+                }
+            }
 
             Weight::default()
         }
-    }
-
-    /// A bug on the staking code cleared the stake maps before
-    /// refunding the stake. Because the total stake was not updated in time,
-    /// the imbalance refers exactly to the amount that needs to be refunded.
-    ///
-    /// This way we safely avoid minting new tokens.
-    fn refund_imbalance<T: Config>() {
-        fn ss58_to_account_id<T: Config>(ss58_address: &str) -> Option<T::AccountId> {
-            use codec::{Decode, Encode};
-            use polkadot_sdk::{sp_application_crypto::Ss58Codec, sp_runtime::AccountId32};
-
-            let account_id = AccountId32::from_ss58check(ss58_address).ok()?;
-            T::AccountId::decode(&mut account_id.encode().as_slice()).ok()
-        }
-
-        let account = "5Ef9VXKCmhXCWGdmqm6bm3eVf6WWckd4P1NZTeZLCTJBoduL";
-        let Some(account) = ss58_to_account_id::<T>(account) else {
-            error!("invalid account {account}");
-            return;
-        };
-
-        let total_stake = crate::TotalStake::<T>::get();
-
-        let mut sum_staking_to = 0u128;
-        for (_, _, stake) in crate::StakingTo::<T>::iter() {
-            sum_staking_to = sum_staking_to.saturating_add(stake);
-        }
-
-        let mut sum_staked_by = 0u128;
-        for (_, _, stake) in crate::StakedBy::<T>::iter() {
-            sum_staked_by = sum_staked_by.saturating_add(stake);
-        }
-
-        if sum_staking_to != sum_staked_by {
-            error!("imbalance between StakingTo ({sum_staking_to}) and StakedBy ({sum_staked_by})");
-            return;
-        }
-
-        let imbalance = total_stake.saturating_sub(sum_staking_to);
-        if imbalance == 0 {
-            error!("no imbalance between TotalStake and stake maps");
-            return;
-        }
-
-        info!("imbalance between TotalStake - sum(stake) = {imbalance}");
-
-        let _ = T::Currency::deposit_creating(&account, imbalance);
-        crate::TotalStake::<T>::mutate(|total_stake| {
-            *total_stake = total_stake.saturating_sub(imbalance);
-        });
-
-        let new_total_stake = crate::TotalStake::<T>::get();
-        if new_total_stake != sum_staking_to {
-            error!("imbalance remained, {new_total_stake} != {sum_staking_to}");
-            return;
-        };
-
-        info!("imbalance refunded to {account:?}, {new_total_stake} == {sum_staking_to}");
     }
 }

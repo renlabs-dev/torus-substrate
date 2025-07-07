@@ -2,7 +2,7 @@
 //!
 //! Should only be used for benchmarking as it may break in other contexts.
 
-use crate::service::FullClient;
+use std::{sync::Arc, time::Duration};
 
 use polkadot_sdk::{
     sc_cli::Result,
@@ -15,7 +15,7 @@ use polkadot_sdk::{
 };
 use torus_runtime::interface::{AccountId, Balance, BalancesCall, SystemCall};
 
-use std::{sync::Arc, time::Duration};
+use crate::service::FullClient;
 
 /// Generates extrinsics for the `benchmark overhead` command.
 ///
@@ -171,6 +171,6 @@ pub fn inherent_benchmark_data() -> Result<InherentData> {
     let timestamp = sp_timestamp::InherentDataProvider::new(d.into());
 
     futures::executor::block_on(timestamp.provide_inherent_data(&mut inherent_data))
-        .map_err(|e| format!("creating inherent data: {:?}", e))?;
+        .map_err(|e| format!("creating inherent data: {e:?}"))?;
     Ok(inherent_data)
 }

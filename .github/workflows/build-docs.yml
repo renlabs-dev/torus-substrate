@@ -1,0 +1,46 @@
+name: Build docs and publish to github pages
+
+on:
+  push:
+    branches:
+      - main
+    
+jobs:
+  publish:
+    permissions:
+      contents: read
+      id-token: write
+      pages: write
+    runs-on: ubicloud-standard-2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Install Rust toolchain
+        run: |
+          rustup set profile minimal
+          rustup show
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          version: 3.20.1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Docs
+        run: |
+          cargo doc --workspace --no-deps
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'target/doc/'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

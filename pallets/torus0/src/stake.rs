@@ -10,6 +10,8 @@ use polkadot_sdk::{
 use crate::agent;
 use crate::{AccountIdOf, BalanceOf};
 
+/// Stakes `amount` tokens from `staker` to `staked` by withdrawing the tokens
+/// and adding them to the [`crate::StakingTo`] and [`crate::StakedBy`] maps.
 pub fn add_stake<T: crate::Config>(
     staker: AccountIdOf<T>,
     staked: AccountIdOf<T>,
@@ -43,6 +45,7 @@ pub fn add_stake<T: crate::Config>(
     Ok(())
 }
 
+/// Withdraws stake from an agent and gives it back to the staker.
 pub fn remove_stake<T: crate::Config>(
     staker: AccountIdOf<T>,
     staked: AccountIdOf<T>,
@@ -111,6 +114,8 @@ pub fn transfer_stake<T: crate::Config>(
     Ok(())
 }
 
+/// Usually called when de-registering an agent, removes all stakes on a given
+/// key.
 pub(crate) fn clear_key<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
     let stakes: Vec<_> = crate::StakingTo::<T>::iter().collect();
     for (staker, staked, amount) in stakes {

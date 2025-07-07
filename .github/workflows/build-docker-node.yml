@@ -1,8 +1,12 @@
-name: Build and push Docker image
+name: Build Torus node Docker image
 
 on:
   push:
-    branches: [main, testnet, github-ci-test]
+    branches:
+      - main
+      - dev
+      - testnet
+      - github-ci-test
     tags:
       - "*"
 
@@ -13,9 +17,9 @@ concurrency:
 jobs:
   build-n-push:
     permissions: write-all
-    runs-on: ubuntu-22.04-32core-karl
+    runs-on: ubicloud-standard-16
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - id: commit
         uses: prompt/actions-commit-hash@v3

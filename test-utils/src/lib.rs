@@ -2,16 +2,21 @@
 
 use std::{cell::RefCell, num::NonZeroU128};
 
+pub use pallet_emission0;
+pub use pallet_governance;
+pub use pallet_permission0;
+pub use pallet_torus0;
+
+use pallet_permission0_api::{CuratorPermissions, PermissionId};
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
-        self,
-        pallet_prelude::DispatchResult,
-        parameter_types,
+        self, parameter_types,
         traits::{Currency, Everything, Hooks},
         PalletId,
     },
-    frame_system, pallet_balances,
+    frame_system::{self, RawOrigin},
+    pallet_balances,
     polkadot_sdk_frame::runtime::prelude::*,
     sp_core::{Get, H256},
     sp_io,
@@ -21,8 +26,6 @@ use polkadot_sdk::{
     },
     sp_tracing,
 };
-
-pub use {pallet_emission0, pallet_governance, pallet_torus0};
 
 #[frame_construct_runtime]
 mod runtime {
@@ -44,6 +47,12 @@ mod runtime {
 
     #[runtime::pallet_index(4)]
     pub type Governance = pallet_governance::Pallet<Runtime>;
+
+    #[runtime::pallet_index(5)]
+    pub type Permission0 = pallet_permission0::Pallet<Runtime>;
+
+    #[runtime::pallet_index(6)]
+    pub type Faucet = pallet_faucet::Pallet<Runtime>;
 }
 
 pub type Block = frame_system::mocking::MockBlock<Test>;
@@ -61,7 +70,7 @@ parameter_types! {
 }
 
 thread_local! {
-    static DEFAULT_MIN_BURN: RefCell<u128> = const { RefCell::new(to_nano(10)) };
+    static DEFAULT_MIN_BURN: RefCell<u128> = const { RefCell::new(as_tors(10)) };
 }
 
 pub struct MinBurnConfig;
@@ -83,34 +92,19 @@ parameter_types! {
     pub const MaxLocks: u32 = 50;
     pub const MaxReserves: u32 = 50;
     pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
-}
 
-impl pallet_governance_api::GovernanceApi<AccountId> for Test {
-    fn dao_treasury_address() -> AccountId {
-        pallet_governance::DaoTreasuryAddress::<Test>::get()
-    }
+    pub DefaultNamespacePricingConfig: pallet_torus0::namespace::NamespacePricingConfig<Test> = pallet_torus0::namespace::NamespacePricingConfig {
+        base_fee: as_tors(0),
+        deposit_per_byte: as_tors(0),
 
-    fn treasury_emission_fee() -> Percent {
-        pallet_governance::TreasuryEmissionFee::<Test>::get()
-    }
-
-    fn is_whitelisted(key: &AccountId) -> bool {
-        pallet_governance::Whitelist::<Test>::contains_key(key)
-    }
-
-    fn ensure_allocator(key: &AccountId) -> DispatchResult {
-        pallet_governance::roles::ensure_allocator::<Test>(key)
-    }
-
-    fn set_allocator(key: &AccountId) {
-        pallet_governance::Allocators::<Test>::insert(key, ());
-    }
+        count_midpoint: 20,
+        fee_steepness: Percent::from_percent(20),
+        max_fee_multiplier: 0,
+    };
 }
 
 impl pallet_torus0::Config for Test {
     type DefaultMinValidatorStake = ConstU128<50_000_000_000_000_000_000_000>;
-
-    type DefaultImmunityPeriod = ConstU16<0>;
 
     type DefaultRewardInterval = ConstU16<100>;
 
@@ -119,8 +113,6 @@ impl pallet_torus0::Config for Test {
     type DefaultMaxNameLength = ConstU16<32>;
 
     type DefaultMaxAgentUrlLength = ConstU16<64>;
-
-    type DefaultMaxAllowedAgents = ConstU16<10_000>;
 
     type DefaultMaxAllowedValidators = ConstU16<128>;
 
@@ -144,6 +136,8 @@ impl pallet_torus0::Config for Test {
 
     type DefaultMaxRegistrationsPerInterval = ConstU16<32>;
 
+    type DefaultAgentUpdateCooldown = ConstU64<32_400>;
+
     #[doc = " The storage MaxNameLength should be constrained to be no more than the value of this."]
     #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
     type MaxAgentNameLengthConstraint = ConstU32<256>;
@@ -155,6 +149,8 @@ impl pallet_torus0::Config for Test {
 
     type DefaultDividendsParticipationWeight = DefaultDividendsParticipationWeight;
 
+    type DefaultNamespacePricingConfig = DefaultNamespacePricingConfig;
+
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
@@ -162,11 +158,14 @@ impl pallet_torus0::Config for Test {
     type Governance = Governance;
 
     type Emission = Emission0;
+    type Permission0 = Permission0;
+
+    type WeightInfo = pallet_torus0::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {
-    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(to_nano(144_000_000)).unwrap();
-    pub MaxSupply: NonZeroU128 = NonZeroU128::new(to_nano(144_000_000 * 4)).unwrap();
+    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
+    pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000 * 4)).unwrap();
     pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_parts(70);
     pub const DefaultIncentivesRatio: Percent = Percent::from_parts(50);
 }
@@ -178,11 +177,7 @@ impl pallet_emission0::Config for Test {
 
     type MaxSupply = MaxSupply;
 
-    type BlockEmission = ConstU128<{ (to_nano(250_000) - 1) / 10800 }>;
-
-    type DefaultMinAllowedWeights = ConstU16<1>;
-
-    type DefaultMaxAllowedWeights = ConstU16<420>;
+    type BlockEmission = ConstU128<{ (as_tors(250_000) - 1) / 10800 }>;
 
     type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
 
@@ -195,6 +190,8 @@ impl pallet_emission0::Config for Test {
     type Governance = Governance;
 
     type WeightInfo = pallet_emission0::weights::SubstrateWeight<Test>;
+
+    type Permission0 = Permission0;
 }
 
 parameter_types! {
@@ -217,25 +214,59 @@ impl pallet_governance::Config for Test {
 
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
-    type DefaultProposalCost = ConstU128<{ to_nano(10_000) }>;
+    type DefaultProposalCost = ConstU128<{ as_tors(10_000) }>;
 
     type DefaultProposalExpiration = ConstU64<75_600>;
 
-    type DefaultAgentApplicationCost = ConstU128<{ to_nano(1_000) }>;
+    type DefaultAgentApplicationCost = ConstU128<{ as_tors(1_000) }>;
 
     type DefaultAgentApplicationExpiration = ConstU64<216_000>;
 
     type DefaultProposalRewardTreasuryAllocation = DefaultProposalRewardTreasuryAllocation;
 
-    type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<{ to_nano(10_000) }>;
+    type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<{ as_tors(10_000) }>;
 
     type DefaultProposalRewardInterval = ConstU64<75_600>;
 
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type Permission0 = Permission0;
 
     type WeightInfo = pallet_governance::weights::SubstrateWeight<Test>;
+}
+
+parameter_types! {
+    pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
+    pub const MaxTargetsPerPermission: u32 = 100;
+    pub const MaxStreamsPerPermission: u32 = 100;
+    pub const MaxRevokersPerPermission: u32 = 10;
+    pub const MaxControllersPerPermission: u32 = 10;
+    pub const MinAutoDistributionThreshold: u128 = as_tors(100);
+}
+
+impl pallet_permission0::Config for Test {
+    type RuntimeEvent = RuntimeEvent;
+
+    type WeightInfo = ();
+
+    type Currency = Balances;
+
+    type Torus = Torus0;
+
+    type PalletId = PermissionPalletId;
+
+    type MaxTargetsPerPermission = MaxTargetsPerPermission;
+
+    type MaxStreamsPerPermission = MaxStreamsPerPermission;
+
+    type MaxRevokersPerPermission = MaxRevokersPerPermission;
+
+    type MaxControllersPerPermission = MaxControllersPerPermission;
+
+    type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
+
+    type MaxNamespacesPerPermission = ConstU32<10>;
 }
 
 impl pallet_balances::Config for Test {
@@ -287,12 +318,18 @@ impl frame_system::Config for Test {
     type PostTransactions = ();
 }
 
+impl pallet_faucet::Config for Test {
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type Torus = Torus0;
+}
+
 // Utility functions
 //===================
 
 const TOKEN_DECIMALS: u32 = 18;
 
-pub const fn to_nano(x: Balance) -> Balance {
+pub const fn as_tors(x: Balance) -> Balance {
     x.saturating_mul((10 as Balance).pow(TOKEN_DECIMALS))
 }
 
@@ -343,15 +380,19 @@ pub fn get_origin(key: AccountId) -> RuntimeOrigin {
 pub fn step_block(count: BlockNumber) {
     let current = System::block_number();
     for block in current..current + count {
+        Permission0::on_finalize(block);
         Torus0::on_finalize(block);
         Emission0::on_finalize(block);
         Governance::on_finalize(block);
         System::on_finalize(block);
+
         System::set_block_number(block + 1);
-        Governance::on_initialize(block + 1);
+
         System::on_initialize(block + 1);
+        Governance::on_initialize(block + 1);
         Emission0::on_initialize(block + 1);
         Torus0::on_initialize(block + 1);
+        Permission0::on_initialize(block + 1);
     }
 }
 
@@ -364,6 +405,7 @@ pub fn get_balance(key: AccountId) -> Balance {
 }
 
 pub fn register_empty_agent(key: AccountId) {
+    pallet_governance::Whitelist::<Test>::insert(key, ());
     pallet_torus0::Agents::<Test>::set(
         key,
         Some(pallet_torus0::agent::Agent {
@@ -374,8 +416,68 @@ pub fn register_empty_agent(key: AccountId) {
             weight_penalty_factor: Default::default(),
             registration_block: <polkadot_sdk::frame_system::Pallet<Test>>::block_number(),
             fees: Default::default(),
+            last_update_block: Default::default(),
         }),
     );
+}
+
+pub type NegativeImbalanceOf = <pallet_balances::Pallet<Test> as Currency<
+    <Test as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
+
+#[allow(clippy::too_many_arguments)]
+pub fn grant_emission_permission(
+    grantor: AccountId,
+    grantee: AccountId,
+    allocation: pallet_permission0_api::EmissionAllocation<Balance>,
+    targets: Vec<(AccountId, u16)>,
+    distribution: pallet_permission0_api::DistributionControl<Balance, BlockNumber>,
+    duration: pallet_permission0_api::PermissionDuration<BlockNumber>,
+    revocation: pallet_permission0_api::RevocationTerms<AccountId, BlockNumber>,
+    enforcement: pallet_permission0_api::EnforcementAuthority<AccountId>,
+) -> Result<PermissionId, polkadot_sdk::sp_runtime::DispatchError> {
+    use pallet_permission0_api::Permission0EmissionApi;
+    <Permission0 as Permission0EmissionApi<
+        AccountId,
+        RuntimeOrigin,
+        BlockNumber,
+        Balance,
+        NegativeImbalanceOf,
+    >>::grant_emission_permission(
+        grantor,
+        grantee,
+        allocation,
+        targets,
+        distribution,
+        duration,
+        revocation,
+        enforcement,
+    )
+}
+
+pub fn grant_curator_permission(
+    key: AccountId,
+    flags: CuratorPermissions,
+    cooldown: Option<BlockNumber>,
+) {
+    use pallet_permission0_api::Permission0CuratorApi;
+    <pallet_permission0::Pallet<Test> as Permission0CuratorApi<
+        AccountId,
+        RuntimeOrigin,
+        BlockNumber,
+    >>::grant_curator_permission(
+        RawOrigin::Root.into(),
+        key,
+        flags,
+        cooldown,
+        pallet_permission0_api::PermissionDuration::Indefinite,
+        pallet_permission0_api::RevocationTerms::Irrevocable,
+    )
+    .expect("failed to register curator");
+}
+
+pub fn clear_cooldown() {
+    pallet_torus0::AgentUpdateCooldown::<Test>::set(0);
 }
 
 pub fn round_first_five(num: u64) -> u64 {

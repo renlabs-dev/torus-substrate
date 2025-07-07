@@ -1,4 +1,3 @@
-use crate::*;
 use frame_support::PalletId;
 use pallet_transaction_payment::{FungibleAdapter, Multiplier, TargetedFeeAdjustment};
 use polkadot_sdk::{
@@ -16,6 +15,8 @@ use polkadot_sdk::{
     sp_std::num::NonZeroU128,
 };
 use sp_runtime::{Perbill, Percent};
+
+use crate::*;
 
 pub mod eth;
 
@@ -69,8 +70,8 @@ impl frame_system::Config for Runtime {
     /// Contains version information about the runtime
     /// Used for runtime upgrades and compatibility
     type Version = Version;
-    /// Defines the weight (computational and storage) costs of blocks and extrinsics
-    /// Including base values and limits
+    /// Defines the weight (computational and storage) costs of blocks and
+    /// extrinsics Including base values and limits
     type BlockWeights = BlockWeights;
     /// Specifies the maximum size of a block in bytes
     type BlockLength = BlockLength;
@@ -86,14 +87,15 @@ impl frame_system::Config for Runtime {
 
 // --- Balances ---
 
-pub const EXISTENTIAL_DEPOSIT: u128 = 10_u128.pow(TOKEN_DECIMALS) / 10;
+pub const EXISTENTIAL_DEPOSIT: u128 = as_tors(1) / 10;
 
 impl pallet_balances::Config for Runtime {
     /// The means of storing the balances of an account
     type AccountStore = System;
     /// The overarching event type
     type RuntimeEvent = RuntimeEvent;
-    /// The type for recording an account's reason for being unable to withdraw funds
+    /// The type for recording an account's reason for being unable to withdraw
+    /// funds
     type RuntimeHoldReason = RuntimeHoldReason;
     /// The type for recording an account's freezing reason
     type RuntimeFreezeReason = ();
@@ -124,7 +126,8 @@ impl pallet_balances::Config for Runtime {
 impl pallet_sudo::Config for Runtime {
     /// The overarching event type that will be emitted by this pallet
     type RuntimeEvent = RuntimeEvent;
-    /// The type that represents all calls that can be dispatched in this runtime
+    /// The type that represents all calls that can be dispatched in this
+    /// runtime
     type RuntimeCall = RuntimeCall;
     /// Weight information for the extrinsics in this pallet
     type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
@@ -163,9 +166,11 @@ impl pallet_multisig::Config for Runtime {
 // --- Timestamp ---
 
 impl pallet_timestamp::Config for Runtime {
-    /// The type used to store timestamps. In this case, it's an unsigned 64-bit integer.
+    /// The type used to store timestamps. In this case, it's an unsigned 64-bit
+    /// integer.
     type Moment = u64;
-    /// A hook that is called after the timestamp is set. In this case, it's empty (unit type).
+    /// A hook that is called after the timestamp is set. In this case, it's
+    /// empty (unit type).
     type OnTimestampSet = ();
     /// The minimum period between blocks. Set to 4000 (8000/2) milliseconds.
     /// This helps prevent timestamp manipulation by validators.
@@ -190,7 +195,8 @@ parameter_types! {
 /// Converts transaction length to fee using a polynomial formula
 pub struct LengthToFee;
 
-/// Fee adjustment mechanism that slowly adjusts transaction fees based on block fullness
+/// Fee adjustment mechanism that slowly adjusts transaction fees based on block
+/// fullness
 pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
     R,
     TargetBlockFullness,
@@ -202,7 +208,8 @@ pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
 impl WeightToFeePolynomial for LengthToFee {
     type Balance = Balance;
 
-    /// Returns coefficients for a polynomial that converts transaction length to fee
+    /// Returns coefficients for a polynomial that converts transaction length
+    /// to fee
     fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
         sp_std::vec![
             WeightToFeeCoefficient {
@@ -299,12 +306,22 @@ const fn as_tors(val: u128) -> u128 {
 
 parameter_types! {
     pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
+
+    pub NamespaceBaseFee: Balance = as_tors(5);
+    pub NamespaceDepositPerByte: Balance = as_tors(1);
+
+    pub DefaultNamespacePricingConfig: pallet_torus0::namespace::NamespacePricingConfig<Runtime> = pallet_torus0::namespace::NamespacePricingConfig {
+        base_fee: as_tors(3),
+        deposit_per_byte: as_tors(1).saturating_div(5),
+
+        count_midpoint: 35,
+        fee_steepness: Percent::from_percent(10),
+        max_fee_multiplier: 3,
+    };
 }
 
 impl pallet_torus0::Config for Runtime {
     type DefaultMinValidatorStake = ConstU128<{ as_tors(50_000) }>;
-
-    type DefaultImmunityPeriod = ConstU16<0>;
 
     type DefaultRewardInterval = ConstU16<100>;
 
@@ -313,8 +330,6 @@ impl pallet_torus0::Config for Runtime {
     type DefaultMaxNameLength = ConstU16<32>;
 
     type DefaultMaxAgentUrlLength = ConstU16<64>;
-
-    type DefaultMaxAllowedAgents = ConstU16<10_000>;
 
     type DefaultMaxAllowedValidators = ConstU16<128>;
 
@@ -327,27 +342,26 @@ impl pallet_torus0::Config for Runtime {
     type DefaultMinWeightControlFee = ConstU8<4>;
 
     type DefaultMinBurn = ConstU128<{ as_tors(10) }>;
-
     type DefaultMaxBurn = ConstU128<{ as_tors(150) }>;
 
     type DefaultAdjustmentAlpha = ConstU64<{ u64::MAX / 2 }>;
 
     type DefaultTargetRegistrationsInterval = ConstU64<142>;
-
     type DefaultTargetRegistrationsPerInterval = ConstU16<3>;
-
     type DefaultMaxRegistrationsPerInterval = ConstU16<32>;
+
+    type DefaultAgentUpdateCooldown = ConstU64<32_400>; // 3 days
 
     #[doc = " The storage MaxNameLength should be constrained to be no more than the value of this."]
     #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
     type MaxAgentNameLengthConstraint = ConstU32<256>;
-
     #[doc = " This is needed on agent::Agent to set the `address` field BoundedVec max length."]
     type MaxAgentUrlLengthConstraint = ConstU32<256>;
-
     type MaxAgentMetadataLengthConstraint = ConstU32<256>;
 
     type DefaultDividendsParticipationWeight = DefaultDividendsParticipationWeight;
+
+    type DefaultNamespacePricingConfig = DefaultNamespacePricingConfig;
 
     type RuntimeEvent = RuntimeEvent;
 
@@ -356,6 +370,9 @@ impl pallet_torus0::Config for Runtime {
     type Governance = Governance;
 
     type Emission = Emission0;
+    type Permission0 = Permission0;
+
+    type WeightInfo = pallet_torus0::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -369,7 +386,6 @@ impl pallet_governance::Config for Runtime {
     type PalletId = GovernancePalletId;
 
     type MinApplicationDataLength = ConstU32<2>;
-
     type MaxApplicationDataLength = ConstU32<256>;
 
     type ApplicationExpiration = ConstU64<2000>;
@@ -379,27 +395,25 @@ impl pallet_governance::Config for Runtime {
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
     type DefaultProposalCost = ConstU128<{ as_tors(10_000) }>;
-
     type DefaultProposalExpiration = ConstU64<75_600>;
 
     type DefaultAgentApplicationCost = ConstU128<{ as_tors(100) }>;
-
     type DefaultAgentApplicationExpiration = ConstU64<216_000>;
 
     type DefaultProposalRewardTreasuryAllocation = DefaultProposalRewardTreasuryAllocation;
-
     type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<{ as_tors(10_000) }>;
-
     type DefaultProposalRewardInterval = ConstU64<75_600>;
 
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type Permission0 = Permission0;
 
     type WeightInfo = pallet_governance::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
+    // SAFETY: `NonZeroU128::new` only fails if the passed value is 0, which is not the case here.
     pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
     pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
     pub const DefaultEmissionRecyclingPercentage: Percent = Percent::one();
@@ -415,10 +429,6 @@ impl pallet_emission0::Config for Runtime {
 
     type BlockEmission = ConstU128<{ as_tors(64_000) / 10800 }>;
 
-    type DefaultMinAllowedWeights = ConstU16<1>;
-
-    type DefaultMaxAllowedWeights = ConstU16<420>;
-
     type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
 
     type DefaultIncentivesRatio = DefaultIncentivesRatio;
@@ -429,5 +439,47 @@ impl pallet_emission0::Config for Runtime {
 
     type Governance = Governance;
 
+    type Permission0 = Permission0;
+
     type WeightInfo = pallet_emission0::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+    pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
+
+    pub const MaxControllersPerPermission: u32 = 10;
+    pub const MaxRevokersPerPermission: u32 = 10;
+
+    pub const MaxTargetsPerPermission: u32 = 100;
+    pub const MaxStreamsPerPermission: u32 = 100;
+    pub const MinAutoDistributionThreshold: u128 = as_tors(100);
+
+    pub const MaxNamespacesPerPermission: u32 = 16;
+}
+
+impl pallet_permission0::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+
+    type WeightInfo = ();
+
+    type Currency = Balances;
+
+    type Torus = Torus0;
+
+    type PalletId = PermissionPalletId;
+
+    type MaxControllersPerPermission = MaxControllersPerPermission;
+    type MaxRevokersPerPermission = MaxRevokersPerPermission;
+
+    type MaxTargetsPerPermission = MaxTargetsPerPermission;
+    type MaxStreamsPerPermission = MaxStreamsPerPermission;
+    type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
+
+    type MaxNamespacesPerPermission = MaxNamespacesPerPermission;
+}
+
+impl pallet_faucet::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type Torus = Torus0;
 }

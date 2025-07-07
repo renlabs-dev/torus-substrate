@@ -1,12 +1,23 @@
-default: check test
+default: fmt check test
+
+# Build
+
+build-mainnet:
+  cargo build --release --timings --package torus-runtime
+
+build-testnet:
+  cargo build --release --features testnet --timings --package torus-runtime
 
 # Development
 
 check:
-  cargo clippy
+  cargo clippy --tests
 
 test:
   cargo test
+
+fmt:
+  cargo fmt
 
 run-localnode profile="--alice":
   cargo xtask run local {{profile}}
@@ -37,9 +48,10 @@ gen-spec-file env: gen-base-spec
 
 run-benchmarks:
   cargo build -r --features runtime-benchmarks
-  # ./target/release/torus-node benchmark pallet --pallet pallet_torus0 --chain dev --extrinsic "*" --steps 50 --repeat 20 --output pallets/torus0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
+  ./target/release/torus-node benchmark pallet --pallet pallet_torus0 --chain dev --extrinsic "*" --steps 50 --repeat 20 --output pallets/torus0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
   ./target/release/torus-node benchmark pallet --pallet pallet_governance --chain dev --extrinsic "*" --steps 50 --repeat 20 --output pallets/governance/src/weights.rs --template=./.maintain/frame-weight-template.hbs
   ./target/release/torus-node benchmark pallet --pallet pallet_emission0 --chain dev --extrinsic "*" --steps 50 --repeat 20 --output pallets/emission0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
+  ./target/release/torus-node benchmark pallet --pallet pallet_permission0 --chain dev --extrinsic "*" --steps 50 --repeat 20 --output pallets/permission0/src/weights.rs --template=./.maintain/frame-weight-template.hbs
 
 # Runtime Update Testing
 
@@ -47,7 +59,7 @@ install-try-runtime:
   cargo install --git https://github.com/paritytech/try-runtime-cli --locked
 
 try-runtime-upgrade-testnet:
-    cargo build --release --features try-runtime
+    cargo build --release --features try-runtime,testnet
     RUST_BACKTRACE=1 RUST_LOG=info try-runtime --runtime target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 8000 live --uri wss://api.testnet.torus.network
 
 try-runtime-upgrade-mainnet:

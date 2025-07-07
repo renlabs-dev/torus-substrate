@@ -5,12 +5,8 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 extern crate alloc;
 use alloc::vec::Vec;
-use interface::*;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
-use weights::constants::RocksDbWeight;
 
+use interface::*;
 use polkadot_sdk::{
     frame_executive, frame_support, frame_system,
     polkadot_sdk_frame::{self as frame, prelude::*, runtime::prelude::*},
@@ -19,9 +15,12 @@ use polkadot_sdk::{
     sp_runtime::impl_opaque_keys,
     *,
 };
+#[cfg(feature = "std")]
+use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
+use weights::constants::RocksDbWeight;
 
 pub mod apis;
-#[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarks;
 pub mod configs;
 pub mod precompiles;
@@ -39,14 +38,15 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("torus-runtime"),
     impl_name: create_runtime_str!("torus-runtime"),
     authoring_version: 1,
-    spec_version: 12,
+    spec_version: 21,
     impl_version: 1,
     apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
     state_version: 1,
 };
 
-/// The version information used to identify this runtime when compiled natively.
+/// The version information used to identify this runtime when compiled
+/// natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
     NativeVersion {
@@ -83,7 +83,12 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 /// All migrations of the runtime, aside from the ones declared in the pallets.
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
-type Migrations = (pallet_torus0::migrations::v3::Migration<Runtime, RocksDbWeight>,);
+type Migrations = (
+    pallet_governance::migrations::v5::Migration<Runtime, RocksDbWeight>,
+    pallet_emission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
+    pallet_torus0::migrations::v4::Migration<Runtime, RocksDbWeight>,
+    pallet_torus0::migrations::v5::Migration<Runtime, RocksDbWeight>,
+);
 
 /// Executive: handles dispatch to the various modules.
 pub type RuntimeExecutive = frame_executive::Executive<
@@ -95,7 +100,8 @@ pub type RuntimeExecutive = frame_executive::Executive<
     Migrations,
 >;
 
-// Composes the runtime by adding all the used pallets and deriving necessary types.
+// Composes the runtime by adding all the used pallets and deriving necessary
+// types.
 #[frame_construct_runtime]
 mod runtime {
     #[runtime::runtime]
@@ -150,30 +156,36 @@ mod runtime {
 
     #[runtime::pallet_index(13)]
     pub type Emission0 = pallet_emission0::Pallet<Runtime>;
+
+    #[runtime::pallet_index(14)]
+    pub type Permission0 = pallet_permission0::Pallet<Runtime>;
+
+    #[runtime::pallet_index(15)]
+    pub type Faucet = pallet_faucet::Pallet<Runtime>;
 }
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
 }
 
-/// Some re-exports that the node side code needs to know. Some are useful in this context as well.
+/// Some re-exports that the node side code needs to know. Some are useful in
+/// this context as well.
 ///
 /// Other types should preferably be private.
 // TODO: this should be standardized in some way, see:
 // https://github.com/paritytech/substrate/issues/10579#issuecomment-1600537558
 pub mod interface {
-    use crate::RuntimeCall;
-
-    use super::Runtime;
     use polkadot_sdk::{
         frame_system, pallet_balances,
         sp_core::H160,
         sp_runtime::{self, generic, traits::BlakeTwo256, MultiSignature},
     };
-
     pub use polkadot_sdk::{
         frame_system::Call as SystemCall, pallet_balances::Call as BalancesCall,
     };
+
+    use super::Runtime;
+    use crate::RuntimeCall;
 
     pub type BlockNumber = u64;
 
@@ -196,17 +208,17 @@ pub mod interface {
     pub type MinimumBalance = <Runtime as pallet_balances::Config>::ExistentialDeposit;
 }
 
-// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
-// the specifics of the runtime. They can then be made to be agnostic over specific formats
-// of data like extrinsics, allowing for them to continue syncing the network through upgrades
-// to even the core data structures.
+// Opaque types. These are used by the CLI to instantiate machinery that don't
+// need to know the specifics of the runtime. They can then be made to be
+// agnostic over specific formats of data like extrinsics, allowing for them to
+// continue syncing the network through upgrades to even the core data
+// structures.
 pub mod opaque {
-    use super::*;
-
     use frame::traits::BlakeTwo256;
     use sp_runtime::generic;
-
     pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+
+    use super::*;
 
     /// Opaque block header type.
     pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
