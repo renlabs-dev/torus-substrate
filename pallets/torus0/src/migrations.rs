@@ -111,8 +111,9 @@ pub mod v5 {
             let _ = storage::NamespaceCount::<T>::clear(u32::MAX, None);
 
             let path = NamespacePath::agent_root();
+            #[allow(deprecated)]
             if let Err(err) =
-                crate::namespace::create_namespace::<T>(NamespaceOwnership::System, path)
+                crate::namespace::create_namespace0::<T>(NamespaceOwnership::System, path, false)
             {
                 error!("failed to create root agent namespace: {err:?}");
                 return Weight::default();
@@ -127,11 +128,7 @@ pub mod v5 {
                     continue;
                 };
 
-                let agent_name = if cfg!(feature = "testnet") {
-                    agent_name.to_ascii_lowercase().replace(' ', "-")
-                } else {
-                    agent_name.into()
-                };
+                let agent_name = agent_name.trim().to_ascii_lowercase().replace(' ', "-");
 
                 let Ok(bounded_name) = agent_name.as_bytes().to_vec().try_into() else {
                     error!("cannot lower case agent {agent_name:?}");

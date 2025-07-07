@@ -79,7 +79,7 @@ pub struct NamespacePath(NamespacePathInner);
 impl NamespacePath {
     /// The root agent namespace entry.
     pub fn agent_root() -> NamespacePath {
-        NamespacePath(b"agent".to_vec().try_into().unwrap())
+        NamespacePath(NamespacePathInner::truncate_from(b"agent".to_vec()))
     }
 
     /// Create a new root agent namespace path from the agent name
