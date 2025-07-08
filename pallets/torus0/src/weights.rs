@@ -42,7 +42,7 @@ pub trait WeightInfo {
 	fn remove_stake() -> Weight;
 	fn transfer_stake() -> Weight;
 	fn register_agent() -> Weight;
-	fn unregister_agent() -> Weight;
+	fn deregister_agent() -> Weight;
 	fn update_agent() -> Weight;
 	fn set_agent_update_cooldown() -> Weight;
 }
@@ -152,7 +152,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: `Torus0::Agents` (`max_values`: None, `max_size`: Some(857), added: 3332, mode: `MaxEncodedLen`)
 	/// Storage: `Torus0::StakingTo` (r:1 w:0)
 	/// Proof: `Torus0::StakingTo` (`max_values`: None, `max_size`: Some(80), added: 2555, mode: `MaxEncodedLen`)
-	fn unregister_agent() -> Weight {
+	fn deregister_agent() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `94`
 		//  Estimated: `4322`
@@ -298,7 +298,7 @@ impl WeightInfo for () {
 	/// Proof: `Torus0::Agents` (`max_values`: None, `max_size`: Some(857), added: 3332, mode: `MaxEncodedLen`)
 	/// Storage: `Torus0::StakingTo` (r:1 w:0)
 	/// Proof: `Torus0::StakingTo` (`max_values`: None, `max_size`: Some(80), added: 2555, mode: `MaxEncodedLen`)
-	fn unregister_agent() -> Weight {
+	fn deregister_agent() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `94`
 		//  Estimated: `4322`

@@ -38,7 +38,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("torus-runtime"),
     impl_name: create_runtime_str!("torus-runtime"),
     authoring_version: 1,
-    spec_version: 21,
+    spec_version: 22,
     impl_version: 1,
     apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -86,6 +86,7 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 type Migrations = (
     pallet_governance::migrations::v5::Migration<Runtime, RocksDbWeight>,
     pallet_emission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
+    pallet_permission0::migrations::v4::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v4::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v5::Migration<Runtime, RocksDbWeight>,
 );

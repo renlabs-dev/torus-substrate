@@ -40,7 +40,7 @@ pub mod pallet {
 
     /// Map of consensus members indexed by their keys. A consensus member is
     /// any agent eligible for emissions in the next epoch. This means
-    /// unregistered agents will also receive emissions.
+    /// deregistered agents will also receive emissions.
     #[pallet::storage]
     pub type ConsensusMembers<T: Config> =
         StorageMap<_, Identity, AccountIdOf<T>, ConsensusMember<T>>;

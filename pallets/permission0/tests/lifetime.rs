@@ -17,7 +17,7 @@ fn manual_cant_execute_when_expires() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
@@ -52,7 +52,7 @@ fn irrevocable() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
@@ -73,7 +73,7 @@ fn irrevocable() {
             pallet_permission0::Error::<Test>::NotAuthorizedToRevoke
         );
 
-        // should still be revocable by grantee
+        // should still be revocable by recipient
         assert_ok!(Permission0::revoke_permission(
             get_origin(agent_1),
             permission_id
@@ -82,7 +82,7 @@ fn irrevocable() {
 }
 
 #[test]
-fn revocable_by_grantor() {
+fn revocable_by_delegator() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
         let agent_0 = 0;
@@ -96,14 +96,14 @@ fn revocable_by_grantor() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
-            pallet_permission0_api::RevocationTerms::RevocableByGrantor,
+            pallet_permission0_api::RevocationTerms::RevocableByDelegator,
             pallet_permission0_api::EnforcementAuthority::None,
         ));
 
@@ -134,7 +134,7 @@ fn revocable_after_block() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
@@ -171,8 +171,8 @@ fn revocable_by_arbiters() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let grant_invalid = |accounts: &[AccountId], required_votes| {
-            grant_emission_permission(
+        let delegate_invalid = |accounts: &[AccountId], required_votes| {
+            delegate_emission_permission(
                 agent_0,
                 agent_1,
                 pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
@@ -188,22 +188,22 @@ fn revocable_by_arbiters() {
         };
 
         assert_err!(
-            grant_invalid(&[], 0),
+            delegate_invalid(&[], 0),
             Error::<Test>::InvalidNumberOfRevokers
         );
         assert_err!(
-            grant_invalid(&[0], 0),
+            delegate_invalid(&[0], 0),
             Error::<Test>::InvalidNumberOfRevokers
         );
         assert_err!(
-            grant_invalid(&[0], 2),
+            delegate_invalid(&[0], 2),
             Error::<Test>::InvalidNumberOfRevokers
         );
 
         let arbiters = [2, 3, 4, 5];
         let not_arbiter = 6;
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),

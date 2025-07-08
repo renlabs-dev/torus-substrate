@@ -30,7 +30,7 @@ fn curator<T: Config>() -> T::AccountId {
         T::AccountId,
         OriginFor<T>,
         BlockNumberFor<T>,
-    >>::grant_curator_permission(
+    >>::delegate_curator_permission(
         RawOrigin::Root.into(),
         curator_id.clone(),
         CuratorPermissions::all(),

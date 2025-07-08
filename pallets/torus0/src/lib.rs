@@ -320,21 +320,20 @@ pub mod pallet {
         #[pallet::weight((T::WeightInfo::register_agent(), DispatchClass::Normal, Pays::Yes))]
         pub fn register_agent(
             origin: OriginFor<T>,
-            agent_key: T::AccountId,
             name: Vec<u8>,
             url: Vec<u8>,
             metadata: Vec<u8>,
         ) -> DispatchResult {
-            let payer = ensure_signed(origin)?;
-            agent::register::<T>(payer, agent_key, name, url, metadata)
+            let agent_key = ensure_signed(origin)?;
+            agent::register::<T>(agent_key, name, url, metadata)
         }
 
         /// Unregister origin's key agent.
         #[pallet::call_index(4)]
-        #[pallet::weight((T::WeightInfo::unregister_agent(), DispatchClass::Normal, Pays::Yes))]
-        pub fn unregister_agent(origin: OriginFor<T>) -> DispatchResult {
+        #[pallet::weight((T::WeightInfo::deregister_agent(), DispatchClass::Normal, Pays::Yes))]
+        pub fn deregister_agent(origin: OriginFor<T>) -> DispatchResult {
             let agent_key = ensure_signed(origin)?;
-            agent::unregister::<T>(agent_key)
+            agent::deregister::<T>(agent_key)
         }
 
         /// Updates origin's key agent metadata.

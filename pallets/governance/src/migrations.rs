@@ -138,13 +138,13 @@ pub mod v5 {
             }
 
             for (curator, _) in old_storage::Curators::<T>::iter() {
-                let res = <<T as Config>::Permission0>::grant_curator_permission(
+                let res = <<T as Config>::Permission0>::delegate_curator_permission(
                     RawOrigin::Root.into(),
                     curator.clone(),
                     CuratorPermissions::all(),
                     None,
                     PermissionDuration::Indefinite,
-                    pallet_permission0_api::RevocationTerms::RevocableByGrantor,
+                    pallet_permission0_api::RevocationTerms::RevocableByDelegator,
                 );
 
                 match res {

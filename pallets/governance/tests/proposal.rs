@@ -38,7 +38,6 @@ fn register(account: AccountId, _unused: u16, module: AccountId, stake: u128) {
 
     assert_ok!(pallet_torus0::agent::register::<Test>(
         module,
-        module,
         b"agent".to_vec(),
         b"url".to_vec(),
         b"metadata".to_vec(),

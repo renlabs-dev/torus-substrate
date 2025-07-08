@@ -28,14 +28,14 @@ pub mod emission;
 pub type PermissionId = H256;
 
 /// Generate a unique permission ID by hashing a concat of
-/// `grantee | scope | block number`
+/// `recipient | scope | block number`
 pub fn generate_permission_id<T: Config>(
-    grantor: &T::AccountId,
-    grantee: &T::AccountId,
+    delegator: &T::AccountId,
+    recipient: &T::AccountId,
     scope: &PermissionScope<T>,
 ) -> Result<PermissionId, DispatchError> {
-    let mut data = grantor.encode();
-    data.extend(grantee.encode());
+    let mut data = delegator.encode();
+    data.extend(recipient.encode());
     data.extend(scope.encode());
 
     data.extend(<frame_system::Pallet<T>>::block_number().encode());
@@ -56,8 +56,8 @@ pub fn generate_permission_id<T: Config>(
 #[derive(Encode, Decode, CloneNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub struct PermissionContract<T: Config> {
-    pub grantor: T::AccountId,
-    pub grantee: T::AccountId,
+    pub delegator: T::AccountId,
+    pub recipient: T::AccountId,
     pub scope: PermissionScope<T>,
     pub duration: PermissionDuration<T>,
     pub revocation: RevocationTerms<T>,
@@ -81,17 +81,17 @@ impl<T: Config> PermissionContract<T> {
     }
 
     pub fn revoke(self, origin: OriginFor<T>, permission_id: H256) -> DispatchResult {
-        // The grantee is also always allowed to revoke the permission.
-        let who = ensure_signed_or_root(origin)?.filter(|who| who != &self.grantee);
+        // The recipient is also always allowed to revoke the permission.
+        let who = ensure_signed_or_root(origin)?.filter(|who| who != &self.recipient);
 
-        let grantor = self.grantor.clone();
-        let grantee = self.grantee.clone();
+        let delegator = self.delegator.clone();
+        let recipient = self.recipient.clone();
 
         // `who` will not be present if the origin is a root key
         if let Some(who) = &who {
             match &self.revocation {
-                RevocationTerms::RevocableByGrantor => {
-                    ensure!(who == &grantor, Error::<T>::NotAuthorizedToRevoke)
+                RevocationTerms::RevocableByDelegator => {
+                    ensure!(who == &delegator, Error::<T>::NotAuthorizedToRevoke)
                 }
                 RevocationTerms::RevocableByArbiters {
                     accounts,
@@ -114,7 +114,7 @@ impl<T: Config> PermissionContract<T> {
                 RevocationTerms::RevocableByArbiters { .. } => {
                     return Err(Error::<T>::NotAuthorizedToRevoke.into())
                 }
-                RevocationTerms::RevocableAfter(block) if who == &grantor => ensure!(
+                RevocationTerms::RevocableAfter(block) if who == &delegator => ensure!(
                     <frame_system::Pallet<T>>::block_number() >= *block,
                     Error::<T>::NotAuthorizedToRevoke
                 ),
@@ -130,8 +130,8 @@ impl<T: Config> PermissionContract<T> {
         self.cleanup(permission_id);
 
         <Pallet<T>>::deposit_event(Event::PermissionRevoked {
-            grantor,
-            grantee,
+            delegator,
+            recipient,
             revoked_by: who,
             permission_id,
         });
@@ -199,7 +199,7 @@ impl<T: Config> PermissionContract<T> {
     }
 
     fn cleanup(self, permission_id: H256) {
-        crate::remove_permission_from_indices::<T>(&self.grantor, &self.grantee, permission_id);
+        crate::remove_permission_from_indices::<T>(&self.delegator, &self.recipient, permission_id);
 
         Permissions::<T>::remove(permission_id);
         RevocationTracking::<T>::remove(permission_id);
@@ -207,10 +207,10 @@ impl<T: Config> PermissionContract<T> {
 
         match self.scope {
             PermissionScope::Emission(emission) => {
-                emission.cleanup(permission_id, &self.last_execution, &self.grantor)
+                emission.cleanup(permission_id, &self.last_execution, &self.delegator)
             }
             PermissionScope::Curator(curator) => {
-                curator.cleanup(permission_id, &self.last_execution, &self.grantor)
+                curator.cleanup(permission_id, &self.last_execution, &self.delegator)
             }
             PermissionScope::Namespace(_) => {
                 // No cleanup needed for namespace permissions
@@ -222,7 +222,7 @@ impl<T: Config> PermissionContract<T> {
         let current_block = frame_system::Pallet::<T>::block_number();
 
         match &self.revocation {
-            RevocationTerms::RevocableByGrantor => true,
+            RevocationTerms::RevocableByDelegator => true,
             RevocationTerms::RevocableAfter(block) => &current_block > block,
             _ => false,
         }
@@ -242,7 +242,7 @@ pub enum PermissionScope<T: Config> {
 #[derive(Encode, Decode, CloneNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub struct NamespaceScope<T: Config> {
-    /// Set of namespace paths this permission grants access to
+    /// Set of namespace paths this permission delegates access to
     pub paths: BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
 }
 
@@ -264,8 +264,8 @@ pub enum PermissionDuration<T: Config> {
 pub enum RevocationTerms<T: Config> {
     /// Cannot be revoked
     Irrevocable,
-    /// Can be revoked by the grantor at any time
-    RevocableByGrantor,
+    /// Can be revoked by the delegator at any time
+    RevocableByDelegator,
     /// Can be revoked by third party arbiters
     RevocableByArbiters {
         accounts: BoundedVec<T::AccountId, T::MaxRevokersPerPermission>,
@@ -345,14 +345,14 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
     }
 
     for (permission_id, contract) in expired {
-        let grantor = contract.grantor.clone();
-        let grantee = contract.grantee.clone();
+        let delegator = contract.delegator.clone();
+        let recipient = contract.recipient.clone();
 
         contract.cleanup(permission_id);
 
         <Pallet<T>>::deposit_event(Event::PermissionExpired {
-            grantor,
-            grantee,
+            delegator,
+            recipient,
             permission_id,
         });
     }

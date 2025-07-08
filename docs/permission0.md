@@ -8,14 +8,14 @@ The concept draws inspiration from multi-level competency networks that self-org
 
 ## Permission Contracts
 
-A permission contract forms the foundation of the delegation relationship. Each contract defines the relationship between a grantor (who delegates emissions) and a grantee (who receives the delegation authority). The contract specifies allocation parameters, distribution controls, duration, and revocation terms.
+A permission contract forms the foundation of the delegation relationship. Each contract defines the relationship between a delegator (who delegates emissions) and a recipient (who receives the delegation authority). The contract specifies allocation parameters, distribution controls, duration, and revocation terms.
 
-Permission contracts are identified by a unique `PermissionId` generated deterministically from the grantor, grantee, scope, and creation block. This ensures contracts can be consistently referenced and avoids collision issues when multiple contracts exist between the same parties.
+Permission contracts are identified by a unique `PermissionId` generated deterministically from the delegator, recipient, scope, and creation block. This ensures contracts can be consistently referenced and avoids collision issues when multiple contracts exist between the same parties.
 
 ```rust
 pub struct PermissionContract<T: Config> {
-    pub grantor: T::AccountId,
-    pub grantee: T::AccountId,
+    pub delegator: T::AccountId,
+    pub recipient: T::AccountId,
     pub scope: PermissionScope<T>,
     pub duration: PermissionDuration<T>,
     pub revocation: RevocationTerms<T>,
@@ -62,11 +62,11 @@ pub enum EmissionAllocation<T: Config> {
 }
 ```
 
-With `Streams` allocation, portions of the grantor's incoming emissions from specific streams are diverted according to the percentages specified (0-100%). Each stream ID represents a distinct emission source, allowing for fine-grained control over different emission types. For `FixedAmount` allocation, a specific number of tokens is reserved from the grantor's account at contract creation.
+With `Streams` allocation, portions of the delegator's incoming emissions from specific streams are diverted according to the percentages specified (0-100%). Each stream ID represents a distinct emission source, allowing for fine-grained control over different emission types. For `FixedAmount` allocation, a specific number of tokens is reserved from the delegator's account at contract creation.
 
 The `targets` field identifies recipients with associated weights, determining how tokens are distributed among multiple targets. For example, with targets A (weight 1) and B (weight 2), target B receives twice the tokens of target A.
 
-The `accumulating` boolean determines whether emissions should actively accumulate for this permission. This flag can be toggled by the grantor or enforcement authorities to temporarily pause emission accumulation.
+The `accumulating` boolean determines whether emissions should actively accumulate for this permission. This flag can be toggled by the delegator or enforcement authorities to temporarily pause emission accumulation.
 
 ### Curator Scope
 
@@ -90,7 +90,7 @@ const WHITELIST_MANAGE   = 0b0000_0100;
 const PENALTY_CONTROL    = 0b0000_1000;
 ```
 
-> `ROOT = 0b0001` exists but is reserved for future use. For now, only the SUDO key is able to grant curator permissions.
+> `ROOT = 0b0001` exists but is reserved for future use. For now, only the SUDO key is able to delegate curator permissions.
 
 The `cooldown` option provides a rate-limiting mechanism for curator actions.
 
@@ -109,7 +109,7 @@ pub enum DistributionControl<T: Config> {
 
 The distribution control mechanism provides flexibility in how emissions flow through the network:
 
-- `Manual`: The grantee must explicitly call `execute_permission` to trigger distribution
+- `Manual`: The recipient must explicitly call `execute_permission` to trigger distribution
 - `Automatic`: Distribution occurs when accumulated amount reaches the specified threshold
 - `AtBlock`: Distribution triggers at a specific block number
 - `Interval`: Distribution occurs periodically at the specified block interval
@@ -132,7 +132,7 @@ Revocation terms define how a permission can be revoked before its normal expira
 ```rust
 pub enum RevocationTerms<T: Config> {
     Irrevocable,
-    RevocableByGrantor,
+    RevocableByDelegator,
     RevocableByArbiters {
         accounts: BoundedVec<T::AccountId, T::MaxRevokersPerPermission>,
         required_votes: u32,
@@ -141,7 +141,7 @@ pub enum RevocationTerms<T: Config> {
 }
 ```
 
-These terms create different security guarantees for the grantee, ranging from complete assurance (`Irrevocable`) to flexible arrangements (`RevocableByGrantor`). The `RevocableByArbiters` option allows for multi-signature revocation by designated third parties. The grantee can ALWAYS revoke a permission as it is the one being benefitted.
+These terms create different security guarantees for the recipient, ranging from complete assurance (`Irrevocable`) to flexible arrangements (`RevocableByDelegator`). The `RevocableByArbiters` option allows for multi-signature revocation by designated third parties. The recipient can ALWAYS revoke a permission as it is the one being benefitted.
 
 ## Enforcement Authority System
 
@@ -213,8 +213,8 @@ For example, a permission might require KYC verification before distributions ca
 
 Enforcement can be configured in two ways:
 
-1. During permission creation via the `grant_emission_permission` extrinsic
-2. After creation through the `set_enforcement_authority` extrinsic (only by the grantor or root)
+1. During permission creation via the `delegate_emission_permission` extrinsic
+2. After creation through the `set_enforcement_authority` extrinsic (only by the delegator or root)
 
 ```rust
 pub fn set_enforcement_authority(
@@ -233,12 +233,12 @@ The enforcement authority system transforms the permission framework from a simp
 
 The Permission0 pallet provides several extrinsics to manage the permission lifecycle:
 
-### grant_emission_permission
+### delegate_emission_permission
 
 ```rust
-pub fn grant_emission_permission(
+pub fn delegate_emission_permission(
     origin: OriginFor<T>,
-    grantee: T::AccountId,
+    recipient: T::AccountId,
     allocation: EmissionAllocation<T>,
     targets: Vec<(T::AccountId, u16)>,
     distribution: DistributionControl<T>,
@@ -248,14 +248,14 @@ pub fn grant_emission_permission(
 ) -> DispatchResult
 ```
 
-Creates a new emission permission from the signed origin to the specified grantee. The caller must be a registered agent, as must the grantee and all targets. Checks for valid allocation percentages, ensuring the total allocated percentage doesn't exceed 100% per stream.
+Creates a new emission permission from the signed origin to the specified recipient. The caller must be a registered agent, as must the recipient and all targets. Checks for valid allocation percentages, ensuring the total allocated percentage doesn't exceed 100% per stream.
 
-### grant_curator_permission
+### delegate_curator_permission
 
 ```rust
-pub fn grant_curator_permission(
+pub fn delegate_curator_permission(
     origin: OriginFor<T>,
-    grantee: T::AccountId,
+    recipient: T::AccountId,
     flags: u32,
     cooldown: Option<BlockNumberFor<T>>,
     duration: PermissionDuration<T>,
@@ -263,9 +263,9 @@ pub fn grant_curator_permission(
 ) -> DispatchResult
 ```
 
-Creates a new curator permission, but can only be called with the Root origin. The `flags` parameter is a bitwise combination of curator permissions (APPLICATION_REVIEW, WHITELIST_MANAGE, PENALTY_CONTROL). The ROOT permission cannot be granted. 
+Creates a new curator permission, but can only be called with the Root origin. The `flags` parameter is a bitwise combination of curator permissions (APPLICATION_REVIEW, WHITELIST_MANAGE, PENALTY_CONTROL). The ROOT permission cannot be delegated.
 
-Only one curator permission can exist per grantee - attempting to create a second will result in a `DuplicatePermission` error. The optional `cooldown` parameter enforces a delay between successive uses of the permission.
+Only one curator permission can exist per recipient - attempting to create a second will result in a `DuplicatePermission` error. The optional `cooldown` parameter enforces a delay between successive uses of the permission.
 
 ### revoke_permission
 
@@ -277,8 +277,9 @@ pub fn revoke_permission(
 ```
 
 Revokes the specified permission if the caller meets the permission's revocation terms. This can be:
-- The grantee (always allowed)
-- The grantor (if RevocableByGrantor)
+
+- The recipient (always allowed)
+- The delegator (if RevocableByDelegator)
 - Root origin (always allowed)
 - Designated arbiters (with sufficient votes for RevocableByArbiters)
 - Anyone, after the specified block (for RevocableAfter)
@@ -294,7 +295,7 @@ pub fn execute_permission(
 ) -> DispatchResult
 ```
 
-Manually executes a permission with distribution control set to Manual. For emission permissions, this distributes accumulated tokens to the targets according to their weights. Can only be called by the grantor or root.
+Manually executes a permission with distribution control set to Manual. For emission permissions, this distributes accumulated tokens to the targets according to their weights. Can only be called by the delegator or root.
 
 ### toggle_permission_accumulation
 
@@ -306,7 +307,7 @@ pub fn toggle_permission_accumulation(
 ) -> DispatchResult
 ```
 
-Enables or disables accumulation for an emission permission. Can be called by the grantor, root, or enforcement controllers (with sufficient votes).
+Enables or disables accumulation for an emission permission. Can be called by the delegator, root, or enforcement controllers (with sufficient votes).
 
 ### enforcement_execute_permission
 
@@ -330,22 +331,22 @@ pub fn set_enforcement_authority(
 ) -> DispatchResult
 ```
 
-Sets or updates the enforcement authority for a permission. Can only be called by the grantor or root. The controllers and required_votes must form a valid multi-signature configuration (non-empty controllers, required_votes > 0, required_votes <= controllers.len()).
+Sets or updates the enforcement authority for a permission. Can only be called by the delegator or root. The controllers and required_votes must form a valid multi-signature configuration (non-empty controllers, required_votes > 0, required_votes <= controllers.len()).
 
 ## Permission Creation
 
 ```mermaid
 flowchart TD
-    A["Agent/Grantor"] -- grant_permission --> B["Create Permission"]
+    A["Agent/Delegator"] -- delegate_permission --> B["Create Permission"]
     B -- validate --> C["Check agent registration"] --> E["Check targets"] --> P{"Check Allocation Type"}
     P -- Fixed Amount --> K["Reserve Tokens"]
     P -- Streams --> D["Check stream percentages <= 100%"]
     B -- Generate ID --> F["Permission Contract"]
     F -- store --> G["Permissions Storage"]
     F -- index --> J["PermissionsByParticipants"]
-    F -- index --> I["PermissionsByGrantee"]
-    F -- index --> H["PermissionsByGrantor"]
-    B -- emit event --> M["PermissionGranted Event"]
+    F -- index --> I["PermissionsByRecipient"]
+    F -- index --> H["PermissionsByDelegator"]
+    B -- emit event --> M["Permissiondelegated Event"]
     D -- accumulate --> L["AccumulatedStreamAmounts"]
 ```
 
@@ -407,8 +408,8 @@ The Permission0 pallet uses several storage maps to track permissions and accumu
 ```rust
 pub type Permissions<T: Config> = StorageMap<_, Identity, PermissionId, PermissionContract<T>>;
 pub type PermissionsByParticipants<T: Config> = StorageMap<_, Identity, (T::AccountId, T::AccountId), BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
-pub type PermissionsByGrantor<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
-pub type PermissionsByGrantee<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
+pub type PermissionsByDelegator<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
+pub type PermissionsByRecipient<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
 pub type AccumulatedStreamAmounts<T: Config> = StorageNMap<
     _,
     (
@@ -423,7 +424,7 @@ pub type AccumulatedStreamAmounts<T: Config> = StorageNMap<
 This storage design allows efficient lookups for:
 
 - Finding all permissions between specific parties
-- Retrieving all permissions granted by an account
+- Retrieving all permissions delegated by an account
 - Retrieving all permissions received by an account
 - Tracking accumulated tokens for each permission by stream
 

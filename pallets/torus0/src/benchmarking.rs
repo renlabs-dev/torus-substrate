@@ -84,22 +84,16 @@ mod benchmarks {
         let metadata = vec![1, 2, 3];
 
         #[extrinsic_call]
-        register_agent(
-            RawOrigin::Signed(agent.clone()),
-            agent.clone(),
-            name,
-            url,
-            metadata,
-        )
+        register_agent(RawOrigin::Signed(agent.clone()), name, url, metadata)
     }
 
     #[benchmark]
-    fn unregister_agent() {
+    fn deregister_agent() {
         let agent: T::AccountId = account("Agent", 0, 1);
         register_test_agent::<T>(&agent, vec![1, 2, 3], vec![1, 2, 3], vec![1, 2, 3]);
 
         #[extrinsic_call]
-        unregister_agent(RawOrigin::Signed(agent))
+        deregister_agent(RawOrigin::Signed(agent))
     }
 
     #[benchmark]

@@ -52,7 +52,7 @@ fn translate_revocation_terms<T: Config>(
 ) -> Result<RevocationTerms<T>, DispatchError> {
     let revocation = match revocation {
         ApiRevocationTerms::Irrevocable => RevocationTerms::Irrevocable,
-        ApiRevocationTerms::RevocableByGrantor => RevocationTerms::RevocableByGrantor,
+        ApiRevocationTerms::RevocableByDelegator => RevocationTerms::RevocableByDelegator,
         ApiRevocationTerms::RevocableByArbiters {
             accounts,
             required_votes,
@@ -133,11 +133,11 @@ pub(crate) fn execute_permission_impl<T: Config>(
 
     let contract = Permissions::<T>::get(permission_id).ok_or(Error::<T>::PermissionNotFound)?;
 
-    let grantor = contract.grantor.clone();
+    let delegator = contract.delegator.clone();
 
     ensure!(
-        who.is_none() || who.as_ref() == Some(&grantor),
-        Error::<T>::NotPermissionGrantor
+        who.is_none() || who.as_ref() == Some(&delegator),
+        Error::<T>::NotPermissionDelegator
     );
 
     match &contract.scope {
