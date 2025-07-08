@@ -21,6 +21,7 @@
     "buildx",
     "devcontainers",
     "extrinsics",
+    "inspectable",
     "irongut",
     "jwalton",
     "mainnet",
