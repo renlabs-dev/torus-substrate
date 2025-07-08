@@ -1,0 +1,16 @@
+[package]
+name = "project-selector"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+camino = "1.1.9"
+cargo_metadata = "0.20.0"
+project-model = { git = "https://github.com/rust-lang/rust-analyzer", version = "0.0.0", rev = "95d5091a09f1ae92cfa59c1b8ccee1dd45053883" }
+toolchain = { git = "https://github.com/rust-lang/rust-analyzer", version = "0.0.0", rev = "95d5091a09f1ae92cfa59c1b8ccee1dd45053883" }
+serde = { version = "1", features = ["std", "derive"] }
+serde_json = { version = "1", features = ["std"] }
+itertools = "0.14.0"
+clap.workspace = true
+anyhow = "1.0.98"

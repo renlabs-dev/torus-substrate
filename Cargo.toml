@@ -7,6 +7,7 @@ members = [
     "pallets/*/rpc",
     "test-utils",
     "xtask",
+    "project-selector",
 ]
 resolver = "2"
 
@@ -82,7 +83,7 @@ clap = { version = "4.5.22", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 
 # RPC
-jsonrpsee = { version = "0.24", features = ["server"] }
+jsonrpsee = { version = "0.24", features = ["full"] }
 
 # Async
 futures = "0.3"
