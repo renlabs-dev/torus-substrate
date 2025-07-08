@@ -1,14 +1,12 @@
 use polkadot_sdk::{
-    frame_support::{
-        dispatch::DispatchResult,
-        ensure,
-        traits::{Currency, ExistenceRequirement, Imbalance, WithdrawReasons},
-    },
+    frame_support::{dispatch::DispatchResult, ensure, traits::NamedReservableCurrency},
     sp_std::{collections::btree_map::BTreeMap, vec::Vec},
 };
 
-use crate::agent;
+use crate::{agent, StakedBy, StakingTo, TotalStake};
 use crate::{AccountIdOf, BalanceOf};
+
+pub const STAKE_IDENTIFIER: &[u8; 8] = b"torstake";
 
 /// Stakes `amount` tokens from `staker` to `staked` by withdrawing the tokens
 /// and adding them to the [`crate::StakingTo`] and [`crate::StakedBy`] maps.
@@ -22,23 +20,17 @@ pub fn add_stake<T: crate::Config>(
         crate::Error::<T>::AgentDoesNotExist
     );
 
-    let _ = <T as crate::Config>::Currency::withdraw(
-        &staker,
-        amount,
-        WithdrawReasons::TRANSFER,
-        ExistenceRequirement::AllowDeath,
-    )
-    .map_err(|_| crate::Error::<T>::NotEnoughBalanceToStake)?;
+    T::Currency::reserve_named(STAKE_IDENTIFIER, &staker, amount)
+        .map_err(|_| crate::Error::<T>::NotEnoughBalanceToStake)?;
 
-    crate::StakedBy::<T>::mutate(&staked, &staker, |stake| {
+    StakedBy::<T>::mutate(&staked, &staker, |stake| {
+        *stake = Some(stake.unwrap_or(0).saturating_add(amount))
+    });
+    StakingTo::<T>::mutate(&staker, &staked, |stake| {
         *stake = Some(stake.unwrap_or(0).saturating_add(amount))
     });
 
-    crate::StakingTo::<T>::mutate(&staker, &staked, |stake| {
-        *stake = Some(stake.unwrap_or(0).saturating_add(amount))
-    });
-
-    crate::TotalStake::<T>::mutate(|total_stake| *total_stake = total_stake.saturating_add(amount));
+    TotalStake::<T>::mutate(|total_stake| *total_stake = total_stake.saturating_add(amount));
 
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeAdded(staker, staked, amount));
 
@@ -57,7 +49,7 @@ pub fn remove_stake<T: crate::Config>(
     );
 
     ensure!(
-        crate::StakingTo::<T>::get(&staker, &staked).unwrap_or(0) >= amount,
+        StakingTo::<T>::get(&staker, &staked).unwrap_or(0) >= amount,
         crate::Error::<T>::NotEnoughStakeToWithdraw
     );
 
@@ -72,33 +64,25 @@ fn remove_stake0<T: crate::Config>(
     amount: BalanceOf<T>,
     keep: bool,
 ) {
-    let Some(stake) = crate::StakingTo::<T>::get(&staker, &staked) else {
+    let Some(stake) = StakingTo::<T>::get(&staker, &staked) else {
         return;
     };
 
-    let mut stake = T::Currency::issue(stake);
-    let retrieved = stake.extract(amount);
-
-    let new_stake = if keep || stake.peek() > 0 {
-        Some(stake.peek())
+    let amount = stake.min(amount);
+    let new_stake = stake.saturating_sub(amount);
+    let new_stake = if keep || new_stake > 0 {
+        Some(new_stake)
     } else {
         None
     };
 
-    crate::StakingTo::<T>::set(&staker, &staked, new_stake);
-    crate::StakedBy::<T>::set(&staked, &staker, new_stake);
-    crate::TotalStake::<T>::mutate(|total_stake| {
-        *total_stake = total_stake.saturating_sub(retrieved.peek())
-    });
+    StakingTo::<T>::set(&staker, &staked, new_stake);
+    StakedBy::<T>::set(&staked, &staker, new_stake);
+    TotalStake::<T>::mutate(|total_stake| *total_stake = total_stake.saturating_sub(amount));
 
-    let retrieved_value = retrieved.peek();
-    <T as crate::Config>::Currency::resolve_creating(&staker, retrieved);
+    T::Currency::unreserve_named(STAKE_IDENTIFIER, &staker, amount);
 
-    crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeRemoved(
-        staker,
-        staked,
-        retrieved_value,
-    ));
+    crate::Pallet::<T>::deposit_event(crate::Event::<T>::StakeRemoved(staker, staked, amount));
 }
 
 /// Transfers stake from an account to another (see [`remove_stake`],
@@ -117,7 +101,7 @@ pub fn transfer_stake<T: crate::Config>(
 /// Usually called when de-registering an agent, removes all stakes on a given
 /// key.
 pub(crate) fn clear_key<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResult {
-    let stakes: Vec<_> = crate::StakingTo::<T>::iter().collect();
+    let stakes: Vec<_> = StakingTo::<T>::iter().collect();
     for (staker, staked, amount) in stakes {
         if &staker == key || &staked == key {
             remove_stake0::<T>(staker, staked, amount, false);
@@ -129,24 +113,24 @@ pub(crate) fn clear_key<T: crate::Config>(key: &AccountIdOf<T>) -> DispatchResul
 
 #[inline]
 pub fn sum_staking_to<T: crate::Config>(staker: &AccountIdOf<T>) -> BalanceOf<T> {
-    crate::StakingTo::<T>::iter_prefix_values(staker).sum()
+    StakingTo::<T>::iter_prefix_values(staker).sum()
 }
 
 #[inline]
 pub fn get_staking_to_vector<T: crate::Config>(
     staker: &AccountIdOf<T>,
 ) -> BTreeMap<T::AccountId, BalanceOf<T>> {
-    crate::StakingTo::<T>::iter_prefix(staker).collect()
+    StakingTo::<T>::iter_prefix(staker).collect()
 }
 
 #[inline]
 pub fn get_staked_by_vector<T: crate::Config>(
     staked: &AccountIdOf<T>,
 ) -> Vec<(T::AccountId, BalanceOf<T>)> {
-    crate::StakedBy::<T>::iter_prefix(staked).collect()
+    StakedBy::<T>::iter_prefix(staked).collect()
 }
 
 #[inline]
 pub fn sum_staked_by<T: crate::Config>(staked: &AccountIdOf<T>) -> BalanceOf<T> {
-    crate::StakedBy::<T>::iter_prefix_values(staked).sum()
+    StakedBy::<T>::iter_prefix_values(staked).sum()
 }
