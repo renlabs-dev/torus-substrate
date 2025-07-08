@@ -59,6 +59,7 @@ struct ProjectContext<'a> {
     build_outputs: HashMap<PackageId, BuildOutput>,
     proc_macro_dylibs: Vec<(String, Utf8PathBuf)>,
     sysroot: project_model::Sysroot,
+    matcher: Box<dyn Fn(&Package) -> bool>,
 }
 
 impl<'a> ProjectContext<'a> {
@@ -99,6 +100,43 @@ impl<'a> ProjectContext<'a> {
 
         let dependencies = get_indirect_dependencies(metadata, &workspace_crates, args.depth)?;
 
+        let blocklist = args
+            .blocklist
+            .split(',')
+            .filter(|s| !s.is_empty())
+            .map(glob::Pattern::new)
+            .collect::<Result<Vec<_>, _>>()?;
+        let allowlist = args
+            .allowlist
+            .split(',')
+            .filter(|s| !s.is_empty())
+            .map(glob::Pattern::new)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let matcher = Box::new({
+            let workspace_crates = workspace_crates.clone();
+
+            move |pkg: &Package| {
+                if workspace_crates.contains(&pkg.id) {
+                    return true;
+                }
+
+                for pat in &allowlist {
+                    if pat.matches(&pkg.name) {
+                        return true;
+                    }
+                }
+
+                for pat in &blocklist {
+                    if pat.matches(&pkg.name) {
+                        return false;
+                    }
+                }
+
+                true
+            }
+        });
+
         Ok(ProjectContext {
             metadata,
             workspace_crates,
@@ -106,6 +144,7 @@ impl<'a> ProjectContext<'a> {
             build_outputs,
             proc_macro_dylibs,
             sysroot,
+            matcher,
         })
     }
 
@@ -180,7 +219,7 @@ fn main() -> Result<()> {
 
     let project_context = ProjectContext::load(&metadata, &args)?;
 
-    let resolved_crates = resolve_crates(&project_context, &args)?;
+    let resolved_crates = resolve_crates(&project_context)?;
 
     let project_json = generate_project_json(&project_context, &resolved_crates)?;
 
@@ -192,7 +231,6 @@ fn main() -> Result<()> {
 /// Resolve all crates and their information based on project context
 fn resolve_crates<'a>(
     context: &'a ProjectContext<'a>,
-    args: &Args,
 ) -> Result<HashMap<&'a PackageId, CrateInfo<'a>>> {
     let mut crate_infos = HashMap::new();
 
@@ -201,18 +239,7 @@ fn resolve_crates<'a>(
             continue;
         };
 
-        let is_blocked = args.blocklist.split(',').any(|blocked| {
-            !blocked.is_empty()
-                && !context.workspace_crates.contains(pkg_id)
-                && pkg_id.repr.contains(blocked)
-        });
-
-        let is_allowed = args
-            .allowlist
-            .split(',')
-            .any(|allowed| !allowed.is_empty() && pkg_id.repr.contains(allowed));
-
-        if is_blocked && !is_allowed {
+        if !(context.matcher)(package) {
             continue;
         }
 

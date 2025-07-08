@@ -12327,6 +12327,7 @@ dependencies = [
  "camino",
  "cargo_metadata 0.20.0",
  "clap",
+ "glob",
  "itertools 0.14.0",
  "project-model",
  "serde",

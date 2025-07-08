@@ -20,7 +20,10 @@ fmt:
   cargo fmt
 
 select crates="" depth="2":
-  cargo r -p project-selector -- {{crates}} -b cumulus,snowbridge,parachain,xcm,pallet,fp,metadata-hash,bp,bridge,fc,polkadot-runtime,polkadot-core,polkadot-ckb,polkadot-primitives -a pallet-balances -d {{depth}} > rust-project.json
+  SKIP_WASM_BUILD=1 cargo r -p project-selector -- {{crates}} \
+    -b "*polkadot*,*cumulus*,*snowbridge*,*parachain*,*xcm*,pallet*,fp*,*metadata-hash*,bp*,bridge*,fc*,substrate*build*" \
+    -a "polkadot-sdk*,pallet*api" \
+    -d {{depth}} > rust-project.json
 
 run-localnode profile="--alice":
   cargo xtask run local {{profile}}
