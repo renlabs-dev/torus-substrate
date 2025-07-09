@@ -6,7 +6,6 @@ members = [
     "pallets/*/api",
     "test-utils",
     "xtask",
-    "client",
 ]
 resolver = "2"
 

@@ -8,6 +8,7 @@ pub mod utils;
 
 mod chain;
 mod client;
+pub mod error;
 pub(crate) mod macros;
 mod pallets;
 
@@ -23,6 +24,11 @@ pub(crate) mod interfaces {
     // #[cfg(feature = "dev")]
     // pub mod dev;
 }
+
+// pub mod wrappers {
+//     #[cfg(feature = "mainnet")]
+//     pub mod mainnet;
+// }
 
 #[cfg(feature = "testnet")]
 mod faucet;

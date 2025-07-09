@@ -14,6 +14,10 @@ gen_interfaces net=default_net: (download_metadata net)
     @echo "Generating interfaces for {{net}} network..."
     subxt codegen --file data/metadata/{{net}}.scale | rustfmt > src/interfaces/{{net}}.rs
     @echo "Generated interfaces in src/interfaces/{{net}}.rs"
+    mkdir -p src/wrappers
+    cargo run -p torus-client-wrapper-codegen -- --source {{net}} --output src/wrappers/{{net}}.rs --force
+    @echo "Generated storage wrappers in src/wrappers/{{net}}.rs"
+
 
 # Generate interfaces for live networks (mainnet and testnet)
 gen_for_live: (gen_interfaces "mainnet") (gen_interfaces "testnet")

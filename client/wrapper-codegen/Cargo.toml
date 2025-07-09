@@ -1,0 +1,16 @@
+[package]
+name = "torus-client-wrapper-codegen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+syn = { version = "2.0", features = ["full", "parsing"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+prettyplease = "0.2"
+thiserror = "1.0"
+clap = { version = "4.0", features = ["derive"] }
+hex = "0.4.3"
+subxt = { version = "0.41.0" }
+codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }
+stringcase = "0.4.0"

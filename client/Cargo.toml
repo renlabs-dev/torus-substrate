@@ -1,3 +1,6 @@
+[workspace]
+members = ["wrapper-codegen"]
+
 [package]
 name = "torus-client"
 version = "0.1.0"
@@ -9,34 +12,30 @@ license = "MIT"
 
 [dependencies]
 
-anyhow = { workspace = true }
+anyhow = "1.0.98"
 
-codec = { workspace = true }
-scale-info = { workspace = true }
+codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }
+scale-info = { version = "2.11.1", default-features = false }
 
-# Subxt for Substrate client interactions
 subxt = { version = "0.41.0" }
 subxt-signer = "0.41.0"
 
-# Async runtime
 tokio = { version = "1.35", features = ["macros", "time", "rt-multi-thread"] }
 
-# Utilities
+thiserror = "2.0.12"
+
 hex = "0.4.3"
 
-# Local dependencies
-torus-runtime = { path = "../runtime", default-features = false }
+rand = "0.9.1"
 
-rand = { workspace = true }
-
-keccak-hash = { workspace = true }
+keccak-hash = { git = "https://github.com/paritytech/parity-common", rev = "f0dade11ac0b2450e6a54f36035f74b2b8ce4c00" }
 
 schnorrkel = "0.11.4"
 futures = "0.3.31"
 
 sha2 = "0.10.9"
 
-paste = { workspace = true }
+paste = "1.0.15"
 
 [features]
 
@@ -46,7 +45,6 @@ std = [
     "codec/derive",
     "codec/max-encoded-len",
     "scale-info/std",
-    "torus-runtime/std",
 ]
 
 # Network-specific features

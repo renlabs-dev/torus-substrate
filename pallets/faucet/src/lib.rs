@@ -11,13 +11,6 @@
 //! The pallet is only enabled on testnets via the `testnet` feature flag and is disabled
 //! on production networks to prevent token generation outside of the normal emission schedule.
 //!
-//! ## Features
-//!
-//! - **Proof-of-Work**: Requires users to perform computational work to prevent abuse
-//! - **Token Distribution**: Provides a fixed amount of tokens to users who complete the challenge
-//! - **Rate Limiting**: Prevents wealthy accounts from repeatedly requesting tokens
-//! - **Recent Block Verification**: Ensures that proof-of-work was done recently
-//!
 //! ## Interface
 //!
 //! ### Extrinsics
