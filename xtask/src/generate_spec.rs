@@ -42,20 +42,15 @@ fn generate_replica_spec(
     out: Option<PathBuf>,
     sudo: Option<String>,
 ) {
-    // Create Replica command
     let replica_cmd = flags::Replica {
         output: out,
         sudo,
         api_url: gen_replica.api_url.clone(),
     };
 
-    // Call the targetchain_spec function
     targetchain_spec(&replica_cmd);
-
-    // The file is already written by targetchain_spec, no need to write again
 }
 
-/// Function moved from build_spec.rs
 pub fn targetchain_spec(flags: &flags::Replica) -> Option<PathBuf> {
     let spec = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -86,7 +81,6 @@ pub fn targetchain_spec(flags: &flags::Replica) -> Option<PathBuf> {
     }
 }
 
-/// Sets the sudo key in the genesis state
 fn sudo(genesis: &mut Value, sudo: Option<&String>) {
     let key = key_name(b"Sudo", b"Key");
 
@@ -247,35 +241,29 @@ fn generate_new_spec(gen_new: &flags::GenNew, cmd: &flags::GenerateSpec) {
         .clone()
         .unwrap_or_else(|| Path::new("dev").to_path_buf());
 
-    // Start with a minimal dev chain spec
     let out = crate::torus_node!("build-spec", "--chain", chain_spec)
+        .stderr(std::io::stderr())
         .output()
         .expect("failed to run torus node");
 
     let mut json: Value = serde_json::from_slice(&out.stdout).expect("failed to parse spec file");
 
-    // Set chain name if provided
     if let Some(name) = &gen_new.name {
         json["name"] = Value::String(name.clone());
     }
 
-    // Apply all the customizations from the flags
     customize_spec(&mut json, cmd);
 
-    // Write the result to the output file
     let serialized = serde_json::to_string_pretty(&json).expect("failed to generate spec file");
+    let Some(output_path) = &cmd.out else {
+        println!("{serialized}");
+        return;
+    };
 
-    match &cmd.out {
-        Some(output_path) => {
-            std::fs::write(output_path, serialized).expect("failed to write resulting spec file");
-        }
-        None => {
-            println!("{serialized}");
-        }
-    }
+    std::fs::write(output_path, serialized).expect("failed to write resulting spec file");
 }
 
-// Function to customize a spec file based on the provided flags
+/// Function to customize a spec file based on the provided flags
 pub fn customize_spec(json: &mut Value, cmd: &flags::GenerateSpec) {
     let patch = &mut json["genesis"]["runtimeGenesis"]["patch"];
 

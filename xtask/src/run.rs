@@ -38,7 +38,7 @@ pub(super) fn run(mut r: flags::Run) {
             .suffix(node.name.as_ref().unwrap_or(&Cow::Borrowed("")).as_ref())
             .tempdir()
             .expect("failed to create tempdir")
-            .into_path()
+            .keep()
     });
 
     match (path.exists(), path.is_dir()) {
@@ -84,7 +84,6 @@ pub(super) fn run(mut r: flags::Run) {
         .wait();
 }
 
-#[allow(dead_code)]
 pub mod ops {
     use std::{
         ffi::OsStr,
@@ -97,32 +96,10 @@ pub mod ops {
     #[macro_export]
     macro_rules! torus_node {
         ($($arg:expr),*) => {{
-            let mut cmd = std::process::Command::new("cargo");
-            cmd.args(["run", "--release", "--features", "testnet", "--package", "torus-node", "--"]);
+            let mut cmd = std::process::Command::new("./target/release/torus-node");
             $(cmd.arg($arg);)*
             cmd
         }};
-    }
-
-    pub fn build_chain_spec(chain_spec: &str) -> Command {
-        torus_node!(
-            "build-spec",
-            "--raw",
-            "--chain",
-            chain_spec,
-            "--disable-default-bootnode"
-        )
-    }
-
-    pub fn key_generate() -> Command {
-        torus_node!(
-            "key",
-            "generate",
-            "--scheme",
-            "sr25519",
-            "--output-type",
-            "json"
-        )
     }
 
     pub fn key_insert_cmd(
@@ -150,18 +127,6 @@ pub mod ops {
         .unwrap()
         .wait()
         .expect("failed to run key insert");
-    }
-
-    pub fn key_inspect_cmd(suri: &str) -> Command {
-        torus_node!(
-            "key",
-            "inspect",
-            "--scheme",
-            "ed25519",
-            "--output-type",
-            "json",
-            suri
-        )
     }
 
     pub fn key_inspect_node_cmd(key: &str) -> String {

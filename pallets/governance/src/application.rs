@@ -3,7 +3,7 @@ use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::{dispatch::DispatchResult, traits::Currency, DebugNoBound},
     polkadot_sdk_frame::prelude::BlockNumberFor,
-    sp_runtime::BoundedVec,
+    sp_runtime::{traits::Saturating, BoundedVec},
     sp_std::vec::Vec,
 };
 use scale_info::TypeInfo;
@@ -101,7 +101,7 @@ pub fn submit_application<T: crate::Config>(
     }
 
     let expires_at = <polkadot_sdk::frame_system::Pallet<T>>::block_number()
-        + config.agent_application_expiration;
+        .saturating_add(config.agent_application_expiration);
 
     let next_id = AgentApplications::<T>::iter()
         .count()

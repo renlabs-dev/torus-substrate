@@ -2,8 +2,8 @@ use crate::{
     generate_permission_id, get_total_allocated_percentage, pallet,
     permission::{emission::*, *},
     update_permission_indices, AccumulatedStreamAmounts, BalanceOf, Config, DistributionControl,
-    EmissionAllocation, EmissionScope, EnforcementTracking, Error, Event, Pallet,
-    PermissionContract, PermissionDuration, PermissionId, PermissionScope, Permissions,
+    EmissionAllocation, EmissionScope, EnforcementTracking, Error, Event, NegativeImbalanceOf,
+    Pallet, PermissionContract, PermissionDuration, PermissionId, PermissionScope, Permissions,
 };
 
 use pallet_permission0_api::{
@@ -12,19 +12,14 @@ use pallet_permission0_api::{
     PermissionDuration as ApiPermissionDuration, RevocationTerms as ApiRevocationTerms, StreamId,
 };
 use polkadot_sdk::{
-    frame_support::{
-        dispatch::DispatchResult,
-        ensure,
-        traits::{Currency, ReservableCurrency},
-    },
-    frame_system::{self, ensure_signed_or_root},
+    frame_support::{dispatch::DispatchResult, ensure, traits::ReservableCurrency},
+    frame_system::{self, ensure_signed, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
-    sp_core::Get,
+    sp_core::{Get, TryCollect},
     sp_runtime::{
-        traits::{CheckedAdd, Zero},
-        DispatchError, Percent, Vec,
+        traits::{CheckedAdd, Saturating, Zero},
+        BoundedBTreeMap, DispatchError, Percent, Vec,
     },
-    sp_std::collections::btree_map::BTreeMap,
 };
 
 use pallet_torus0_api::Torus0Api;
@@ -35,7 +30,7 @@ impl<T: Config>
         OriginFor<T>,
         BlockNumberFor<T>,
         crate::BalanceOf<T>,
-        <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+        NegativeImbalanceOf<T>,
     > for pallet::Pallet<T>
 {
     fn grant_emission_permission(
@@ -70,6 +65,11 @@ impl<T: Config>
         let revocation = super::translate_revocation_terms(revocation)?;
         let enforcement = super::translate_enforcement_authority(enforcement)?;
 
+        let targets = targets
+            .into_iter()
+            .try_collect()
+            .map_err(|_| crate::Error::<T>::TooManyTargets)?;
+
         grant_emission_permission_impl::<T>(
             grantor,
             grantee,
@@ -86,7 +86,7 @@ impl<T: Config>
     fn accumulate_emissions(
         agent: &T::AccountId,
         stream: &StreamId,
-        amount: &mut <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+        amount: &mut NegativeImbalanceOf<T>,
     ) {
         crate::permission::emission::do_accumulate_emissions::<T>(agent, stream, amount);
     }
@@ -114,7 +114,7 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
     grantor: T::AccountId,
     grantee: T::AccountId,
     allocation: EmissionAllocation<T>,
-    targets: Vec<(T::AccountId, u16)>,
+    targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
     distribution: DistributionControl<T>,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
@@ -131,32 +131,12 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
         T::Torus::is_agent_registered(&grantee),
         Error::<T>::NotRegisteredAgent
     );
-    ensure!(grantor != grantee, Error::<T>::SelfPermissionNotAllowed);
-    ensure!(!targets.is_empty(), Error::<T>::NoTargetsSpecified);
 
-    for (target, _) in &targets {
-        ensure!(
-            T::Torus::is_agent_registered(target),
-            Error::<T>::NotRegisteredAgent
-        );
-    }
+    validate_emission_permission_target_weights::<T>(&targets)?;
 
     match &allocation {
         EmissionAllocation::Streams(streams) => {
-            for (stream, percentage) in streams {
-                ensure!(*percentage <= Percent::one(), Error::<T>::InvalidPercentage);
-
-                let total_allocated = get_total_allocated_percentage::<T>(&grantor, stream);
-                let new_total_allocated = match total_allocated.checked_add(percentage) {
-                    Some(new_total_allocated) => new_total_allocated,
-                    None => return Err(Error::<T>::TotalAllocationExceeded.into()),
-                };
-
-                ensure!(
-                    new_total_allocated <= Percent::one(),
-                    Error::<T>::TotalAllocationExceeded
-                );
-            }
+            validate_emission_permission_streams::<T>(streams, &grantor)?;
         }
         EmissionAllocation::FixedAmount(amount) => {
             ensure!(*amount > BalanceOf::<T>::zero(), Error::<T>::InvalidAmount);
@@ -174,22 +154,7 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
         }
     }
 
-    match &distribution {
-        DistributionControl::Automatic(threshold) => {
-            ensure!(
-                *threshold >= T::MinAutoDistributionThreshold::get(),
-                Error::<T>::InvalidThreshold
-            );
-        }
-        DistributionControl::Interval(interval) => {
-            ensure!(!interval.is_zero(), Error::<T>::InvalidInterval);
-        }
-        DistributionControl::AtBlock(block) => {
-            let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
-            ensure!(*block > current_block, Error::<T>::InvalidInterval);
-        }
-        _ => {}
-    }
+    validate_emission_permission_distribution::<T>(&distribution)?;
 
     if let Some(parent) = parent_id {
         let parent_contract =
@@ -201,11 +166,6 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
         );
     }
 
-    let target_map: BTreeMap<_, _> = targets.into_iter().collect();
-    let targets = target_map
-        .try_into()
-        .map_err(|_| Error::<T>::TooManyTargets)?;
-
     let emission_scope = EmissionScope {
         allocation: allocation.clone(),
         distribution,
@@ -215,7 +175,7 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
 
     let scope = PermissionScope::Emission(emission_scope);
 
-    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope);
+    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope)?;
 
     let contract = PermissionContract {
         grantor: grantor.clone(),
@@ -277,7 +237,7 @@ pub fn execute_permission_impl<T: Config>(
                     .filter_map(|id| {
                         AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))
                     })
-                    .fold(BalanceOf::<T>::zero(), |acc, e| acc + e), // The Balance AST does not enforce the Sum trait
+                    .fold(BalanceOf::<T>::zero(), |acc, e| acc.saturating_add(e)), // The Balance AST does not enforce the Sum trait
                 EmissionAllocation::FixedAmount(amount) => *amount,
             };
 
@@ -325,7 +285,7 @@ pub fn toggle_permission_accumulation_impl<T: Config>(
                     .filter(|id| controllers.contains(id))
                     .count();
 
-                if votes + 1 < *required_votes as usize {
+                if votes.saturating_add(1) < *required_votes as usize {
                     return EnforcementTracking::<T>::mutate(
                         permission_id,
                         referendum.clone(),
@@ -366,6 +326,142 @@ pub fn toggle_permission_accumulation_impl<T: Config>(
         accumulating,
         toggled_by: who,
     });
+
+    Ok(())
+}
+
+pub(crate) fn update_emission_permission<T: Config>(
+    origin: OriginFor<T>,
+    permission_id: PermissionId,
+    new_targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+    new_streams: Option<BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>>,
+    new_distribution_control: Option<DistributionControl<T>>,
+) -> DispatchResult {
+    let who = ensure_signed(origin)?;
+
+    let permission = Permissions::<T>::get(permission_id);
+
+    let Some(mut permission) = permission else {
+        return Err(Error::<T>::PermissionNotFound.into());
+    };
+
+    let allowed_grantor = permission.grantor == who && permission.is_updatable();
+    let allowed_grantee =
+        permission.grantee == who && (new_streams.is_none() && new_distribution_control.is_none());
+
+    if !allowed_grantor && !allowed_grantee {
+        return Err(Error::<T>::NotAuthorizedToEdit.into());
+    }
+
+    let mut scope = permission.scope.clone();
+    match &mut scope {
+        PermissionScope::Emission(emission_scope) => {
+            validate_emission_permission_target_weights::<T>(&new_targets)?;
+
+            emission_scope.targets = new_targets;
+
+            let EmissionAllocation::Streams(streams) = &mut emission_scope.allocation else {
+                return Err(Error::<T>::NotEditable.into());
+            };
+
+            if let Some(new_streams) = new_streams {
+                crate::permission::emission::do_distribute_emission::<T>(
+                    permission_id,
+                    &permission,
+                    DistributionReason::Manual,
+                );
+
+                for stream in streams.keys() {
+                    AccumulatedStreamAmounts::<T>::remove((
+                        &permission.grantor,
+                        stream,
+                        &permission_id,
+                    ));
+                }
+
+                validate_emission_permission_streams::<T>(&new_streams, &permission.grantor)?;
+
+                for stream in new_streams.keys() {
+                    AccumulatedStreamAmounts::<T>::set(
+                        (&permission.grantor, stream, permission_id),
+                        Some(Zero::zero()),
+                    )
+                }
+
+                *streams = new_streams;
+            }
+
+            if let Some(new_distribution_control) = new_distribution_control {
+                validate_emission_permission_distribution::<T>(&new_distribution_control)?;
+
+                emission_scope.distribution = new_distribution_control;
+            }
+        }
+        _ => return Err(Error::<T>::NotEditable.into()),
+    }
+
+    permission.scope = scope;
+    Permissions::<T>::set(permission_id, Some(permission));
+
+    Ok(())
+}
+
+fn validate_emission_permission_target_weights<T: Config>(
+    targets: &BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+) -> DispatchResult {
+    ensure!(!targets.is_empty(), Error::<T>::NoTargetsSpecified);
+
+    for (target, weight) in targets {
+        ensure!(*weight > 0, Error::<T>::InvalidTargetWeight);
+        ensure!(
+            T::Torus::is_agent_registered(target),
+            Error::<T>::NotRegisteredAgent
+        );
+    }
+
+    Ok(())
+}
+fn validate_emission_permission_streams<T: Config>(
+    streams: &BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>,
+    grantor: &T::AccountId,
+) -> DispatchResult {
+    for (stream, percentage) in streams {
+        ensure!(*percentage <= Percent::one(), Error::<T>::InvalidPercentage);
+
+        let total_allocated = get_total_allocated_percentage::<T>(grantor, stream);
+        let new_total_allocated = match total_allocated.checked_add(percentage) {
+            Some(new_total_allocated) => new_total_allocated,
+            None => return Err(Error::<T>::TotalAllocationExceeded.into()),
+        };
+
+        ensure!(
+            new_total_allocated <= Percent::one(),
+            Error::<T>::TotalAllocationExceeded
+        );
+    }
+
+    Ok(())
+}
+
+fn validate_emission_permission_distribution<T: Config>(
+    distribution: &DistributionControl<T>,
+) -> DispatchResult {
+    match distribution {
+        DistributionControl::Automatic(threshold) => {
+            ensure!(
+                *threshold >= T::MinAutoDistributionThreshold::get(),
+                Error::<T>::InvalidThreshold
+            );
+        }
+        DistributionControl::Interval(interval) => {
+            ensure!(!interval.is_zero(), Error::<T>::InvalidInterval);
+        }
+        DistributionControl::AtBlock(block) => {
+            let current_block = <polkadot_sdk::frame_system::Pallet<T>>::block_number();
+            ensure!(*block > current_block, Error::<T>::InvalidInterval);
+        }
+        _ => {}
+    }
 
     Ok(())
 }

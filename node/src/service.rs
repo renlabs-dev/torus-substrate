@@ -14,6 +14,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#![allow(clippy::result_large_err)]
 
 use std::{pin::Pin, sync::Arc, time::Duration};
 
@@ -153,20 +154,19 @@ type InherentDataProviders = (
     fp_dynamic_fee::InherentDataProvider,
 );
 
-fn aura_data_provider(
-    slot_duration: sp_consensus_aura::SlotDuration,
-    eth_config: &EthConfiguration,
-) -> impl Fn(
-    sp_core::H256,
-    (),
-) -> Pin<
+type AuraData = Pin<
     Box<
         dyn std::future::Future<
                 Output = Result<InherentDataProviders, Box<dyn std::error::Error + Send + Sync>>,
             > + Send
             + Sync,
     >,
-> {
+>;
+
+fn aura_data_provider(
+    slot_duration: sp_consensus_aura::SlotDuration,
+    eth_config: &EthConfiguration,
+) -> impl Fn(sp_core::H256, ()) -> AuraData {
     let target_gas_price = eth_config.target_gas_price;
     move |_, ()| {
         Box::pin(async move {

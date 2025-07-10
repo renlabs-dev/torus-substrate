@@ -1,3 +1,5 @@
+#![allow(unused, clippy::arithmetic_side_effects)]
+
 use pallet_emission0::PendingEmission;
 use pallet_governance::{
     proposal::{Proposal, ProposalData, ProposalStatus},
@@ -8,7 +10,7 @@ use polkadot_sdk::{frame_support::assert_err, frame_system::RawOrigin};
 use polkadot_sdk::{frame_support::assert_ok, sp_runtime::Percent};
 use polkadot_sdk::{frame_support::traits::Get, sp_runtime::BoundedVec};
 use test_utils::{
-    add_balance, get_balance, get_origin, new_test_ext, step_block, to_nano, zero_min_burn,
+    add_balance, as_tors, get_balance, get_origin, new_test_ext, step_block, zero_min_burn,
     AccountId, Governance, Test,
 };
 
@@ -49,7 +51,7 @@ fn config(proposal_cost: u128, proposal_expiration: u64) {
 
 fn vote(account: u32, proposal_id: u64, agree: bool) {
     if pallet_torus0::stake::sum_staked_by::<Test>(&account) < 1 {
-        stake(account, account, to_nano(1));
+        stake(account, account, as_tors(1));
     }
 
     assert_ok!(pallet_governance::voting::add_vote::<Test>(
@@ -81,8 +83,8 @@ fn removes_vote_correctly() {
 
         let key = 0;
 
-        register(FOR, 0, 0, to_nano(10));
-        register(AGAINST, 0, 1, to_nano(5));
+        register(FOR, 0, 0, as_tors(10));
+        register(AGAINST, 0, 1, as_tors(5));
 
         config(1, 100);
 
@@ -103,8 +105,8 @@ fn removes_vote_correctly() {
             Proposals::<Test>::get(0).unwrap().status,
             ProposalStatus::Accepted {
                 block: 100,
-                stake_for: to_nano(10),
-                stake_against: to_nano(5),
+                stake_for: as_tors(10),
+                stake_against: as_tors(5),
             }
         );
     });
@@ -121,8 +123,8 @@ fn global_proposal_is_refused_correctly() {
         const FOR: u32 = 0;
         const AGAINST: u32 = 1;
 
-        register(FOR, 0, 0, to_nano(5));
-        register(AGAINST, 0, 1, to_nano(10));
+        register(FOR, 0, 0, as_tors(5));
+        register(AGAINST, 0, 1, as_tors(10));
 
         config(1, 100);
 
@@ -166,8 +168,8 @@ fn adds_vote_correctly() {
         const FOR: u32 = 0;
         const AGAINST: u32 = 1;
 
-        register(FOR, 0, 0, to_nano(10));
-        register(AGAINST, 0, 1, to_nano(10));
+        register(FOR, 0, 0, as_tors(10));
+        register(AGAINST, 0, 1, as_tors(10));
 
         config(1, 100);
 
@@ -212,15 +214,15 @@ fn ensures_proposal_exists() {
         config(1, 100);
 
         let origin = get_origin(0);
-        add_balance(0, to_nano(2));
-        register(0, 0, 0, to_nano(1) - min_stake);
+        add_balance(0, as_tors(2));
+        register(0, 0, 0, as_tors(1) - min_stake);
 
         if pallet_torus0::stake::sum_staked_by::<Test>(&MODULE) < 1 {
-            stake(MODULE, MODULE, to_nano(1));
+            stake(MODULE, MODULE, as_tors(1));
         }
 
         let _ = pallet_governance::roles::penalize_agent::<Test>(RawOrigin::Root.into(), 0, 100);
-        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+        pallet_torus0::TotalStake::<Test>::set(as_tors(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
             origin.clone(),
@@ -260,8 +262,8 @@ fn creates_emission_proposal_with_invalid_params_and_it_fails() {
         config(1, default_proposal_expiration);
 
         let origin = get_origin(MODULE);
-        add_balance(MODULE, to_nano(2));
-        register(MODULE, 0, MODULE, to_nano(1) - min_stake);
+        add_balance(MODULE, as_tors(2));
+        register(MODULE, 0, MODULE, as_tors(1) - min_stake);
 
         assert_err!(
             pallet_governance::Pallet::<Test>::vote_proposal(origin.clone(), 0, true),
@@ -287,7 +289,7 @@ fn ensures_proposal_is_open() {
 
         const MODULE: u32 = 0;
 
-        register(MODULE, 0, 0, to_nano(10));
+        register(MODULE, 0, 0, as_tors(10));
 
         config(1, 100);
 
@@ -329,7 +331,7 @@ fn ensures_module_hasnt_voted() {
 
         const MODULE: u32 = 0;
 
-        register(MODULE, 0, 0, to_nano(10));
+        register(MODULE, 0, 0, as_tors(10));
 
         config(1, 100);
 
@@ -360,7 +362,7 @@ fn ensures_module_has_voted() {
 
         const MODULE: u32 = 0;
 
-        register(MODULE, 0, 0, to_nano(10));
+        register(MODULE, 0, 0, as_tors(10));
 
         config(1, 100);
 

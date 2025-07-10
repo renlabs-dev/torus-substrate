@@ -5,16 +5,27 @@ use polkadot_sdk::{
     frame_benchmarking::{account, v2::*},
     frame_system::RawOrigin,
     sp_runtime::Percent,
-    sp_std::vec,
 };
 
 use crate::*;
 
 #[benchmarks]
 mod benchmarks {
-    use polkadot_sdk::sp_std::collections::btree_map::BTreeMap;
+    use polkadot_sdk::{
+        sp_core::TryCollect, sp_std::collections::btree_map::BTreeMap, sp_std::vec,
+    };
 
     use super::*;
+
+    macro_rules! bounded_btree_map {
+        ($ ( $key:expr => $value:expr ),* $(,)?) => {
+            {
+                TryCollect::<$crate::BoundedBTreeMap<_, _, _>>::try_collect(
+                    vec![$(($key, $value)),*].into_iter()
+                ).unwrap()
+            }
+        };
+    }
 
     #[benchmark]
     fn grant_emission_permission() {
@@ -35,7 +46,7 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = vec![(target, 100)];
+        let targets = bounded_btree_map![target => 100];
         let distribution = DistributionControl::Manual;
         let duration = PermissionDuration::Indefinite;
         let revocation = RevocationTerms::RevocableByGrantor;
@@ -76,7 +87,7 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = vec![(target, 100)];
+        let targets = bounded_btree_map![target => 100];
         let permission_id = ext::emission_impl::grant_emission_permission_impl::<T>(
             grantor.clone(),
             grantee,
@@ -116,7 +127,7 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = vec![(target, 100)];
+        let targets = bounded_btree_map![target => 100];
 
         let permission_id = ext::emission_impl::grant_emission_permission_impl::<T>(
             grantor.clone(),
@@ -159,7 +170,7 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = vec![(target, 100)];
+        let targets = bounded_btree_map![target => 100];
 
         let permission_id = ext::emission_impl::grant_emission_permission_impl::<T>(
             grantor.clone(),
@@ -201,7 +212,7 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = vec![(target, 100)];
+        let targets = bounded_btree_map![target => 100];
         let controllers = vec![controller.clone()].try_into().unwrap();
 
         let enforcement = EnforcementAuthority::ControlledBy {
@@ -250,7 +261,7 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = vec![(target, 100)];
+        let targets = bounded_btree_map![target => 100];
 
         let permission_id = ext::emission_impl::grant_emission_permission_impl::<T>(
             grantor.clone(),
@@ -266,16 +277,15 @@ mod benchmarks {
         .expect("failed to grant permission");
 
         // Prepare new controllers
-        let controllers = vec![controller1, controller2];
+        let controllers = vec![controller1, controller2].try_into().unwrap();
         let required_votes = 1u32;
-
-        #[extrinsic_call]
-        set_enforcement_authority(
-            RawOrigin::Signed(grantor),
-            permission_id,
+        let enforcement = EnforcementAuthority::ControlledBy {
             controllers,
             required_votes,
-        )
+        };
+
+        #[extrinsic_call]
+        set_enforcement_authority(RawOrigin::Signed(grantor), permission_id, enforcement)
     }
 
     #[benchmark]

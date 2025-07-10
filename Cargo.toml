@@ -4,14 +4,25 @@ members = [
     "runtime",
     "pallets/*",
     "pallets/*/api",
+    "pallets/*/rpc",
     "test-utils",
     "xtask",
+    "project-selector",
 ]
 resolver = "2"
 
 [workspace.package]
 authors = ["Renlabs <contact@renlabs.dev>"]
 edition = "2021"
+
+[workspace.lints.clippy]
+all = "deny"
+arithmetic_side_effects = "deny"
+indexing_slicing = "deny"
+panicking_unwrap = "deny"
+out_of_bounds_indexing = "deny"
+match_bool = "deny"
+infinite_loop = "deny"
 
 [workspace.dependencies]
 
@@ -26,8 +37,10 @@ pallet-emission0-api = { path = "./pallets/emission0/api", default-features = fa
 pallet-faucet = { path = "./pallets/faucet", default-features = false }
 pallet-torus0 = { path = "./pallets/torus0", default-features = false }
 pallet-torus0-api = { path = "./pallets/torus0/api", default-features = false }
+pallet-torus0-rpc = { path = "./pallets/torus0/rpc", default-features = false }
 pallet-permission0 = { path = "./pallets/permission0", default-features = false }
 pallet-permission0-api = { path = "./pallets/permission0/api", default-features = false }
+pallet-permission0-rpc = { path = "./pallets/permission0/rpc", default-features = false }
 test-utils.path = "./test-utils"
 
 # Substrate
@@ -37,10 +50,13 @@ polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk.git", branch 
 substrate-wasm-builder = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "stable2409", default-features = false }
 
 # Utils
+async-trait = "0.1.88"
 num-traits = { version = "0.2.19", default-features = false, features = [
     "libm",
 ] }
-bitflags = { version = "2.5.0", default-features = false }
+bitflags = { version = "2.9.1", default-features = false }
+rand = { version = "0.9.1", default-features = false }
+libm = { version = "0.2.15", default-features = false }
 
 # Frontier / EVM
 fc-api = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333" }
@@ -70,13 +86,11 @@ clap = { version = "4.5.22", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 
 # RPC
-jsonrpsee = { version = "0.24", features = ["server"] }
+jsonrpsee = { version = "0.24", features = ["full"] }
 
 # Async
 futures = "0.3"
 futures-timer = "3"
-
-rand = "0.9.1"
 
 anyhow = "1.0.98"
 

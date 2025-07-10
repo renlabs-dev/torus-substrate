@@ -1,4 +1,4 @@
-#![allow(unused)]
+#![allow(unused, clippy::arithmetic_side_effects)]
 
 use std::{cell::RefCell, io::Read, num::NonZeroU128};
 
@@ -64,7 +64,7 @@ parameter_types! {
 }
 
 thread_local! {
-    static DEFAULT_MIN_BURN: RefCell<u128> = const { RefCell::new(to_nano(10)) };
+    static DEFAULT_MIN_BURN: RefCell<u128> = const { RefCell::new(as_tors(10)) };
 }
 
 pub struct MinBurnConfig;
@@ -86,12 +86,19 @@ parameter_types! {
     pub const MaxLocks: u32 = 50;
     pub const MaxReserves: u32 = 50;
     pub const DefaultDividendsParticipationWeight: Percent = Percent::from_parts(40);
+
+    pub DefaultNamespacePricingConfig: pallet_torus0::namespace::NamespacePricingConfig<Test> = pallet_torus0::namespace::NamespacePricingConfig {
+        base_fee: as_tors(5),
+        deposit_per_byte: as_tors(5),
+
+        count_midpoint: 20,
+        fee_steepness: Percent::from_percent(20),
+        max_fee_multiplier: 5,
+    };
 }
 
 impl pallet_torus0::Config for Test {
     type DefaultMinValidatorStake = ConstU128<50_000_000_000_000_000_000_000>;
-
-    type DefaultImmunityPeriod = ConstU16<0>;
 
     type DefaultRewardInterval = ConstU16<100>;
 
@@ -100,8 +107,6 @@ impl pallet_torus0::Config for Test {
     type DefaultMaxNameLength = ConstU16<32>;
 
     type DefaultMaxAgentUrlLength = ConstU16<64>;
-
-    type DefaultMaxAllowedAgents = ConstU16<10_000>;
 
     type DefaultMaxAllowedValidators = ConstU16<128>;
 
@@ -138,6 +143,8 @@ impl pallet_torus0::Config for Test {
 
     type DefaultDividendsParticipationWeight = DefaultDividendsParticipationWeight;
 
+    type DefaultNamespacePricingConfig = DefaultNamespacePricingConfig;
+
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
@@ -145,13 +152,14 @@ impl pallet_torus0::Config for Test {
     type Governance = Governance;
 
     type Emission = Emission0;
+    type Permission0 = Permission0;
 
     type WeightInfo = pallet_torus0::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {
-    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(to_nano(144_000_000)).unwrap();
-    pub MaxSupply: NonZeroU128 = NonZeroU128::new(to_nano(144_000_000 * 4)).unwrap();
+    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
+    pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000 * 4)).unwrap();
     pub const DefaultEmissionRecyclingPercentage: Percent = Percent::from_parts(70);
     pub const DefaultIncentivesRatio: Percent = Percent::from_parts(50);
 }
@@ -163,7 +171,7 @@ impl pallet_emission0::Config for Test {
 
     type MaxSupply = MaxSupply;
 
-    type BlockEmission = ConstU128<{ (to_nano(250_000) - 1) / 10800 }>;
+    type BlockEmission = ConstU128<{ (as_tors(250_000) - 1) / 10800 }>;
 
     type DefaultEmissionRecyclingPercentage = DefaultEmissionRecyclingPercentage;
 
@@ -200,17 +208,17 @@ impl pallet_governance::Config for Test {
 
     type DefaultTreasuryEmissionFee = DefaultTreasuryEmissionFee;
 
-    type DefaultProposalCost = ConstU128<{ to_nano(10_000) }>;
+    type DefaultProposalCost = ConstU128<{ as_tors(10_000) }>;
 
     type DefaultProposalExpiration = ConstU64<75_600>;
 
-    type DefaultAgentApplicationCost = ConstU128<{ to_nano(1_000) }>;
+    type DefaultAgentApplicationCost = ConstU128<{ as_tors(1_000) }>;
 
     type DefaultAgentApplicationExpiration = ConstU64<216_000>;
 
     type DefaultProposalRewardTreasuryAllocation = DefaultProposalRewardTreasuryAllocation;
 
-    type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<{ to_nano(10_000) }>;
+    type DefaultMaxProposalRewardTreasuryAllocation = ConstU128<{ as_tors(10_000) }>;
 
     type DefaultProposalRewardInterval = ConstU64<75_600>;
 
@@ -229,7 +237,7 @@ parameter_types! {
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MaxRevokersPerPermission: u32 = 10;
     pub const MaxControllersPerPermission: u32 = 10;
-    pub const MinAutoDistributionThreshold: u128 = to_nano(100);
+    pub const MinAutoDistributionThreshold: u128 = as_tors(100);
 }
 
 impl pallet_permission0::Config for Test {
@@ -252,6 +260,8 @@ impl pallet_permission0::Config for Test {
     type MaxControllersPerPermission = MaxControllersPerPermission;
 
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
+
+    type MaxNamespacesPerPermission = ConstU32<0>;
 }
 
 impl pallet_balances::Config for Test {
@@ -311,7 +321,7 @@ impl pallet_faucet::Config for Test {
 
 const TOKEN_DECIMALS: u32 = 18;
 
-pub const fn to_nano(x: Balance) -> Balance {
+pub const fn as_tors(x: Balance) -> Balance {
     x.saturating_mul((10 as Balance).pow(TOKEN_DECIMALS))
 }
 

@@ -1,9 +1,36 @@
-//! Implementation of the faucet functionality
+//! # proof-of-work
 //!
-//! This module contains the core logic for the faucet pallet, including:
-//! - The execution function that handles faucet requests
-//! - Hash calculation and verification functions for proof-of-work
-//! - Block hash retrieval and validation functions
+//! The following steps are required to generate a valid proof-of-work:
+//! - Concatenate the current block hash with the receiver key bytes and hash the result using keccak256. (reference [hash_block_and_key])
+//! - Concatenate a random nonce with the result of the previous step, hash it with sha256 and again with keccak256. (reference [create_seal_hash])
+//! - Transform the result hash to a u128 number and multiply it by 1_000_000. (reference [hash_meets_difficulty])
+//!     - If the multiplication result exceeds the maximum possible u128 value, the hash is invalid. Try again with a new random nonce and updated block hash.
+//!     - If it doesn't, the proof-of-work is valid and the result may be submitted.
+//!
+//! ## Pseudocode
+//! ```x
+//! u128 difficulty = 1_000_000;
+//! while true {
+//!     u64 nonce = random_u64();
+//!     u8[] block_hash = current_block_hash;
+//!
+//!     // This should result in a byte array with size 64 (trim the end of key bytes if necessary)
+//!     u8[] block_key_bytes = concat(block_hash, key_bytes);
+//!     u8[] block_key_hash = keccak_256(block_key_bytes);
+//!     
+//!     // This should result in a byte array with size 40 (8 nonce bytes + 32 block_key_hash bytes)
+//!     u8[] seal_bytes = concat(to_byte_array(nonce), block_key_hash);
+//!     u8[] seal_hash = sha_256(keccak_256(seal_bytes));
+//!         
+//!     // Overflowing means that the multiplication result exceeded the max value possible for the type, u128 on this case.
+//!     if overflows(as_u128(seal_hash) * difficulty) {
+//!         // The seal hash doesn't meet the difficulty requirement, change the nonce and try again.
+//!         continue;
+//!     }
+//!
+//!     // The generated seal hash meets the desired difficulty and may be submitted.
+//! }
+//! ```
 
 use crate::Vec;
 use crate::{AccountIdOf, BalanceOf};
@@ -20,25 +47,8 @@ use polkadot_sdk::{
     sp_tracing::{info, trace},
 };
 
-/// Main execution function for the faucet pallet
-///
-/// This function processes a faucet request after it has passed the unsigned validation.
-/// It performs the following steps:
-/// 1. Ensures the account exists (or creates it)
-/// 2. Validates that the block number is recent (within the last 3 blocks)
-/// 3. Verifies that the proof-of-work meets the difficulty requirement
-/// 4. Checks that the submitted work hash matches the expected seal hash
-/// 5. Deposits tokens to the account if all checks pass
-///
-/// # Parameters
-/// * `key` - The account that will receive tokens
-/// * `block_number` - The block number used for the proof-of-work
-/// * `nonce` - The nonce value that makes the hash meet the difficulty
-/// * `work` - The hash result to verify
-///
-/// # Returns
-/// * `Ok(())` if successful
-/// * `Err` with an error if any check fails
+const FAUCET_AMOUNT: u128 = 50_000_000_000_000_000_000;
+
 pub fn execute<T: crate::Config>(
     key: AccountIdOf<T>,
     block_number: u64,
@@ -52,7 +62,6 @@ pub fn execute<T: crate::Config>(
 
     info!("do faucet with key: {key:?} and block number: {block_number} and nonce: {nonce} and hash: {work:?}");
 
-    // Get the current block number for validation
     let current_block_number: u64 = frame_system::Pallet::<T>::block_number()
         .try_into()
         .map_err(|_| "block number exceeded u64")?;
@@ -81,9 +90,8 @@ pub fn execute<T: crate::Config>(
     let seal: H256 = create_seal_hash::<T>(block_number, nonce, &key)?;
     ensure!(seal == work_hash, Error::<T>::InvalidSeal);
 
-    // Award tokens to the account (15 tokens with 18 decimals)
-    let amount: u64 = 15_000_000_000_000_000_000;
-    let amount: BalanceOf<T> = amount.try_into().map_err(|_| "Invalid amount")?;
+    // Award tokens to the account
+    let amount: BalanceOf<T> = FAUCET_AMOUNT.try_into().map_err(|_| "Invalid amount")?;
     let _ = T::Currency::deposit_creating(&key, amount);
 
     // Log success and emit event
@@ -98,14 +106,6 @@ pub fn execute<T: crate::Config>(
 /// This function combines a block hash with an account key and produces a new hash.
 /// It takes the 32-byte block hash and combines it with the first 32 bytes of the
 /// account ID to create a 64-byte array, then hashes it with keccak-256.
-///
-/// # Parameters
-/// * `block_hash_bytes` - The 32-byte hash of a block
-/// * `key` - The account ID to combine with the block hash
-///
-/// # Returns
-/// * `Ok(H256)` - The resulting hash if successful
-/// * `Err` - If the key is too small
 pub fn hash_block_and_key<T: crate::Config>(
     block_hash_bytes: &[u8; 32],
     key: &T::AccountId,
@@ -166,10 +166,6 @@ pub fn create_seal_hash<T: crate::Config>(
     Ok(seal_hash)
 }
 
-/// Retrieves the hash of a block by its number
-///
-/// This function converts a u64 block number to the chain's BlockNumberFor type,
-/// retrieves the hash of that block from the system, and converts it to an H256 type.
 pub fn get_block_hash_from_u64<T: crate::Config>(block_number: u64) -> Result<H256, DispatchError> {
     let block_number: BlockNumberFor<T> = block_number.try_into().map_err(|_| {
         "Block number {block_number} is too large to be converted to BlockNumberFor<T>"

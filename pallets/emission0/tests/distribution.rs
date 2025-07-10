@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing)]
+
 use std::array::from_fn;
 
 use pallet_emission0::{
@@ -102,7 +104,7 @@ fn weights_are_filtered_and_normalized() {
             weights,
             vec![
                 (1, FixedU128::from_rational(1, 3)),
-                (2, FixedU128::from_rational(1, 3) * 2.into())
+                (2, FixedU128::from_rational(2, 3))
             ]
         )
     });

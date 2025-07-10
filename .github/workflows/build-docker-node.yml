@@ -17,7 +17,7 @@ concurrency:
 jobs:
   build-n-push:
     permissions: write-all
-    runs-on: ubuntu-22.04-32core-karl
+    runs-on: ubicloud-standard-16
     steps:
       - uses: actions/checkout@v4
 

@@ -7,6 +7,7 @@ use pallet_ethereum::{
 };
 use pallet_evm::{Account as EVMAccount, FeeCalculator, Runner};
 use pallet_grandpa::AuthorityId as GrandpaId;
+use pallet_permission0_api::{generate_root_stream_id, StreamId};
 use polkadot_sdk::{
     polkadot_sdk_frame::runtime::prelude::*,
     sp_consensus_aura::sr25519::AuthorityId as AuraId,
@@ -213,7 +214,9 @@ impl_runtime_apis! {
             use baseline::Pallet as BaselineBench;
             use super::*;
 
+            #[allow(non_local_definitions)]
             impl frame_system_benchmarking::Config for Runtime {}
+            #[allow(non_local_definitions)]
             impl baseline::Config for Runtime {}
 
             use frame_support::traits::WhitelistedStorageKeys;
@@ -304,7 +307,7 @@ impl_runtime_apis! {
             nonce: Option<U256>,
             estimate: bool,
             access_list: Option<Vec<(H160, Vec<H256>)>>,
-        ) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
+        ) -> Result<pallet_evm::CallInfo, DispatchError> {
             let config = if estimate {
                 let mut config = <Runtime as pallet_evm::Config>::config().clone();
                 config.estimate = true;
@@ -442,7 +445,7 @@ impl_runtime_apis! {
                 let _ = RuntimeExecutive::apply_extrinsic(ext);
             }
 
-            Ethereum::on_finalize(System::block_number() + 1);
+            Ethereum::on_finalize(System::block_number().saturating_add(1));
 
             (
                 pallet_ethereum::CurrentBlock::<Runtime>::get(),
@@ -460,6 +463,26 @@ impl_runtime_apis! {
             UncheckedExtrinsic::new_unsigned(
                 pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
             )
+        }
+    }
+
+    impl pallet_permission0_api::Permission0RuntimeApi<Block, AccountId> for Runtime {
+        fn root_stream_id_for_account(account_id: AccountId) -> StreamId {
+            generate_root_stream_id(&account_id)
+        }
+    }
+
+    impl pallet_torus0_api::api::Torus0RuntimeApi<Block, AccountId, Balance> for Runtime {
+        fn namespace_path_creation_cost(account_id: AccountId, path: pallet_torus0_api::NamespacePathInner) -> Result<(Balance, Balance), DispatchError> {
+            use pallet_torus0::namespace;
+            use pallet_torus0_api::NamespacePath;
+
+            let namespace_path =
+                NamespacePath::new_agent(&path).map_err(|_| pallet_torus0::Error::<Runtime>::InvalidNamespacePath)?;
+
+                let owner = namespace::NamespaceOwnership::Account(account_id);
+            let missing_paths = namespace::find_missing_paths::<Runtime>(&owner, &namespace_path);
+            namespace::calculate_cost::<Runtime>(&owner, &missing_paths)
         }
     }
 }

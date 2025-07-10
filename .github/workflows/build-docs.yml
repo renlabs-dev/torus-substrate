@@ -11,7 +11,7 @@ jobs:
       contents: read
       id-token: write
       pages: write
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     steps:
       - uses: actions/checkout@v4
 

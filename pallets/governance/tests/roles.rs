@@ -1,3 +1,5 @@
+#![allow(unused, clippy::arithmetic_side_effects)]
+
 use pallet_governance::{GlobalGovernanceConfig, Whitelist};
 use pallet_permission0_api::CuratorPermissions;
 use polkadot_sdk::{frame_support::assert_err, sp_runtime::Percent};
@@ -160,7 +162,7 @@ fn penalize_agent_successfully() {
 
         grant_curator_permission(curator_key, CuratorPermissions::PENALTY_CONTROL, None);
 
-        register(module_key, 0, module_key, to_nano(100));
+        register(module_key, 0, module_key, as_tors(100));
 
         Whitelist::<Test>::set(module_key, Some(()));
 

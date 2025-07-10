@@ -1,25 +1,23 @@
 //! # Faucet Pallet
 //!
-//! A pallet that allows users to get test tokens on the testnet by performing proof-of-work.
-//!
 //! ## Overview
 //!
 //! The Faucet pallet provides a mechanism for users to acquire test tokens on the testnet
-//! through a proof-of-work challenge. This enables developers to test their applications
-//! on the testnet without requiring real tokens.
+//! through a proof-of-work challenge. This enables developers to test their applications before
+//! deploying to the mainnet.
 //!
 //! The pallet is only enabled on testnets via the `testnet` feature flag and is disabled
 //! on production networks to prevent token generation outside of the normal emission schedule.
 //!
-//! ## Interface
-//!
-//! ### Extrinsics
-//!
-//! * `faucet` - Submit proof-of-work to receive test tokens
-//!
 //! ## Usage
 //!
-//! To request tokens from the faucet, users need to:
+//! ### Interface
+//!
+//! A user-friendly interface can be found at https://wallet.testnet.torus.network.
+//!
+//! ### Programatically
+//!
+//! To request tokens programatically from the faucet, users need to:
 //!
 //! 1. Get the hash of a recent block (within the last 3 blocks)
 //! 2. Generate a proof-of-work based on block hash, account ID, and a nonce
@@ -27,6 +25,8 @@
 //!
 //! If the proof is valid and the account's total balance (including staked tokens) is below
 //! the threshold, the account will receive the configured amount of test tokens.
+//!
+//! Details about the proof-of-work implementation can be found [here](crate::faucet).
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused)]
@@ -69,10 +69,9 @@ pub mod pallet {
     const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
     /// Configuration trait for the faucet pallet
-    #[pallet::config(with_default)]
+    #[pallet::config]
     pub trait Config: polkadot_sdk::frame_system::Config {
         /// The overarching event type
-        #[pallet::no_default_bounds]
         type RuntimeEvent: From<Event<Self>>
             + IsType<<Self as polkadot_sdk::frame_system::Config>::RuntimeEvent>;
 
@@ -80,11 +79,7 @@ pub mod pallet {
         type Currency: Currency<Self::AccountId> + Send + Sync;
 
         /// The Torus interface for accessing network functions
-        type Torus: Torus0Api<
-            Self::AccountId,
-            <Self::Currency as Currency<Self::AccountId>>::Balance,
-            <Self::Currency as Currency<Self::AccountId>>::NegativeImbalance,
-        >;
+        type Torus: Torus0Api<Self::AccountId, BalanceOf<Self>>;
     }
 
     /// Implementation of the unsigned transaction validation for the faucet pallet

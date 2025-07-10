@@ -15,7 +15,6 @@ runtime-benchmarks = [
 ]
 testnet = ["torus-runtime/testnet"]
 
-
 [dependencies]
 
 clap = { workspace = true, features = ["derive"] }
@@ -107,7 +106,8 @@ fp-rpc = { workspace = true, features = ["default"] }
 
 # Local
 torus-runtime.workspace = true
-
+pallet-permission0-rpc.workspace = true
+pallet-torus0-rpc.workspace = true
 
 [build-dependencies]
 polkadot-sdk = { workspace = true, features = ["substrate-build-script-utils"] }

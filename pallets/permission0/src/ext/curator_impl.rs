@@ -11,7 +11,7 @@ use pallet_permission0_api::{
 };
 use polkadot_sdk::frame_system::{ensure_root, ensure_signed_or_root};
 use polkadot_sdk::sp_core::Get;
-use polkadot_sdk::sp_runtime::traits::AccountIdConversion;
+use polkadot_sdk::sp_runtime::traits::{AccountIdConversion, Saturating};
 use polkadot_sdk::{
     frame_support::ensure,
     frame_system,
@@ -45,10 +45,7 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
             return Ok(T::PalletId::get().into_account_truncating());
         };
 
-        let Some(permissions) = PermissionsByGrantee::<T>::get(&grantee) else {
-            return Err(Error::<T>::PermissionNotFound.into());
-        };
-
+        let permissions = PermissionsByGrantee::<T>::get(&grantee);
         let Some((_, contract)) = permissions.into_iter().find_map(|permission_id| {
             let contract = Permissions::<T>::get(permission_id)?;
 
@@ -75,7 +72,7 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
 
             if contract
                 .last_execution
-                .is_some_and(|last_execution| last_execution + cooldown > now)
+                .is_some_and(|last_execution| last_execution.saturating_add(cooldown) > now)
             {
                 return Err(Error::<T>::PermissionInCooldown.into());
             }
@@ -85,17 +82,17 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
     }
 
     fn get_curator_permission(grantee: &T::AccountId) -> Option<PermissionId> {
-        let permissions = PermissionsByGrantee::<T>::get(grantee)?;
+        PermissionsByGrantee::<T>::get(grantee)
+            .into_iter()
+            .find_map(|permission_id| {
+                let contract = Permissions::<T>::get(permission_id)?;
 
-        permissions.into_iter().find_map(|permission_id| {
-            let contract = Permissions::<T>::get(permission_id)?;
-
-            if matches!(&contract.scope, PermissionScope::Curator(_)) {
-                Some(permission_id)
-            } else {
-                None
-            }
-        })
+                if matches!(&contract.scope, PermissionScope::Curator(_)) {
+                    Some(permission_id)
+                } else {
+                    None
+                }
+            })
     }
 }
 
@@ -121,20 +118,18 @@ pub fn grant_curator_permission_impl<T: Config>(
     // Once we move away from centralized chain management, a ROOT curator
     // will be appointed by the system.
 
-    if let Some(permissions) = PermissionsByGrantee::<T>::get(&grantee) {
-        for perm in permissions {
-            let Some(contract) = Permissions::<T>::get(perm) else {
-                continue;
-            };
+    for perm in PermissionsByGrantee::<T>::get(&grantee) {
+        let Some(contract) = Permissions::<T>::get(perm) else {
+            continue;
+        };
 
-            if matches!(&contract.scope, PermissionScope::Curator(_)) {
-                return Err(Error::<T>::DuplicatePermission.into());
-            }
+        if matches!(&contract.scope, PermissionScope::Curator(_)) {
+            return Err(Error::<T>::DuplicatePermission.into());
         }
     }
 
     let scope = PermissionScope::Curator(CuratorScope { flags, cooldown });
-    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope);
+    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope)?;
 
     let contract = PermissionContract {
         grantor,

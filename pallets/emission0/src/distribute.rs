@@ -22,7 +22,7 @@ use polkadot_sdk::{
     sp_tracing::{error, info},
 };
 
-use crate::{BalanceOf, Config, ConsensusMember, IncentivesRatio, Weights};
+use crate::{BalanceOf, Config, ConsensusMember, IncentivesRatio, NegativeImbalanceOf, Weights};
 
 mod math;
 
@@ -74,10 +74,11 @@ pub fn get_total_emission_per_block<T: Config>() -> BalanceOf<T> {
     }
 
     let interval = T::HalvingInterval::get();
-    let halving_count = total_issuance.saturating_div(interval.get());
+    let halving_count = total_issuance.checked_div(interval.get()).unwrap_or(0);
     let emission = T::BlockEmission::get() >> halving_count;
 
-    let not_recycled = Percent::one() - crate::EmissionRecyclingPercentage::<T>::get();
+    let not_recycled =
+        Percent::one().saturating_sub(crate::EmissionRecyclingPercentage::<T>::get());
     not_recycled.mul_floor(emission)
 }
 
@@ -112,7 +113,9 @@ impl<T: Config> ConsensusMemberInput<T> {
     pub fn all_members() -> BTreeMap<T::AccountId, ConsensusMemberInput<T>> {
         let min_validator_stake = <T::Torus>::min_validator_stake();
 
-        let mut registered_agents: BTreeSet<_> = <T::Torus>::agent_ids().collect();
+        let mut registered_agents: BTreeSet<_> = <T::Torus>::agent_ids()
+            .filter(<T::Governance>::is_whitelisted)
+            .collect();
         let mut consensus_members: BTreeMap<_, _> = crate::ConsensusMembers::<T>::iter().collect();
 
         let mut inputs: Vec<_> = crate::WeightControlDelegation::<T>::iter()
@@ -168,8 +171,9 @@ impl<T: Config> ConsensusMemberInput<T> {
             }
 
             if total_network_stake != 0.into() {
-                input.normalized_stake =
-                    FixedU128::from_inner(input.total_stake) / total_network_stake;
+                input.normalized_stake = FixedU128::from_inner(input.total_stake)
+                    .const_checked_div(total_network_stake)
+                    .unwrap_or_default();
             }
         }
 
@@ -184,7 +188,8 @@ impl<T: Config> ConsensusMemberInput<T> {
         weights: Weights<T>,
         min_validator_stake: u128,
     ) -> ConsensusMemberInput<T> {
-        let weight_factor = Percent::one() - <T::Torus>::weight_penalty_factor(&agent_id);
+        let weight_factor =
+            Percent::one().saturating_sub(<T::Torus>::weight_penalty_factor(&agent_id));
 
         let mut total_stake = 0;
         let stakes = <T::Torus>::staked_by(&agent_id)
@@ -199,12 +204,15 @@ impl<T: Config> ConsensusMemberInput<T> {
 
         let validator_permit = total_stake >= min_validator_stake && !weights.is_empty();
 
-        let weights = validator_permit
-            .then(|| Self::prepare_weights(weights, &agent_id))
-            .unwrap_or_default();
+        let weights = if validator_permit {
+            Self::prepare_weights(weights, &agent_id)
+        } else {
+            Default::default()
+        };
 
         ConsensusMemberInput {
-            registered: <T::Torus>::is_agent_registered(&agent_id),
+            registered: <T::Torus>::is_agent_registered(&agent_id)
+                && <T::Governance>::is_whitelisted(&agent_id),
 
             agent_id,
             validator_permit,
@@ -239,7 +247,7 @@ impl<T: Config> ConsensusMemberInput<T> {
 
         if weights_sum > 0.into() {
             for (_, weight) in weights.iter_mut() {
-                *weight = *weight / weights_sum;
+                *weight = weight.const_checked_div(weights_sum).unwrap_or_default();
             }
         }
 
@@ -257,9 +265,7 @@ impl<T: Config> ConsensusMemberInput<T> {
 }
 
 #[must_use]
-fn linear_rewards<T: Config>(
-    mut emission: <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
-) -> <T::Currency as Currency<T::AccountId>>::NegativeImbalance {
+fn linear_rewards<T: Config>(mut emission: NegativeImbalanceOf<T>) -> NegativeImbalanceOf<T> {
     let treasury_fee = <T::Governance>::treasury_emission_fee();
     if !treasury_fee.is_zero() {
         let treasury_fee = treasury_fee.mul_floor(emission.peek());
@@ -360,18 +366,17 @@ fn linear_rewards<T: Config>(
         .zip(upscaled_incentives)
         .zip(upscaled_dividends)
     {
-        let add_stake =
-            |staker, mut amount: <T::Currency as Currency<T::AccountId>>::NegativeImbalance| {
-                <T::Permission0>::accumulate_emissions(
-                    &staker,
-                    &pallet_permission0_api::generate_root_stream_id(&staker),
-                    &mut amount,
-                );
+        let add_stake = |staker, mut amount: NegativeImbalanceOf<T>| {
+            <T::Permission0>::accumulate_emissions(
+                &staker,
+                &pallet_permission0_api::generate_root_stream_id(&staker),
+                &mut amount,
+            );
 
-                let raw_amount = amount.peek();
-                T::Currency::resolve_creating(&staker, amount);
-                let _ = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount);
-            };
+            let raw_amount = amount.peek();
+            T::Currency::resolve_creating(&staker, amount);
+            let _ = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount);
+        };
 
         if dividend.peek() != 0 {
             let fixed_dividend = dividend.peek();
@@ -412,12 +417,12 @@ fn linear_rewards<T: Config>(
 }
 
 struct Emissions<T: Config> {
-    dividends: Vec<<T::Currency as Currency<T::AccountId>>::NegativeImbalance>,
-    incentives: Vec<<T::Currency as Currency<T::AccountId>>::NegativeImbalance>,
+    dividends: Vec<NegativeImbalanceOf<T>>,
+    incentives: Vec<NegativeImbalanceOf<T>>,
 }
 
 fn compute_emissions<T: Config>(
-    emission: &mut <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
+    emission: &mut NegativeImbalanceOf<T>,
     stake: &[FixedU128],
     incentives: Vec<FixedU128>,
     dividends: Vec<FixedU128>,
@@ -429,7 +434,7 @@ fn compute_emissions<T: Config>(
         .collect();
     let emission_sum = combined_emission
         .iter()
-        .fold(FixedU128::default(), |acc, &e| acc + e);
+        .fold(FixedU128::default(), |acc, &e| acc.saturating_add(e));
 
     let normalized_incentives = math::normalize_with_sum(incentives, emission_sum);
     let normalized_dividends = if emission_sum == 0.into() {
@@ -457,12 +462,12 @@ fn compute_emissions<T: Config>(
     let dividends_to_be_emitted;
 
     if let Some(incentives_ratio) = incentives_ratio.checked_sub(50) {
-        let incentives_percentage = Percent::from_parts(incentives_ratio * 2);
+        let incentives_percentage = Percent::from_parts(incentives_ratio.saturating_mul(2));
         let incentives = incentives_percentage.mul_floor(to_be_emitted);
         incentives_to_be_emitted = to_be_emitted.saturating_add(incentives);
         dividends_to_be_emitted = to_be_emitted.saturating_sub(incentives);
     } else if let Some(dividends_ratio) = 50u8.checked_sub(incentives_ratio) {
-        let dividends_percentage = Percent::from_parts(dividends_ratio * 2);
+        let dividends_percentage = Percent::from_parts(dividends_ratio.saturating_mul(2));
         let dividends = dividends_percentage.mul_floor(to_be_emitted);
         dividends_to_be_emitted = to_be_emitted.saturating_add(dividends);
         incentives_to_be_emitted = to_be_emitted.saturating_sub(dividends);

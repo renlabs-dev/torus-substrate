@@ -41,9 +41,10 @@ use crate::{
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(5);
 
     use pallet_permission0_api::{CuratorPermissions, Permission0Api, Permission0CuratorApi};
+    use polkadot_sdk::sp_core::ConstBool;
     use proposal::GlobalParamsData;
     use weights::WeightInfo;
 
@@ -101,6 +102,14 @@ pub mod pallet {
     pub type TreasuryEmissionFee<T: Config> =
         StorageValue<_, Percent, ValueQuery, T::DefaultTreasuryEmissionFee>;
 
+    /// Determines if new agents can be registered on the chain.
+    #[pallet::storage]
+    pub type AgentsFrozen<T: Config> = StorageValue<_, bool, ValueQuery, ConstBool<false>>;
+
+    /// Determines if new namespaces can be created on the chain.
+    #[pallet::storage]
+    pub type NamespacesFrozen<T: Config> = StorageValue<_, bool, ValueQuery, ConstBool<false>>;
+
     #[pallet::config]
     pub trait Config:
         polkadot_sdk::frame_system::Config + pallet_torus0::Config + pallet_emission0::Config
@@ -149,13 +158,8 @@ pub mod pallet {
 
         type Currency: Currency<Self::AccountId, Balance = u128> + Send + Sync;
 
-        type Permission0: Permission0Api<
-            Self::AccountId,
-            OriginFor<Self>,
-            BlockNumberFor<Self>,
-            crate::BalanceOf<Self>,
-            <<Self as Config>::Currency as Currency<Self::AccountId>>::NegativeImbalance,
-        >;
+        type Permission0: Permission0Api<OriginFor<Self>>
+            + Permission0CuratorApi<Self::AccountId, OriginFor<Self>, BlockNumberFor<Self>>;
 
         type WeightInfo: WeightInfo;
     }
@@ -383,6 +387,44 @@ pub mod pallet {
 
             Ok(())
         }
+
+        #[pallet::call_index(19)]
+        #[pallet::weight((<T as Config>::WeightInfo::toggle_agent_freezing(), DispatchClass::Normal, Pays::No))]
+        pub fn toggle_agent_freezing(origin: OriginFor<T>) -> DispatchResult {
+            let curator = <T as pallet::Config>::Permission0::ensure_curator_permission(
+                origin,
+                CuratorPermissions::AGENT_FREEZING_TOGGLING,
+            )?;
+
+            let new_state = !crate::AgentsFrozen::<T>::get();
+            AgentsFrozen::<T>::set(new_state);
+
+            crate::Pallet::<T>::deposit_event(crate::Event::AgentFreezingToggled {
+                curator,
+                new_state,
+            });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(20)]
+        #[pallet::weight((<T as Config>::WeightInfo::toggle_namespace_freezing(), DispatchClass::Normal, Pays::No))]
+        pub fn toggle_namespace_freezing(origin: OriginFor<T>) -> DispatchResult {
+            let curator = <T as pallet::Config>::Permission0::ensure_curator_permission(
+                origin,
+                CuratorPermissions::NAMESPACE_FREEZING_TOGGLING,
+            )?;
+
+            let new_state = !crate::NamespacesFrozen::<T>::get();
+            NamespacesFrozen::<T>::set(new_state);
+
+            crate::Pallet::<T>::deposit_event(crate::Event::NamespaceFreezingToggled {
+                curator,
+                new_state,
+            });
+
+            Ok(())
+        }
     }
 
     #[pallet::event]
@@ -417,6 +459,16 @@ pub mod pallet {
             curator: T::AccountId,
             agent: T::AccountId,
             penalty: Percent,
+        },
+        /// The agent freezing feature was toggled by a curator.
+        AgentFreezingToggled {
+            curator: T::AccountId,
+            new_state: bool,
+        },
+        /// The namespace freezing feature was toggled by a curator.
+        NamespaceFreezingToggled {
+            curator: T::AccountId,
+            new_state: bool,
         },
     }
 
@@ -498,8 +550,6 @@ pub mod pallet {
         InvalidMinNameLength,
         /// Invalid maximum name length in proposal
         InvalidMaxNameLength,
-        /// Invalid maximum allowed agents in proposal
-        InvalidMaxAllowedAgents,
         /// Invalid maximum allowed weights in proposal
         InvalidMaxAllowedWeights,
         /// Invalid minimum weight control fee in proposal
@@ -534,6 +584,14 @@ impl<T: Config> pallet_governance_api::GovernanceApi<T::AccountId> for Pallet<T>
 
     fn set_allocator(key: &T::AccountId) {
         Allocators::<T>::insert(key, ());
+    }
+
+    fn can_create_namespace(key: &T::AccountId) -> bool {
+        !NamespacesFrozen::<T>::get() || Self::is_whitelisted(key)
+    }
+
+    fn can_register_agent(key: &T::AccountId) -> bool {
+        !AgentsFrozen::<T>::get() || Self::is_whitelisted(key)
     }
 
     #[cfg(feature = "runtime-benchmarks")]

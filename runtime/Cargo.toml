@@ -6,6 +6,9 @@ license = "MIT-0"
 authors.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [features]
 default = ["std"]
 std = [
@@ -53,10 +56,9 @@ try-runtime = [
     # Frontier
     "fp-self-contained/try-runtime",
 ]
-testnet = ["pallet-faucet/testnet"]
+testnet = ["pallet-torus0/testnet", "pallet-faucet/testnet"]
 
 [dependencies]
-
 serde_json = { workspace = true, features = ["alloc"] }
 
 # Substrate

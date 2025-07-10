@@ -1,7 +1,9 @@
+#![allow(clippy::arithmetic_side_effects)]
+
 use pallet_governance::{
     config::GovernanceConfiguration,
     proposal::{GlobalParamsData, ProposalStatus},
-    DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
+    Config, DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
 };
 use polkadot_sdk::{
     frame_support::{assert_err, assert_ok, traits::Get},
@@ -9,9 +11,23 @@ use polkadot_sdk::{
     sp_runtime::{BoundedBTreeSet, Percent},
 };
 use test_utils::{
-    add_balance, get_balance, get_origin, new_test_ext, step_block, to_nano, zero_min_burn,
+    add_balance, as_tors, get_balance, get_origin, new_test_ext, step_block, zero_min_burn,
     AccountId, Test,
 };
+
+fn default_params<T: Config>() -> GlobalParamsData<T> {
+    GlobalParamsData {
+        min_name_length: T::DefaultMinNameLength::get(),
+        max_name_length: T::DefaultMaxNameLength::get(),
+        min_weight_control_fee: T::DefaultMinWeightControlFee::get(),
+        min_staking_fee: T::DefaultMinStakingFee::get(),
+        dividends_participation_weight:
+            <T as pallet_torus0::Config>::DefaultDividendsParticipationWeight::get(),
+        namespace_pricing_config: <T as pallet_torus0::Config>::DefaultNamespacePricingConfig::get(
+        ),
+        proposal_cost: T::DefaultProposalCost::get(),
+    }
+}
 
 fn register(account: AccountId, _unused: u16, module: AccountId, stake: u128) {
     if get_balance(account) < stake {
@@ -50,7 +66,7 @@ fn config(proposal_cost: u128, proposal_expiration: u64) {
 
 fn vote(account: u32, proposal_id: u64, agree: bool) {
     if pallet_torus0::stake::sum_staked_by::<Test>(&account) < 1 {
-        stake(account, account, to_nano(1));
+        stake(account, account, as_tors(1));
     }
 
     assert_ok!(pallet_governance::voting::add_vote::<Test>(
@@ -72,7 +88,7 @@ fn global_governance_config_validates_parameters_correctly() {
         assert_err!(
             GlobalParamsData::<Test> {
                 min_name_length: 1,
-                ..GlobalParamsData::default()
+                ..default_params::<Test>()
             }
             .validate(),
             Error::<Test>::InvalidMinNameLength
@@ -81,7 +97,7 @@ fn global_governance_config_validates_parameters_correctly() {
         assert_err!(
             GlobalParamsData::<Test> {
                 max_name_length: 300,
-                ..GlobalParamsData::default()
+                ..default_params::<Test>()
             }
             .validate(),
             Error::<Test>::InvalidMaxNameLength
@@ -89,17 +105,8 @@ fn global_governance_config_validates_parameters_correctly() {
 
         assert_err!(
             GlobalParamsData::<Test> {
-                max_allowed_agents: 50001,
-                ..GlobalParamsData::default()
-            }
-            .validate(),
-            Error::<Test>::InvalidMaxAllowedAgents
-        );
-
-        assert_err!(
-            GlobalParamsData::<Test> {
                 min_weight_control_fee: 101,
-                ..GlobalParamsData::default()
+                ..default_params::<Test>()
             }
             .validate(),
             Error::<Test>::InvalidMinWeightControlFee
@@ -108,7 +115,7 @@ fn global_governance_config_validates_parameters_correctly() {
         assert_err!(
             GlobalParamsData::<Test> {
                 min_staking_fee: 101,
-                ..GlobalParamsData::default()
+                ..default_params::<Test>()
             }
             .validate(),
             Error::<Test>::InvalidMinStakingFee
@@ -121,12 +128,12 @@ fn global_proposal_validates_parameters() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
         const KEY: u32 = 0;
-        add_balance(KEY, to_nano(100_000));
+        add_balance(KEY, as_tors(100_000));
 
         assert_err!(
             pallet_governance::Pallet::<Test>::add_global_params_proposal(
                 get_origin(KEY),
-                Default::default(),
+                default_params::<Test>(),
                 b"".to_vec(),
             ),
             Error::<Test>::ProposalDataTooSmall
@@ -135,7 +142,7 @@ fn global_proposal_validates_parameters() {
         assert_err!(
             pallet_governance::Pallet::<Test>::add_global_params_proposal(
                 get_origin(KEY),
-                Default::default(),
+                default_params::<Test>(),
                 b"1".repeat(257),
             ),
             Error::<Test>::ProposalDataTooLarge
@@ -151,17 +158,17 @@ fn global_proposal_validates_parameters() {
 
         test(GlobalParamsData {
             min_name_length: 0,
-            ..Default::default()
+            ..default_params::<Test>()
         })
         .expect_err("created proposal with invalid max name length");
 
         test(GlobalParamsData {
             proposal_cost: 50_000_000_000_000_000_000_001,
-            ..Default::default()
+            ..default_params::<Test>()
         })
         .expect_err("created proposal with invalid proposal cost");
 
-        test(GlobalParamsData::default()).expect("failed to create proposal with valid parameters");
+        test(default_params::<Test>()).expect("failed to create proposal with valid parameters");
     });
 }
 
@@ -174,8 +181,8 @@ fn global_custom_proposal_is_accepted_correctly() {
 
         let key = 0;
 
-        register(FOR, 0, 0, to_nano(10));
-        register(AGAINST, 0, 1, to_nano(5));
+        register(FOR, 0, 0, as_tors(10));
+        register(AGAINST, 0, 1, as_tors(5));
 
         config(1, 100);
 
@@ -196,8 +203,8 @@ fn global_custom_proposal_is_accepted_correctly() {
             Proposals::<Test>::get(0).unwrap().status,
             ProposalStatus::Accepted {
                 block: 100,
-                stake_for: to_nano(10),
-                stake_against: to_nano(5),
+                stake_for: as_tors(10),
+                stake_against: as_tors(5),
             }
         );
 
@@ -207,8 +214,8 @@ fn global_custom_proposal_is_accepted_correctly() {
             Proposals::<Test>::get(0).unwrap().status,
             ProposalStatus::Accepted {
                 block: 100,
-                stake_for: to_nano(10),
-                stake_against: to_nano(5),
+                stake_for: as_tors(10),
+                stake_against: as_tors(5),
             }
         );
     });
@@ -223,8 +230,8 @@ fn global_proposal_is_refused_correctly() {
 
         let key = 0;
 
-        register(FOR, 0, 0, to_nano(5));
-        register(AGAINST, 0, 1, to_nano(10));
+        register(FOR, 0, 0, as_tors(5));
+        register(AGAINST, 0, 1, as_tors(10));
 
         config(1, 100);
 
@@ -258,12 +265,12 @@ fn global_params_proposal_accepted() {
         zero_min_burn();
         const KEY: u32 = 0;
 
-        register(KEY, 0, 0, to_nano(10));
+        register(KEY, 0, 0, as_tors(10));
         config(1, 100);
 
         let data = GlobalParamsData {
             proposal_cost: 69_420,
-            ..Default::default()
+            ..default_params::<Test>()
         };
 
         add_balance(KEY, 1);
@@ -292,15 +299,15 @@ fn global_proposals_counts_delegated_stake() {
 
         let origin = get_origin(0);
 
-        register(FOR, 0, FOR, to_nano(5));
-        register(AGAINST, 0, AGAINST, to_nano(10));
+        register(FOR, 0, FOR, as_tors(5));
+        register(AGAINST, 0, AGAINST, as_tors(10));
 
-        stake(FOR_DELEGATED, FOR, to_nano(10));
+        stake(FOR_DELEGATED, FOR, as_tors(10));
         delegate(FOR_DELEGATED);
 
         // AGAINST does not delegate voting power, so it doesn't matter
         // to who it stakes.
-        stake(AGAINST, FOR, to_nano(3));
+        stake(AGAINST, FOR, as_tors(3));
         pallet_governance::voting::disable_delegation::<Test>(AGAINST).unwrap();
 
         config(1, 100);
@@ -337,20 +344,20 @@ fn creates_treasury_transfer_proposal_and_transfers() {
         let origin = get_origin(0);
         pallet_governance::Pallet::<Test>::add_dao_treasury_transfer_proposal(
             origin.clone(),
-            to_nano(5),
+            as_tors(5),
             0,
             vec![b'0'; 64],
         )
         .expect_err("proposal should not be created when treasury does not have enough money");
 
-        add_balance(DaoTreasuryAddress::<Test>::get(), to_nano(10));
-        add_balance(0, to_nano(3));
+        add_balance(DaoTreasuryAddress::<Test>::get(), as_tors(10));
+        add_balance(0, as_tors(3));
         register(0, 0, 0, 0);
         config(1, 100);
 
         pallet_governance::Pallet::<Test>::add_dao_treasury_transfer_proposal(
             origin,
-            to_nano(5),
+            as_tors(5),
             0,
             vec![b'0'; 64],
         )
@@ -359,8 +366,8 @@ fn creates_treasury_transfer_proposal_and_transfers() {
 
         step_block(100);
 
-        assert_eq!(get_balance(DaoTreasuryAddress::<Test>::get()), to_nano(5));
-        assert_eq!(get_balance(0), to_nano(8));
+        assert_eq!(get_balance(DaoTreasuryAddress::<Test>::get()), as_tors(5));
+        assert_eq!(get_balance(0), as_tors(8));
     });
 }
 
@@ -375,10 +382,10 @@ fn creates_emission_proposal_and_it_runs_after_2_days() {
         config(1, default_proposal_expiration);
 
         let origin = get_origin(0);
-        add_balance(0, to_nano(2));
-        register(0, 0, 0, to_nano(1));
+        add_balance(0, as_tors(2));
+        register(0, 0, 0, as_tors(1));
         let _ = pallet_governance::roles::penalize_agent::<Test>(RawOrigin::Root.into(), 0, 100);
-        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+        pallet_torus0::TotalStake::<Test>::set(as_tors(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
             origin.clone(),
@@ -396,7 +403,7 @@ fn creates_emission_proposal_and_it_runs_after_2_days() {
             Proposals::<Test>::get(0).unwrap().status,
             ProposalStatus::Accepted {
                 block: 21_600,
-                stake_for: to_nano(1),
+                stake_for: as_tors(1),
                 stake_against: 0
             }
         );
@@ -416,10 +423,10 @@ fn creates_emission_proposal_and_it_runs_before_expiration() {
         config(1, default_proposal_expiration);
 
         let origin = get_origin(0);
-        add_balance(0, to_nano(2));
-        register(0, 0, 0, to_nano(1) - min_stake);
+        add_balance(0, as_tors(2));
+        register(0, 0, 0, as_tors(1) - min_stake);
         let _ = pallet_governance::roles::penalize_agent::<Test>(RawOrigin::Root.into(), 0, 100);
-        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+        pallet_torus0::TotalStake::<Test>::set(as_tors(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
             origin.clone(),
@@ -441,13 +448,13 @@ fn creates_emission_proposal_and_it_runs_before_expiration() {
             ProposalStatus::Open {
                 votes_for,
                 votes_against: BoundedBTreeSet::new(),
-                stake_for: to_nano(1) - min_stake,
+                stake_for: as_tors(1) - min_stake,
                 stake_against: 0
             }
         );
 
         stake(0, 0, min_stake);
-        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+        pallet_torus0::TotalStake::<Test>::set(as_tors(10));
 
         step_block(100);
 
@@ -455,7 +462,7 @@ fn creates_emission_proposal_and_it_runs_before_expiration() {
             Proposals::<Test>::get(0).unwrap().status,
             ProposalStatus::Accepted {
                 block: 21_700,
-                stake_for: to_nano(1),
+                stake_for: as_tors(1),
                 stake_against: 0
             }
         );
@@ -475,10 +482,10 @@ fn creates_emission_proposal_and_it_expires() {
         config(1, default_proposal_expiration);
 
         let origin = get_origin(0);
-        add_balance(0, to_nano(2));
-        register(0, 0, 0, to_nano(1) - min_stake);
+        add_balance(0, as_tors(2));
+        register(0, 0, 0, as_tors(1) - min_stake);
         let _ = pallet_governance::roles::penalize_agent::<Test>(RawOrigin::Root.into(), 0, 100);
-        pallet_torus0::TotalStake::<Test>::set(to_nano(10));
+        pallet_torus0::TotalStake::<Test>::set(as_tors(10));
 
         assert_ok!(pallet_governance::Pallet::<Test>::add_emission_proposal(
             origin.clone(),
@@ -517,7 +524,7 @@ fn rewards_wont_exceed_treasury() {
         zero_min_burn();
         // Fill the governance address with 1 mil so we are not limited by the max
         // allocation
-        let amount = to_nano(1_000_000_000);
+        let amount = as_tors(1_000_000_000);
         let key = DaoTreasuryAddress::<Test>::get();
         add_balance(key, amount);
 
@@ -547,8 +554,8 @@ fn creates_emission_proposal_with_invalid_params_and_it_fails() {
         config(1, default_proposal_expiration);
 
         let origin = get_origin(0);
-        add_balance(0, to_nano(2));
-        register(0, 0, 0, to_nano(1) - min_stake);
+        add_balance(0, as_tors(2));
+        register(0, 0, 0, as_tors(1) - min_stake);
 
         assert_err!(
             pallet_governance::Pallet::<Test>::add_emission_proposal(

@@ -1,15 +1,22 @@
 use polkadot_sdk::frame_support::{
-    migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade, weights::Weight,
+    migrations::VersionedMigration, sp_runtime::traits::Get, traits::UncheckedOnRuntimeUpgrade,
+    weights::Weight,
 };
 
 use crate::{Config, Pallet};
 
-pub mod v3 {
+pub mod v5 {
+    use pallet_permission0_api::{CuratorPermissions, Permission0CuratorApi, PermissionDuration};
+    use polkadot_sdk::{
+        frame_system::RawOrigin,
+        sp_tracing::{info, warn},
+    };
+
     use crate::proposal::{GlobalParamsData, ProposalData};
 
     use super::*;
 
-    pub type Migration<T, W> = VersionedMigration<2, 3, MigrateToV3<T>, Pallet<T>, W>;
+    pub type Migration<T, W> = VersionedMigration<2, 5, MigrateToV3<T>, Pallet<T>, W>;
     pub struct MigrateToV3<T>(core::marker::PhantomData<T>);
 
     mod old_storage {
@@ -73,6 +80,10 @@ pub mod v3 {
         #[storage_alias]
         pub type Proposals<T: crate::Config> =
             StorageMap<crate::Pallet<T>, Identity, ProposalId, Proposal<T>>;
+
+        #[storage_alias]
+        pub type Curators<T: crate::Config> =
+            StorageMap<crate::Pallet<T>, Identity, AccountIdOf<T>, ()>;
     }
 
     impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV3<T> {
@@ -82,7 +93,6 @@ pub mod v3 {
                     old_storage::ProposalData::GlobalParams(old_storage::GlobalParamsData {
                         min_name_length,
                         max_name_length,
-                        max_allowed_agents,
                         min_weight_control_fee,
                         min_staking_fee,
                         dividends_participation_weight,
@@ -91,10 +101,11 @@ pub mod v3 {
                     }) => ProposalData::GlobalParams(GlobalParamsData {
                         min_name_length,
                         max_name_length,
-                        max_allowed_agents,
                         min_weight_control_fee,
                         min_staking_fee,
                         dividends_participation_weight,
+                        namespace_pricing_config:
+                            <T as pallet_torus0::Config>::DefaultNamespacePricingConfig::get(),
                         proposal_cost,
                     }),
                     old_storage::ProposalData::GlobalCustom => ProposalData::GlobalCustom,
@@ -126,35 +137,6 @@ pub mod v3 {
                 crate::Proposals::<T>::set(id, Some(new_proposal));
             }
 
-            Weight::zero()
-        }
-    }
-}
-
-pub mod v4 {
-    use pallet_permission0_api::{CuratorPermissions, Permission0CuratorApi, PermissionDuration};
-    use polkadot_sdk::{
-        frame_system::RawOrigin,
-        sp_tracing::{info, warn},
-    };
-
-    use super::*;
-
-    pub type Migration<T, W> = VersionedMigration<3, 4, MigrateToV4<T>, Pallet<T>, W>;
-    pub struct MigrateToV4<T>(core::marker::PhantomData<T>);
-
-    mod old_storage {
-        use polkadot_sdk::frame_support::{storage_alias, Identity};
-
-        use crate::AccountIdOf;
-
-        #[storage_alias]
-        pub type Curators<T: crate::Config> =
-            StorageMap<crate::Pallet<T>, Identity, AccountIdOf<T>, ()>;
-    }
-
-    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV4<T> {
-        fn on_runtime_upgrade() -> Weight {
             for (curator, _) in old_storage::Curators::<T>::iter() {
                 let res = <<T as Config>::Permission0>::grant_curator_permission(
                     RawOrigin::Root.into(),

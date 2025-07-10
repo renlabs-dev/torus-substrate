@@ -15,7 +15,7 @@ fn fixed_fails_without_balance() {
             grant_emission_permission(
                 agent_0,
                 agent_1,
-                pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+                pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
                 vec![(agent_0, u16::MAX)],
                 pallet_permission0_api::DistributionControl::Manual,
                 pallet_permission0_api::PermissionDuration::Indefinite,
@@ -37,12 +37,12 @@ fn fixed_creates() {
         let agent_1 = 1;
         register_empty_agent(agent_1);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_0, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -66,12 +66,12 @@ fn fixed_reserves() {
         let agent_1 = 1;
         register_empty_agent(agent_1);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_0, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -83,7 +83,7 @@ fn fixed_reserves() {
             permission_id
         ));
 
-        assert_eq!(Balances::reserved_balance(agent_0), to_nano(10));
+        assert_eq!(Balances::reserved_balance(agent_0), as_tors(10));
     });
 }
 
@@ -100,12 +100,12 @@ fn fixed_manual_executes() {
         let agent_2 = 2;
         register_empty_agent(agent_2);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -122,8 +122,8 @@ fn fixed_manual_executes() {
             permission_id
         ));
 
-        assert_eq!(get_balance(agent_1), to_nano(5));
-        assert_eq!(get_balance(agent_2), to_nano(5));
+        assert_eq!(get_balance(agent_1), as_tors(5));
+        assert_eq!(get_balance(agent_2), as_tors(5));
         assert_eq!(get_balance(agent_0), 1);
 
         assert_ok!(Permission0::execute_permission(
@@ -146,12 +146,12 @@ fn fixed_manual_executes_only_once() {
         let agent_2 = 2;
         register_empty_agent(agent_2);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -168,8 +168,8 @@ fn fixed_manual_executes_only_once() {
             permission_id
         ));
 
-        assert_eq!(get_balance(agent_1), to_nano(5));
-        assert_eq!(get_balance(agent_2), to_nano(5));
+        assert_eq!(get_balance(agent_1), as_tors(5));
+        assert_eq!(get_balance(agent_2), as_tors(5));
         assert_eq!(get_balance(agent_0), 1);
 
         assert_ok!(Permission0::execute_permission(
@@ -177,8 +177,8 @@ fn fixed_manual_executes_only_once() {
             permission_id
         ));
 
-        assert_eq!(get_balance(agent_1), to_nano(5));
-        assert_eq!(get_balance(agent_2), to_nano(5));
+        assert_eq!(get_balance(agent_1), as_tors(5));
+        assert_eq!(get_balance(agent_2), as_tors(5));
         assert_eq!(get_balance(agent_0), 1);
     });
 }
@@ -196,12 +196,12 @@ fn fixed_at_block_executes() {
         let agent_2 = 2;
         register_empty_agent(agent_2);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let _ = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
             pallet_permission0_api::DistributionControl::AtBlock(20),
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -211,8 +211,8 @@ fn fixed_at_block_executes() {
 
         step_block(40);
 
-        assert_eq!(get_balance(agent_1), to_nano(5));
-        assert_eq!(get_balance(agent_2), to_nano(5));
+        assert_eq!(get_balance(agent_1), as_tors(5));
+        assert_eq!(get_balance(agent_2), as_tors(5));
         assert_eq!(get_balance(agent_0), 1);
     });
 }

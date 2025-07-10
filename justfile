@@ -1,4 +1,4 @@
-default: check test
+default: fmt check test
 
 # Build
 
@@ -11,10 +11,19 @@ build-testnet:
 # Development
 
 check:
-  cargo clippy
+  cargo clippy --tests
 
 test:
   cargo test
+
+fmt:
+  cargo fmt
+
+select crates="" depth="2":
+  SKIP_WASM_BUILD=1 cargo r -p project-selector -- {{crates}} \
+    -b "*polkadot*,*cumulus*,*snowbridge*,*parachain*,*xcm*,pallet*,fp*,*metadata-hash*,bp*,bridge*,fc*,substrate*build*" \
+    -a "polkadot-sdk*,pallet*api" \
+    -d {{depth}} > rust-project.json
 
 run-localnode profile="--alice":
   cargo xtask run local {{profile}}
@@ -56,7 +65,7 @@ install-try-runtime:
   cargo install --git https://github.com/paritytech/try-runtime-cli --locked
 
 try-runtime-upgrade-testnet:
-    cargo build --release --features try-runtime
+    cargo build --release --features try-runtime,testnet
     RUST_BACKTRACE=1 RUST_LOG=info try-runtime --runtime target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 8000 live --uri wss://api.testnet.torus.network
 
 try-runtime-upgrade-mainnet:

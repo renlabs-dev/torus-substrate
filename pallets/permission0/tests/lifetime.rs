@@ -15,12 +15,12 @@ fn manual_cant_execute_when_expires() {
         let agent_2 = 2;
         register_empty_agent(agent_2);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::UntilBlock(1),
@@ -50,12 +50,12 @@ fn irrevocable() {
         let agent_2 = 2;
         register_empty_agent(agent_2);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -94,12 +94,12 @@ fn revocable_by_grantor() {
         let agent_2 = 2;
         register_empty_agent(agent_2);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -132,12 +132,12 @@ fn revocable_after_block() {
         let agent_2 = 2;
         register_empty_agent(agent_2);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -169,13 +169,13 @@ fn revocable_by_arbiters() {
         let agent_1 = 1;
         register_empty_agent(agent_1);
 
-        add_balance(agent_0, to_nano(10) + 1);
+        add_balance(agent_0, as_tors(10) + 1);
 
         let grant_invalid = |accounts: &[AccountId], required_votes| {
             grant_emission_permission(
                 agent_0,
                 agent_1,
-                pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+                pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
                 vec![(agent_1, u16::MAX / 2)],
                 pallet_permission0_api::DistributionControl::Manual,
                 pallet_permission0_api::PermissionDuration::Indefinite,
@@ -206,7 +206,7 @@ fn revocable_by_arbiters() {
         let permission_id = assert_ok!(grant_emission_permission(
             agent_0,
             agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(to_nano(10)),
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
