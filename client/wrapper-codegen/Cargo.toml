@@ -14,3 +14,4 @@ hex = "0.4.3"
 subxt = { version = "0.41.0" }
 codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }
 stringcase = "0.4.0"
+paste = "1.0.15"

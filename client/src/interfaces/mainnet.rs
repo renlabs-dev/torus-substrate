@@ -6,7 +6,7 @@ pub mod api {
     mod root_mod {
         pub use super::*;
     }
-    pub static PALLETS: [&str; 13usize] = [
+    pub static PALLETS: [&str; 15usize] = [
         "System",
         "Timestamp",
         "Aura",
@@ -20,6 +20,8 @@ pub mod api {
         "Governance",
         "Torus0",
         "Emission0",
+        "Permission0",
+        "Faucet",
     ];
     pub static RUNTIME_APIS: [&str; 0usize] = [];
     #[doc = r" The error type that is returned when there is a runtime issue."]
@@ -89,6 +91,9 @@ pub mod api {
         pub fn emission0(&self) -> emission0::constants::ConstantsApi {
             emission0::constants::ConstantsApi
         }
+        pub fn permission0(&self) -> permission0::constants::ConstantsApi {
+            permission0::constants::ConstantsApi
+        }
     }
     pub struct StorageApi;
     impl StorageApi {
@@ -131,6 +136,9 @@ pub mod api {
         pub fn emission0(&self) -> emission0::storage::StorageApi {
             emission0::storage::StorageApi
         }
+        pub fn permission0(&self) -> permission0::storage::StorageApi {
+            permission0::storage::StorageApi
+        }
     }
     pub struct TransactionApi;
     impl TransactionApi {
@@ -167,6 +175,12 @@ pub mod api {
         pub fn emission0(&self) -> emission0::calls::TransactionApi {
             emission0::calls::TransactionApi
         }
+        pub fn permission0(&self) -> permission0::calls::TransactionApi {
+            permission0::calls::TransactionApi
+        }
+        pub fn faucet(&self) -> faucet::calls::TransactionApi {
+            faucet::calls::TransactionApi
+        }
     }
     pub struct ViewFunctionsApi;
     impl ViewFunctionsApi {}
@@ -179,9 +193,9 @@ pub mod api {
             .hash();
         runtime_metadata_hash
             == [
-                16u8, 117u8, 87u8, 214u8, 245u8, 197u8, 29u8, 244u8, 133u8, 137u8, 161u8, 190u8,
-                237u8, 13u8, 73u8, 212u8, 14u8, 141u8, 215u8, 243u8, 249u8, 51u8, 110u8, 4u8, 90u8,
-                20u8, 26u8, 101u8, 113u8, 173u8, 39u8, 57u8,
+                10u8, 216u8, 96u8, 15u8, 83u8, 93u8, 253u8, 85u8, 105u8, 183u8, 19u8, 142u8, 7u8,
+                250u8, 140u8, 94u8, 253u8, 192u8, 44u8, 211u8, 110u8, 193u8, 40u8, 175u8, 127u8,
+                201u8, 202u8, 174u8, 43u8, 248u8, 86u8, 190u8,
             ]
     }
     pub mod system {
@@ -1452,10 +1466,10 @@ pub mod api {
                         "Events",
                         (),
                         [
-                            9u8, 238u8, 104u8, 143u8, 76u8, 222u8, 22u8, 145u8, 235u8, 201u8,
-                            158u8, 146u8, 77u8, 251u8, 194u8, 132u8, 224u8, 158u8, 182u8, 68u8,
-                            226u8, 50u8, 247u8, 63u8, 90u8, 183u8, 79u8, 233u8, 18u8, 193u8, 112u8,
-                            172u8,
+                            185u8, 116u8, 236u8, 126u8, 17u8, 184u8, 66u8, 79u8, 34u8, 186u8, 24u8,
+                            146u8, 169u8, 211u8, 161u8, 135u8, 37u8, 176u8, 6u8, 146u8, 52u8,
+                            131u8, 200u8, 123u8, 45u8, 91u8, 4u8, 232u8, 200u8, 187u8, 214u8,
+                            125u8,
                         ],
                     )
                 }
@@ -4581,10 +4595,9 @@ pub mod api {
                             call: ::subxt::ext::subxt_core::alloc::boxed::Box::new(call),
                         },
                         [
-                            218u8, 187u8, 157u8, 22u8, 160u8, 12u8, 151u8, 143u8, 33u8, 235u8,
-                            216u8, 11u8, 118u8, 236u8, 247u8, 79u8, 25u8, 133u8, 70u8, 45u8, 103u8,
-                            102u8, 105u8, 249u8, 217u8, 119u8, 45u8, 18u8, 244u8, 227u8, 221u8,
-                            86u8,
+                            133u8, 97u8, 147u8, 20u8, 250u8, 191u8, 194u8, 18u8, 169u8, 66u8, 91u8,
+                            11u8, 142u8, 125u8, 95u8, 1u8, 247u8, 195u8, 137u8, 99u8, 146u8, 217u8,
+                            102u8, 68u8, 119u8, 105u8, 11u8, 255u8, 116u8, 174u8, 75u8, 151u8,
                         ],
                     )
                 }
@@ -4607,10 +4620,9 @@ pub mod api {
                             weight,
                         },
                         [
-                            251u8, 125u8, 64u8, 58u8, 64u8, 223u8, 242u8, 179u8, 117u8, 212u8,
-                            176u8, 90u8, 127u8, 55u8, 77u8, 233u8, 222u8, 193u8, 145u8, 28u8,
-                            255u8, 140u8, 227u8, 28u8, 231u8, 169u8, 157u8, 211u8, 13u8, 32u8,
-                            112u8, 148u8,
+                            111u8, 153u8, 198u8, 3u8, 75u8, 109u8, 43u8, 165u8, 166u8, 191u8, 44u8,
+                            40u8, 62u8, 188u8, 15u8, 60u8, 138u8, 138u8, 122u8, 28u8, 121u8, 72u8,
+                            31u8, 195u8, 95u8, 140u8, 141u8, 96u8, 90u8, 179u8, 176u8, 208u8,
                         ],
                     )
                 }
@@ -4650,9 +4662,9 @@ pub mod api {
                             call: ::subxt::ext::subxt_core::alloc::boxed::Box::new(call),
                         },
                         [
-                            57u8, 14u8, 22u8, 204u8, 212u8, 44u8, 16u8, 209u8, 103u8, 204u8, 17u8,
-                            103u8, 121u8, 171u8, 228u8, 38u8, 2u8, 196u8, 130u8, 67u8, 73u8, 48u8,
-                            119u8, 169u8, 50u8, 230u8, 108u8, 134u8, 118u8, 205u8, 69u8, 209u8,
+                            239u8, 18u8, 86u8, 85u8, 229u8, 161u8, 27u8, 200u8, 128u8, 215u8, 62u8,
+                            53u8, 187u8, 46u8, 48u8, 109u8, 68u8, 81u8, 147u8, 222u8, 103u8, 233u8,
+                            46u8, 201u8, 111u8, 45u8, 123u8, 126u8, 42u8, 147u8, 82u8, 74u8,
                         ],
                     )
                 }
@@ -5093,10 +5105,10 @@ pub mod api {
                             call: ::subxt::ext::subxt_core::alloc::boxed::Box::new(call),
                         },
                         [
-                            157u8, 227u8, 201u8, 186u8, 28u8, 211u8, 24u8, 163u8, 110u8, 16u8,
-                            122u8, 13u8, 21u8, 7u8, 109u8, 136u8, 35u8, 121u8, 156u8, 145u8, 178u8,
-                            13u8, 12u8, 12u8, 121u8, 87u8, 118u8, 253u8, 119u8, 183u8, 184u8,
-                            146u8,
+                            76u8, 49u8, 216u8, 116u8, 166u8, 137u8, 116u8, 167u8, 216u8, 91u8,
+                            198u8, 89u8, 216u8, 163u8, 233u8, 66u8, 171u8, 86u8, 29u8, 198u8,
+                            224u8, 195u8, 160u8, 61u8, 207u8, 19u8, 232u8, 91u8, 173u8, 129u8, 6u8,
+                            145u8,
                         ],
                     )
                 }
@@ -5159,9 +5171,10 @@ pub mod api {
                             max_weight,
                         },
                         [
-                            146u8, 97u8, 89u8, 226u8, 149u8, 41u8, 153u8, 75u8, 71u8, 138u8, 90u8,
-                            8u8, 183u8, 59u8, 85u8, 94u8, 32u8, 76u8, 173u8, 146u8, 77u8, 188u8,
-                            242u8, 149u8, 57u8, 70u8, 212u8, 172u8, 107u8, 131u8, 13u8, 226u8,
+                            118u8, 55u8, 239u8, 36u8, 198u8, 185u8, 4u8, 227u8, 168u8, 237u8,
+                            174u8, 162u8, 44u8, 113u8, 216u8, 53u8, 155u8, 81u8, 123u8, 64u8,
+                            209u8, 109u8, 149u8, 180u8, 47u8, 166u8, 110u8, 69u8, 249u8, 222u8,
+                            11u8, 251u8,
                         ],
                     )
                 }
@@ -6552,58 +6565,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
-                pub struct AddCurator {
-                    pub key: add_curator::Key,
-                }
-                pub mod add_curator {
-                    use super::runtime_types;
-                    pub type Key = ::subxt::ext::subxt_core::utils::AccountId32;
-                }
-                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for AddCurator {
-                    const PALLET: &'static str = "Governance";
-                    const CALL: &'static str = "add_curator";
-                }
-                #[derive(
-                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
-                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
-                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
-                #[codec(dumb_trait_bound)]
-                #[decode_as_type(
-                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
-                )]
-                #[encode_as_type(
-                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
-                )]
-                pub struct RemoveCurator {
-                    pub key: remove_curator::Key,
-                }
-                pub mod remove_curator {
-                    use super::runtime_types;
-                    pub type Key = ::subxt::ext::subxt_core::utils::AccountId32;
-                }
-                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for RemoveCurator {
-                    const PALLET: &'static str = "Governance";
-                    const CALL: &'static str = "remove_curator";
-                }
-                #[derive(
-                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
-                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
-                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
-                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
-                    Debug,
-                )]
-                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
-                #[codec(dumb_trait_bound)]
-                #[decode_as_type(
-                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
-                )]
-                #[encode_as_type(
-                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
-                )]
+                #[doc = "Adds a new allocator to the list. Only available for the root key."]
                 pub struct AddAllocator {
                     pub key: add_allocator::Key,
                 }
@@ -6630,6 +6592,8 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Removes an existing allocator from the list. Only available for the"]
+                #[doc = "root key."]
                 pub struct RemoveAllocator {
                     pub key: remove_allocator::Key,
                 }
@@ -6656,6 +6620,8 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Forcefully adds a new agent to the whitelist. Only available for the"]
+                #[doc = "root key or curators."]
                 pub struct AddToWhitelist {
                     pub key: add_to_whitelist::Key,
                 }
@@ -6682,6 +6648,8 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Forcefully removes an agent from the whitelist. Only available for"]
+                #[doc = "the root key or curators."]
                 pub struct RemoveFromWhitelist {
                     pub key: remove_from_whitelist::Key,
                 }
@@ -6708,6 +6676,8 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Accepts an agent application. Only available for the root key or"]
+                #[doc = "curators."]
                 pub struct AcceptApplication {
                     pub application_id: accept_application::ApplicationId,
                 }
@@ -6734,6 +6704,8 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Denies an agent application. Only available for the root key or"]
+                #[doc = "curators."]
                 pub struct DenyApplication {
                     pub application_id: deny_application::ApplicationId,
                 }
@@ -6760,6 +6732,8 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Sets a penalty factor to the given agent emissions. Only available"]
+                #[doc = "for the root key or curators."]
                 pub struct PenalizeAgent {
                     pub agent_key: penalize_agent::AgentKey,
                     pub percentage: penalize_agent::Percentage,
@@ -6788,6 +6762,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Submits a new agent application on behalf of a given key."]
                 pub struct SubmitApplication {
                     pub agent_key: submit_application::AgentKey,
                     pub metadata: submit_application::Metadata,
@@ -6819,6 +6794,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Creates a new global parameters proposal."]
                 pub struct AddGlobalParamsProposal {
                     pub data: add_global_params_proposal::Data,
                     pub metadata: add_global_params_proposal::Metadata,
@@ -6848,6 +6824,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Creates a new custom global proposal."]
                 pub struct AddGlobalCustomProposal {
                     pub metadata: add_global_custom_proposal::Metadata,
                 }
@@ -6875,6 +6852,8 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Creates a proposal moving funds from the treasury account to the"]
+                #[doc = "given key."]
                 pub struct AddDaoTreasuryTransferProposal {
                     pub value: add_dao_treasury_transfer_proposal::Value,
                     pub destination_key: add_dao_treasury_transfer_proposal::DestinationKey,
@@ -6906,6 +6885,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Casts a vote for an open proposal."]
                 pub struct VoteProposal {
                     pub proposal_id: vote_proposal::ProposalId,
                     pub agree: vote_proposal::Agree,
@@ -6934,6 +6914,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Removes a casted vote for an open proposal."]
                 pub struct RemoveVoteProposal {
                     pub proposal_id: remove_vote_proposal::ProposalId,
                 }
@@ -6960,6 +6941,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Enables vote power delegation."]
                 pub struct EnableVoteDelegation;
                 impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for EnableVoteDelegation {
                     const PALLET: &'static str = "Governance";
@@ -6980,6 +6962,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Disables vote power delegation."]
                 pub struct DisableVoteDelegation;
                 impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for DisableVoteDelegation {
                     const PALLET: &'static str = "Governance";
@@ -7000,6 +6983,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Creates a new emission percentage proposal."]
                 pub struct AddEmissionProposal {
                     pub recycling_percentage: add_emission_proposal::RecyclingPercentage,
                     pub treasury_percentage: add_emission_proposal::TreasuryPercentage,
@@ -7034,6 +7018,8 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Forcefully sets emission percentages. Only available for the root"]
+                #[doc = "key."]
                 pub struct SetEmissionParams {
                     pub recycling_percentage: set_emission_params::RecyclingPercentage,
                     pub treasury_percentage: set_emission_params::TreasuryPercentage,
@@ -7048,41 +7034,50 @@ pub mod api {
                     const PALLET: &'static str = "Governance";
                     const CALL: &'static str = "set_emission_params";
                 }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub struct ToggleAgentFreezing;
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for ToggleAgentFreezing {
+                    const PALLET: &'static str = "Governance";
+                    const CALL: &'static str = "toggle_agent_freezing";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub struct ToggleNamespaceFreezing;
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for ToggleNamespaceFreezing {
+                    const PALLET: &'static str = "Governance";
+                    const CALL: &'static str = "toggle_namespace_freezing";
+                }
             }
             pub struct TransactionApi;
             impl TransactionApi {
-                pub fn add_curator(
-                    &self,
-                    key: types::add_curator::Key,
-                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<types::AddCurator>
-                {
-                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
-                        "Governance",
-                        "add_curator",
-                        types::AddCurator { key },
-                        [
-                            201u8, 5u8, 5u8, 25u8, 149u8, 29u8, 39u8, 211u8, 29u8, 180u8, 130u8,
-                            238u8, 234u8, 74u8, 184u8, 239u8, 179u8, 249u8, 189u8, 123u8, 87u8,
-                            248u8, 83u8, 97u8, 176u8, 108u8, 8u8, 198u8, 183u8, 82u8, 109u8, 188u8,
-                        ],
-                    )
-                }
-                pub fn remove_curator(
-                    &self,
-                    key: types::remove_curator::Key,
-                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<types::RemoveCurator>
-                {
-                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
-                        "Governance",
-                        "remove_curator",
-                        types::RemoveCurator { key },
-                        [
-                            248u8, 209u8, 173u8, 52u8, 9u8, 70u8, 94u8, 2u8, 153u8, 216u8, 42u8,
-                            157u8, 69u8, 59u8, 131u8, 133u8, 54u8, 248u8, 147u8, 174u8, 16u8,
-                            128u8, 5u8, 198u8, 38u8, 156u8, 170u8, 114u8, 173u8, 3u8, 162u8, 38u8,
-                        ],
-                    )
-                }
+                #[doc = "Adds a new allocator to the list. Only available for the root key."]
                 pub fn add_allocator(
                     &self,
                     key: types::add_allocator::Key,
@@ -7099,6 +7094,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Removes an existing allocator from the list. Only available for the"]
+                #[doc = "root key."]
                 pub fn remove_allocator(
                     &self,
                     key: types::remove_allocator::Key,
@@ -7115,6 +7112,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Forcefully adds a new agent to the whitelist. Only available for the"]
+                #[doc = "root key or curators."]
                 pub fn add_to_whitelist(
                     &self,
                     key: types::add_to_whitelist::Key,
@@ -7131,6 +7130,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Forcefully removes an agent from the whitelist. Only available for"]
+                #[doc = "the root key or curators."]
                 pub fn remove_from_whitelist(
                     &self,
                     key: types::remove_from_whitelist::Key,
@@ -7148,6 +7149,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Accepts an agent application. Only available for the root key or"]
+                #[doc = "curators."]
                 pub fn accept_application(
                     &self,
                     application_id: types::accept_application::ApplicationId,
@@ -7164,6 +7167,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Denies an agent application. Only available for the root key or"]
+                #[doc = "curators."]
                 pub fn deny_application(
                     &self,
                     application_id: types::deny_application::ApplicationId,
@@ -7180,6 +7185,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Sets a penalty factor to the given agent emissions. Only available"]
+                #[doc = "for the root key or curators."]
                 pub fn penalize_agent(
                     &self,
                     agent_key: types::penalize_agent::AgentKey,
@@ -7201,6 +7208,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Submits a new agent application on behalf of a given key."]
                 pub fn submit_application(
                     &self,
                     agent_key: types::submit_application::AgentKey,
@@ -7224,6 +7232,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Creates a new global parameters proposal."]
                 pub fn add_global_params_proposal(
                     &self,
                     data: types::add_global_params_proposal::Data,
@@ -7236,13 +7245,14 @@ pub mod api {
                         "add_global_params_proposal",
                         types::AddGlobalParamsProposal { data, metadata },
                         [
-                            51u8, 43u8, 139u8, 221u8, 83u8, 191u8, 41u8, 153u8, 95u8, 149u8, 80u8,
-                            203u8, 121u8, 14u8, 161u8, 176u8, 190u8, 123u8, 19u8, 112u8, 32u8,
-                            133u8, 102u8, 135u8, 202u8, 223u8, 75u8, 106u8, 21u8, 21u8, 17u8,
-                            109u8,
+                            122u8, 121u8, 246u8, 221u8, 125u8, 199u8, 58u8, 203u8, 97u8, 181u8,
+                            255u8, 107u8, 93u8, 101u8, 193u8, 60u8, 199u8, 191u8, 237u8, 152u8,
+                            214u8, 71u8, 32u8, 128u8, 125u8, 43u8, 156u8, 142u8, 132u8, 184u8,
+                            24u8, 22u8,
                         ],
                     )
                 }
+                #[doc = "Creates a new custom global proposal."]
                 pub fn add_global_custom_proposal(
                     &self,
                     metadata: types::add_global_custom_proposal::Metadata,
@@ -7260,6 +7270,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Creates a proposal moving funds from the treasury account to the"]
+                #[doc = "given key."]
                 pub fn add_dao_treasury_transfer_proposal(
                     &self,
                     value: types::add_dao_treasury_transfer_proposal::Value,
@@ -7284,6 +7296,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Casts a vote for an open proposal."]
                 pub fn vote_proposal(
                     &self,
                     proposal_id: types::vote_proposal::ProposalId,
@@ -7301,6 +7314,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Removes a casted vote for an open proposal."]
                 pub fn remove_vote_proposal(
                     &self,
                     proposal_id: types::remove_vote_proposal::ProposalId,
@@ -7317,6 +7331,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Enables vote power delegation."]
                 pub fn enable_vote_delegation(
                     &self,
                 ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<types::EnableVoteDelegation>
@@ -7333,6 +7348,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Disables vote power delegation."]
                 pub fn disable_vote_delegation(
                     &self,
                 ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
@@ -7350,6 +7366,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Creates a new emission percentage proposal."]
                 pub fn add_emission_proposal(
                     &self,
                     recycling_percentage: types::add_emission_proposal::RecyclingPercentage,
@@ -7374,6 +7391,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Forcefully sets emission percentages. Only available for the root"]
+                #[doc = "key."]
                 pub fn set_emission_params(
                     &self,
                     recycling_percentage: types::set_emission_params::RecyclingPercentage,
@@ -7392,6 +7411,38 @@ pub mod api {
                             254u8, 185u8, 66u8, 165u8, 30u8, 232u8, 168u8, 55u8, 98u8, 212u8,
                             150u8, 39u8, 241u8, 182u8, 119u8, 216u8, 156u8, 186u8, 0u8, 160u8,
                             190u8,
+                        ],
+                    )
+                }
+                pub fn toggle_agent_freezing(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<types::ToggleAgentFreezing>
+                {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Governance",
+                        "toggle_agent_freezing",
+                        types::ToggleAgentFreezing {},
+                        [
+                            89u8, 176u8, 5u8, 173u8, 171u8, 73u8, 148u8, 219u8, 133u8, 234u8, 24u8,
+                            79u8, 18u8, 114u8, 124u8, 118u8, 1u8, 199u8, 215u8, 221u8, 33u8, 130u8,
+                            152u8, 69u8, 254u8, 100u8, 86u8, 236u8, 77u8, 192u8, 74u8, 146u8,
+                        ],
+                    )
+                }
+                pub fn toggle_namespace_freezing(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
+                    types::ToggleNamespaceFreezing,
+                > {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Governance",
+                        "toggle_namespace_freezing",
+                        types::ToggleNamespaceFreezing {},
+                        [
+                            10u8, 253u8, 234u8, 241u8, 205u8, 162u8, 233u8, 28u8, 108u8, 43u8, 3u8,
+                            41u8, 209u8, 67u8, 189u8, 204u8, 27u8, 132u8, 48u8, 105u8, 109u8,
+                            199u8, 19u8, 194u8, 227u8, 175u8, 194u8, 42u8, 179u8, 81u8, 130u8,
+                            101u8,
                         ],
                     )
                 }
@@ -7663,6 +7714,83 @@ pub mod api {
                 const PALLET: &'static str = "Governance";
                 const EVENT: &'static str = "ApplicationExpired";
             }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "A penalty was applied to an agent."]
+            pub struct PenaltyApplied {
+                pub curator: penalty_applied::Curator,
+                pub agent: penalty_applied::Agent,
+                pub penalty: penalty_applied::Penalty,
+            }
+            pub mod penalty_applied {
+                use super::runtime_types;
+                pub type Curator = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type Agent = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type Penalty = runtime_types::sp_arithmetic::per_things::Percent;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for PenaltyApplied {
+                const PALLET: &'static str = "Governance";
+                const EVENT: &'static str = "PenaltyApplied";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "The agent freezing feature was toggled by a curator."]
+            pub struct AgentFreezingToggled {
+                pub curator: agent_freezing_toggled::Curator,
+                pub new_state: agent_freezing_toggled::NewState,
+            }
+            pub mod agent_freezing_toggled {
+                use super::runtime_types;
+                pub type Curator = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type NewState = ::core::primitive::bool;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for AgentFreezingToggled {
+                const PALLET: &'static str = "Governance";
+                const EVENT: &'static str = "AgentFreezingToggled";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "The namespace freezing feature was toggled by a curator."]
+            pub struct NamespaceFreezingToggled {
+                pub curator: namespace_freezing_toggled::Curator,
+                pub new_state: namespace_freezing_toggled::NewState,
+            }
+            pub mod namespace_freezing_toggled {
+                use super::runtime_types;
+                pub type Curator = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type NewState = ::core::primitive::bool;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for NamespaceFreezingToggled {
+                const PALLET: &'static str = "Governance";
+                const EVENT: &'static str = "NamespaceFreezingToggled";
+            }
         }
         pub mod storage {
             use super::runtime_types;
@@ -7706,11 +7834,6 @@ pub mod api {
                     pub type Whitelist = ();
                     pub type Param0 = ::subxt::ext::subxt_core::utils::AccountId32;
                 }
-                pub mod curators {
-                    use super::runtime_types;
-                    pub type Curators = ();
-                    pub type Param0 = ::subxt::ext::subxt_core::utils::AccountId32;
-                }
                 pub mod allocators {
                     use super::runtime_types;
                     pub type Allocators = ();
@@ -7721,9 +7844,18 @@ pub mod api {
                     pub type TreasuryEmissionFee =
                         runtime_types::sp_arithmetic::per_things::Percent;
                 }
+                pub mod agents_frozen {
+                    use super::runtime_types;
+                    pub type AgentsFrozen = ::core::primitive::bool;
+                }
+                pub mod namespaces_frozen {
+                    use super::runtime_types;
+                    pub type NamespacesFrozen = ::core::primitive::bool;
+                }
             }
             pub struct StorageApi;
             impl StorageApi {
+                #[doc = " Map of past and present proposals indexed by their incrementing ID."]
                 pub fn proposals_iter(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -7738,12 +7870,14 @@ pub mod api {
                         "Proposals",
                         (),
                         [
-                            145u8, 6u8, 157u8, 129u8, 42u8, 32u8, 254u8, 121u8, 248u8, 68u8, 7u8,
-                            124u8, 69u8, 58u8, 16u8, 174u8, 206u8, 177u8, 102u8, 244u8, 124u8,
-                            200u8, 93u8, 225u8, 4u8, 211u8, 65u8, 38u8, 147u8, 21u8, 233u8, 53u8,
+                            218u8, 109u8, 195u8, 5u8, 237u8, 39u8, 112u8, 8u8, 177u8, 203u8, 50u8,
+                            5u8, 63u8, 187u8, 54u8, 222u8, 209u8, 120u8, 157u8, 211u8, 128u8,
+                            247u8, 75u8, 177u8, 125u8, 173u8, 172u8, 21u8, 197u8, 60u8, 123u8,
+                            18u8,
                         ],
                     )
                 }
+                #[doc = " Map of past and present proposals indexed by their incrementing ID."]
                 pub fn proposals(
                     &self,
                     _0: impl ::core::borrow::Borrow<types::proposals::Param0>,
@@ -7763,12 +7897,14 @@ pub mod api {
                             _0.borrow(),
                         ),
                         [
-                            145u8, 6u8, 157u8, 129u8, 42u8, 32u8, 254u8, 121u8, 248u8, 68u8, 7u8,
-                            124u8, 69u8, 58u8, 16u8, 174u8, 206u8, 177u8, 102u8, 244u8, 124u8,
-                            200u8, 93u8, 225u8, 4u8, 211u8, 65u8, 38u8, 147u8, 21u8, 233u8, 53u8,
+                            218u8, 109u8, 195u8, 5u8, 237u8, 39u8, 112u8, 8u8, 177u8, 203u8, 50u8,
+                            5u8, 63u8, 187u8, 54u8, 222u8, 209u8, 120u8, 157u8, 211u8, 128u8,
+                            247u8, 75u8, 177u8, 125u8, 173u8, 172u8, 21u8, 197u8, 60u8, 123u8,
+                            18u8,
                         ],
                     )
                 }
+                #[doc = " Queue of proposals to be rewarded after closing."]
                 pub fn unrewarded_proposals_iter(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -7790,6 +7926,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Queue of proposals to be rewarded after closing."]
                 pub fn unrewarded_proposals(
                     &self,
                     _0: impl ::core::borrow::Borrow<types::unrewarded_proposals::Param0>,
@@ -7816,6 +7953,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " List of keys that are NOT delegating their voting power. By default, all"]
+                #[doc = " keys delegate their voting power."]
                 pub fn not_delegating_voting_power(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -7837,6 +7976,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Global governance configuration files."]
                 pub fn global_governance_config(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -7857,6 +7997,9 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " The treasury address to which the treasury emission percentages and"]
+                #[doc = " other funds go to. A proposal can be created withdrawing the funds to a"]
+                #[doc = " key."]
                 pub fn dao_treasury_address(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -7878,6 +8021,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " A map of agent applications, past and present."]
                 pub fn agent_applications_iter(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -7898,6 +8042,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " A map of agent applications, past and present."]
                 pub fn agent_applications(
                     &self,
                     _0: impl ::core::borrow::Borrow<types::agent_applications::Param0>,
@@ -7923,6 +8068,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " List of whitelisted keys. Keys listed here are allowed to register"]
+                #[doc = " agents."]
                 pub fn whitelist_iter(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -7944,6 +8091,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " List of whitelisted keys. Keys listed here are allowed to register"]
+                #[doc = " agents."]
                 pub fn whitelist(
                     &self,
                     _0: impl ::core::borrow::Borrow<types::whitelist::Param0>,
@@ -7970,53 +8119,7 @@ pub mod api {
                         ],
                     )
                 }
-                pub fn curators_iter(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
-                    (),
-                    types::curators::Curators,
-                    (),
-                    (),
-                    ::subxt::ext::subxt_core::utils::Yes,
-                > {
-                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
-                        "Governance",
-                        "Curators",
-                        (),
-                        [
-                            122u8, 134u8, 173u8, 24u8, 32u8, 12u8, 201u8, 159u8, 27u8, 239u8,
-                            239u8, 92u8, 103u8, 249u8, 223u8, 130u8, 160u8, 197u8, 28u8, 148u8,
-                            240u8, 199u8, 211u8, 74u8, 16u8, 156u8, 37u8, 167u8, 161u8, 209u8,
-                            13u8, 52u8,
-                        ],
-                    )
-                }
-                pub fn curators(
-                    &self,
-                    _0: impl ::core::borrow::Borrow<types::curators::Param0>,
-                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
-                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
-                        types::curators::Param0,
-                    >,
-                    types::curators::Curators,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    (),
-                    (),
-                > {
-                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
-                        "Governance",
-                        "Curators",
-                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
-                            _0.borrow(),
-                        ),
-                        [
-                            122u8, 134u8, 173u8, 24u8, 32u8, 12u8, 201u8, 159u8, 27u8, 239u8,
-                            239u8, 92u8, 103u8, 249u8, 223u8, 130u8, 160u8, 197u8, 28u8, 148u8,
-                            240u8, 199u8, 211u8, 74u8, 16u8, 156u8, 37u8, 167u8, 161u8, 209u8,
-                            13u8, 52u8,
-                        ],
-                    )
-                }
+                #[doc = " List of allocator keys, which are the default validators on the network."]
                 pub fn allocators_iter(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -8038,6 +8141,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " List of allocator keys, which are the default validators on the network."]
                 pub fn allocators(
                     &self,
                     _0: impl ::core::borrow::Borrow<types::allocators::Param0>,
@@ -8064,6 +8168,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Fee taken from emission distribution and deposited into"]
+                #[doc = " [`DaoTreasuryAddress`]."]
                 pub fn treasury_emission_fee(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -8082,6 +8188,49 @@ pub mod api {
                             22u8, 49u8, 79u8, 170u8, 167u8, 249u8, 57u8, 58u8, 114u8, 19u8, 83u8,
                             166u8, 122u8, 255u8, 34u8, 148u8, 150u8, 17u8, 136u8, 198u8, 47u8,
                             235u8,
+                        ],
+                    )
+                }
+                #[doc = " Determines if new agents can be registered on the chain."]
+                pub fn agents_frozen(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::agents_frozen::AgentsFrozen,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Governance",
+                        "AgentsFrozen",
+                        (),
+                        [
+                            231u8, 253u8, 68u8, 16u8, 205u8, 101u8, 74u8, 227u8, 53u8, 153u8, 62u8,
+                            244u8, 157u8, 87u8, 252u8, 252u8, 182u8, 62u8, 197u8, 250u8, 205u8,
+                            15u8, 85u8, 154u8, 71u8, 196u8, 154u8, 161u8, 240u8, 55u8, 184u8,
+                            195u8,
+                        ],
+                    )
+                }
+                #[doc = " Determines if new namespaces can be created on the chain."]
+                pub fn namespaces_frozen(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::namespaces_frozen::NamespacesFrozen,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Governance",
+                        "NamespacesFrozen",
+                        (),
+                        [
+                            191u8, 50u8, 16u8, 7u8, 133u8, 1u8, 115u8, 71u8, 241u8, 161u8, 109u8,
+                            215u8, 248u8, 215u8, 45u8, 23u8, 30u8, 120u8, 34u8, 56u8, 159u8, 219u8,
+                            110u8, 59u8, 169u8, 172u8, 16u8, 224u8, 37u8, 53u8, 107u8, 143u8,
                         ],
                     )
                 }
@@ -8326,6 +8475,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Adds stakes from origin to the agent key."]
                 pub struct AddStake {
                     pub agent_key: add_stake::AgentKey,
                     pub amount: add_stake::Amount,
@@ -8354,6 +8504,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Removes stakes from origin to the agent key."]
                 pub struct RemoveStake {
                     pub agent_key: remove_stake::AgentKey,
                     pub amount: remove_stake::Amount,
@@ -8382,6 +8533,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Transfers origin's stakes from an agent to another."]
                 pub struct TransferStake {
                     pub agent_key: transfer_stake::AgentKey,
                     pub new_agent_key: transfer_stake::NewAgentKey,
@@ -8412,6 +8564,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Registers a new agent on behalf of an arbitrary key."]
                 pub struct RegisterAgent {
                     pub agent_key: register_agent::AgentKey,
                     pub name: register_agent::Name,
@@ -8446,6 +8599,7 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Unregister origin's key agent."]
                 pub struct UnregisterAgent;
                 impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for UnregisterAgent {
                     const PALLET: &'static str = "Torus0";
@@ -8466,8 +8620,8 @@ pub mod api {
                 #[encode_as_type(
                     crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
                 )]
+                #[doc = "Updates origin's key agent metadata."]
                 pub struct UpdateAgent {
-                    pub name: update_agent::Name,
                     pub url: update_agent::Url,
                     pub metadata: update_agent::Metadata,
                     pub staking_fee: update_agent::StakingFee,
@@ -8475,8 +8629,6 @@ pub mod api {
                 }
                 pub mod update_agent {
                     use super::runtime_types;
-                    pub type Name =
-                        ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>;
                     pub type Url = ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>;
                     pub type Metadata = ::core::option::Option<
                         ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
@@ -8490,9 +8642,95 @@ pub mod api {
                     const PALLET: &'static str = "Torus0";
                     const CALL: &'static str = "update_agent";
                 }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Updates origin's key agent metadata."]
+                pub struct SetAgentUpdateCooldown {
+                    pub new_cooldown: set_agent_update_cooldown::NewCooldown,
+                }
+                pub mod set_agent_update_cooldown {
+                    use super::runtime_types;
+                    pub type NewCooldown = ::core::primitive::u64;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for SetAgentUpdateCooldown {
+                    const PALLET: &'static str = "Torus0";
+                    const CALL: &'static str = "set_agent_update_cooldown";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Create a new namespace, automatically creating missing intermediate nodes"]
+                pub struct CreateNamespace {
+                    pub path: create_namespace::Path,
+                }
+                pub mod create_namespace {
+                    use super::runtime_types;
+                    pub type Path = runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        ::core::primitive::u8,
+                    >;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for CreateNamespace {
+                    const PALLET: &'static str = "Torus0";
+                    const CALL: &'static str = "create_namespace";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Delete a namespace and all its children"]
+                pub struct DeleteNamespace {
+                    pub path: delete_namespace::Path,
+                }
+                pub mod delete_namespace {
+                    use super::runtime_types;
+                    pub type Path = runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        ::core::primitive::u8,
+                    >;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for DeleteNamespace {
+                    const PALLET: &'static str = "Torus0";
+                    const CALL: &'static str = "delete_namespace";
+                }
             }
             pub struct TransactionApi;
             impl TransactionApi {
+                #[doc = "Adds stakes from origin to the agent key."]
                 pub fn add_stake(
                     &self,
                     agent_key: types::add_stake::AgentKey,
@@ -8510,6 +8748,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Removes stakes from origin to the agent key."]
                 pub fn remove_stake(
                     &self,
                     agent_key: types::remove_stake::AgentKey,
@@ -8528,6 +8767,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Transfers origin's stakes from an agent to another."]
                 pub fn transfer_stake(
                     &self,
                     agent_key: types::transfer_stake::AgentKey,
@@ -8550,6 +8790,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Registers a new agent on behalf of an arbitrary key."]
                 pub fn register_agent(
                     &self,
                     agent_key: types::register_agent::AgentKey,
@@ -8575,6 +8816,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Unregister origin's key agent."]
                 pub fn unregister_agent(
                     &self,
                 ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<types::UnregisterAgent>
@@ -8590,9 +8832,9 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = "Updates origin's key agent metadata."]
                 pub fn update_agent(
                     &self,
-                    name: types::update_agent::Name,
                     url: types::update_agent::Url,
                     metadata: types::update_agent::Metadata,
                     staking_fee: types::update_agent::StakingFee,
@@ -8603,16 +8845,69 @@ pub mod api {
                         "Torus0",
                         "update_agent",
                         types::UpdateAgent {
-                            name,
                             url,
                             metadata,
                             staking_fee,
                             weight_control_fee,
                         },
                         [
-                            28u8, 23u8, 34u8, 208u8, 45u8, 23u8, 30u8, 85u8, 251u8, 2u8, 238u8,
-                            68u8, 53u8, 102u8, 44u8, 30u8, 58u8, 68u8, 206u8, 40u8, 249u8, 0u8,
-                            131u8, 95u8, 198u8, 219u8, 137u8, 23u8, 124u8, 18u8, 35u8, 159u8,
+                            74u8, 151u8, 110u8, 24u8, 169u8, 17u8, 71u8, 36u8, 175u8, 251u8, 157u8,
+                            93u8, 2u8, 240u8, 248u8, 193u8, 38u8, 139u8, 133u8, 73u8, 110u8, 44u8,
+                            63u8, 48u8, 239u8, 243u8, 139u8, 254u8, 169u8, 12u8, 187u8, 240u8,
+                        ],
+                    )
+                }
+                #[doc = "Updates origin's key agent metadata."]
+                pub fn set_agent_update_cooldown(
+                    &self,
+                    new_cooldown: types::set_agent_update_cooldown::NewCooldown,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
+                    types::SetAgentUpdateCooldown,
+                > {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Torus0",
+                        "set_agent_update_cooldown",
+                        types::SetAgentUpdateCooldown { new_cooldown },
+                        [
+                            205u8, 244u8, 69u8, 229u8, 205u8, 68u8, 116u8, 34u8, 203u8, 37u8,
+                            121u8, 211u8, 255u8, 232u8, 115u8, 144u8, 196u8, 31u8, 48u8, 84u8,
+                            148u8, 244u8, 115u8, 65u8, 204u8, 193u8, 109u8, 184u8, 103u8, 41u8,
+                            224u8, 92u8,
+                        ],
+                    )
+                }
+                #[doc = "Create a new namespace, automatically creating missing intermediate nodes"]
+                pub fn create_namespace(
+                    &self,
+                    path: types::create_namespace::Path,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<types::CreateNamespace>
+                {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Torus0",
+                        "create_namespace",
+                        types::CreateNamespace { path },
+                        [
+                            252u8, 84u8, 145u8, 215u8, 177u8, 127u8, 181u8, 36u8, 125u8, 219u8,
+                            180u8, 14u8, 18u8, 46u8, 215u8, 93u8, 31u8, 160u8, 73u8, 245u8, 165u8,
+                            250u8, 39u8, 81u8, 5u8, 191u8, 9u8, 216u8, 222u8, 29u8, 140u8, 164u8,
+                        ],
+                    )
+                }
+                #[doc = "Delete a namespace and all its children"]
+                pub fn delete_namespace(
+                    &self,
+                    path: types::delete_namespace::Path,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<types::DeleteNamespace>
+                {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Torus0",
+                        "delete_namespace",
+                        types::DeleteNamespace { path },
+                        [
+                            187u8, 188u8, 35u8, 205u8, 203u8, 85u8, 5u8, 28u8, 24u8, 190u8, 216u8,
+                            68u8, 166u8, 128u8, 204u8, 237u8, 84u8, 107u8, 212u8, 148u8, 221u8,
+                            163u8, 236u8, 119u8, 169u8, 177u8, 126u8, 86u8, 176u8, 1u8, 114u8,
+                            43u8,
                         ],
                     )
                 }
@@ -8633,8 +8928,8 @@ pub mod api {
             #[codec(dumb_trait_bound)]
             #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
             #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
-            #[doc = "Event created when stake has been transferred from the coldkey account onto the key"]
-            #[doc = "staking account"]
+            #[doc = "Event created when stake has been transferred from the coldkey"]
+            #[doc = "account onto the key staking account"]
             pub struct StakeAdded(
                 pub stake_added::Field0,
                 pub stake_added::Field1,
@@ -8661,8 +8956,8 @@ pub mod api {
             #[codec(dumb_trait_bound)]
             #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
             #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
-            #[doc = "Event created when stake has been removed from the key staking account onto the coldkey"]
-            #[doc = "account"]
+            #[doc = "Event created when stake has been removed from the key staking"]
+            #[doc = "account onto the coldkey account"]
             pub struct StakeRemoved(
                 pub stake_removed::Field0,
                 pub stake_removed::Field1,
@@ -8689,7 +8984,8 @@ pub mod api {
             #[codec(dumb_trait_bound)]
             #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
             #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
-            #[doc = "Event created when a new agent account has been registered to the chain"]
+            #[doc = "Event created when a new agent account has been registered to the"]
+            #[doc = "chain"]
             pub struct AgentRegistered(pub agent_registered::Field0);
             pub mod agent_registered {
                 use super::runtime_types;
@@ -8710,7 +9006,8 @@ pub mod api {
             #[codec(dumb_trait_bound)]
             #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
             #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
-            #[doc = "Event created when a agent account has been deregistered from the chain"]
+            #[doc = "Event created when a agent account has been deregistered from the"]
+            #[doc = "chain"]
             pub struct AgentUnregistered(pub agent_unregistered::Field0);
             pub mod agent_unregistered {
                 use super::runtime_types;
@@ -8731,7 +9028,8 @@ pub mod api {
             #[codec(dumb_trait_bound)]
             #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
             #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
-            #[doc = "Event created when the agent's updated information is added to the network"]
+            #[doc = "Event created when the agent's updated information is added to the"]
+            #[doc = "network"]
             pub struct AgentUpdated(pub agent_updated::Field0);
             pub mod agent_updated {
                 use super::runtime_types;
@@ -8740,6 +9038,56 @@ pub mod api {
             impl ::subxt::ext::subxt_core::events::StaticEvent for AgentUpdated {
                 const PALLET: &'static str = "Torus0";
                 const EVENT: &'static str = "AgentUpdated";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Namespace created"]
+            pub struct NamespaceCreated {
+                pub owner: namespace_created::Owner,
+                pub path: namespace_created::Path,
+            }
+            pub mod namespace_created {
+                use super::runtime_types;
+                pub type Owner = runtime_types::pallet_torus0::namespace::NamespaceOwnership;
+                pub type Path = runtime_types::pallet_torus0_api::NamespacePath;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for NamespaceCreated {
+                const PALLET: &'static str = "Torus0";
+                const EVENT: &'static str = "NamespaceCreated";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Namespace deleted"]
+            pub struct NamespaceDeleted {
+                pub owner: namespace_deleted::Owner,
+                pub path: namespace_deleted::Path,
+            }
+            pub mod namespace_deleted {
+                use super::runtime_types;
+                pub type Owner = runtime_types::pallet_torus0::namespace::NamespaceOwnership;
+                pub type Path = runtime_types::pallet_torus0_api::NamespacePath;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for NamespaceDeleted {
+                const PALLET: &'static str = "Torus0";
+                const EVENT: &'static str = "NamespaceDeleted";
             }
         }
         pub mod storage {
@@ -8762,10 +9110,6 @@ pub mod api {
                     use super::runtime_types;
                     pub type MinValidatorStake = ::core::primitive::u128;
                 }
-                pub mod immunity_period {
-                    use super::runtime_types;
-                    pub type ImmunityPeriod = ::core::primitive::u16;
-                }
                 pub mod reward_interval {
                     use super::runtime_types;
                     pub type RewardInterval = ::core::primitive::u16;
@@ -8775,26 +9119,17 @@ pub mod api {
                     pub type Agents = runtime_types::pallet_torus0::agent::Agent;
                     pub type Param0 = ::subxt::ext::subxt_core::utils::AccountId32;
                 }
-                pub mod registration_block {
-                    use super::runtime_types;
-                    pub type RegistrationBlock = ::core::primitive::u64;
-                    pub type Param0 = ::subxt::ext::subxt_core::utils::AccountId32;
-                }
                 pub mod max_name_length {
                     use super::runtime_types;
                     pub type MaxNameLength = ::core::primitive::u16;
-                }
-                pub mod max_agent_url_length {
-                    use super::runtime_types;
-                    pub type MaxAgentUrlLength = ::core::primitive::u16;
                 }
                 pub mod min_name_length {
                     use super::runtime_types;
                     pub type MinNameLength = ::core::primitive::u16;
                 }
-                pub mod max_allowed_agents {
+                pub mod max_agent_url_length {
                     use super::runtime_types;
-                    pub type MaxAllowedAgents = ::core::primitive::u16;
+                    pub type MaxAgentUrlLength = ::core::primitive::u16;
                 }
                 pub mod registrations_this_block {
                     use super::runtime_types;
@@ -8838,9 +9173,33 @@ pub mod api {
                     use super::runtime_types;
                     pub type BurnConfig = runtime_types::pallet_torus0::burn::BurnConfiguration;
                 }
+                pub mod agent_update_cooldown {
+                    use super::runtime_types;
+                    pub type AgentUpdateCooldown = ::core::primitive::u64;
+                }
+                pub mod namespaces {
+                    use super::runtime_types;
+                    pub type Namespaces =
+                        runtime_types::pallet_torus0::namespace::NamespaceMetadata;
+                    pub type Param0 = runtime_types::pallet_torus0::namespace::NamespaceOwnership;
+                    pub type Param1 = runtime_types::pallet_torus0_api::NamespacePath;
+                }
+                pub mod namespace_count {
+                    use super::runtime_types;
+                    pub type NamespaceCount = ::core::primitive::u32;
+                    pub type Param0 = runtime_types::pallet_torus0::namespace::NamespaceOwnership;
+                }
+                pub mod namespace_pricing_config {
+                    use super::runtime_types;
+                    pub type NamespacePricingConfig =
+                        runtime_types::pallet_torus0::namespace::NamespacePricingConfig;
+                }
             }
             pub struct StorageApi;
             impl StorageApi {
+                #[doc = " Max allowed of validators. This is used then calculating emissions, only"]
+                #[doc = " the top staked agents up to this value will have their weights"]
+                #[doc = " considered."]
                 pub fn max_allowed_validators(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -8861,6 +9220,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Amount of tokens to burn from a payer key when registering new agents."]
                 pub fn burn(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -8882,6 +9242,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Number of agent registrations that happened in the last"]
+                #[doc = " [`BurnConfiguration::target_registrations_interval`] blocks."]
                 pub fn registrations_this_interval(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -8903,6 +9265,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Minimum required stake for an agent to be considered a validator."]
                 pub fn min_validator_stake(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -8923,27 +9286,7 @@ pub mod api {
                         ],
                     )
                 }
-                pub fn immunity_period(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
-                    (),
-                    types::immunity_period::ImmunityPeriod,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    (),
-                > {
-                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
-                        "Torus0",
-                        "ImmunityPeriod",
-                        (),
-                        [
-                            230u8, 228u8, 145u8, 124u8, 8u8, 14u8, 88u8, 68u8, 93u8, 76u8, 144u8,
-                            150u8, 169u8, 180u8, 180u8, 132u8, 182u8, 194u8, 108u8, 208u8, 213u8,
-                            157u8, 106u8, 156u8, 171u8, 137u8, 202u8, 156u8, 157u8, 26u8, 52u8,
-                            216u8,
-                        ],
-                    )
-                }
+                #[doc = " Number of blocks between emissions."]
                 pub fn reward_interval(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -8964,6 +9307,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Known registered network agents indexed by the owner's key."]
                 pub fn agents_iter(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -8978,12 +9322,13 @@ pub mod api {
                         "Agents",
                         (),
                         [
-                            190u8, 204u8, 91u8, 223u8, 86u8, 14u8, 107u8, 250u8, 239u8, 185u8,
-                            119u8, 204u8, 59u8, 9u8, 32u8, 49u8, 103u8, 57u8, 76u8, 85u8, 21u8,
-                            98u8, 80u8, 94u8, 214u8, 90u8, 235u8, 250u8, 56u8, 250u8, 215u8, 130u8,
+                            255u8, 188u8, 168u8, 152u8, 228u8, 64u8, 223u8, 49u8, 223u8, 64u8,
+                            11u8, 29u8, 9u8, 197u8, 194u8, 166u8, 254u8, 200u8, 9u8, 98u8, 14u8,
+                            13u8, 102u8, 113u8, 64u8, 62u8, 16u8, 147u8, 131u8, 25u8, 204u8, 52u8,
                         ],
                     )
                 }
+                #[doc = " Known registered network agents indexed by the owner's key."]
                 pub fn agents(
                     &self,
                     _0: impl ::core::borrow::Borrow<types::agents::Param0>,
@@ -9003,57 +9348,13 @@ pub mod api {
                             _0.borrow(),
                         ),
                         [
-                            190u8, 204u8, 91u8, 223u8, 86u8, 14u8, 107u8, 250u8, 239u8, 185u8,
-                            119u8, 204u8, 59u8, 9u8, 32u8, 49u8, 103u8, 57u8, 76u8, 85u8, 21u8,
-                            98u8, 80u8, 94u8, 214u8, 90u8, 235u8, 250u8, 56u8, 250u8, 215u8, 130u8,
+                            255u8, 188u8, 168u8, 152u8, 228u8, 64u8, 223u8, 49u8, 223u8, 64u8,
+                            11u8, 29u8, 9u8, 197u8, 194u8, 166u8, 254u8, 200u8, 9u8, 98u8, 14u8,
+                            13u8, 102u8, 113u8, 64u8, 62u8, 16u8, 147u8, 131u8, 25u8, 204u8, 52u8,
                         ],
                     )
                 }
-                pub fn registration_block_iter(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
-                    (),
-                    types::registration_block::RegistrationBlock,
-                    (),
-                    (),
-                    ::subxt::ext::subxt_core::utils::Yes,
-                > {
-                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
-                        "Torus0",
-                        "RegistrationBlock",
-                        (),
-                        [
-                            44u8, 44u8, 252u8, 113u8, 122u8, 6u8, 189u8, 124u8, 21u8, 59u8, 151u8,
-                            54u8, 211u8, 171u8, 206u8, 190u8, 42u8, 12u8, 204u8, 1u8, 180u8, 187u8,
-                            178u8, 145u8, 45u8, 52u8, 67u8, 125u8, 217u8, 120u8, 36u8, 249u8,
-                        ],
-                    )
-                }
-                pub fn registration_block(
-                    &self,
-                    _0: impl ::core::borrow::Borrow<types::registration_block::Param0>,
-                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
-                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
-                        types::registration_block::Param0,
-                    >,
-                    types::registration_block::RegistrationBlock,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    (),
-                    (),
-                > {
-                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
-                        "Torus0",
-                        "RegistrationBlock",
-                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
-                            _0.borrow(),
-                        ),
-                        [
-                            44u8, 44u8, 252u8, 113u8, 122u8, 6u8, 189u8, 124u8, 21u8, 59u8, 151u8,
-                            54u8, 211u8, 171u8, 206u8, 190u8, 42u8, 12u8, 204u8, 1u8, 180u8, 187u8,
-                            178u8, 145u8, 45u8, 52u8, 67u8, 125u8, 217u8, 120u8, 36u8, 249u8,
-                        ],
-                    )
-                }
+                #[doc = " Maximum number of characters allowed in an agent name."]
                 pub fn max_name_length(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -9075,26 +9376,7 @@ pub mod api {
                         ],
                     )
                 }
-                pub fn max_agent_url_length(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
-                    (),
-                    types::max_agent_url_length::MaxAgentUrlLength,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    (),
-                > {
-                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
-                        "Torus0",
-                        "MaxAgentUrlLength",
-                        (),
-                        [
-                            147u8, 46u8, 243u8, 6u8, 194u8, 167u8, 76u8, 0u8, 198u8, 168u8, 158u8,
-                            249u8, 142u8, 57u8, 77u8, 118u8, 189u8, 91u8, 56u8, 220u8, 30u8, 221u8,
-                            42u8, 27u8, 199u8, 112u8, 240u8, 192u8, 53u8, 239u8, 122u8, 230u8,
-                        ],
-                    )
-                }
+                #[doc = " Minimum number of characters required in an agent name."]
                 pub fn min_name_length(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -9115,26 +9397,28 @@ pub mod api {
                         ],
                     )
                 }
-                pub fn max_allowed_agents(
+                #[doc = " Maximum number of characters allowed in an agent URL."]
+                pub fn max_agent_url_length(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
                     (),
-                    types::max_allowed_agents::MaxAllowedAgents,
+                    types::max_agent_url_length::MaxAgentUrlLength,
                     ::subxt::ext::subxt_core::utils::Yes,
                     ::subxt::ext::subxt_core::utils::Yes,
                     (),
                 > {
                     ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
                         "Torus0",
-                        "MaxAllowedAgents",
+                        "MaxAgentUrlLength",
                         (),
                         [
-                            212u8, 94u8, 169u8, 15u8, 240u8, 143u8, 21u8, 156u8, 1u8, 174u8, 183u8,
-                            124u8, 100u8, 147u8, 53u8, 64u8, 190u8, 186u8, 149u8, 200u8, 251u8,
-                            181u8, 57u8, 194u8, 68u8, 69u8, 97u8, 81u8, 194u8, 67u8, 42u8, 123u8,
+                            147u8, 46u8, 243u8, 6u8, 194u8, 167u8, 76u8, 0u8, 198u8, 168u8, 158u8,
+                            249u8, 142u8, 57u8, 77u8, 118u8, 189u8, 91u8, 56u8, 220u8, 30u8, 221u8,
+                            42u8, 27u8, 199u8, 112u8, 240u8, 192u8, 53u8, 239u8, 122u8, 230u8,
                         ],
                     )
                 }
+                #[doc = " Number of agent registrations that happened this block."]
                 pub fn registrations_this_block(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -9156,6 +9440,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Maximum amount of agent registrations per block, tracked by"]
+                #[doc = " [`RegistrationsThisBlock`]."]
                 pub fn max_registrations_per_block(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -9341,6 +9627,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " The total amount of stake in the network."]
                 pub fn total_stake(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -9362,6 +9649,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Minimum amount of stake in tokens a key has to deposit in an agent."]
                 pub fn min_allowed_stake(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -9382,6 +9670,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " The weight dividends have when finding agents to prune. 100% meaning it"]
+                #[doc = " is taking fully into account."]
                 pub fn dividends_participation_weight(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -9403,6 +9693,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Constraints defining validation of agent fees."]
                 pub fn fee_constraints(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -9424,6 +9715,7 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " [`Burn`] configuration values."]
                 pub fn burn_config(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -9442,6 +9734,180 @@ pub mod api {
                             178u8, 176u8, 14u8, 128u8, 233u8, 132u8, 243u8, 255u8, 35u8, 65u8,
                             143u8, 246u8, 184u8, 14u8, 191u8, 213u8, 159u8, 29u8, 204u8, 113u8,
                             213u8, 15u8,
+                        ],
+                    )
+                }
+                #[doc = " Cooldown (in blocks) in which an agent needs to wait between each `update_agent` call."]
+                pub fn agent_update_cooldown(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::agent_update_cooldown::AgentUpdateCooldown,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Torus0",
+                        "AgentUpdateCooldown",
+                        (),
+                        [
+                            111u8, 168u8, 125u8, 36u8, 247u8, 65u8, 246u8, 71u8, 36u8, 187u8, 1u8,
+                            77u8, 46u8, 43u8, 103u8, 100u8, 198u8, 70u8, 31u8, 141u8, 192u8, 199u8,
+                            45u8, 123u8, 86u8, 53u8, 158u8, 66u8, 6u8, 112u8, 96u8, 141u8,
+                        ],
+                    )
+                }
+                #[doc = " Namespace registry - maps (owner, path) to metadata"]
+                pub fn namespaces_iter(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::namespaces::Namespaces,
+                    (),
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Torus0",
+                        "Namespaces",
+                        (),
+                        [
+                            117u8, 132u8, 112u8, 198u8, 107u8, 44u8, 171u8, 206u8, 33u8, 195u8,
+                            159u8, 188u8, 23u8, 31u8, 56u8, 97u8, 146u8, 31u8, 53u8, 228u8, 11u8,
+                            212u8, 5u8, 137u8, 48u8, 231u8, 33u8, 241u8, 192u8, 156u8, 68u8, 21u8,
+                        ],
+                    )
+                }
+                #[doc = " Namespace registry - maps (owner, path) to metadata"]
+                pub fn namespaces_iter1(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::namespaces::Param0>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                        types::namespaces::Param0,
+                    >,
+                    types::namespaces::Namespaces,
+                    (),
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Torus0",
+                        "Namespaces",
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                            _0.borrow(),
+                        ),
+                        [
+                            117u8, 132u8, 112u8, 198u8, 107u8, 44u8, 171u8, 206u8, 33u8, 195u8,
+                            159u8, 188u8, 23u8, 31u8, 56u8, 97u8, 146u8, 31u8, 53u8, 228u8, 11u8,
+                            212u8, 5u8, 137u8, 48u8, 231u8, 33u8, 241u8, 192u8, 156u8, 68u8, 21u8,
+                        ],
+                    )
+                }
+                #[doc = " Namespace registry - maps (owner, path) to metadata"]
+                pub fn namespaces(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::namespaces::Param0>,
+                    _1: impl ::core::borrow::Borrow<types::namespaces::Param1>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::namespaces::Param0,
+                        >,
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::namespaces::Param1,
+                        >,
+                    ),
+                    types::namespaces::Namespaces,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Torus0",
+                        "Namespaces",
+                        (
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _0.borrow(),
+                            ),
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _1.borrow(),
+                            ),
+                        ),
+                        [
+                            117u8, 132u8, 112u8, 198u8, 107u8, 44u8, 171u8, 206u8, 33u8, 195u8,
+                            159u8, 188u8, 23u8, 31u8, 56u8, 97u8, 146u8, 31u8, 53u8, 228u8, 11u8,
+                            212u8, 5u8, 137u8, 48u8, 231u8, 33u8, 241u8, 192u8, 156u8, 68u8, 21u8,
+                        ],
+                    )
+                }
+                #[doc = " Count of namespaces registered per account"]
+                pub fn namespace_count_iter(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::namespace_count::NamespaceCount,
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Torus0",
+                        "NamespaceCount",
+                        (),
+                        [
+                            179u8, 190u8, 174u8, 191u8, 54u8, 237u8, 192u8, 132u8, 33u8, 121u8,
+                            42u8, 103u8, 27u8, 162u8, 123u8, 90u8, 106u8, 114u8, 210u8, 194u8,
+                            83u8, 167u8, 206u8, 25u8, 173u8, 69u8, 151u8, 246u8, 68u8, 108u8, 99u8,
+                            248u8,
+                        ],
+                    )
+                }
+                #[doc = " Count of namespaces registered per account"]
+                pub fn namespace_count(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::namespace_count::Param0>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                        types::namespace_count::Param0,
+                    >,
+                    types::namespace_count::NamespaceCount,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Torus0",
+                        "NamespaceCount",
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                            _0.borrow(),
+                        ),
+                        [
+                            179u8, 190u8, 174u8, 191u8, 54u8, 237u8, 192u8, 132u8, 33u8, 121u8,
+                            42u8, 103u8, 27u8, 162u8, 123u8, 90u8, 106u8, 114u8, 210u8, 194u8,
+                            83u8, 167u8, 206u8, 25u8, 173u8, 69u8, 151u8, 246u8, 68u8, 108u8, 99u8,
+                            248u8,
+                        ],
+                    )
+                }
+                pub fn namespace_pricing_config(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::namespace_pricing_config::NamespacePricingConfig,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Torus0",
+                        "NamespacePricingConfig",
+                        (),
+                        [
+                            215u8, 38u8, 156u8, 120u8, 73u8, 44u8, 10u8, 243u8, 193u8, 67u8, 185u8,
+                            136u8, 176u8, 151u8, 44u8, 55u8, 185u8, 76u8, 40u8, 29u8, 240u8, 254u8,
+                            93u8, 140u8, 219u8, 116u8, 203u8, 140u8, 16u8, 80u8, 223u8, 46u8,
                         ],
                     )
                 }
@@ -9478,21 +9944,6 @@ pub mod api {
                             84u8, 157u8, 140u8, 4u8, 93u8, 57u8, 29u8, 133u8, 105u8, 200u8, 214u8,
                             27u8, 144u8, 208u8, 218u8, 160u8, 130u8, 109u8, 101u8, 54u8, 210u8,
                             136u8, 71u8, 63u8, 49u8, 237u8, 234u8, 15u8, 178u8, 98u8, 148u8, 156u8,
-                        ],
-                    )
-                }
-                pub fn default_immunity_period(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
-                    ::core::primitive::u16,
-                > {
-                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
-                        "Torus0",
-                        "DefaultImmunityPeriod",
-                        [
-                            116u8, 33u8, 2u8, 170u8, 181u8, 147u8, 171u8, 169u8, 167u8, 227u8,
-                            41u8, 144u8, 11u8, 236u8, 82u8, 100u8, 74u8, 60u8, 184u8, 72u8, 169u8,
-                            90u8, 208u8, 135u8, 15u8, 117u8, 10u8, 123u8, 128u8, 193u8, 29u8, 70u8,
                         ],
                     )
                 }
@@ -9549,21 +10000,6 @@ pub mod api {
                     ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
                         "Torus0",
                         "DefaultMaxAgentUrlLength",
-                        [
-                            116u8, 33u8, 2u8, 170u8, 181u8, 147u8, 171u8, 169u8, 167u8, 227u8,
-                            41u8, 144u8, 11u8, 236u8, 82u8, 100u8, 74u8, 60u8, 184u8, 72u8, 169u8,
-                            90u8, 208u8, 135u8, 15u8, 117u8, 10u8, 123u8, 128u8, 193u8, 29u8, 70u8,
-                        ],
-                    )
-                }
-                pub fn default_max_allowed_agents(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
-                    ::core::primitive::u16,
-                > {
-                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
-                        "Torus0",
-                        "DefaultMaxAllowedAgents",
                         [
                             116u8, 33u8, 2u8, 170u8, 181u8, 147u8, 171u8, 169u8, 167u8, 227u8,
                             41u8, 144u8, 11u8, 236u8, 82u8, 100u8, 74u8, 60u8, 184u8, 72u8, 169u8,
@@ -9725,8 +10161,9 @@ pub mod api {
                         ],
                     )
                 }
-                #[doc = " The storage MaxNameLength should be constrained to be no more than the value of this."]
-                #[doc = " This is needed on agent::Agent to set the `name` field BoundedVec max length."]
+                #[doc = " The storage MaxNameLength should be constrained to be no more than"]
+                #[doc = " the value of this. This is needed on agent::Agent to set the"]
+                #[doc = " `name` field BoundedVec max length."]
                 pub fn max_agent_name_length_constraint(
                     &self,
                 ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
@@ -9743,7 +10180,8 @@ pub mod api {
                         ],
                     )
                 }
-                #[doc = " This is needed on agent::Agent to set the `url` field BoundedVec max length."]
+                #[doc = " This is needed on agent::Agent to set the `url` field BoundedVec max"]
+                #[doc = " length."]
                 pub fn max_agent_url_length_constraint(
                     &self,
                 ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
@@ -9789,6 +10227,38 @@ pub mod api {
                             231u8, 249u8, 200u8, 252u8, 73u8, 244u8, 170u8, 51u8, 177u8, 106u8,
                             47u8, 114u8, 234u8, 84u8, 104u8, 62u8, 118u8, 227u8, 50u8, 225u8,
                             122u8,
+                        ],
+                    )
+                }
+                #[doc = " Default Cooldown (in blocks) in which an agent needs to wait between each `update_agent` call."]
+                pub fn default_agent_update_cooldown(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
+                    ::core::primitive::u64,
+                > {
+                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
+                        "Torus0",
+                        "DefaultAgentUpdateCooldown",
+                        [
+                            128u8, 214u8, 205u8, 242u8, 181u8, 142u8, 124u8, 231u8, 190u8, 146u8,
+                            59u8, 226u8, 157u8, 101u8, 103u8, 117u8, 249u8, 65u8, 18u8, 191u8,
+                            103u8, 119u8, 53u8, 85u8, 81u8, 96u8, 220u8, 42u8, 184u8, 239u8, 42u8,
+                            246u8,
+                        ],
+                    )
+                }
+                pub fn default_namespace_pricing_config(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
+                    runtime_types::pallet_torus0::namespace::NamespacePricingConfig,
+                > {
+                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
+                        "Torus0",
+                        "DefaultNamespacePricingConfig",
+                        [
+                            123u8, 0u8, 125u8, 159u8, 226u8, 0u8, 70u8, 90u8, 21u8, 179u8, 20u8,
+                            97u8, 171u8, 234u8, 95u8, 123u8, 97u8, 55u8, 216u8, 156u8, 23u8, 168u8,
+                            64u8, 218u8, 90u8, 153u8, 60u8, 215u8, 133u8, 120u8, 33u8, 206u8,
                         ],
                     )
                 }
@@ -10002,18 +10472,6 @@ pub mod api {
                     pub type WeightControlDelegation = ::subxt::ext::subxt_core::utils::AccountId32;
                     pub type Param0 = ::subxt::ext::subxt_core::utils::AccountId32;
                 }
-                pub mod min_allowed_weights {
-                    use super::runtime_types;
-                    pub type MinAllowedWeights = ::core::primitive::u16;
-                }
-                pub mod max_allowed_weights {
-                    use super::runtime_types;
-                    pub type MaxAllowedWeights = ::core::primitive::u16;
-                }
-                pub mod min_stake_per_weight {
-                    use super::runtime_types;
-                    pub type MinStakePerWeight = ::core::primitive::u128;
-                }
                 pub mod emission_recycling_percentage {
                     use super::runtime_types;
                     pub type EmissionRecyclingPercentage =
@@ -10030,6 +10488,9 @@ pub mod api {
             }
             pub struct StorageApi;
             impl StorageApi {
+                #[doc = " Map of consensus members indexed by their keys. A consensus member is"]
+                #[doc = " any agent eligible for emissions in the next epoch. This means"]
+                #[doc = " unregistered agents will also receive emissions."]
                 pub fn consensus_members_iter(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -10051,6 +10512,9 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Map of consensus members indexed by their keys. A consensus member is"]
+                #[doc = " any agent eligible for emissions in the next epoch. This means"]
+                #[doc = " unregistered agents will also receive emissions."]
                 pub fn consensus_members(
                     &self,
                     _0: impl ::core::borrow::Borrow<types::consensus_members::Param0>,
@@ -10077,6 +10541,9 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Map of agents delegating weight control to other agents. Emissions"]
+                #[doc = " derived from weight delegation are taxed and the fees go the original"]
+                #[doc = " weight setter."]
                 pub fn weight_control_delegation_iter(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -10098,6 +10565,9 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Map of agents delegating weight control to other agents. Emissions"]
+                #[doc = " derived from weight delegation are taxed and the fees go the original"]
+                #[doc = " weight setter."]
                 pub fn weight_control_delegation(
                     &self,
                     _0: impl ::core::borrow::Borrow<types::weight_control_delegation::Param0>,
@@ -10124,68 +10594,7 @@ pub mod api {
                         ],
                     )
                 }
-                pub fn min_allowed_weights(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
-                    (),
-                    types::min_allowed_weights::MinAllowedWeights,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    (),
-                > {
-                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
-                        "Emission0",
-                        "MinAllowedWeights",
-                        (),
-                        [
-                            78u8, 252u8, 86u8, 112u8, 46u8, 74u8, 184u8, 238u8, 142u8, 33u8, 46u8,
-                            206u8, 115u8, 111u8, 90u8, 228u8, 199u8, 176u8, 113u8, 154u8, 21u8,
-                            88u8, 221u8, 24u8, 97u8, 116u8, 200u8, 167u8, 149u8, 34u8, 23u8, 230u8,
-                        ],
-                    )
-                }
-                pub fn max_allowed_weights(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
-                    (),
-                    types::max_allowed_weights::MaxAllowedWeights,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    (),
-                > {
-                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
-                        "Emission0",
-                        "MaxAllowedWeights",
-                        (),
-                        [
-                            224u8, 165u8, 37u8, 176u8, 252u8, 74u8, 25u8, 191u8, 125u8, 158u8,
-                            246u8, 103u8, 118u8, 85u8, 73u8, 56u8, 210u8, 233u8, 239u8, 209u8,
-                            109u8, 78u8, 80u8, 58u8, 68u8, 28u8, 40u8, 86u8, 109u8, 46u8, 90u8,
-                            166u8,
-                        ],
-                    )
-                }
-                pub fn min_stake_per_weight(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
-                    (),
-                    types::min_stake_per_weight::MinStakePerWeight,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    ::subxt::ext::subxt_core::utils::Yes,
-                    (),
-                > {
-                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
-                        "Emission0",
-                        "MinStakePerWeight",
-                        (),
-                        [
-                            59u8, 3u8, 115u8, 108u8, 218u8, 141u8, 92u8, 131u8, 228u8, 220u8,
-                            189u8, 35u8, 23u8, 9u8, 108u8, 123u8, 115u8, 129u8, 104u8, 80u8, 113u8,
-                            149u8, 62u8, 156u8, 58u8, 7u8, 181u8, 109u8, 216u8, 119u8, 213u8,
-                            110u8,
-                        ],
-                    )
-                }
+                #[doc = " Percentage of issued tokens to be burned every epoch."]
                 pub fn emission_recycling_percentage(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -10206,6 +10615,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Ratio between incentives and dividends on distribution. 50% means they"]
+                #[doc = " are distributed equally."]
                 pub fn incentives_ratio(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -10226,6 +10637,8 @@ pub mod api {
                         ],
                     )
                 }
+                #[doc = " Amount of tokens accumulated since the last epoch. This increases on"]
+                #[doc = " every block. See [`distribute::get_total_emission_per_block`]."]
                 pub fn pending_emission(
                     &self,
                 ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
@@ -10286,7 +10699,8 @@ pub mod api {
                         ],
                     )
                 }
-                #[doc = " Emissions per block in NANOs. Not taking into account halving and recycling."]
+                #[doc = " Emissions per block in NANOs. Not taking into account halving and"]
+                #[doc = " recycling."]
                 pub fn block_emission(
                     &self,
                 ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
@@ -10299,36 +10713,6 @@ pub mod api {
                             84u8, 157u8, 140u8, 4u8, 93u8, 57u8, 29u8, 133u8, 105u8, 200u8, 214u8,
                             27u8, 144u8, 208u8, 218u8, 160u8, 130u8, 109u8, 101u8, 54u8, 210u8,
                             136u8, 71u8, 63u8, 49u8, 237u8, 234u8, 15u8, 178u8, 98u8, 148u8, 156u8,
-                        ],
-                    )
-                }
-                pub fn default_min_allowed_weights(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
-                    ::core::primitive::u16,
-                > {
-                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
-                        "Emission0",
-                        "DefaultMinAllowedWeights",
-                        [
-                            116u8, 33u8, 2u8, 170u8, 181u8, 147u8, 171u8, 169u8, 167u8, 227u8,
-                            41u8, 144u8, 11u8, 236u8, 82u8, 100u8, 74u8, 60u8, 184u8, 72u8, 169u8,
-                            90u8, 208u8, 135u8, 15u8, 117u8, 10u8, 123u8, 128u8, 193u8, 29u8, 70u8,
-                        ],
-                    )
-                }
-                pub fn default_max_allowed_weights(
-                    &self,
-                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
-                    ::core::primitive::u16,
-                > {
-                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
-                        "Emission0",
-                        "DefaultMaxAllowedWeights",
-                        [
-                            116u8, 33u8, 2u8, 170u8, 181u8, 147u8, 171u8, 169u8, 167u8, 227u8,
-                            41u8, 144u8, 11u8, 236u8, 82u8, 100u8, 74u8, 60u8, 184u8, 72u8, 169u8,
-                            90u8, 208u8, 135u8, 15u8, 117u8, 10u8, 123u8, 128u8, 193u8, 29u8, 70u8,
                         ],
                     )
                 }
@@ -10364,6 +10748,1539 @@ pub mod api {
                         ],
                     )
                 }
+            }
+        }
+    }
+    pub mod permission0 {
+        use super::root_mod;
+        use super::runtime_types;
+        #[doc = "The `Error` enum of this pallet."]
+        pub type Error = runtime_types::pallet_permission0::pallet::Error;
+        #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
+        pub type Call = runtime_types::pallet_permission0::pallet::Call;
+        pub mod calls {
+            use super::root_mod;
+            use super::runtime_types;
+            type DispatchError = runtime_types::sp_runtime::DispatchError;
+            pub mod types {
+                use super::runtime_types;
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Grant a permission for emission delegation"]
+                pub struct GrantEmissionPermission {
+                    pub grantee: grant_emission_permission::Grantee,
+                    pub allocation: grant_emission_permission::Allocation,
+                    pub targets: grant_emission_permission::Targets,
+                    pub distribution: grant_emission_permission::Distribution,
+                    pub duration: grant_emission_permission::Duration,
+                    pub revocation: grant_emission_permission::Revocation,
+                    pub enforcement: grant_emission_permission::Enforcement,
+                }
+                pub mod grant_emission_permission {
+                    use super::runtime_types;
+                    pub type Grantee = ::subxt::ext::subxt_core::utils::AccountId32;
+                    pub type Allocation =
+                        runtime_types::pallet_permission0::permission::emission::EmissionAllocation;
+                    pub type Targets =
+                        runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::core::primitive::u16,
+                        >;
+                    pub type Distribution = runtime_types :: pallet_permission0 :: permission :: emission :: DistributionControl ;
+                    pub type Duration =
+                        runtime_types::pallet_permission0::permission::PermissionDuration;
+                    pub type Revocation =
+                        runtime_types::pallet_permission0::permission::RevocationTerms;
+                    pub type Enforcement =
+                        runtime_types::pallet_permission0::permission::EnforcementAuthority;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for GrantEmissionPermission {
+                    const PALLET: &'static str = "Permission0";
+                    const CALL: &'static str = "grant_emission_permission";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Revoke a permission. The caller must met revocation constraints or be a root key."]
+                pub struct RevokePermission {
+                    pub permission_id: revoke_permission::PermissionId,
+                }
+                pub mod revoke_permission {
+                    use super::runtime_types;
+                    pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for RevokePermission {
+                    const PALLET: &'static str = "Permission0";
+                    const CALL: &'static str = "revoke_permission";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Execute a manual distribution based on permission"]
+                pub struct ExecutePermission {
+                    pub permission_id: execute_permission::PermissionId,
+                }
+                pub mod execute_permission {
+                    use super::runtime_types;
+                    pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for ExecutePermission {
+                    const PALLET: &'static str = "Permission0";
+                    const CALL: &'static str = "execute_permission";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Toggle a permission's accumulation state (enabled/disabled)"]
+                #[doc = "The caller must be authorized as a controller or be the root key"]
+                pub struct TogglePermissionAccumulation {
+                    pub permission_id: toggle_permission_accumulation::PermissionId,
+                    pub accumulating: toggle_permission_accumulation::Accumulating,
+                }
+                pub mod toggle_permission_accumulation {
+                    use super::runtime_types;
+                    pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                    pub type Accumulating = ::core::primitive::bool;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for TogglePermissionAccumulation {
+                    const PALLET: &'static str = "Permission0";
+                    const CALL: &'static str = "toggle_permission_accumulation";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Execute a permission through enforcement authority"]
+                #[doc = "The caller must be authorized as a controller or be the root key"]
+                pub struct EnforcementExecutePermission {
+                    pub permission_id: enforcement_execute_permission::PermissionId,
+                }
+                pub mod enforcement_execute_permission {
+                    use super::runtime_types;
+                    pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for EnforcementExecutePermission {
+                    const PALLET: &'static str = "Permission0";
+                    const CALL: &'static str = "enforcement_execute_permission";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Set enforcement authority for a permission"]
+                #[doc = "Only the grantor or root can set enforcement authority"]
+                pub struct SetEnforcementAuthority {
+                    pub permission_id: set_enforcement_authority::PermissionId,
+                    pub enforcement: set_enforcement_authority::Enforcement,
+                }
+                pub mod set_enforcement_authority {
+                    use super::runtime_types;
+                    pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                    pub type Enforcement =
+                        runtime_types::pallet_permission0::permission::EnforcementAuthority;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for SetEnforcementAuthority {
+                    const PALLET: &'static str = "Permission0";
+                    const CALL: &'static str = "set_enforcement_authority";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Grant a permission for curator delegation"]
+                pub struct GrantCuratorPermission {
+                    pub grantee: grant_curator_permission::Grantee,
+                    pub flags: grant_curator_permission::Flags,
+                    pub cooldown: grant_curator_permission::Cooldown,
+                    pub duration: grant_curator_permission::Duration,
+                    pub revocation: grant_curator_permission::Revocation,
+                }
+                pub mod grant_curator_permission {
+                    use super::runtime_types;
+                    pub type Grantee = ::subxt::ext::subxt_core::utils::AccountId32;
+                    pub type Flags = ::core::primitive::u32;
+                    pub type Cooldown = ::core::option::Option<::core::primitive::u64>;
+                    pub type Duration =
+                        runtime_types::pallet_permission0::permission::PermissionDuration;
+                    pub type Revocation =
+                        runtime_types::pallet_permission0::permission::RevocationTerms;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for GrantCuratorPermission {
+                    const PALLET: &'static str = "Permission0";
+                    const CALL: &'static str = "grant_curator_permission";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Grant a permission over namespaces"]
+                pub struct GrantNamespacePermission {
+                    pub grantee: grant_namespace_permission::Grantee,
+                    pub paths: grant_namespace_permission::Paths,
+                    pub duration: grant_namespace_permission::Duration,
+                    pub revocation: grant_namespace_permission::Revocation,
+                }
+                pub mod grant_namespace_permission {
+                    use super::runtime_types;
+                    pub type Grantee = ::subxt::ext::subxt_core::utils::AccountId32;
+                    pub type Paths =
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                                ::core::primitive::u8,
+                            >,
+                        >;
+                    pub type Duration =
+                        runtime_types::pallet_permission0::permission::PermissionDuration;
+                    pub type Revocation =
+                        runtime_types::pallet_permission0::permission::RevocationTerms;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for GrantNamespacePermission {
+                    const PALLET: &'static str = "Permission0";
+                    const CALL: &'static str = "grant_namespace_permission";
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Allows Grantor/Grantee to edit stream emission permission"]
+                pub struct UpdateEmissionPermission {
+                    pub permission_id: update_emission_permission::PermissionId,
+                    pub new_targets: update_emission_permission::NewTargets,
+                    pub new_streams: update_emission_permission::NewStreams,
+                    pub new_distribution_control:
+                        update_emission_permission::NewDistributionControl,
+                }
+                pub mod update_emission_permission {
+                    use super::runtime_types;
+                    pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                    pub type NewTargets =
+                        runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::core::primitive::u16,
+                        >;
+                    pub type NewStreams = ::core::option::Option<
+                        runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap<
+                            ::subxt::ext::subxt_core::utils::H256,
+                            runtime_types::sp_arithmetic::per_things::Percent,
+                        >,
+                    >;
+                    pub type NewDistributionControl = :: core :: option :: Option < runtime_types :: pallet_permission0 :: permission :: emission :: DistributionControl > ;
+                }
+                impl ::subxt::ext::subxt_core::blocks::StaticExtrinsic for UpdateEmissionPermission {
+                    const PALLET: &'static str = "Permission0";
+                    const CALL: &'static str = "update_emission_permission";
+                }
+            }
+            pub struct TransactionApi;
+            impl TransactionApi {
+                #[doc = "Grant a permission for emission delegation"]
+                pub fn grant_emission_permission(
+                    &self,
+                    grantee: types::grant_emission_permission::Grantee,
+                    allocation: types::grant_emission_permission::Allocation,
+                    targets: types::grant_emission_permission::Targets,
+                    distribution: types::grant_emission_permission::Distribution,
+                    duration: types::grant_emission_permission::Duration,
+                    revocation: types::grant_emission_permission::Revocation,
+                    enforcement: types::grant_emission_permission::Enforcement,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
+                    types::GrantEmissionPermission,
+                > {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Permission0",
+                        "grant_emission_permission",
+                        types::GrantEmissionPermission {
+                            grantee,
+                            allocation,
+                            targets,
+                            distribution,
+                            duration,
+                            revocation,
+                            enforcement,
+                        },
+                        [
+                            61u8, 83u8, 62u8, 60u8, 231u8, 163u8, 160u8, 45u8, 127u8, 202u8, 72u8,
+                            239u8, 22u8, 91u8, 72u8, 250u8, 153u8, 182u8, 56u8, 236u8, 11u8, 217u8,
+                            163u8, 125u8, 194u8, 238u8, 229u8, 30u8, 205u8, 162u8, 175u8, 210u8,
+                        ],
+                    )
+                }
+                #[doc = "Revoke a permission. The caller must met revocation constraints or be a root key."]
+                pub fn revoke_permission(
+                    &self,
+                    permission_id: types::revoke_permission::PermissionId,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<types::RevokePermission>
+                {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Permission0",
+                        "revoke_permission",
+                        types::RevokePermission { permission_id },
+                        [
+                            242u8, 35u8, 37u8, 187u8, 105u8, 214u8, 188u8, 52u8, 64u8, 4u8, 170u8,
+                            247u8, 49u8, 169u8, 159u8, 203u8, 90u8, 92u8, 245u8, 214u8, 115u8,
+                            251u8, 170u8, 114u8, 85u8, 31u8, 27u8, 62u8, 143u8, 29u8, 180u8, 24u8,
+                        ],
+                    )
+                }
+                #[doc = "Execute a manual distribution based on permission"]
+                pub fn execute_permission(
+                    &self,
+                    permission_id: types::execute_permission::PermissionId,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<types::ExecutePermission>
+                {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Permission0",
+                        "execute_permission",
+                        types::ExecutePermission { permission_id },
+                        [
+                            68u8, 161u8, 232u8, 52u8, 8u8, 155u8, 222u8, 131u8, 153u8, 76u8, 160u8,
+                            77u8, 67u8, 205u8, 144u8, 134u8, 72u8, 210u8, 83u8, 233u8, 217u8,
+                            203u8, 91u8, 127u8, 214u8, 3u8, 129u8, 25u8, 129u8, 109u8, 213u8,
+                            230u8,
+                        ],
+                    )
+                }
+                #[doc = "Toggle a permission's accumulation state (enabled/disabled)"]
+                #[doc = "The caller must be authorized as a controller or be the root key"]
+                pub fn toggle_permission_accumulation(
+                    &self,
+                    permission_id: types::toggle_permission_accumulation::PermissionId,
+                    accumulating: types::toggle_permission_accumulation::Accumulating,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
+                    types::TogglePermissionAccumulation,
+                > {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Permission0",
+                        "toggle_permission_accumulation",
+                        types::TogglePermissionAccumulation {
+                            permission_id,
+                            accumulating,
+                        },
+                        [
+                            221u8, 252u8, 210u8, 85u8, 61u8, 249u8, 146u8, 238u8, 161u8, 166u8,
+                            132u8, 201u8, 78u8, 37u8, 142u8, 185u8, 84u8, 93u8, 71u8, 170u8, 153u8,
+                            247u8, 117u8, 168u8, 10u8, 232u8, 12u8, 102u8, 87u8, 197u8, 152u8,
+                            24u8,
+                        ],
+                    )
+                }
+                #[doc = "Execute a permission through enforcement authority"]
+                #[doc = "The caller must be authorized as a controller or be the root key"]
+                pub fn enforcement_execute_permission(
+                    &self,
+                    permission_id: types::enforcement_execute_permission::PermissionId,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
+                    types::EnforcementExecutePermission,
+                > {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Permission0",
+                        "enforcement_execute_permission",
+                        types::EnforcementExecutePermission { permission_id },
+                        [
+                            73u8, 200u8, 158u8, 114u8, 4u8, 15u8, 33u8, 43u8, 81u8, 84u8, 137u8,
+                            193u8, 24u8, 102u8, 159u8, 3u8, 202u8, 172u8, 16u8, 17u8, 84u8, 203u8,
+                            39u8, 192u8, 5u8, 70u8, 108u8, 33u8, 77u8, 42u8, 99u8, 119u8,
+                        ],
+                    )
+                }
+                #[doc = "Set enforcement authority for a permission"]
+                #[doc = "Only the grantor or root can set enforcement authority"]
+                pub fn set_enforcement_authority(
+                    &self,
+                    permission_id: types::set_enforcement_authority::PermissionId,
+                    enforcement: types::set_enforcement_authority::Enforcement,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
+                    types::SetEnforcementAuthority,
+                > {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Permission0",
+                        "set_enforcement_authority",
+                        types::SetEnforcementAuthority {
+                            permission_id,
+                            enforcement,
+                        },
+                        [
+                            225u8, 62u8, 117u8, 104u8, 203u8, 63u8, 193u8, 86u8, 220u8, 137u8,
+                            55u8, 129u8, 64u8, 65u8, 133u8, 116u8, 156u8, 141u8, 157u8, 47u8, 33u8,
+                            99u8, 53u8, 227u8, 94u8, 84u8, 30u8, 208u8, 25u8, 252u8, 214u8, 120u8,
+                        ],
+                    )
+                }
+                #[doc = "Grant a permission for curator delegation"]
+                pub fn grant_curator_permission(
+                    &self,
+                    grantee: types::grant_curator_permission::Grantee,
+                    flags: types::grant_curator_permission::Flags,
+                    cooldown: types::grant_curator_permission::Cooldown,
+                    duration: types::grant_curator_permission::Duration,
+                    revocation: types::grant_curator_permission::Revocation,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
+                    types::GrantCuratorPermission,
+                > {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Permission0",
+                        "grant_curator_permission",
+                        types::GrantCuratorPermission {
+                            grantee,
+                            flags,
+                            cooldown,
+                            duration,
+                            revocation,
+                        },
+                        [
+                            33u8, 92u8, 243u8, 122u8, 66u8, 9u8, 242u8, 78u8, 61u8, 245u8, 4u8,
+                            170u8, 161u8, 143u8, 92u8, 133u8, 10u8, 82u8, 179u8, 242u8, 101u8,
+                            253u8, 18u8, 36u8, 212u8, 22u8, 144u8, 248u8, 158u8, 103u8, 203u8,
+                            237u8,
+                        ],
+                    )
+                }
+                #[doc = "Grant a permission over namespaces"]
+                pub fn grant_namespace_permission(
+                    &self,
+                    grantee: types::grant_namespace_permission::Grantee,
+                    paths: types::grant_namespace_permission::Paths,
+                    duration: types::grant_namespace_permission::Duration,
+                    revocation: types::grant_namespace_permission::Revocation,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
+                    types::GrantNamespacePermission,
+                > {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Permission0",
+                        "grant_namespace_permission",
+                        types::GrantNamespacePermission {
+                            grantee,
+                            paths,
+                            duration,
+                            revocation,
+                        },
+                        [
+                            50u8, 92u8, 226u8, 5u8, 156u8, 44u8, 36u8, 242u8, 49u8, 1u8, 100u8,
+                            186u8, 121u8, 149u8, 77u8, 65u8, 191u8, 19u8, 251u8, 55u8, 55u8, 170u8,
+                            121u8, 6u8, 165u8, 9u8, 0u8, 39u8, 41u8, 43u8, 74u8, 231u8,
+                        ],
+                    )
+                }
+                #[doc = "Allows Grantor/Grantee to edit stream emission permission"]
+                pub fn update_emission_permission(
+                    &self,
+                    permission_id: types::update_emission_permission::PermissionId,
+                    new_targets: types::update_emission_permission::NewTargets,
+                    new_streams: types::update_emission_permission::NewStreams,
+                    new_distribution_control : types :: update_emission_permission :: NewDistributionControl,
+                ) -> ::subxt::ext::subxt_core::tx::payload::StaticPayload<
+                    types::UpdateEmissionPermission,
+                > {
+                    ::subxt::ext::subxt_core::tx::payload::StaticPayload::new_static(
+                        "Permission0",
+                        "update_emission_permission",
+                        types::UpdateEmissionPermission {
+                            permission_id,
+                            new_targets,
+                            new_streams,
+                            new_distribution_control,
+                        },
+                        [
+                            117u8, 3u8, 23u8, 143u8, 69u8, 130u8, 52u8, 219u8, 103u8, 55u8, 190u8,
+                            130u8, 68u8, 25u8, 26u8, 134u8, 1u8, 106u8, 237u8, 174u8, 60u8, 140u8,
+                            32u8, 45u8, 7u8, 213u8, 213u8, 73u8, 172u8, 121u8, 43u8, 253u8,
+                        ],
+                    )
+                }
+            }
+        }
+        #[doc = "The `Event` enum of this pallet"]
+        pub type Event = runtime_types::pallet_permission0::pallet::Event;
+        pub mod events {
+            use super::runtime_types;
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Permission granted from grantor to grantee with ID"]
+            pub struct PermissionGranted {
+                pub grantor: permission_granted::Grantor,
+                pub grantee: permission_granted::Grantee,
+                pub permission_id: permission_granted::PermissionId,
+            }
+            pub mod permission_granted {
+                use super::runtime_types;
+                pub type Grantor = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type Grantee = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for PermissionGranted {
+                const PALLET: &'static str = "Permission0";
+                const EVENT: &'static str = "PermissionGranted";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Permission revoked with ID"]
+            pub struct PermissionRevoked {
+                pub grantor: permission_revoked::Grantor,
+                pub grantee: permission_revoked::Grantee,
+                pub revoked_by: permission_revoked::RevokedBy,
+                pub permission_id: permission_revoked::PermissionId,
+            }
+            pub mod permission_revoked {
+                use super::runtime_types;
+                pub type Grantor = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type Grantee = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type RevokedBy =
+                    ::core::option::Option<::subxt::ext::subxt_core::utils::AccountId32>;
+                pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for PermissionRevoked {
+                const PALLET: &'static str = "Permission0";
+                const EVENT: &'static str = "PermissionRevoked";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Permission executed (manual distribution) with ID"]
+            pub struct PermissionExecuted {
+                pub grantor: permission_executed::Grantor,
+                pub grantee: permission_executed::Grantee,
+                pub permission_id: permission_executed::PermissionId,
+                pub stream_id: permission_executed::StreamId,
+                pub amount: permission_executed::Amount,
+            }
+            pub mod permission_executed {
+                use super::runtime_types;
+                pub type Grantor = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type Grantee = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                pub type StreamId = ::core::option::Option<::subxt::ext::subxt_core::utils::H256>;
+                pub type Amount = ::core::primitive::u128;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for PermissionExecuted {
+                const PALLET: &'static str = "Permission0";
+                const EVENT: &'static str = "PermissionExecuted";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Auto-distribution executed"]
+            pub struct AutoDistributionExecuted {
+                pub grantor: auto_distribution_executed::Grantor,
+                pub grantee: auto_distribution_executed::Grantee,
+                pub permission_id: auto_distribution_executed::PermissionId,
+                pub stream_id: auto_distribution_executed::StreamId,
+                pub amount: auto_distribution_executed::Amount,
+            }
+            pub mod auto_distribution_executed {
+                use super::runtime_types;
+                pub type Grantor = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type Grantee = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                pub type StreamId = ::core::option::Option<::subxt::ext::subxt_core::utils::H256>;
+                pub type Amount = ::core::primitive::u128;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for AutoDistributionExecuted {
+                const PALLET: &'static str = "Permission0";
+                const EVENT: &'static str = "AutoDistributionExecuted";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Permission expired with ID"]
+            pub struct PermissionExpired {
+                pub grantor: permission_expired::Grantor,
+                pub grantee: permission_expired::Grantee,
+                pub permission_id: permission_expired::PermissionId,
+            }
+            pub mod permission_expired {
+                use super::runtime_types;
+                pub type Grantor = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type Grantee = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for PermissionExpired {
+                const PALLET: &'static str = "Permission0";
+                const EVENT: &'static str = "PermissionExpired";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Permission accumulation state toggled"]
+            pub struct PermissionAccumulationToggled {
+                pub permission_id: permission_accumulation_toggled::PermissionId,
+                pub accumulating: permission_accumulation_toggled::Accumulating,
+                pub toggled_by: permission_accumulation_toggled::ToggledBy,
+            }
+            pub mod permission_accumulation_toggled {
+                use super::runtime_types;
+                pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                pub type Accumulating = ::core::primitive::bool;
+                pub type ToggledBy =
+                    ::core::option::Option<::subxt::ext::subxt_core::utils::AccountId32>;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for PermissionAccumulationToggled {
+                const PALLET: &'static str = "Permission0";
+                const EVENT: &'static str = "PermissionAccumulationToggled";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Permission was executed by enforcement authority"]
+            pub struct PermissionEnforcementExecuted {
+                pub permission_id: permission_enforcement_executed::PermissionId,
+                pub executed_by: permission_enforcement_executed::ExecutedBy,
+            }
+            pub mod permission_enforcement_executed {
+                use super::runtime_types;
+                pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                pub type ExecutedBy =
+                    ::core::option::Option<::subxt::ext::subxt_core::utils::AccountId32>;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for PermissionEnforcementExecuted {
+                const PALLET: &'static str = "Permission0";
+                const EVENT: &'static str = "PermissionEnforcementExecuted";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Vote for enforcement action"]
+            pub struct EnforcementVoteCast {
+                pub permission_id: enforcement_vote_cast::PermissionId,
+                pub voter: enforcement_vote_cast::Voter,
+                pub referendum: enforcement_vote_cast::Referendum,
+            }
+            pub mod enforcement_vote_cast {
+                use super::runtime_types;
+                pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                pub type Voter = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type Referendum =
+                    runtime_types::pallet_permission0::permission::EnforcementReferendum;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for EnforcementVoteCast {
+                const PALLET: &'static str = "Permission0";
+                const EVENT: &'static str = "EnforcementVoteCast";
+            }
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Enforcement authority set for permission"]
+            pub struct EnforcementAuthoritySet {
+                pub permission_id: enforcement_authority_set::PermissionId,
+                pub controllers_count: enforcement_authority_set::ControllersCount,
+                pub required_votes: enforcement_authority_set::RequiredVotes,
+            }
+            pub mod enforcement_authority_set {
+                use super::runtime_types;
+                pub type PermissionId = ::subxt::ext::subxt_core::utils::H256;
+                pub type ControllersCount = ::core::primitive::u32;
+                pub type RequiredVotes = ::core::primitive::u32;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for EnforcementAuthoritySet {
+                const PALLET: &'static str = "Permission0";
+                const EVENT: &'static str = "EnforcementAuthoritySet";
+            }
+        }
+        pub mod storage {
+            use super::runtime_types;
+            pub mod types {
+                use super::runtime_types;
+                pub mod permissions {
+                    use super::runtime_types;
+                    pub type Permissions =
+                        runtime_types::pallet_permission0::permission::PermissionContract;
+                    pub type Param0 = ::subxt::ext::subxt_core::utils::H256;
+                }
+                pub mod permissions_by_participants {
+                    use super::runtime_types;
+                    pub type PermissionsByParticipants =
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >;
+                    pub type Param0 = ::subxt::ext::subxt_core::utils::AccountId32;
+                    pub type Param1 = ::subxt::ext::subxt_core::utils::AccountId32;
+                }
+                pub mod permissions_by_grantor {
+                    use super::runtime_types;
+                    pub type PermissionsByGrantor =
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >;
+                    pub type Param0 = ::subxt::ext::subxt_core::utils::AccountId32;
+                }
+                pub mod permissions_by_grantee {
+                    use super::runtime_types;
+                    pub type PermissionsByGrantee =
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >;
+                    pub type Param0 = ::subxt::ext::subxt_core::utils::AccountId32;
+                }
+                pub mod revocation_tracking {
+                    use super::runtime_types;
+                    pub type RevocationTracking =
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >;
+                    pub type Param0 = ::subxt::ext::subxt_core::utils::H256;
+                }
+                pub mod enforcement_tracking {
+                    use super::runtime_types;
+                    pub type EnforcementTracking =
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >;
+                    pub type Param0 = ::subxt::ext::subxt_core::utils::H256;
+                    pub type Param1 =
+                        runtime_types::pallet_permission0::permission::EnforcementReferendum;
+                }
+                pub mod accumulated_stream_amounts {
+                    use super::runtime_types;
+                    pub type AccumulatedStreamAmounts = ::core::primitive::u128;
+                    pub type Param0 = ::subxt::ext::subxt_core::utils::AccountId32;
+                    pub type Param1 = ::subxt::ext::subxt_core::utils::H256;
+                    pub type Param2 = ::subxt::ext::subxt_core::utils::H256;
+                }
+            }
+            pub struct StorageApi;
+            impl StorageApi {
+                #[doc = " Active permission contracts - stored by permission ID"]
+                pub fn permissions_iter(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::permissions::Permissions,
+                    (),
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "Permissions",
+                        (),
+                        [
+                            143u8, 243u8, 241u8, 190u8, 156u8, 211u8, 188u8, 251u8, 121u8, 46u8,
+                            183u8, 197u8, 207u8, 24u8, 253u8, 36u8, 170u8, 24u8, 171u8, 120u8,
+                            180u8, 113u8, 50u8, 118u8, 62u8, 29u8, 138u8, 68u8, 157u8, 228u8, 62u8,
+                            207u8,
+                        ],
+                    )
+                }
+                #[doc = " Active permission contracts - stored by permission ID"]
+                pub fn permissions(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::permissions::Param0>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                        types::permissions::Param0,
+                    >,
+                    types::permissions::Permissions,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "Permissions",
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                            _0.borrow(),
+                        ),
+                        [
+                            143u8, 243u8, 241u8, 190u8, 156u8, 211u8, 188u8, 251u8, 121u8, 46u8,
+                            183u8, 197u8, 207u8, 24u8, 253u8, 36u8, 170u8, 24u8, 171u8, 120u8,
+                            180u8, 113u8, 50u8, 118u8, 62u8, 29u8, 138u8, 68u8, 157u8, 228u8, 62u8,
+                            207u8,
+                        ],
+                    )
+                }
+                #[doc = " Mapping from (grantor, grantee) to permission IDs"]
+                pub fn permissions_by_participants_iter(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::permissions_by_participants::PermissionsByParticipants,
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "PermissionsByParticipants",
+                        (),
+                        [
+                            156u8, 139u8, 141u8, 49u8, 39u8, 56u8, 190u8, 23u8, 215u8, 70u8, 148u8,
+                            127u8, 127u8, 215u8, 75u8, 90u8, 190u8, 116u8, 231u8, 214u8, 23u8,
+                            190u8, 3u8, 31u8, 107u8, 4u8, 227u8, 120u8, 204u8, 159u8, 250u8, 250u8,
+                        ],
+                    )
+                }
+                #[doc = " Mapping from (grantor, grantee) to permission IDs"]
+                pub fn permissions_by_participants_iter1(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::permissions_by_participants::Param0>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                        types::permissions_by_participants::Param0,
+                    >,
+                    types::permissions_by_participants::PermissionsByParticipants,
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "PermissionsByParticipants",
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                            _0.borrow(),
+                        ),
+                        [
+                            156u8, 139u8, 141u8, 49u8, 39u8, 56u8, 190u8, 23u8, 215u8, 70u8, 148u8,
+                            127u8, 127u8, 215u8, 75u8, 90u8, 190u8, 116u8, 231u8, 214u8, 23u8,
+                            190u8, 3u8, 31u8, 107u8, 4u8, 227u8, 120u8, 204u8, 159u8, 250u8, 250u8,
+                        ],
+                    )
+                }
+                #[doc = " Mapping from (grantor, grantee) to permission IDs"]
+                pub fn permissions_by_participants(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::permissions_by_participants::Param0>,
+                    _1: impl ::core::borrow::Borrow<types::permissions_by_participants::Param1>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::permissions_by_participants::Param0,
+                        >,
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::permissions_by_participants::Param1,
+                        >,
+                    ),
+                    types::permissions_by_participants::PermissionsByParticipants,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "PermissionsByParticipants",
+                        (
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _0.borrow(),
+                            ),
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _1.borrow(),
+                            ),
+                        ),
+                        [
+                            156u8, 139u8, 141u8, 49u8, 39u8, 56u8, 190u8, 23u8, 215u8, 70u8, 148u8,
+                            127u8, 127u8, 215u8, 75u8, 90u8, 190u8, 116u8, 231u8, 214u8, 23u8,
+                            190u8, 3u8, 31u8, 107u8, 4u8, 227u8, 120u8, 204u8, 159u8, 250u8, 250u8,
+                        ],
+                    )
+                }
+                #[doc = " Permissions granted by a specific account"]
+                pub fn permissions_by_grantor_iter(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::permissions_by_grantor::PermissionsByGrantor,
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "PermissionsByGrantor",
+                        (),
+                        [
+                            59u8, 111u8, 144u8, 13u8, 23u8, 230u8, 197u8, 64u8, 70u8, 212u8, 247u8,
+                            236u8, 29u8, 82u8, 242u8, 103u8, 218u8, 35u8, 218u8, 39u8, 112u8,
+                            234u8, 238u8, 57u8, 183u8, 245u8, 104u8, 214u8, 153u8, 173u8, 174u8,
+                            55u8,
+                        ],
+                    )
+                }
+                #[doc = " Permissions granted by a specific account"]
+                pub fn permissions_by_grantor(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::permissions_by_grantor::Param0>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                        types::permissions_by_grantor::Param0,
+                    >,
+                    types::permissions_by_grantor::PermissionsByGrantor,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "PermissionsByGrantor",
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                            _0.borrow(),
+                        ),
+                        [
+                            59u8, 111u8, 144u8, 13u8, 23u8, 230u8, 197u8, 64u8, 70u8, 212u8, 247u8,
+                            236u8, 29u8, 82u8, 242u8, 103u8, 218u8, 35u8, 218u8, 39u8, 112u8,
+                            234u8, 238u8, 57u8, 183u8, 245u8, 104u8, 214u8, 153u8, 173u8, 174u8,
+                            55u8,
+                        ],
+                    )
+                }
+                #[doc = " Permissions received by a specific account"]
+                pub fn permissions_by_grantee_iter(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::permissions_by_grantee::PermissionsByGrantee,
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "PermissionsByGrantee",
+                        (),
+                        [
+                            131u8, 75u8, 167u8, 119u8, 5u8, 229u8, 46u8, 62u8, 12u8, 39u8, 244u8,
+                            206u8, 205u8, 180u8, 130u8, 100u8, 93u8, 104u8, 60u8, 121u8, 82u8,
+                            16u8, 93u8, 218u8, 106u8, 180u8, 203u8, 114u8, 229u8, 204u8, 10u8,
+                            198u8,
+                        ],
+                    )
+                }
+                #[doc = " Permissions received by a specific account"]
+                pub fn permissions_by_grantee(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::permissions_by_grantee::Param0>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                        types::permissions_by_grantee::Param0,
+                    >,
+                    types::permissions_by_grantee::PermissionsByGrantee,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "PermissionsByGrantee",
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                            _0.borrow(),
+                        ),
+                        [
+                            131u8, 75u8, 167u8, 119u8, 5u8, 229u8, 46u8, 62u8, 12u8, 39u8, 244u8,
+                            206u8, 205u8, 180u8, 130u8, 100u8, 93u8, 104u8, 60u8, 121u8, 82u8,
+                            16u8, 93u8, 218u8, 106u8, 180u8, 203u8, 114u8, 229u8, 204u8, 10u8,
+                            198u8,
+                        ],
+                    )
+                }
+                #[doc = " Revocations in progress and the voters"]
+                pub fn revocation_tracking_iter(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::revocation_tracking::RevocationTracking,
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "RevocationTracking",
+                        (),
+                        [
+                            101u8, 190u8, 75u8, 9u8, 43u8, 101u8, 12u8, 47u8, 93u8, 79u8, 13u8,
+                            31u8, 221u8, 205u8, 96u8, 234u8, 136u8, 190u8, 242u8, 102u8, 0u8,
+                            172u8, 129u8, 133u8, 141u8, 215u8, 91u8, 218u8, 228u8, 88u8, 38u8,
+                            116u8,
+                        ],
+                    )
+                }
+                #[doc = " Revocations in progress and the voters"]
+                pub fn revocation_tracking(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::revocation_tracking::Param0>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                        types::revocation_tracking::Param0,
+                    >,
+                    types::revocation_tracking::RevocationTracking,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "RevocationTracking",
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                            _0.borrow(),
+                        ),
+                        [
+                            101u8, 190u8, 75u8, 9u8, 43u8, 101u8, 12u8, 47u8, 93u8, 79u8, 13u8,
+                            31u8, 221u8, 205u8, 96u8, 234u8, 136u8, 190u8, 242u8, 102u8, 0u8,
+                            172u8, 129u8, 133u8, 141u8, 215u8, 91u8, 218u8, 228u8, 88u8, 38u8,
+                            116u8,
+                        ],
+                    )
+                }
+                #[doc = " Enforcement votes in progress and the voters"]
+                pub fn enforcement_tracking_iter(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::enforcement_tracking::EnforcementTracking,
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "EnforcementTracking",
+                        (),
+                        [
+                            165u8, 93u8, 40u8, 0u8, 140u8, 17u8, 101u8, 215u8, 156u8, 46u8, 201u8,
+                            248u8, 165u8, 231u8, 143u8, 71u8, 116u8, 40u8, 32u8, 107u8, 2u8, 85u8,
+                            94u8, 141u8, 155u8, 228u8, 123u8, 49u8, 200u8, 203u8, 131u8, 57u8,
+                        ],
+                    )
+                }
+                #[doc = " Enforcement votes in progress and the voters"]
+                pub fn enforcement_tracking_iter1(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::enforcement_tracking::Param0>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                        types::enforcement_tracking::Param0,
+                    >,
+                    types::enforcement_tracking::EnforcementTracking,
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "EnforcementTracking",
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                            _0.borrow(),
+                        ),
+                        [
+                            165u8, 93u8, 40u8, 0u8, 140u8, 17u8, 101u8, 215u8, 156u8, 46u8, 201u8,
+                            248u8, 165u8, 231u8, 143u8, 71u8, 116u8, 40u8, 32u8, 107u8, 2u8, 85u8,
+                            94u8, 141u8, 155u8, 228u8, 123u8, 49u8, 200u8, 203u8, 131u8, 57u8,
+                        ],
+                    )
+                }
+                #[doc = " Enforcement votes in progress and the voters"]
+                pub fn enforcement_tracking(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::enforcement_tracking::Param0>,
+                    _1: impl ::core::borrow::Borrow<types::enforcement_tracking::Param1>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::enforcement_tracking::Param0,
+                        >,
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::enforcement_tracking::Param1,
+                        >,
+                    ),
+                    types::enforcement_tracking::EnforcementTracking,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "EnforcementTracking",
+                        (
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _0.borrow(),
+                            ),
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _1.borrow(),
+                            ),
+                        ),
+                        [
+                            165u8, 93u8, 40u8, 0u8, 140u8, 17u8, 101u8, 215u8, 156u8, 46u8, 201u8,
+                            248u8, 165u8, 231u8, 143u8, 71u8, 116u8, 40u8, 32u8, 107u8, 2u8, 85u8,
+                            94u8, 141u8, 155u8, 228u8, 123u8, 49u8, 200u8, 203u8, 131u8, 57u8,
+                        ],
+                    )
+                }
+                #[doc = " Accumulated amounts for each stream"]
+                pub fn accumulated_stream_amounts_iter(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (),
+                    types::accumulated_stream_amounts::AccumulatedStreamAmounts,
+                    (),
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "AccumulatedStreamAmounts",
+                        (),
+                        [
+                            120u8, 155u8, 99u8, 84u8, 16u8, 116u8, 215u8, 254u8, 204u8, 92u8, 62u8,
+                            104u8, 62u8, 120u8, 220u8, 150u8, 7u8, 239u8, 195u8, 200u8, 103u8,
+                            132u8, 31u8, 237u8, 248u8, 190u8, 154u8, 207u8, 56u8, 134u8, 117u8,
+                            192u8,
+                        ],
+                    )
+                }
+                #[doc = " Accumulated amounts for each stream"]
+                pub fn accumulated_stream_amounts_iter1(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::accumulated_stream_amounts::Param0>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                        types::accumulated_stream_amounts::Param0,
+                    >,
+                    types::accumulated_stream_amounts::AccumulatedStreamAmounts,
+                    (),
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "AccumulatedStreamAmounts",
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                            _0.borrow(),
+                        ),
+                        [
+                            120u8, 155u8, 99u8, 84u8, 16u8, 116u8, 215u8, 254u8, 204u8, 92u8, 62u8,
+                            104u8, 62u8, 120u8, 220u8, 150u8, 7u8, 239u8, 195u8, 200u8, 103u8,
+                            132u8, 31u8, 237u8, 248u8, 190u8, 154u8, 207u8, 56u8, 134u8, 117u8,
+                            192u8,
+                        ],
+                    )
+                }
+                #[doc = " Accumulated amounts for each stream"]
+                pub fn accumulated_stream_amounts_iter2(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::accumulated_stream_amounts::Param0>,
+                    _1: impl ::core::borrow::Borrow<types::accumulated_stream_amounts::Param1>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::accumulated_stream_amounts::Param0,
+                        >,
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::accumulated_stream_amounts::Param1,
+                        >,
+                    ),
+                    types::accumulated_stream_amounts::AccumulatedStreamAmounts,
+                    (),
+                    (),
+                    ::subxt::ext::subxt_core::utils::Yes,
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "AccumulatedStreamAmounts",
+                        (
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _0.borrow(),
+                            ),
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _1.borrow(),
+                            ),
+                        ),
+                        [
+                            120u8, 155u8, 99u8, 84u8, 16u8, 116u8, 215u8, 254u8, 204u8, 92u8, 62u8,
+                            104u8, 62u8, 120u8, 220u8, 150u8, 7u8, 239u8, 195u8, 200u8, 103u8,
+                            132u8, 31u8, 237u8, 248u8, 190u8, 154u8, 207u8, 56u8, 134u8, 117u8,
+                            192u8,
+                        ],
+                    )
+                }
+                #[doc = " Accumulated amounts for each stream"]
+                pub fn accumulated_stream_amounts(
+                    &self,
+                    _0: impl ::core::borrow::Borrow<types::accumulated_stream_amounts::Param0>,
+                    _1: impl ::core::borrow::Borrow<types::accumulated_stream_amounts::Param1>,
+                    _2: impl ::core::borrow::Borrow<types::accumulated_stream_amounts::Param2>,
+                ) -> ::subxt::ext::subxt_core::storage::address::StaticAddress<
+                    (
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::accumulated_stream_amounts::Param0,
+                        >,
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::accumulated_stream_amounts::Param1,
+                        >,
+                        ::subxt::ext::subxt_core::storage::address::StaticStorageKey<
+                            types::accumulated_stream_amounts::Param2,
+                        >,
+                    ),
+                    types::accumulated_stream_amounts::AccumulatedStreamAmounts,
+                    ::subxt::ext::subxt_core::utils::Yes,
+                    (),
+                    (),
+                > {
+                    ::subxt::ext::subxt_core::storage::address::StaticAddress::new_static(
+                        "Permission0",
+                        "AccumulatedStreamAmounts",
+                        (
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _0.borrow(),
+                            ),
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _1.borrow(),
+                            ),
+                            ::subxt::ext::subxt_core::storage::address::StaticStorageKey::new(
+                                _2.borrow(),
+                            ),
+                        ),
+                        [
+                            120u8, 155u8, 99u8, 84u8, 16u8, 116u8, 215u8, 254u8, 204u8, 92u8, 62u8,
+                            104u8, 62u8, 120u8, 220u8, 150u8, 7u8, 239u8, 195u8, 200u8, 103u8,
+                            132u8, 31u8, 237u8, 248u8, 190u8, 154u8, 207u8, 56u8, 134u8, 117u8,
+                            192u8,
+                        ],
+                    )
+                }
+            }
+        }
+        pub mod constants {
+            use super::runtime_types;
+            pub struct ConstantsApi;
+            impl ConstantsApi {
+                #[doc = " Permission0 pallet ID"]
+                pub fn pallet_id(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
+                    runtime_types::frame_support::PalletId,
+                > {
+                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
+                        "Permission0",
+                        "PalletId",
+                        [
+                            56u8, 243u8, 53u8, 83u8, 154u8, 179u8, 170u8, 80u8, 133u8, 173u8, 61u8,
+                            161u8, 47u8, 225u8, 146u8, 21u8, 50u8, 229u8, 248u8, 27u8, 104u8, 58u8,
+                            129u8, 197u8, 102u8, 160u8, 168u8, 205u8, 154u8, 42u8, 217u8, 53u8,
+                        ],
+                    )
+                }
+                #[doc = " Maximum number of controllers per permission."]
+                pub fn max_controllers_per_permission(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
+                    ::core::primitive::u32,
+                > {
+                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
+                        "Permission0",
+                        "MaxControllersPerPermission",
+                        [
+                            98u8, 252u8, 116u8, 72u8, 26u8, 180u8, 225u8, 83u8, 200u8, 157u8,
+                            125u8, 151u8, 53u8, 76u8, 168u8, 26u8, 10u8, 9u8, 98u8, 68u8, 9u8,
+                            178u8, 197u8, 113u8, 31u8, 79u8, 200u8, 90u8, 203u8, 100u8, 41u8,
+                            145u8,
+                        ],
+                    )
+                }
+                #[doc = " Maximum number of revokers."]
+                pub fn max_revokers_per_permission(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
+                    ::core::primitive::u32,
+                > {
+                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
+                        "Permission0",
+                        "MaxRevokersPerPermission",
+                        [
+                            98u8, 252u8, 116u8, 72u8, 26u8, 180u8, 225u8, 83u8, 200u8, 157u8,
+                            125u8, 151u8, 53u8, 76u8, 168u8, 26u8, 10u8, 9u8, 98u8, 68u8, 9u8,
+                            178u8, 197u8, 113u8, 31u8, 79u8, 200u8, 90u8, 203u8, 100u8, 41u8,
+                            145u8,
+                        ],
+                    )
+                }
+                #[doc = " Maximum number of targets per permission."]
+                pub fn max_targets_per_permission(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
+                    ::core::primitive::u32,
+                > {
+                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
+                        "Permission0",
+                        "MaxTargetsPerPermission",
+                        [
+                            98u8, 252u8, 116u8, 72u8, 26u8, 180u8, 225u8, 83u8, 200u8, 157u8,
+                            125u8, 151u8, 53u8, 76u8, 168u8, 26u8, 10u8, 9u8, 98u8, 68u8, 9u8,
+                            178u8, 197u8, 113u8, 31u8, 79u8, 200u8, 90u8, 203u8, 100u8, 41u8,
+                            145u8,
+                        ],
+                    )
+                }
+                #[doc = " Maximum number of delegated streams per permission."]
+                pub fn max_streams_per_permission(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
+                    ::core::primitive::u32,
+                > {
+                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
+                        "Permission0",
+                        "MaxStreamsPerPermission",
+                        [
+                            98u8, 252u8, 116u8, 72u8, 26u8, 180u8, 225u8, 83u8, 200u8, 157u8,
+                            125u8, 151u8, 53u8, 76u8, 168u8, 26u8, 10u8, 9u8, 98u8, 68u8, 9u8,
+                            178u8, 197u8, 113u8, 31u8, 79u8, 200u8, 90u8, 203u8, 100u8, 41u8,
+                            145u8,
+                        ],
+                    )
+                }
+                #[doc = " Minimum threshold for auto-distribution"]
+                pub fn min_auto_distribution_threshold(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
+                    ::core::primitive::u128,
+                > {
+                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
+                        "Permission0",
+                        "MinAutoDistributionThreshold",
+                        [
+                            84u8, 157u8, 140u8, 4u8, 93u8, 57u8, 29u8, 133u8, 105u8, 200u8, 214u8,
+                            27u8, 144u8, 208u8, 218u8, 160u8, 130u8, 109u8, 101u8, 54u8, 210u8,
+                            136u8, 71u8, 63u8, 49u8, 237u8, 234u8, 15u8, 178u8, 98u8, 148u8, 156u8,
+                        ],
+                    )
+                }
+                #[doc = " Maximum number of namespaces a single permission can delegate."]
+                pub fn max_namespaces_per_permission(
+                    &self,
+                ) -> ::subxt::ext::subxt_core::constants::address::StaticAddress<
+                    ::core::primitive::u32,
+                > {
+                    ::subxt::ext::subxt_core::constants::address::StaticAddress::new_static(
+                        "Permission0",
+                        "MaxNamespacesPerPermission",
+                        [
+                            98u8, 252u8, 116u8, 72u8, 26u8, 180u8, 225u8, 83u8, 200u8, 157u8,
+                            125u8, 151u8, 53u8, 76u8, 168u8, 26u8, 10u8, 9u8, 98u8, 68u8, 9u8,
+                            178u8, 197u8, 113u8, 31u8, 79u8, 200u8, 90u8, 203u8, 100u8, 41u8,
+                            145u8,
+                        ],
+                    )
+                }
+            }
+        }
+    }
+    pub mod faucet {
+        use super::root_mod;
+        use super::runtime_types;
+        #[doc = "Errors that can occur in the faucet pallet"]
+        pub type Error = runtime_types::pallet_faucet::pallet::Error;
+        #[doc = "Callable functions for the faucet pallet"]
+        pub type Call = runtime_types::pallet_faucet::pallet::Call;
+        pub mod calls {
+            use super::root_mod;
+            use super::runtime_types;
+            type DispatchError = runtime_types::sp_runtime::DispatchError;
+            pub mod types {
+                use super::runtime_types;
+            }
+            pub struct TransactionApi;
+            impl TransactionApi {}
+        }
+        #[doc = "Events emitted by the faucet pallet"]
+        pub type Event = runtime_types::pallet_faucet::pallet::Event;
+        pub mod events {
+            use super::runtime_types;
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            #[doc = "Tokens were successfully distributed by the faucet"]
+            #[doc = "[account, amount]"]
+            pub struct Faucet(pub faucet::Field0, pub faucet::Field1);
+            pub mod faucet {
+                use super::runtime_types;
+                pub type Field0 = ::subxt::ext::subxt_core::utils::AccountId32;
+                pub type Field1 = ::core::primitive::u128;
+            }
+            impl ::subxt::ext::subxt_core::events::StaticEvent for Faucet {
+                const PALLET: &'static str = "Faucet";
+                const EVENT: &'static str = "Faucet";
             }
         }
     }
@@ -12322,6 +14239,9 @@ pub mod api {
                     #[codec(index = 6)]
                     #[doc = "Agent does not have enough stake to set weights."]
                     NotEnoughStakeToSetWeights,
+                    #[codec(index = 7)]
+                    #[doc = "At the current state, agents cannot control their own weight."]
+                    WeightControlNotEnabled,
                 }
                 #[derive(
                     :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
@@ -12654,6 +14574,81 @@ pub mod api {
                 pub hash: ::subxt::ext::subxt_core::utils::H256,
             }
         }
+        pub mod pallet_faucet {
+            use super::runtime_types;
+            pub mod pallet {
+                use super::runtime_types;
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Callable functions for the faucet pallet"]
+                pub enum Call {}
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Errors that can occur in the faucet pallet"]
+                pub enum Error {
+                    #[codec(index = 0)]
+                    #[doc = "The block number provided is invalid (too old or in the future)"]
+                    InvalidWorkBlock,
+                    #[codec(index = 1)]
+                    #[doc = "The proof-of-work does not meet the required difficulty"]
+                    InvalidDifficulty,
+                    #[codec(index = 2)]
+                    #[doc = "The seal (hash) is invalid for the given parameters"]
+                    InvalidSeal,
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Events emitted by the faucet pallet"]
+                pub enum Event {
+                    #[codec(index = 0)]
+                    #[doc = "Tokens were successfully distributed by the faucet"]
+                    #[doc = "[account, amount]"]
+                    Faucet(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        ::core::primitive::u128,
+                    ),
+                }
+            }
+        }
         pub mod pallet_governance {
             use super::runtime_types;
             pub mod application {
@@ -12777,76 +14772,91 @@ pub mod api {
                 )]
                 #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
                 pub enum Call {
-                    #[codec(index = 0)]
-                    add_curator {
-                        key: ::subxt::ext::subxt_core::utils::AccountId32,
-                    },
-                    #[codec(index = 1)]
-                    remove_curator {
-                        key: ::subxt::ext::subxt_core::utils::AccountId32,
-                    },
                     #[codec(index = 2)]
+                    #[doc = "Adds a new allocator to the list. Only available for the root key."]
                     add_allocator {
                         key: ::subxt::ext::subxt_core::utils::AccountId32,
                     },
                     #[codec(index = 3)]
+                    #[doc = "Removes an existing allocator from the list. Only available for the"]
+                    #[doc = "root key."]
                     remove_allocator {
                         key: ::subxt::ext::subxt_core::utils::AccountId32,
                     },
                     #[codec(index = 4)]
+                    #[doc = "Forcefully adds a new agent to the whitelist. Only available for the"]
+                    #[doc = "root key or curators."]
                     add_to_whitelist {
                         key: ::subxt::ext::subxt_core::utils::AccountId32,
                     },
                     #[codec(index = 5)]
+                    #[doc = "Forcefully removes an agent from the whitelist. Only available for"]
+                    #[doc = "the root key or curators."]
                     remove_from_whitelist {
                         key: ::subxt::ext::subxt_core::utils::AccountId32,
                     },
                     #[codec(index = 6)]
+                    #[doc = "Accepts an agent application. Only available for the root key or"]
+                    #[doc = "curators."]
                     accept_application {
                         application_id: ::core::primitive::u32,
                     },
                     #[codec(index = 7)]
+                    #[doc = "Denies an agent application. Only available for the root key or"]
+                    #[doc = "curators."]
                     deny_application {
                         application_id: ::core::primitive::u32,
                     },
                     #[codec(index = 8)]
+                    #[doc = "Sets a penalty factor to the given agent emissions. Only available"]
+                    #[doc = "for the root key or curators."]
                     penalize_agent {
                         agent_key: ::subxt::ext::subxt_core::utils::AccountId32,
                         percentage: ::core::primitive::u8,
                     },
                     #[codec(index = 9)]
+                    #[doc = "Submits a new agent application on behalf of a given key."]
                     submit_application {
                         agent_key: ::subxt::ext::subxt_core::utils::AccountId32,
                         metadata: ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
                         removing: ::core::primitive::bool,
                     },
                     #[codec(index = 10)]
+                    #[doc = "Creates a new global parameters proposal."]
                     add_global_params_proposal {
                         data: runtime_types::pallet_governance::proposal::GlobalParamsData,
                         metadata: ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
                     },
                     #[codec(index = 11)]
+                    #[doc = "Creates a new custom global proposal."]
                     add_global_custom_proposal {
                         metadata: ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
                     },
                     #[codec(index = 12)]
+                    #[doc = "Creates a proposal moving funds from the treasury account to the"]
+                    #[doc = "given key."]
                     add_dao_treasury_transfer_proposal {
                         value: ::core::primitive::u128,
                         destination_key: ::subxt::ext::subxt_core::utils::AccountId32,
                         data: ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
                     },
                     #[codec(index = 13)]
+                    #[doc = "Casts a vote for an open proposal."]
                     vote_proposal {
                         proposal_id: ::core::primitive::u64,
                         agree: ::core::primitive::bool,
                     },
                     #[codec(index = 14)]
+                    #[doc = "Removes a casted vote for an open proposal."]
                     remove_vote_proposal { proposal_id: ::core::primitive::u64 },
                     #[codec(index = 15)]
+                    #[doc = "Enables vote power delegation."]
                     enable_vote_delegation,
                     #[codec(index = 16)]
+                    #[doc = "Disables vote power delegation."]
                     disable_vote_delegation,
                     #[codec(index = 17)]
+                    #[doc = "Creates a new emission percentage proposal."]
                     add_emission_proposal {
                         recycling_percentage: runtime_types::sp_arithmetic::per_things::Percent,
                         treasury_percentage: runtime_types::sp_arithmetic::per_things::Percent,
@@ -12854,10 +14864,16 @@ pub mod api {
                         data: ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
                     },
                     #[codec(index = 18)]
+                    #[doc = "Forcefully sets emission percentages. Only available for the root"]
+                    #[doc = "key."]
                     set_emission_params {
                         recycling_percentage: runtime_types::sp_arithmetic::per_things::Percent,
                         treasury_percentage: runtime_types::sp_arithmetic::per_things::Percent,
                     },
+                    #[codec(index = 19)]
+                    toggle_agent_freezing,
+                    #[codec(index = 20)]
+                    toggle_namespace_freezing,
                 }
                 #[derive(
                     :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
@@ -12886,10 +14902,12 @@ pub mod api {
                     #[doc = "Invalid parameters were provided to the voting process."]
                     InvalidProposalVotingParameters,
                     #[codec(index = 3)]
-                    #[doc = "Negative proposal cost when setting global or subnet governance configuration."]
+                    #[doc = "Negative proposal cost when setting global or subnet governance"]
+                    #[doc = "configuration."]
                     InvalidProposalCost,
                     #[codec(index = 4)]
-                    #[doc = "Negative expiration when setting global or subnet governance configuration."]
+                    #[doc = "Negative expiration when setting global or subnet governance"]
+                    #[doc = "configuration."]
                     InvalidProposalExpiration,
                     #[codec(index = 5)]
                     #[doc = "Key doesn't have enough tokens to create a proposal."]
@@ -12907,7 +14925,8 @@ pub mod api {
                     #[doc = "Proposal with given id doesn't exist."]
                     ProposalNotFound,
                     #[codec(index = 10)]
-                    #[doc = "Proposal was either accepted, refused or expired and cannot accept votes."]
+                    #[doc = "Proposal was either accepted, refused or expired and cannot accept"]
+                    #[doc = "votes."]
                     ProposalClosed,
                     #[codec(index = 11)]
                     #[doc = "Proposal data isn't composed by valid UTF-8 characters."]
@@ -12928,11 +14947,12 @@ pub mod api {
                     #[doc = "Key doesn't have enough stake to vote."]
                     InsufficientStake,
                     #[codec(index = 17)]
-                    #[doc = "The voter is delegating its voting power to their staked modules. Disable voting power"]
-                    #[doc = "delegation."]
+                    #[doc = "The voter is delegating its voting power to their staked modules."]
+                    #[doc = "Disable voting power delegation."]
                     VoterIsDelegatingVotingPower,
                     #[codec(index = 18)]
-                    #[doc = "An internal error occurred, probably relating to the size of the bounded sets."]
+                    #[doc = "An internal error occurred, probably relating to the size of the"]
+                    #[doc = "bounded sets."]
                     InternalError,
                     #[codec(index = 19)]
                     #[doc = "The application is not in a pending state."]
@@ -12953,7 +14973,8 @@ pub mod api {
                     #[doc = "The account is already whitelisted and cannot be added again."]
                     AlreadyWhitelisted,
                     #[codec(index = 25)]
-                    #[doc = "The account is not whitelisted and cannot be removed from the whitelist."]
+                    #[doc = "The account is not whitelisted and cannot be removed from the"]
+                    #[doc = "whitelist."]
                     NotWhitelisted,
                     #[codec(index = 26)]
                     #[doc = "Failed to convert the given value to a balance."]
@@ -12983,18 +15004,15 @@ pub mod api {
                     #[doc = "Invalid maximum name length in proposal"]
                     InvalidMaxNameLength,
                     #[codec(index = 35)]
-                    #[doc = "Invalid maximum allowed agents in proposal"]
-                    InvalidMaxAllowedAgents,
-                    #[codec(index = 36)]
                     #[doc = "Invalid maximum allowed weights in proposal"]
                     InvalidMaxAllowedWeights,
-                    #[codec(index = 37)]
+                    #[codec(index = 36)]
                     #[doc = "Invalid minimum weight control fee in proposal"]
                     InvalidMinWeightControlFee,
-                    #[codec(index = 38)]
+                    #[codec(index = 37)]
                     #[doc = "Invalid minimum staking fee in proposal"]
                     InvalidMinStakingFee,
-                    #[codec(index = 39)]
+                    #[codec(index = 38)]
                     #[doc = "Invalid params given to Emission proposal"]
                     InvalidEmissionProposalData,
                 }
@@ -13058,6 +15076,25 @@ pub mod api {
                     #[codec(index = 11)]
                     #[doc = "An application has expired."]
                     ApplicationExpired(::core::primitive::u32),
+                    #[codec(index = 12)]
+                    #[doc = "A penalty was applied to an agent."]
+                    PenaltyApplied {
+                        curator: ::subxt::ext::subxt_core::utils::AccountId32,
+                        agent: ::subxt::ext::subxt_core::utils::AccountId32,
+                        penalty: runtime_types::sp_arithmetic::per_things::Percent,
+                    },
+                    #[codec(index = 13)]
+                    #[doc = "The agent freezing feature was toggled by a curator."]
+                    AgentFreezingToggled {
+                        curator: ::subxt::ext::subxt_core::utils::AccountId32,
+                        new_state: ::core::primitive::bool,
+                    },
+                    #[codec(index = 14)]
+                    #[doc = "The namespace freezing feature was toggled by a curator."]
+                    NamespaceFreezingToggled {
+                        curator: ::subxt::ext::subxt_core::utils::AccountId32,
+                        new_state: ::core::primitive::bool,
+                    },
                 }
             }
             pub mod proposal {
@@ -13080,13 +15117,12 @@ pub mod api {
                 pub struct GlobalParamsData {
                     pub min_name_length: ::core::primitive::u16,
                     pub max_name_length: ::core::primitive::u16,
-                    pub max_allowed_agents: ::core::primitive::u16,
-                    pub max_allowed_weights: ::core::primitive::u16,
-                    pub min_stake_per_weight: ::core::primitive::u128,
                     pub min_weight_control_fee: ::core::primitive::u8,
                     pub min_staking_fee: ::core::primitive::u8,
                     pub dividends_participation_weight:
                         runtime_types::sp_arithmetic::per_things::Percent,
+                    pub namespace_pricing_config:
+                        runtime_types::pallet_torus0::namespace::NamespacePricingConfig,
                     pub proposal_cost: ::core::primitive::u128,
                 }
                 #[derive(
@@ -13728,6 +15764,534 @@ pub mod api {
                 pub index: ::core::primitive::u32,
             }
         }
+        pub mod pallet_permission0 {
+            use super::runtime_types;
+            pub mod pallet {
+                use super::runtime_types;
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
+                pub enum Call {
+                    # [codec (index = 0)] # [doc = "Grant a permission for emission delegation"] grant_emission_permission { grantee : :: subxt :: ext :: subxt_core :: utils :: AccountId32 , allocation : runtime_types :: pallet_permission0 :: permission :: emission :: EmissionAllocation , targets : runtime_types :: bounded_collections :: bounded_btree_map :: BoundedBTreeMap < :: subxt :: ext :: subxt_core :: utils :: AccountId32 , :: core :: primitive :: u16 > , distribution : runtime_types :: pallet_permission0 :: permission :: emission :: DistributionControl , duration : runtime_types :: pallet_permission0 :: permission :: PermissionDuration , revocation : runtime_types :: pallet_permission0 :: permission :: RevocationTerms , enforcement : runtime_types :: pallet_permission0 :: permission :: EnforcementAuthority , } , # [codec (index = 1)] # [doc = "Revoke a permission. The caller must met revocation constraints or be a root key."] revoke_permission { permission_id : :: subxt :: ext :: subxt_core :: utils :: H256 , } , # [codec (index = 2)] # [doc = "Execute a manual distribution based on permission"] execute_permission { permission_id : :: subxt :: ext :: subxt_core :: utils :: H256 , } , # [codec (index = 3)] # [doc = "Toggle a permission's accumulation state (enabled/disabled)"] # [doc = "The caller must be authorized as a controller or be the root key"] toggle_permission_accumulation { permission_id : :: subxt :: ext :: subxt_core :: utils :: H256 , accumulating : :: core :: primitive :: bool , } , # [codec (index = 4)] # [doc = "Execute a permission through enforcement authority"] # [doc = "The caller must be authorized as a controller or be the root key"] enforcement_execute_permission { permission_id : :: subxt :: ext :: subxt_core :: utils :: H256 , } , # [codec (index = 5)] # [doc = "Set enforcement authority for a permission"] # [doc = "Only the grantor or root can set enforcement authority"] set_enforcement_authority { permission_id : :: subxt :: ext :: subxt_core :: utils :: H256 , enforcement : runtime_types :: pallet_permission0 :: permission :: EnforcementAuthority , } , # [codec (index = 6)] # [doc = "Grant a permission for curator delegation"] grant_curator_permission { grantee : :: subxt :: ext :: subxt_core :: utils :: AccountId32 , flags : :: core :: primitive :: u32 , cooldown : :: core :: option :: Option < :: core :: primitive :: u64 > , duration : runtime_types :: pallet_permission0 :: permission :: PermissionDuration , revocation : runtime_types :: pallet_permission0 :: permission :: RevocationTerms , } , # [codec (index = 7)] # [doc = "Grant a permission over namespaces"] grant_namespace_permission { grantee : :: subxt :: ext :: subxt_core :: utils :: AccountId32 , paths : runtime_types :: bounded_collections :: bounded_btree_set :: BoundedBTreeSet < runtime_types :: bounded_collections :: bounded_vec :: BoundedVec < :: core :: primitive :: u8 > > , duration : runtime_types :: pallet_permission0 :: permission :: PermissionDuration , revocation : runtime_types :: pallet_permission0 :: permission :: RevocationTerms , } , # [codec (index = 8)] # [doc = "Allows Grantor/Grantee to edit stream emission permission"] update_emission_permission { permission_id : :: subxt :: ext :: subxt_core :: utils :: H256 , new_targets : runtime_types :: bounded_collections :: bounded_btree_map :: BoundedBTreeMap < :: subxt :: ext :: subxt_core :: utils :: AccountId32 , :: core :: primitive :: u16 > , new_streams : :: core :: option :: Option < runtime_types :: bounded_collections :: bounded_btree_map :: BoundedBTreeMap < :: subxt :: ext :: subxt_core :: utils :: H256 , runtime_types :: sp_arithmetic :: per_things :: Percent > > , new_distribution_control : :: core :: option :: Option < runtime_types :: pallet_permission0 :: permission :: emission :: DistributionControl > , } , }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "The `Error` enum of this pallet."]
+                pub enum Error {
+                    #[codec(index = 0)]
+                    #[doc = "The agent is not registered"]
+                    NotRegisteredAgent,
+                    #[codec(index = 1)]
+                    #[doc = "Permissions can only be created through extrinsics"]
+                    PermissionCreationOutsideExtrinsic,
+                    #[codec(index = 2)]
+                    #[doc = "A permission with the same exact parameters was"]
+                    #[doc = "already created in the current block"]
+                    DuplicatePermissionInBlock,
+                    #[codec(index = 3)]
+                    #[doc = "Permission not found"]
+                    PermissionNotFound,
+                    #[codec(index = 4)]
+                    #[doc = "Self-permission is not allowed"]
+                    SelfPermissionNotAllowed,
+                    #[codec(index = 5)]
+                    #[doc = "Invalid percentage (out of range)"]
+                    InvalidPercentage,
+                    #[codec(index = 6)]
+                    #[doc = "Invalid emission weight set to target"]
+                    InvalidTargetWeight,
+                    #[codec(index = 7)]
+                    #[doc = "No targets specified"]
+                    NoTargetsSpecified,
+                    #[codec(index = 8)]
+                    #[doc = "Invalid threshold"]
+                    InvalidThreshold,
+                    #[codec(index = 9)]
+                    #[doc = "No accumulated amount"]
+                    NoAccumulatedAmount,
+                    #[codec(index = 10)]
+                    #[doc = "Not authorized to revoke"]
+                    NotAuthorizedToRevoke,
+                    #[codec(index = 11)]
+                    #[doc = "Total allocation exceeded 100%"]
+                    TotalAllocationExceeded,
+                    #[codec(index = 12)]
+                    #[doc = "Not the grantee of the permission"]
+                    NotPermissionGrantee,
+                    #[codec(index = 13)]
+                    #[doc = "Not the grantor of the permission"]
+                    NotPermissionGrantor,
+                    #[codec(index = 14)]
+                    #[doc = "Too many streams"]
+                    TooManyStreams,
+                    #[codec(index = 15)]
+                    #[doc = "Too many targets"]
+                    TooManyTargets,
+                    #[codec(index = 16)]
+                    #[doc = "Too many revokers"]
+                    TooManyRevokers,
+                    #[codec(index = 17)]
+                    #[doc = "Failed to insert into storage"]
+                    StorageError,
+                    #[codec(index = 18)]
+                    #[doc = "Invalid amount"]
+                    InvalidAmount,
+                    #[codec(index = 19)]
+                    #[doc = "Insufficient balance for operation"]
+                    InsufficientBalance,
+                    #[codec(index = 20)]
+                    #[doc = "Invalid distribution interval"]
+                    InvalidInterval,
+                    #[codec(index = 21)]
+                    #[doc = "Parent permission not found"]
+                    ParentPermissionNotFound,
+                    #[codec(index = 22)]
+                    #[doc = "Invalid distribution method"]
+                    InvalidDistributionMethod,
+                    #[codec(index = 23)]
+                    #[doc = "Revokers and required voters must be at least one, and required voters must"]
+                    #[doc = "be less than the number of revokers"]
+                    InvalidNumberOfRevokers,
+                    #[codec(index = 24)]
+                    #[doc = "Fixed amount emissions can only be triggered once, manually or at a block"]
+                    FixedAmountCanOnlyBeTriggeredOnce,
+                    #[codec(index = 25)]
+                    #[doc = "Unsupported permission type"]
+                    UnsupportedPermissionType,
+                    #[codec(index = 26)]
+                    #[doc = "Not authorized to toggle permission state"]
+                    NotAuthorizedToToggle,
+                    #[codec(index = 27)]
+                    #[doc = "Too many controllers"]
+                    TooManyControllers,
+                    #[codec(index = 28)]
+                    #[doc = "Invalid number of controllers or required votes"]
+                    InvalidNumberOfControllers,
+                    #[codec(index = 29)]
+                    #[doc = "Permission is a duplicate, revoke the previous one"]
+                    DuplicatePermission,
+                    #[codec(index = 30)]
+                    #[doc = "Permission is in cooldown, wait a bit."]
+                    PermissionInCooldown,
+                    #[codec(index = 31)]
+                    #[doc = "Curator flags provided are invalid."]
+                    InvalidCuratorPermissions,
+                    #[codec(index = 32)]
+                    #[doc = "Tried granting unknown namespace."]
+                    NamespaceDoesNotExist,
+                    #[codec(index = 33)]
+                    #[doc = "Namespace path provided contains illegal character or is malformatted."]
+                    NamespacePathIsInvalid,
+                    #[codec(index = 34)]
+                    #[doc = "Exceeded amount of total namespaces allowed in a single permission."]
+                    TooManyNamespaces,
+                    #[codec(index = 35)]
+                    #[doc = "Not authorized to edit a stream emission permission."]
+                    NotAuthorizedToEdit,
+                    #[codec(index = 36)]
+                    #[doc = "Stream emission permission is not editable"]
+                    NotEditable,
+                    #[codec(index = 37)]
+                    #[doc = "Namespace creation was disabled by a curator."]
+                    NamespaceCreationDisabled,
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                #[doc = "The `Event` enum of this pallet"]
+                pub enum Event {
+                    #[codec(index = 0)]
+                    #[doc = "Permission granted from grantor to grantee with ID"]
+                    PermissionGranted {
+                        grantor: ::subxt::ext::subxt_core::utils::AccountId32,
+                        grantee: ::subxt::ext::subxt_core::utils::AccountId32,
+                        permission_id: ::subxt::ext::subxt_core::utils::H256,
+                    },
+                    #[codec(index = 1)]
+                    #[doc = "Permission revoked with ID"]
+                    PermissionRevoked {
+                        grantor: ::subxt::ext::subxt_core::utils::AccountId32,
+                        grantee: ::subxt::ext::subxt_core::utils::AccountId32,
+                        revoked_by:
+                            ::core::option::Option<::subxt::ext::subxt_core::utils::AccountId32>,
+                        permission_id: ::subxt::ext::subxt_core::utils::H256,
+                    },
+                    #[codec(index = 2)]
+                    #[doc = "Permission executed (manual distribution) with ID"]
+                    PermissionExecuted {
+                        grantor: ::subxt::ext::subxt_core::utils::AccountId32,
+                        grantee: ::subxt::ext::subxt_core::utils::AccountId32,
+                        permission_id: ::subxt::ext::subxt_core::utils::H256,
+                        stream_id: ::core::option::Option<::subxt::ext::subxt_core::utils::H256>,
+                        amount: ::core::primitive::u128,
+                    },
+                    #[codec(index = 3)]
+                    #[doc = "Auto-distribution executed"]
+                    AutoDistributionExecuted {
+                        grantor: ::subxt::ext::subxt_core::utils::AccountId32,
+                        grantee: ::subxt::ext::subxt_core::utils::AccountId32,
+                        permission_id: ::subxt::ext::subxt_core::utils::H256,
+                        stream_id: ::core::option::Option<::subxt::ext::subxt_core::utils::H256>,
+                        amount: ::core::primitive::u128,
+                    },
+                    #[codec(index = 4)]
+                    #[doc = "Permission expired with ID"]
+                    PermissionExpired {
+                        grantor: ::subxt::ext::subxt_core::utils::AccountId32,
+                        grantee: ::subxt::ext::subxt_core::utils::AccountId32,
+                        permission_id: ::subxt::ext::subxt_core::utils::H256,
+                    },
+                    #[codec(index = 5)]
+                    #[doc = "Permission accumulation state toggled"]
+                    PermissionAccumulationToggled {
+                        permission_id: ::subxt::ext::subxt_core::utils::H256,
+                        accumulating: ::core::primitive::bool,
+                        toggled_by:
+                            ::core::option::Option<::subxt::ext::subxt_core::utils::AccountId32>,
+                    },
+                    #[codec(index = 6)]
+                    #[doc = "Permission was executed by enforcement authority"]
+                    PermissionEnforcementExecuted {
+                        permission_id: ::subxt::ext::subxt_core::utils::H256,
+                        executed_by:
+                            ::core::option::Option<::subxt::ext::subxt_core::utils::AccountId32>,
+                    },
+                    #[codec(index = 7)]
+                    #[doc = "Vote for enforcement action"]
+                    EnforcementVoteCast {
+                        permission_id: ::subxt::ext::subxt_core::utils::H256,
+                        voter: ::subxt::ext::subxt_core::utils::AccountId32,
+                        referendum:
+                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
+                    },
+                    #[codec(index = 8)]
+                    #[doc = "Enforcement authority set for permission"]
+                    EnforcementAuthoritySet {
+                        permission_id: ::subxt::ext::subxt_core::utils::H256,
+                        controllers_count: ::core::primitive::u32,
+                        required_votes: ::core::primitive::u32,
+                    },
+                }
+            }
+            pub mod permission {
+                use super::runtime_types;
+                pub mod curator {
+                    use super::runtime_types;
+                    #[derive(
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: CompactAs,
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                        Debug,
+                    )]
+                    # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                    #[codec(dumb_trait_bound)]
+                    #[decode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                    )]
+                    #[encode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                    )]
+                    pub struct CuratorPermissions(pub ::core::primitive::u32);
+                    #[derive(
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                        Debug,
+                    )]
+                    # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                    #[codec(dumb_trait_bound)]
+                    #[decode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                    )]
+                    #[encode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                    )]
+                    pub struct CuratorScope { pub flags : runtime_types :: pallet_permission0 :: permission :: curator :: CuratorPermissions , pub cooldown : :: core :: option :: Option < :: core :: primitive :: u64 > , }
+                }
+                pub mod emission {
+                    use super::runtime_types;
+                    #[derive(
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                        Debug,
+                    )]
+                    # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                    #[codec(dumb_trait_bound)]
+                    #[decode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                    )]
+                    #[encode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                    )]
+                    pub enum DistributionControl {
+                        #[codec(index = 0)]
+                        Manual,
+                        #[codec(index = 1)]
+                        Automatic(::core::primitive::u128),
+                        #[codec(index = 2)]
+                        AtBlock(::core::primitive::u64),
+                        #[codec(index = 3)]
+                        Interval(::core::primitive::u64),
+                    }
+                    #[derive(
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                        Debug,
+                    )]
+                    # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                    #[codec(dumb_trait_bound)]
+                    #[decode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                    )]
+                    #[encode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                    )]
+                    pub enum EmissionAllocation {
+                        #[codec(index = 0)]
+                        Streams(
+                            runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap<
+                                ::subxt::ext::subxt_core::utils::H256,
+                                runtime_types::sp_arithmetic::per_things::Percent,
+                            >,
+                        ),
+                        #[codec(index = 1)]
+                        FixedAmount(::core::primitive::u128),
+                    }
+                    #[derive(
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                        :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                        :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                        Debug,
+                    )]
+                    # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                    #[codec(dumb_trait_bound)]
+                    #[decode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                    )]
+                    #[encode_as_type(
+                        crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                    )]
+                    pub struct EmissionScope { pub allocation : runtime_types :: pallet_permission0 :: permission :: emission :: EmissionAllocation , pub distribution : runtime_types :: pallet_permission0 :: permission :: emission :: DistributionControl , pub targets : runtime_types :: bounded_collections :: bounded_btree_map :: BoundedBTreeMap < :: subxt :: ext :: subxt_core :: utils :: AccountId32 , :: core :: primitive :: u16 > , pub accumulating : :: core :: primitive :: bool , }
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub enum EnforcementAuthority {
+                    #[codec(index = 0)]
+                    None,
+                    #[codec(index = 1)]
+                    ControlledBy {
+                        controllers: runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                        required_votes: ::core::primitive::u32,
+                    },
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub enum EnforcementReferendum {
+                    #[codec(index = 0)]
+                    EmissionAccumulation(::core::primitive::bool),
+                    #[codec(index = 1)]
+                    Execution,
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub struct NamespaceScope {
+                    pub paths:
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            runtime_types::pallet_torus0_api::NamespacePath,
+                        >,
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub struct PermissionContract {
+                    pub grantor: ::subxt::ext::subxt_core::utils::AccountId32,
+                    pub grantee: ::subxt::ext::subxt_core::utils::AccountId32,
+                    pub scope: runtime_types::pallet_permission0::permission::PermissionScope,
+                    pub duration: runtime_types::pallet_permission0::permission::PermissionDuration,
+                    pub revocation: runtime_types::pallet_permission0::permission::RevocationTerms,
+                    pub enforcement:
+                        runtime_types::pallet_permission0::permission::EnforcementAuthority,
+                    pub last_execution: ::core::option::Option<::core::primitive::u64>,
+                    pub execution_count: ::core::primitive::u32,
+                    pub parent: ::core::option::Option<::subxt::ext::subxt_core::utils::H256>,
+                    pub created_at: ::core::primitive::u64,
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub enum PermissionDuration {
+                    #[codec(index = 0)]
+                    UntilBlock(::core::primitive::u64),
+                    #[codec(index = 1)]
+                    Indefinite,
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub enum PermissionScope {
+                    #[codec(index = 0)]
+                    Emission(
+                        runtime_types::pallet_permission0::permission::emission::EmissionScope,
+                    ),
+                    #[codec(index = 1)]
+                    Curator(runtime_types::pallet_permission0::permission::curator::CuratorScope),
+                    #[codec(index = 2)]
+                    Namespace(runtime_types::pallet_permission0::permission::NamespaceScope),
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub enum RevocationTerms {
+                    #[codec(index = 0)]
+                    Irrevocable,
+                    #[codec(index = 1)]
+                    RevocableByGrantor,
+                    #[codec(index = 2)]
+                    RevocableByArbiters {
+                        accounts: runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                        required_votes: ::core::primitive::u32,
+                    },
+                    #[codec(index = 3)]
+                    RevocableAfter(::core::primitive::u64),
+                }
+            }
+        }
         pub mod pallet_sudo {
             use super::runtime_types;
             pub mod pallet {
@@ -13940,6 +16504,7 @@ pub mod api {
                     pub weight_penalty_factor: runtime_types::sp_arithmetic::per_things::Percent,
                     pub registration_block: ::core::primitive::u64,
                     pub fees: runtime_types::pallet_torus0::fee::ValidatorFee,
+                    pub last_update_block: ::core::primitive::u64,
                 }
             }
             pub mod burn {
@@ -14009,6 +16574,71 @@ pub mod api {
                     pub min_weight_control_fee: runtime_types::sp_arithmetic::per_things::Percent,
                 }
             }
+            pub mod namespace {
+                use super::runtime_types;
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub struct NamespaceMetadata {
+                    pub created_at: ::core::primitive::u64,
+                    pub deposit: ::core::primitive::u128,
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub enum NamespaceOwnership {
+                    #[codec(index = 0)]
+                    System,
+                    #[codec(index = 1)]
+                    Account(::subxt::ext::subxt_core::utils::AccountId32),
+                }
+                #[derive(
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                    :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                    :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                    Debug,
+                )]
+                # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+                #[codec(dumb_trait_bound)]
+                #[decode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode"
+                )]
+                #[encode_as_type(
+                    crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode"
+                )]
+                pub struct NamespacePricingConfig {
+                    pub deposit_per_byte: ::core::primitive::u128,
+                    pub base_fee: ::core::primitive::u128,
+                    pub count_midpoint: ::core::primitive::u32,
+                    pub fee_steepness: runtime_types::sp_arithmetic::per_things::Percent,
+                    pub max_fee_multiplier: ::core::primitive::u32,
+                }
+            }
             pub mod pallet {
                 use super::runtime_types;
                 #[derive(
@@ -14029,22 +16659,26 @@ pub mod api {
                 #[doc = "Contains a variant per dispatchable extrinsic that this pallet has."]
                 pub enum Call {
                     #[codec(index = 0)]
+                    #[doc = "Adds stakes from origin to the agent key."]
                     add_stake {
                         agent_key: ::subxt::ext::subxt_core::utils::AccountId32,
                         amount: ::core::primitive::u128,
                     },
                     #[codec(index = 1)]
+                    #[doc = "Removes stakes from origin to the agent key."]
                     remove_stake {
                         agent_key: ::subxt::ext::subxt_core::utils::AccountId32,
                         amount: ::core::primitive::u128,
                     },
                     #[codec(index = 2)]
+                    #[doc = "Transfers origin's stakes from an agent to another."]
                     transfer_stake {
                         agent_key: ::subxt::ext::subxt_core::utils::AccountId32,
                         new_agent_key: ::subxt::ext::subxt_core::utils::AccountId32,
                         amount: ::core::primitive::u128,
                     },
                     #[codec(index = 3)]
+                    #[doc = "Registers a new agent on behalf of an arbitrary key."]
                     register_agent {
                         agent_key: ::subxt::ext::subxt_core::utils::AccountId32,
                         name: ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
@@ -14052,10 +16686,11 @@ pub mod api {
                         metadata: ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
                     },
                     #[codec(index = 4)]
+                    #[doc = "Unregister origin's key agent."]
                     unregister_agent,
                     #[codec(index = 5)]
+                    #[doc = "Updates origin's key agent metadata."]
                     update_agent {
-                        name: ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
                         url: ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
                         metadata: ::core::option::Option<
                             ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
@@ -14065,6 +16700,25 @@ pub mod api {
                         >,
                         weight_control_fee: ::core::option::Option<
                             runtime_types::sp_arithmetic::per_things::Percent,
+                        >,
+                    },
+                    #[codec(index = 6)]
+                    #[doc = "Updates origin's key agent metadata."]
+                    set_agent_update_cooldown {
+                        new_cooldown: ::core::primitive::u64,
+                    },
+                    #[codec(index = 7)]
+                    #[doc = "Create a new namespace, automatically creating missing intermediate nodes"]
+                    create_namespace {
+                        path: runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::core::primitive::u8,
+                        >,
+                    },
+                    #[codec(index = 8)]
+                    #[doc = "Delete a namespace and all its children"]
+                    delete_namespace {
+                        path: runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::core::primitive::u8,
                         >,
                     },
                 }
@@ -14092,13 +16746,16 @@ pub mod api {
                     #[doc = "Insufficient stake to withdraw the requested amount."]
                     NotEnoughStakeToWithdraw,
                     #[codec(index = 2)]
-                    #[doc = "Insufficient balance in the cold key account to stake the requested amount."]
+                    #[doc = "Insufficient balance in the cold key account to stake the requested"]
+                    #[doc = "amount."]
                     NotEnoughBalanceToStake,
                     #[codec(index = 3)]
-                    #[doc = "The number of agent registrations in this block exceeds the allowed limit."]
+                    #[doc = "The number of agent registrations in this block exceeds the allowed"]
+                    #[doc = "limit."]
                     TooManyAgentRegistrationsThisBlock,
                     #[codec(index = 4)]
-                    #[doc = "The number of agent registrations in this interval exceeds the allowed limit."]
+                    #[doc = "The number of agent registrations in this interval exceeds the"]
+                    #[doc = "allowed limit."]
                     TooManyAgentRegistrationsThisInterval,
                     #[codec(index = 5)]
                     #[doc = "The agent is already registered in the active set."]
@@ -14134,72 +16791,93 @@ pub mod api {
                     #[doc = "The entity is still registered and cannot be modified."]
                     StillRegistered,
                     #[codec(index = 16)]
-                    #[doc = "Attempted to set max allowed agents to a value less than the current number of"]
-                    #[doc = "registered agents."]
-                    MaxAllowedAgents,
-                    #[codec(index = 17)]
                     #[doc = "Insufficient balance to transfer."]
                     NotEnoughBalanceToTransfer,
-                    #[codec(index = 18)]
+                    #[codec(index = 17)]
                     #[doc = "The agent metadata is invalid."]
                     InvalidAgentMetadata,
-                    #[codec(index = 19)]
+                    #[codec(index = 18)]
                     #[doc = "The agent metadata is too long."]
                     AgentMetadataTooLong,
-                    #[codec(index = 20)]
+                    #[codec(index = 19)]
                     #[doc = "The agent metadata is too long."]
                     AgentMetadataTooShort,
-                    #[codec(index = 21)]
+                    #[codec(index = 20)]
                     #[doc = "The minimum burn value is invalid, likely too small."]
                     InvalidMinBurn,
-                    #[codec(index = 22)]
+                    #[codec(index = 21)]
                     #[doc = "The maximum burn value is invalid."]
                     InvalidMaxBurn,
-                    #[codec(index = 23)]
+                    #[codec(index = 22)]
                     #[doc = "The agent name is too long."]
                     AgentNameTooLong,
-                    #[codec(index = 24)]
+                    #[codec(index = 23)]
                     #[doc = "The agent name is too short."]
                     AgentNameTooShort,
-                    #[codec(index = 25)]
+                    #[codec(index = 24)]
                     #[doc = "The agent name is invalid. It must be a UTF-8 encoded string."]
                     InvalidAgentName,
-                    #[codec(index = 26)]
+                    #[codec(index = 25)]
                     #[doc = "The agent url is too long."]
                     AgentUrlTooLong,
-                    #[codec(index = 27)]
+                    #[codec(index = 26)]
                     #[doc = "The agent url is too short."]
                     AgentUrlTooShort,
-                    #[codec(index = 28)]
+                    #[codec(index = 27)]
                     #[doc = "The agent ur; is invalid."]
                     InvalidAgentUrl,
-                    #[codec(index = 29)]
+                    #[codec(index = 28)]
                     #[doc = "A agent with this name already exists in the subnet."]
                     AgentNameAlreadyExists,
-                    #[codec(index = 30)]
-                    #[doc = "An arithmetic error occurred during calculation."]
-                    ArithmeticError,
-                    #[codec(index = 31)]
-                    #[doc = "The extrinsic panicked during execution."]
-                    ExtrinsicPanicked,
-                    #[codec(index = 32)]
-                    #[doc = "A step in the process panicked."]
-                    StepPanicked,
-                    #[codec(index = 33)]
+                    #[codec(index = 29)]
                     #[doc = "The stake amount to add or remove is too small. Minimum is 0.5 unit."]
                     StakeTooSmall,
-                    #[codec(index = 34)]
-                    #[doc = "Key is not present in Whitelist, it needs to be whitelisted by a Curator"]
+                    #[codec(index = 30)]
+                    #[doc = "Key is not present in Whitelist, it needs to be whitelisted by a"]
+                    #[doc = "Curator"]
                     AgentKeyNotWhitelisted,
-                    #[codec(index = 35)]
+                    #[codec(index = 31)]
                     #[doc = "The amount given is 0"]
                     InvalidAmount,
-                    #[codec(index = 36)]
+                    #[codec(index = 32)]
                     #[doc = "The staking fee given is lower than the minimum fee"]
                     InvalidStakingFee,
-                    #[codec(index = 37)]
+                    #[codec(index = 33)]
                     #[doc = "The weight control fee given is lower than the minimum fee"]
                     InvalidWeightControlFee,
+                    #[codec(index = 34)]
+                    #[doc = "The agent already updated recently"]
+                    AgentUpdateOnCooldown,
+                    #[codec(index = 35)]
+                    #[doc = "Invalid namespace path"]
+                    InvalidNamespacePath,
+                    #[codec(index = 36)]
+                    #[doc = "Namespace already exists"]
+                    NamespaceAlreadyExists,
+                    #[codec(index = 37)]
+                    #[doc = "Namespace not found"]
+                    NamespaceNotFound,
+                    #[codec(index = 38)]
+                    #[doc = "Parent namespace not found"]
+                    ParentNamespaceNotFound,
+                    #[codec(index = 39)]
+                    #[doc = "Not the owner of the namespace"]
+                    NotNamespaceOwner,
+                    #[codec(index = 40)]
+                    #[doc = "Cannot delete namespace with children"]
+                    NamespaceHasChildren,
+                    #[codec(index = 41)]
+                    #[doc = "Namespace depth exceeded"]
+                    NamespaceDepthExceeded,
+                    #[codec(index = 42)]
+                    #[doc = "The namespace is being delegated through a permission. Revoke that first."]
+                    NamespaceBeingDelegated,
+                    #[codec(index = 43)]
+                    #[doc = "Agent Creation was disabled by a curator."]
+                    AgentsFrozen,
+                    #[codec(index = 44)]
+                    #[doc = "Namespace Creation was disabled by a curator."]
+                    NamespacesFrozen,
                 }
                 #[derive(
                     :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
@@ -14219,32 +16897,66 @@ pub mod api {
                 #[doc = "The `Event` enum of this pallet"]
                 pub enum Event {
                     #[codec(index = 0)]
-                    #[doc = "Event created when stake has been transferred from the coldkey account onto the key"]
-                    #[doc = "staking account"]
+                    #[doc = "Event created when stake has been transferred from the coldkey"]
+                    #[doc = "account onto the key staking account"]
                     StakeAdded(
                         ::subxt::ext::subxt_core::utils::AccountId32,
                         ::subxt::ext::subxt_core::utils::AccountId32,
                         ::core::primitive::u128,
                     ),
                     #[codec(index = 1)]
-                    #[doc = "Event created when stake has been removed from the key staking account onto the coldkey"]
-                    #[doc = "account"]
+                    #[doc = "Event created when stake has been removed from the key staking"]
+                    #[doc = "account onto the coldkey account"]
                     StakeRemoved(
                         ::subxt::ext::subxt_core::utils::AccountId32,
                         ::subxt::ext::subxt_core::utils::AccountId32,
                         ::core::primitive::u128,
                     ),
                     #[codec(index = 2)]
-                    #[doc = "Event created when a new agent account has been registered to the chain"]
+                    #[doc = "Event created when a new agent account has been registered to the"]
+                    #[doc = "chain"]
                     AgentRegistered(::subxt::ext::subxt_core::utils::AccountId32),
                     #[codec(index = 3)]
-                    #[doc = "Event created when a agent account has been deregistered from the chain"]
+                    #[doc = "Event created when a agent account has been deregistered from the"]
+                    #[doc = "chain"]
                     AgentUnregistered(::subxt::ext::subxt_core::utils::AccountId32),
                     #[codec(index = 4)]
-                    #[doc = "Event created when the agent's updated information is added to the network"]
+                    #[doc = "Event created when the agent's updated information is added to the"]
+                    #[doc = "network"]
                     AgentUpdated(::subxt::ext::subxt_core::utils::AccountId32),
+                    #[codec(index = 5)]
+                    #[doc = "Namespace created"]
+                    NamespaceCreated {
+                        owner: runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+                        path: runtime_types::pallet_torus0_api::NamespacePath,
+                    },
+                    #[codec(index = 6)]
+                    #[doc = "Namespace deleted"]
+                    NamespaceDeleted {
+                        owner: runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+                        path: runtime_types::pallet_torus0_api::NamespacePath,
+                    },
                 }
             }
+        }
+        pub mod pallet_torus0_api {
+            use super::runtime_types;
+            #[derive(
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
+                :: subxt :: ext :: subxt_core :: ext :: codec :: Encode,
+                :: subxt :: ext :: subxt_core :: ext :: scale_decode :: DecodeAsType,
+                :: subxt :: ext :: subxt_core :: ext :: scale_encode :: EncodeAsType,
+                Debug,
+            )]
+            # [codec (crate = :: subxt :: ext :: subxt_core :: ext :: codec)]
+            #[codec(dumb_trait_bound)]
+            #[decode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_decode")]
+            #[encode_as_type(crate_path = ":: subxt :: ext :: subxt_core :: ext :: scale_encode")]
+            pub struct NamespacePath(
+                pub  runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                    ::core::primitive::u8,
+                >,
+            );
         }
         pub mod pallet_transaction_payment {
             use super::runtime_types;
@@ -15361,6 +18073,10 @@ pub mod api {
                 Torus0(runtime_types::pallet_torus0::pallet::Call),
                 #[codec(index = 13)]
                 Emission0(runtime_types::pallet_emission0::pallet::Call),
+                #[codec(index = 14)]
+                Permission0(runtime_types::pallet_permission0::pallet::Call),
+                #[codec(index = 15)]
+                Faucet(runtime_types::pallet_faucet::pallet::Call),
             }
             #[derive(
                 :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
@@ -15394,6 +18110,10 @@ pub mod api {
                 Torus0(runtime_types::pallet_torus0::pallet::Error),
                 #[codec(index = 13)]
                 Emission0(runtime_types::pallet_emission0::pallet::Error),
+                #[codec(index = 14)]
+                Permission0(runtime_types::pallet_permission0::pallet::Error),
+                #[codec(index = 15)]
+                Faucet(runtime_types::pallet_faucet::pallet::Error),
             }
             #[derive(
                 :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,
@@ -15429,6 +18149,10 @@ pub mod api {
                 Torus0(runtime_types::pallet_torus0::pallet::Event),
                 #[codec(index = 13)]
                 Emission0(runtime_types::pallet_emission0::pallet::Event),
+                #[codec(index = 14)]
+                Permission0(runtime_types::pallet_permission0::pallet::Event),
+                #[codec(index = 15)]
+                Faucet(runtime_types::pallet_faucet::pallet::Event),
             }
             #[derive(
                 :: subxt :: ext :: subxt_core :: ext :: codec :: Decode,

@@ -1,5 +1,8 @@
+use std::collections::{HashMap, HashSet};
+
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
+use stringcase::pascal_case;
 
 use crate::{
     InterfaceSource,
@@ -11,30 +14,29 @@ mod calls;
 mod storage;
 
 pub fn generate_wrappers_for_network(
-    network: &InterfaceSource,
-    pallets: &[PalletPattern],
+    mainnet_pallets: &[PalletPattern],
+    testnet_pallets: &[PalletPattern],
 ) -> TokenStream {
-    let mut sorted_patterns = pallets.to_vec();
-    sorted_patterns.sort_by(|a, b| a.name.cmp(&b.name));
-
-    let pallets: Vec<TokenStream> = sorted_patterns
+    let mut chained_pallet_names = mainnet_pallets
         .iter()
-        .map(|pattern| generate_pallet_mod(network, pattern))
+        .chain(testnet_pallets)
+        .map(|p| p.name.to_string())
+        .collect::<HashSet<String>>()
+        .into_iter()
+        .collect::<Vec<_>>();
+    chained_pallet_names.sort();
+
+    let clients = generate_client_structs(&chained_pallet_names);
+
+    let mainnet_pallets: Vec<TokenStream> = mainnet_pallets
+        .iter()
+        .map(|pattern| generate_pallet_mod(&InterfaceSource::Mainnet, pattern))
         .collect();
 
-    // Generate helper functions for key decoding
-    // let helper_functions = generate_helper_functions();
-
-    let api_import = match network {
-        InterfaceSource::Mainnet => quote! {
-            use crate::interfaces::mainnet::api;
-            use crate::interfaces::mainnet::api::runtime_types;
-        },
-        InterfaceSource::Testnet => quote! {
-            use crate::interfaces::testnet::api;
-            use crate::interfaces::testnet::api::runtime_types;
-        },
-    };
+    let testnet_pallets: Vec<TokenStream> = testnet_pallets
+        .iter()
+        .map(|pattern| generate_pallet_mod(&InterfaceSource::Testnet, pattern))
+        .collect();
 
     quote! {
         //! Generated storage wrapper functions
@@ -44,26 +46,89 @@ pub fn generate_wrappers_for_network(
 
         #![allow(dead_code)]
 
-        use std::collections::HashMap;
-        use subxt::{OnlineClient, PolkadotConfig};
+        // use std::collections::HashMap;
+        use subxt::{OnlineClient, PolkadotConfig, utils::H256};
         use codec::Decode;
-        #api_import
+        use futures::{Stream, StreamExt, TryStreamExt};
+        use std::marker::PhantomData;
+        // #api_import
 
-        #(#pallets)*
+        #clients
+
+        #[cfg(feature = "mainnet")]
+        pub mod mainnet {
+            use super::*;
+            use crate::interfaces::mainnet::api::runtime_types;
+
+            #(#mainnet_pallets)*
+        }
+
+        #[cfg(feature = "testnet")]
+        pub mod testnet {
+            use super::*;
+            use crate::interfaces::testnet::api::runtime_types;
+
+            #(#testnet_pallets)*
+        }
+    }
+}
+
+fn generate_client_structs(pallet_names: &[String]) -> TokenStream {
+    let (struct_idents, storage_struct_idents, calls_struct_idents, method_idents) = pallet_names
+        .iter()
+        .map(|name| {
+            (
+                format_ident!("{}", pascal_case(&format!("{}_client", name))),
+                format_ident!("{}", pascal_case(&format!("{}_storage", name))),
+                format_ident!("{}", pascal_case(&format!("{}_calls", name))),
+                format_ident!("{}", name),
+            )
+        })
+        .collect::<(Vec<_>, Vec<_>, Vec<_>, Vec<_>)>();
+
+    quote! {
+        #(
+            pub struct #struct_idents<C: crate::chain::Chain> {
+                pub(crate) client: OnlineClient<PolkadotConfig>,
+                pub(crate) _pd: PhantomData<C>
+            }
+
+            impl<C: crate::chain::Chain> crate::client::TorusClient<C> {
+                pub fn #method_idents(&self) -> #struct_idents<C> {
+                    #struct_idents {
+                        client: self.client.clone(),
+                        _pd: PhantomData
+                    }
+                }
+            }
+
+            pub struct #storage_struct_idents<C: crate::chain::Chain> {
+                pub(crate) client: OnlineClient<PolkadotConfig>,
+                pub(crate) block: Option<H256>,
+                pub(crate) _pd: PhantomData<C>,
+            }
+
+            pub struct #calls_struct_idents<C: crate::chain::Chain> {
+                pub(crate) client: OnlineClient<PolkadotConfig>,
+                pub(crate) _pd: PhantomData<C>,
+            }
+        )*
     }
 }
 
 fn generate_pallet_mod(network: &InterfaceSource, pallet: &PalletPattern) -> TokenStream {
-    let network_name = network.to_str();
     let pallet_name = format_ident!("{}", pallet.name);
 
     let storage = generate_pallet_storage(network, pallet);
     let calls = generate_pallet_calls(network, pallet);
 
-    quote! {
+    if storage.is_none() && calls.is_none() {
+        return quote! {};
+    }
 
-        #[cfg(feature = #network_name)]
+    quote! {
         pub mod #pallet_name {
+            use super::*;
 
             #storage
 

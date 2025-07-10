@@ -9,3 +9,11 @@ pub enum CallError {
     #[error(transparent)]
     SubxtError(#[from] subxt::error::Error),
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum StorageError {
+    #[error(transparent)]
+    CodecError(#[from] codec::Error),
+    #[error(transparent)]
+    SubxtError(#[from] subxt::error::Error),
+}

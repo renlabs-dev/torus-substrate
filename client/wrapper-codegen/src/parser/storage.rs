@@ -36,9 +36,7 @@ fn extract_storage_methods(impl_item: &ItemImpl) -> Result<Vec<MethodInfo>, Pars
         if let ImplItem::Fn(method) = item {
             let method_name = method.sig.ident.to_string();
             let param_count = method.sig.inputs.len().saturating_sub(1); // Subtract 1 for &self
-            let is_iter = method_name.ends_with("_iter")
-                || method_name.ends_with("_iter1")
-                || method_name.ends_with("_iter2");
+            let is_iter = method_name.contains("_iter");
 
             methods.push(MethodInfo {
                 name: method_name,

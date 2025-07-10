@@ -3,24 +3,30 @@
 # Default network
 default_net := "mainnet"
 
-# Download metadata for a given network (default: mainnet)
-download_metadata net=default_net:
-    @echo "Downloading metadata for {{net}} network..."
-    ./scripts/get-metadata.sh {{net}}
-    @echo "Metadata downloaded to data/metadata/{{net}}.scale"
+# Download metadata for a given network
+download_metadata:
+    @echo "Downloading metadata for both networks..."
+    ./scripts/get-metadata.sh mainnet
+    @echo "Metadata downloaded to data/metadata/mainnet.scale"
+    ./scripts/get-metadata.sh testnet
+    @echo "Metadata downloaded to data/metadata/testnet.scale"
 
-# Generate interfaces from metadata for a given network (default: mainnet)
-gen_interfaces net=default_net: (download_metadata net)
-    @echo "Generating interfaces for {{net}} network..."
-    subxt codegen --file data/metadata/{{net}}.scale | rustfmt > src/interfaces/{{net}}.rs
-    @echo "Generated interfaces in src/interfaces/{{net}}.rs"
+# Generate interfaces from metadata for a given network
+gen_interfaces: (download_metadata)
+    @echo "Generating interfaces for both networks..."
+    subxt codegen --file data/metadata/mainnet.scale | rustfmt > src/interfaces/mainnet.rs
+    @echo "Generated interfaces in src/interfaces/mainnet.rs"
+    subxt codegen --file data/metadata/testnet.scale | rustfmt > src/interfaces/testnet.rs
+    @echo "Generated interfaces in src/interfaces/testnet.rs"
+
+gen_wrappers: (gen_interfaces)
+    @echo "Generating wrappers for both networks..."
     mkdir -p src/wrappers
-    cargo run -p torus-client-wrapper-codegen -- --source {{net}} --output src/wrappers/{{net}}.rs --force
-    @echo "Generated storage wrappers in src/wrappers/{{net}}.rs"
-
+    cargo run -p torus-client-wrapper-codegen -- --output src/wrappers.rs --force
+    @echo "Generated wrappers in src/wrappers"
 
 # Generate interfaces for live networks (mainnet and testnet)
-gen_for_live: (gen_interfaces "mainnet") (gen_interfaces "testnet")
+gen_for_live: (gen_wrappers)
     @echo "Live network interfaces generated successfully"
 
 # Build the client library

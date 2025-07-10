@@ -1,6 +1,6 @@
 use clap::Parser;
 use std::path::PathBuf;
-use syn::parse_quote;
+use syn::{parse_quote, parse_str};
 
 use crate::{codegen::generate_wrappers_for_network, parser::parse_api_file};
 
@@ -14,11 +14,6 @@ mod utils;
 #[command(name = "generate-wrappers")]
 #[command(about = "Generate storage wrapper functions from subxt interfaces")]
 struct Args {
-    /// Source interface to parse (mainnet or testnet)
-    #[arg(short, long, value_enum)]
-    source: InterfaceSource,
-
-    /// Output file path
     #[arg(short, long)]
     output: PathBuf,
 
@@ -52,12 +47,33 @@ impl InterfaceSource {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    let interface_path = match args.source {
-        InterfaceSource::Mainnet => "src/interfaces/mainnet.rs",
-        InterfaceSource::Testnet => "src/interfaces/testnet.rs",
+    let mainnet_content = read_interface("src/interfaces/mainnet.rs")?;
+    let testnet_content = read_interface("src/interfaces/testnet.rs")?;
+
+    let mainnet_pallets = parser::parse_api_file(&mainnet_content)?;
+    let testnet_pallets = parser::parse_api_file(&testnet_content)?;
+
+    let wrappers_tokens = generate_wrappers_for_network(&mainnet_pallets, &testnet_pallets);
+
+    // Parse the TokenStream into a syn::File and format with prettyplease
+    let wrappers_file: syn::File = parse_quote! {
+        #wrappers_tokens
     };
 
-    // Get the full path for better error reporting
+    let wrappers_code = prettyplease::unparse(&wrappers_file);
+
+    // Create output directory if it doesn't exist
+    if let Some(parent) = args.output.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    std::fs::write(&args.output, wrappers_code)?;
+    println!("Generated wrappers: {:?}", args.output);
+
+    Ok(())
+}
+
+fn read_interface(interface_path: &'static str) -> Result<String, std::io::Error> {
     let full_path = std::path::Path::new(interface_path)
         .canonicalize()
         .unwrap_or_else(|_| {
@@ -73,34 +89,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
-    if args.output.exists() && !args.force {
-        eprintln!("Error: Output file already exists: {:?}", args.output);
-        eprintln!("Use --force to overwrite");
-        std::process::exit(1);
-    }
-
-    println!("Parsing interface: {}", interface_path);
-    let content = std::fs::read_to_string(interface_path)?;
-    let pallets = parse_api_file(&content)?;
-
-    println!("Found {} pallets", pallets.len());
-
-    // Generate the wrappers
-    let wrappers_tokens = generate_wrappers_for_network(&args.source, &pallets);
-
-    // Parse the TokenStream into a syn::File and format with prettyplease
-    let wrappers_file: syn::File = parse_quote! {
-        #wrappers_tokens
-    };
-    let wrappers_code = prettyplease::unparse(&wrappers_file);
-
-    // Create output directory if it doesn't exist
-    if let Some(parent) = args.output.parent() {
-        std::fs::create_dir_all(parent)?;
-    }
-
-    std::fs::write(&args.output, wrappers_code)?;
-    println!("Generated wrappers: {:?}", args.output);
-
-    Ok(())
+    std::fs::read_to_string(interface_path)
 }

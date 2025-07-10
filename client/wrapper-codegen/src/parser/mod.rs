@@ -11,7 +11,7 @@ use crate::{
 mod calls;
 mod storage;
 
-const IGNORED_MODULES: [&'static str; 7] = [
+const IGNORED_MODULES: [&'static str; 8] = [
     "runtime_types",
     "constants",
     "storage",
@@ -19,6 +19,7 @@ const IGNORED_MODULES: [&'static str; 7] = [
     "events",
     "calls",
     "runtime_apis",
+    "root_mod",
 ];
 
 pub fn parse_api_file(content: &str) -> Result<Vec<PalletPattern>, ParseError> {
@@ -68,8 +69,6 @@ pub fn parse_api_file(content: &str) -> Result<Vec<PalletPattern>, ParseError> {
 
 fn parse_pallet_module(pallet_mod: &ItemMod) -> Result<PalletPattern, ParseError> {
     let pallet_name = &pallet_mod.ident;
-
-    dbg!(&pallet_name);
 
     let mut storages = Vec::new();
     let mut calls = Vec::new();

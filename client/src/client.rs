@@ -1,12 +1,11 @@
 use std::marker::PhantomData;
 
 use subxt::{config::Header, OnlineClient, PolkadotConfig};
-use subxt_signer::sr25519::dev;
 
-use crate::{chain::Chain, pallets::torus0::Torus0};
+use crate::chain::Chain;
 
 pub struct TorusClient<C: Chain> {
-    client: OnlineClient<PolkadotConfig>,
+    pub(crate) client: OnlineClient<PolkadotConfig>,
     _pd: PhantomData<C>,
 }
 
@@ -30,12 +29,12 @@ impl<C: Chain> TorusClient<C> {
         })
     }
 
-    pub fn torus0(&self) -> Torus0<C> {
-        Torus0 {
-            client: self.client.clone(),
-            _pd: PhantomData,
-        }
-    }
+    // pub fn torus0(&self) -> Torus0<C> {
+    //     Torus0 {
+    //         client: self.client.clone(),
+    //         _pd: PhantomData,
+    //     }
+    // }
 
     /// Get the latest block hash
     pub async fn latest_block_hash(&self) -> Result<subxt::utils::H256, subxt::Error> {

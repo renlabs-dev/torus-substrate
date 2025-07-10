@@ -11,7 +11,8 @@ use crate::{
 pub(super) fn generate_pallet_storage(
     network: &InterfaceSource,
     pallet: &PalletPattern,
-) -> TokenStream {
+) -> Option<TokenStream> {
+    let client_name = format_ident!("{}", pascal_case(&format!("{}_client", pallet.name)));
     let struct_name = format_ident!("{}", pascal_case(&format!("{}_storage", pallet.name)));
     let network_chain: Type = syn::parse_str(network.to_chain_type()).unwrap();
 
@@ -21,17 +22,33 @@ pub(super) fn generate_pallet_storage(
         .flat_map(|pattern| generate_pattern_wrappers(network, pattern))
         .collect();
 
-    quote! {
-        pub struct #struct_name<C: crate::chain::Chain> {
-            pub(crate) client: OnlineClient<PolkadotConfig>,
-            pub(crate) block: Option<H256>,
-            pub(crate) _pd: PhantomData<C>,
+    if functions.is_empty() {
+        return None;
+    }
+
+    Some(quote! {
+        impl #client_name<#network_chain> {
+            pub fn storage(&self) -> #struct_name<#network_chain> {
+                #struct_name {
+                    client: self.client.clone(),
+                    block: None,
+                    _pd: PhantomData
+                }
+            }
+
+            pub fn storage_at(&self, block_hash: H256) -> #struct_name<#network_chain> {
+                #struct_name {
+                    client: self.client.clone(),
+                    block: Some(block_hash),
+                    _pd: PhantomData
+                }
+            }
         }
 
         impl #struct_name<#network_chain> {
             #(#functions)*
         }
-    }
+    })
 }
 
 /// Generate helper functions for key decoding
@@ -80,8 +97,8 @@ fn generate_pattern_wrappers(
         }
         StoragePattern::NMap { .. } => {
             vec![
-                // generate_nmap_getter(pattern),
-                // generate_nmap_query(pattern),
+                generate_nmap_getter(network, pattern),
+                generate_nmap_query(network, pattern),
                 // generate_nmap_query_raw(pattern),
             ]
         }
@@ -102,7 +119,18 @@ fn generate_value_wrapper(network: &InterfaceSource, pattern: &StoragePattern) -
         let return_type_tokens = parse_type_string(return_type);
 
         quote! {
-            storage_value!(#network_ident, #pallet_ident, #storage_ident -> #return_type_tokens);
+            pub async fn #storage_ident(&self) -> Result<Option<#return_type_tokens>, crate::error::StorageError> {
+                let call = crate::interfaces::#network_ident::api::storage()
+                    .#pallet_ident()
+                    .#storage_ident();
+
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+
+                Ok(api.fetch(&call).await?)
+            }
         }
     } else {
         panic!("Expected StoragePattern::Value");
@@ -119,12 +147,51 @@ fn generate_map_wrapper(network: &InterfaceSource, pattern: &StoragePattern) -> 
     {
         let network_ident = format_ident!("{}", network.to_str());
         let pallet_ident = format_ident!("{}", pallet);
+        let storage_ident_get = format_ident!("{}_get", name);
+        let storage_ident_iter = format_ident!("{}_iter", name);
         let storage_ident = format_ident!("{}", name);
         let key_tt = parse_type_string(key_type);
         let value_tt = parse_type_string(return_type);
 
         quote! {
-            storage_map!(#network_ident, #pallet_ident, #storage_ident -> <#key_tt, #value_tt>);
+            pub async fn #storage_ident_get(&self, key: &#key_tt) -> anyhow::Result<Option<#value_tt>> {
+                let call = crate::interfaces::#network_ident::api::storage()
+                    .#pallet_ident()
+                    .#storage_ident(key);
+
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+
+                Ok(api.fetch(&call).await?)
+            }
+
+            pub async fn #storage_ident_iter(
+                &self,
+            ) -> Result<impl Stream<Item = Result<(#key_tt, #value_tt), crate::error::StorageError>>, crate::error::StorageError> {
+                let call = crate::interfaces::#network_ident::api::storage()
+                    .#pallet_ident()
+                    .#storage_ident_iter();
+
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key =
+                            <#key_tt as Decode>::decode(&mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]))?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+
+                Ok(stream)
+            }
         }
     } else {
         panic!("Expected StoragePattern::Map");
@@ -142,12 +209,80 @@ fn generate_double_map_wrapper(network: &InterfaceSource, pattern: &StoragePatte
     {
         let network_ident = format_ident!("{}", network.to_str());
         let pallet_ident = format_ident!("{}", pallet);
+        let storage_ident_get = format_ident!("{}_get", name);
+        let storage_ident_iter = format_ident!("{}_iter", name);
+        let storage_ident_iter1 = format_ident!("{}_iter1", name);
         let storage_ident = format_ident!("{}", name);
         let key1_tt = parse_type_string(key1_type);
         let key2_tt = parse_type_string(key2_type);
         let value_tt = parse_type_string(return_type);
+
         quote! {
-            storage_dmap!(#network_ident, #pallet_ident, #storage_ident -> <(#key1_tt, #key2_tt), #value_tt>);
+            pub async fn #storage_ident_get(&self, key1: &#key1_tt, key2: &#key2_tt) -> Result<Option<#value_tt>, crate::error::StorageError> {
+                let call = crate::interfaces::#network_ident::api::storage()
+                    .#pallet_ident()
+                    .#storage_ident(key1, key2);
+
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+
+                Ok(api.fetch(&call).await?)
+            }
+
+            pub async fn #storage_ident_iter(
+                &self,
+            ) -> Result<impl Stream<Item = Result<((#key1_tt, #key2_tt), #value_tt), crate::error::StorageError>>, crate::error::StorageError> {
+                let call = crate::interfaces::#network_ident::api::storage()
+                    .#pallet_ident()
+                    .#storage_ident_iter();
+
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair =
+                            <(#key1_tt, #key2_tt) as Decode>::decode(&mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]))?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+
+                Ok(stream)
+            }
+
+            pub async fn #storage_ident_iter1(
+                &self,
+                key1: &#key1_tt
+            ) -> Result<impl Stream<Item = Result<((#key1_tt, #key2_tt), #value_tt), crate::error::StorageError>>, crate::error::StorageError> {
+                let call = crate::interfaces::#network_ident::api::storage()
+                    .#pallet_ident()
+                    .#storage_ident_iter1(key1);
+
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair =
+                            <(#key1_tt, #key2_tt) as Decode>::decode(&mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]))?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+
+                Ok(stream)
+            }
         }
     } else {
         panic!("Expected StoragePattern::DoubleMap");
@@ -155,7 +290,7 @@ fn generate_double_map_wrapper(network: &InterfaceSource, pattern: &StoragePatte
 }
 
 /// Generate getter function for Storage N Map
-fn generate_nmap_getter(pattern: &StoragePattern) -> TokenStream {
+fn generate_nmap_getter(network: &InterfaceSource, pattern: &StoragePattern) -> TokenStream {
     if let StoragePattern::NMap {
         name,
         pallet,
@@ -169,7 +304,7 @@ fn generate_nmap_getter(pattern: &StoragePattern) -> TokenStream {
             .map(|(i, t)| format!("{}_{}", type_to_param_name(t), i + 1))
             .collect();
 
-        let func_name = format_ident!("get_{}_{}_by_{}", pallet, name, key_names.join("_by_"));
+        let func_name = format_ident!("{}_get", name);
         let pallet_ident = format_ident!("{}", pallet);
         let storage_ident = format_ident!("{}", name);
 
@@ -177,16 +312,17 @@ fn generate_nmap_getter(pattern: &StoragePattern) -> TokenStream {
         let key_type_tokens: Vec<TokenStream> =
             key_types.iter().map(|t| parse_type_string(t)).collect();
         let return_type_tokens = parse_type_string(return_type);
+        let network_ident = format_ident!("{}", network.to_str());
 
         quote! {
             /// Get storage n-map value by keys
             pub async fn #func_name(
-                client: &OnlineClient<PolkadotConfig>,
+                &self,
                 #(#key_params: #key_type_tokens),*
             ) -> Result<Option<#return_type_tokens>, Box<dyn std::error::Error>> {
-                let storage = client.storage().at_latest().await?;
-                let result = storage.fetch(&api::storage().#pallet_ident().#storage_ident(#(#key_params),*)).await?;
-                Ok(result)
+                let call = crate::interfaces::#network_ident::api::storage().#pallet_ident().#storage_ident(#(#key_params),*);
+                let storage = self.client.storage().at_latest().await?;
+                Ok(storage.fetch(&call).await?)
             }
         }
     } else {
@@ -195,7 +331,7 @@ fn generate_nmap_getter(pattern: &StoragePattern) -> TokenStream {
 }
 
 /// Generate query function for Storage N Map
-fn generate_nmap_query(pattern: &StoragePattern) -> TokenStream {
+fn generate_nmap_query(network: &InterfaceSource, pattern: &StoragePattern) -> TokenStream {
     if let StoragePattern::NMap {
         name,
         pallet,
@@ -203,13 +339,13 @@ fn generate_nmap_query(pattern: &StoragePattern) -> TokenStream {
         return_type,
     } = pattern
     {
-        let func_name = format_ident!("query_all_{}_{}", pallet, name);
         let pallet_ident = format_ident!("{}", pallet);
         let storage_iter_ident = format_ident!("{}_iter", name);
 
         let key_type_tokens: Vec<TokenStream> =
             key_types.iter().map(|t| parse_type_string(t)).collect();
         let return_type_tokens = parse_type_string(return_type);
+        let network_ident = format_ident!("{}", network.to_str());
 
         // Generate tuple type for keys
         let keys_tuple = if key_types.len() == 1 {
@@ -218,25 +354,84 @@ fn generate_nmap_query(pattern: &StoragePattern) -> TokenStream {
             quote! { (#(#key_type_tokens),*) }
         };
 
+        let mut prefix_iters = vec![];
+        if key_types.len() > 1 {
+            for i in 1..key_types.len() {
+                let storage_iter_ident = format_ident!("{}_iter{}", name, i);
+
+                let (key_ident_tokens, key_type_tokens) = key_types
+                    .iter()
+                    .take(i)
+                    .enumerate()
+                    .map(|(idx, t)| (format_ident!("key{}", idx), parse_type_string(t)))
+                    .collect::<(Vec<_>, Vec<_>)>();
+
+                let keys_tuple = if key_type_tokens.len() == 1 {
+                    quote! { #(#key_type_tokens),* }
+                } else {
+                    quote! { (#(#key_type_tokens),*) }
+                };
+
+                prefix_iters.push(quote! {
+                    pub async fn #storage_iter_ident(
+                        &self,
+                        #(#key_ident_tokens: #key_type_tokens),*
+                    ) -> Result<impl Stream<Item = Result<(#keys_tuple, #return_type_tokens), crate::error::StorageError>>, crate::error::StorageError> {
+                        let call = crate::interfaces::#network_ident::api::storage()
+                            .#pallet_ident()
+                            .#storage_iter_ident(#(#key_ident_tokens),*);
+
+                        let api = match &self.block {
+                            Some(block_hash) => self.client.storage().at(*block_hash),
+                            None => self.client.storage().at_latest().await?,
+                        };
+
+                        let stream = api
+                            .iter(call)
+                            .await?
+                            .map(|res| {
+                                let res = res?;
+                                let tuple =
+                                    <#keys_tuple as Decode>::decode(&mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]))?;
+                                Ok((tuple, res.value))
+                            })
+                            .into_stream();
+
+                        Ok(stream)
+                    }
+                });
+            }
+        }
+
         quote! {
             /// Query all entries in storage n-map
-            pub async fn #func_name(
-                client: &OnlineClient<PolkadotConfig>,
-            ) -> Result<Vec<(#keys_tuple, #return_type_tokens)>, Box<dyn std::error::Error>> {
-                let storage = client.storage().at_latest().await?;
-                let mut result = Vec::new();
-                let mut iter = storage.iter(api::storage().#pallet_ident().#storage_iter_ident()).await?;
+            pub async fn #storage_iter_ident(
+                &self,
+            ) -> Result<impl Stream<Item = Result<(#keys_tuple, #return_type_tokens), crate::error::StorageError>>, crate::error::StorageError> {
+                let call = crate::interfaces::#network_ident::api::storage()
+                    .#pallet_ident()
+                    .#storage_iter_ident();
 
-                while let Some(Ok(kv)) = iter.next().await {
-                    match decode_nmap_keys::<#keys_tuple>(&kv.key_bytes) {
-                        Ok(keys) => {
-                            result.push((keys, kv.value));
-                        }
-                        Err(_) => continue, // Skip malformed entries
-                    }
-                }
-                Ok(result)
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let tuple =
+                            <#keys_tuple as Decode>::decode(&mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]))?;
+                        Ok((tuple, res.value))
+                    })
+                    .into_stream();
+
+                Ok(stream)
             }
+
+            #(#prefix_iters)*
         }
     } else {
         panic!("Expected StoragePattern::NMap");
