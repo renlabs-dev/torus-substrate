@@ -2,6 +2,7 @@
 //!
 //! This module provides ergonomic access to Substrate storage items.
 //! Functions are automatically generated from the subxt API metadata.
+#![allow(dead_code)]
 use codec::Decode;
 use futures::{Stream, StreamExt, TryStreamExt};
 use std::marker::PhantomData;
@@ -344,256 +345,23 @@ pub mod mainnet {
             }
         }
         impl SystemStorage<crate::chain::MainNet> {
-            pub async fn upgraded_to_triple_ref_count(
-                &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .upgraded_to_triple_ref_count();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn execution_phase(
-                &self,
-            ) -> Result<Option<runtime_types::frame_system::Phase>, crate::error::StorageError>
-            {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .execution_phase();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn block_hash_get(
-                &self,
-                key: &::core::primitive::u64,
-            ) -> anyhow::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .block_hash(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn block_hash_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u64,
-                            ::subxt::ext::subxt_core::utils::H256,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .block_hash_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::core::primitive::u64 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn block_weight(
-                &self,
-            ) -> Result<
-                Option<
-                    runtime_types::frame_support::dispatch::PerDispatchClass<
-                        runtime_types::sp_weights::weight_v2::Weight,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .block_weight();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn extrinsic_data_get(
-                &self,
-                key: &::core::primitive::u32,
-            ) -> anyhow::Result<
-                Option<::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>>,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .extrinsic_data(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn extrinsic_data_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u32,
-                            ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .extrinsic_data_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::core::primitive::u32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn account_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::frame_system::AccountInfo<
-                        ::core::primitive::u32,
-                        runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .account(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn account_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::frame_system::AccountInfo<
-                                ::core::primitive::u32,
-                                runtime_types::pallet_balances::types::AccountData<
-                                    ::core::primitive::u128,
-                                >,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .account_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn upgraded_to_u32_ref_count(
-                &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .upgraded_to_u32_ref_count();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn inherents_applied(
-                &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .inherents_applied();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn events(
-                &self,
-            ) -> Result<
-                Option<
-                    ::subxt::ext::subxt_core::alloc::vec::Vec<
-                        runtime_types::frame_system::EventRecord<
-                            runtime_types::torus_runtime::RuntimeEvent,
-                            ::subxt::ext::subxt_core::utils::H256,
-                        >,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage().system().events();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
             pub async fn digest(
                 &self,
-            ) -> Result<
-                Option<runtime_types::sp_runtime::generic::digest::Digest>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::sp_runtime::generic::digest::Digest>>
+            {
                 let call = crate::interfaces::mainnet::api::storage().system().digest();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn parent_hash(
+                &self,
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .parent_hash();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -603,7 +371,7 @@ pub mod mainnet {
             pub async fn event_topics_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::H256,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<
                     ::subxt::ext::subxt_core::alloc::vec::Vec<(
                         ::core::primitive::u64,
@@ -622,20 +390,16 @@ pub mod mainnet {
             }
             pub async fn event_topics_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H256,
-                            ::subxt::ext::subxt_core::alloc::vec::Vec<(
-                                ::core::primitive::u64,
-                                ::core::primitive::u32,
-                            )>,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H256,
+                        ::subxt::ext::subxt_core::alloc::vec::Vec<(
+                            ::core::primitive::u64,
+                            ::core::primitive::u32,
+                        )>,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .system()
@@ -657,74 +421,7 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn last_runtime_upgrade(
-                &self,
-            ) -> Result<
-                Option<runtime_types::frame_system::LastRuntimeUpgradeInfo>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .last_runtime_upgrade();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn number(
-                &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage().system().number();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn authorized_upgrade(
-                &self,
-            ) -> Result<
-                Option<runtime_types::frame_system::CodeUpgradeAuthorization>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .authorized_upgrade();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn extrinsic_count(
-                &self,
-            ) -> Result<Option<::core::primitive::u32>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .extrinsic_count();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn parent_hash(
-                &self,
-            ) -> Result<Option<::subxt::ext::subxt_core::utils::H256>, crate::error::StorageError>
-            {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .system()
-                    .parent_hash();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn event_count(
-                &self,
-            ) -> Result<Option<::core::primitive::u32>, crate::error::StorageError> {
+            pub async fn event_count(&self) -> crate::Result<Option<::core::primitive::u32>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .system()
                     .event_count();
@@ -734,12 +431,284 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
+            pub async fn events(
+                &self,
+            ) -> crate::Result<
+                Option<
+                    ::subxt::ext::subxt_core::alloc::vec::Vec<
+                        runtime_types::frame_system::EventRecord<
+                            runtime_types::torus_runtime::RuntimeEvent,
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage().system().events();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn last_runtime_upgrade(
+                &self,
+            ) -> crate::Result<Option<runtime_types::frame_system::LastRuntimeUpgradeInfo>>
+            {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .last_runtime_upgrade();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn number(&self) -> crate::Result<Option<::core::primitive::u64>> {
+                let call = crate::interfaces::mainnet::api::storage().system().number();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn block_hash_get(
+                &self,
+                key: &::core::primitive::u64,
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .block_hash(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn block_hash_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::core::primitive::u64,
+                        ::subxt::ext::subxt_core::utils::H256,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .block_hash_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::core::primitive::u64 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn execution_phase(
+                &self,
+            ) -> crate::Result<Option<runtime_types::frame_system::Phase>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .execution_phase();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn account_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::frame_system::AccountInfo<
+                        ::core::primitive::u32,
+                        runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .account(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn account_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::frame_system::AccountInfo<
+                            ::core::primitive::u32,
+                            runtime_types::pallet_balances::types::AccountData<
+                                ::core::primitive::u128,
+                            >,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .account_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn extrinsic_data_get(
+                &self,
+                key: &::core::primitive::u32,
+            ) -> crate::Result<
+                Option<::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>>,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .extrinsic_data(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn extrinsic_data_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::core::primitive::u32,
+                        ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .extrinsic_data_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::core::primitive::u32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
             pub async fn all_extrinsics_len(
                 &self,
-            ) -> Result<Option<::core::primitive::u32>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u32>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .system()
                     .all_extrinsics_len();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn upgraded_to_triple_ref_count(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::bool>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .upgraded_to_triple_ref_count();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn authorized_upgrade(
+                &self,
+            ) -> crate::Result<Option<runtime_types::frame_system::CodeUpgradeAuthorization>>
+            {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .authorized_upgrade();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn extrinsic_count(&self) -> crate::Result<Option<::core::primitive::u32>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .extrinsic_count();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn inherents_applied(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::bool>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .inherents_applied();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn block_weight(
+                &self,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::frame_support::dispatch::PerDispatchClass<
+                        runtime_types::sp_weights::weight_v2::Weight,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .block_weight();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn upgraded_to_u32_ref_count(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::bool>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .system()
+                    .upgraded_to_u32_ref_count();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -760,8 +729,7 @@ pub mod mainnet {
                 &self,
                 remark: crate::interfaces::mainnet::api::system::calls::types::remark::Remark,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .remark(remark);
@@ -775,8 +743,7 @@ pub mod mainnet {
                 &self,
                 remark: crate::interfaces::mainnet::api::system::calls::types::remark::Remark,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .remark(remark);
@@ -791,25 +758,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_heap_pages(
                 &self,
                 pages: crate::interfaces::mainnet::api::system::calls::types::set_heap_pages::Pages,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .set_heap_pages(pages);
@@ -823,8 +789,7 @@ pub mod mainnet {
                 &self,
                 pages: crate::interfaces::mainnet::api::system::calls::types::set_heap_pages::Pages,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .set_heap_pages(pages);
@@ -839,25 +804,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_code(
                 &self,
                 code: crate::interfaces::mainnet::api::system::calls::types::set_code::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .set_code(code);
@@ -871,8 +835,7 @@ pub mod mainnet {
                 &self,
                 code: crate::interfaces::mainnet::api::system::calls::types::set_code::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .set_code(code);
@@ -887,25 +850,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_code_without_checks(
                 &self,
                 code: crate::interfaces::mainnet::api::system::calls::types::set_code_without_checks::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .set_code_without_checks(code);
@@ -919,8 +881,7 @@ pub mod mainnet {
                 &self,
                 code: crate::interfaces::mainnet::api::system::calls::types::set_code_without_checks::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .set_code_without_checks(code);
@@ -935,25 +896,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_storage(
                 &self,
                 items: crate::interfaces::mainnet::api::system::calls::types::set_storage::Items,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .set_storage(items);
@@ -967,8 +927,7 @@ pub mod mainnet {
                 &self,
                 items: crate::interfaces::mainnet::api::system::calls::types::set_storage::Items,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .set_storage(items);
@@ -983,25 +942,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn kill_storage(
                 &self,
                 keys: crate::interfaces::mainnet::api::system::calls::types::kill_storage::Keys,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .kill_storage(keys);
@@ -1015,8 +973,7 @@ pub mod mainnet {
                 &self,
                 keys: crate::interfaces::mainnet::api::system::calls::types::kill_storage::Keys,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .kill_storage(keys);
@@ -1031,26 +988,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn kill_prefix(
                 &self,
                 prefix: crate::interfaces::mainnet::api::system::calls::types::kill_prefix::Prefix,
                 subkeys: crate::interfaces::mainnet::api::system::calls::types::kill_prefix::Subkeys,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .kill_prefix(prefix, subkeys);
@@ -1065,8 +1021,7 @@ pub mod mainnet {
                 prefix: crate::interfaces::mainnet::api::system::calls::types::kill_prefix::Prefix,
                 subkeys: crate::interfaces::mainnet::api::system::calls::types::kill_prefix::Subkeys,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .kill_prefix(prefix, subkeys);
@@ -1081,25 +1036,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remark_with_event(
                 &self,
                 remark: crate::interfaces::mainnet::api::system::calls::types::remark_with_event::Remark,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .remark_with_event(remark);
@@ -1113,8 +1067,7 @@ pub mod mainnet {
                 &self,
                 remark: crate::interfaces::mainnet::api::system::calls::types::remark_with_event::Remark,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .remark_with_event(remark);
@@ -1129,25 +1082,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn do_task(
                 &self,
                 task: crate::interfaces::mainnet::api::system::calls::types::do_task::Task,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().system().do_task(task);
                 Ok(self
                     .client
@@ -1159,8 +1111,7 @@ pub mod mainnet {
                 &self,
                 task: crate::interfaces::mainnet::api::system::calls::types::do_task::Task,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().system().do_task(task);
                 let mut stream = self
                     .client
@@ -1173,25 +1124,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn authorize_upgrade(
                 &self,
                 code_hash: crate::interfaces::mainnet::api::system::calls::types::authorize_upgrade::CodeHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .authorize_upgrade(code_hash);
@@ -1205,8 +1155,7 @@ pub mod mainnet {
                 &self,
                 code_hash: crate::interfaces::mainnet::api::system::calls::types::authorize_upgrade::CodeHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .authorize_upgrade(code_hash);
@@ -1221,25 +1170,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn authorize_upgrade_without_checks(
                 &self,
                 code_hash: crate::interfaces::mainnet::api::system::calls::types::authorize_upgrade_without_checks::CodeHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .authorize_upgrade_without_checks(code_hash);
@@ -1253,8 +1201,7 @@ pub mod mainnet {
                 &self,
                 code_hash: crate::interfaces::mainnet::api::system::calls::types::authorize_upgrade_without_checks::CodeHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .authorize_upgrade_without_checks(code_hash);
@@ -1269,25 +1216,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn apply_authorized_upgrade(
                 &self,
                 code: crate::interfaces::mainnet::api::system::calls::types::apply_authorized_upgrade::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .apply_authorized_upgrade(code);
@@ -1301,8 +1247,7 @@ pub mod mainnet {
                 &self,
                 code: crate::interfaces::mainnet::api::system::calls::types::apply_authorized_upgrade::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .system()
                     .apply_authorized_upgrade(code);
@@ -1317,18 +1262,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -1351,9 +1296,7 @@ pub mod mainnet {
             }
         }
         impl TimestampStorage<crate::chain::MainNet> {
-            pub async fn did_update(
-                &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
+            pub async fn did_update(&self) -> crate::Result<Option<::core::primitive::bool>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .timestamp()
                     .did_update();
@@ -1363,9 +1306,7 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn now(
-                &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
+            pub async fn now(&self) -> crate::Result<Option<::core::primitive::u64>> {
                 let call = crate::interfaces::mainnet::api::storage().timestamp().now();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
@@ -1387,8 +1328,7 @@ pub mod mainnet {
                 &self,
                 now: crate::interfaces::mainnet::api::timestamp::calls::types::set::Now,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().timestamp().set(now);
                 Ok(self
                     .client
@@ -1400,8 +1340,7 @@ pub mod mainnet {
                 &self,
                 now: crate::interfaces::mainnet::api::timestamp::calls::types::set::Now,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().timestamp().set(now);
                 let mut stream = self
                     .client
@@ -1414,18 +1353,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -1448,32 +1387,30 @@ pub mod mainnet {
             }
         }
         impl AuraStorage<crate::chain::MainNet> {
-            pub async fn current_slot(
+            pub async fn authorities(
                 &self,
-            ) -> Result<Option<runtime_types::sp_consensus_slots::Slot>, crate::error::StorageError>
-            {
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        runtime_types::sp_consensus_aura::sr25519::app_sr25519::Public,
+                    >,
+                >,
+            > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .aura()
-                    .current_slot();
+                    .authorities();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn authorities(
+            pub async fn current_slot(
                 &self,
-            ) -> Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        runtime_types::sp_consensus_aura::sr25519::app_sr25519::Public,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::sp_consensus_slots::Slot>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .aura()
-                    .authorities();
+                    .current_slot();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -1501,9 +1438,19 @@ pub mod mainnet {
             }
         }
         impl GrandpaStorage<crate::chain::MainNet> {
-            pub async fn next_forced(
+            pub async fn state(
                 &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
+            ) -> crate::Result<
+                Option<runtime_types::pallet_grandpa::StoredState<::core::primitive::u64>>,
+            > {
+                let call = crate::interfaces::mainnet::api::storage().grandpa().state();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn next_forced(&self) -> crate::Result<Option<::core::primitive::u64>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .grandpa()
                     .next_forced();
@@ -1513,37 +1460,20 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn state(
+            pub async fn stalled(
                 &self,
-            ) -> Result<
-                Option<runtime_types::pallet_grandpa::StoredState<::core::primitive::u64>>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage().grandpa().state();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn pending_change(
-                &self,
-            ) -> Result<
-                Option<runtime_types::pallet_grandpa::StoredPendingChange<::core::primitive::u64>>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<(::core::primitive::u64, ::core::primitive::u64)>>
+            {
                 let call = crate::interfaces::mainnet::api::storage()
                     .grandpa()
-                    .pending_change();
+                    .stalled();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn current_set_id(
-                &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
+            pub async fn current_set_id(&self) -> crate::Result<Option<::core::primitive::u64>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .grandpa()
                     .current_set_id();
@@ -1556,7 +1486,7 @@ pub mod mainnet {
             pub async fn set_id_session_get(
                 &self,
                 key: &::core::primitive::u64,
-            ) -> anyhow::Result<Option<::core::primitive::u32>> {
+            ) -> crate::Result<Option<::core::primitive::u32>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .grandpa()
                     .set_id_session(key);
@@ -1568,14 +1498,8 @@ pub mod mainnet {
             }
             pub async fn set_id_session_iter(
                 &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (::core::primitive::u64, ::core::primitive::u32),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
+            ) -> crate::Result<
+                impl Stream<Item = crate::Result<(::core::primitive::u64, ::core::primitive::u32)>>,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .grandpa()
@@ -1597,35 +1521,33 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn stalled(
-                &self,
-            ) -> Result<
-                Option<(::core::primitive::u64, ::core::primitive::u64)>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .grandpa()
-                    .stalled();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
             pub async fn authorities(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<(
                         runtime_types::sp_consensus_grandpa::app::Public,
                         ::core::primitive::u64,
                     )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .grandpa()
                     .authorities();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn pending_change(
+                &self,
+            ) -> crate::Result<
+                Option<runtime_types::pallet_grandpa::StoredPendingChange<::core::primitive::u64>>,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .grandpa()
+                    .pending_change();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -1647,8 +1569,7 @@ pub mod mainnet {
                 equivocation_proof: crate::interfaces::mainnet::api::grandpa::calls::types::report_equivocation::EquivocationProof,
                 key_owner_proof: crate::interfaces::mainnet::api::grandpa::calls::types::report_equivocation::KeyOwnerProof,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .grandpa()
                     .report_equivocation(equivocation_proof, key_owner_proof);
@@ -1663,8 +1584,7 @@ pub mod mainnet {
                 equivocation_proof: crate::interfaces::mainnet::api::grandpa::calls::types::report_equivocation::EquivocationProof,
                 key_owner_proof: crate::interfaces::mainnet::api::grandpa::calls::types::report_equivocation::KeyOwnerProof,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .grandpa()
                     .report_equivocation(equivocation_proof, key_owner_proof);
@@ -1679,26 +1599,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn report_equivocation_unsigned(
                 &self,
                 equivocation_proof: crate::interfaces::mainnet::api::grandpa::calls::types::report_equivocation_unsigned::EquivocationProof,
                 key_owner_proof: crate::interfaces::mainnet::api::grandpa::calls::types::report_equivocation_unsigned::KeyOwnerProof,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .grandpa()
                     .report_equivocation_unsigned(equivocation_proof, key_owner_proof);
@@ -1713,8 +1632,7 @@ pub mod mainnet {
                 equivocation_proof: crate::interfaces::mainnet::api::grandpa::calls::types::report_equivocation_unsigned::EquivocationProof,
                 key_owner_proof: crate::interfaces::mainnet::api::grandpa::calls::types::report_equivocation_unsigned::KeyOwnerProof,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .grandpa()
                     .report_equivocation_unsigned(equivocation_proof, key_owner_proof);
@@ -1729,26 +1647,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn note_stalled(
                 &self,
                 delay: crate::interfaces::mainnet::api::grandpa::calls::types::note_stalled::Delay,
                 best_finalized_block_number: crate::interfaces::mainnet::api::grandpa::calls::types::note_stalled::BestFinalizedBlockNumber,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .grandpa()
                     .note_stalled(delay, best_finalized_block_number);
@@ -1763,8 +1680,7 @@ pub mod mainnet {
                 delay: crate::interfaces::mainnet::api::grandpa::calls::types::note_stalled::Delay,
                 best_finalized_block_number: crate::interfaces::mainnet::api::grandpa::calls::types::note_stalled::BestFinalizedBlockNumber,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .grandpa()
                     .note_stalled(delay, best_finalized_block_number);
@@ -1779,18 +1695,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -1813,10 +1729,32 @@ pub mod mainnet {
             }
         }
         impl BalancesStorage<crate::chain::MainNet> {
+            pub async fn total_issuance(&self) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .balances()
+                    .total_issuance();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn inactive_issuance(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .balances()
+                    .inactive_issuance();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
             pub async fn account_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>>,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
@@ -1830,19 +1768,13 @@ pub mod mainnet {
             }
             pub async fn account_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::pallet_balances::types::AccountData<
-                                ::core::primitive::u128,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .balances()
@@ -1864,156 +1796,10 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn inactive_issuance(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .balances()
-                    .inactive_issuance();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn freezes_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        runtime_types::frame_support::traits::tokens::misc::IdAmount<
-                            (),
-                            ::core::primitive::u128,
-                        >,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .balances()
-                    .freezes(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn freezes_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                runtime_types::frame_support::traits::tokens::misc::IdAmount<
-                                    (),
-                                    ::core::primitive::u128,
-                                >,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .balances()
-                    .freezes_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn reserves_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        runtime_types::pallet_balances::types::ReserveData<
-                            (),
-                            ::core::primitive::u128,
-                        >,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .balances()
-                    .reserves(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn reserves_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                runtime_types::pallet_balances::types::ReserveData<
-                                    (),
-                                    ::core::primitive::u128,
-                                >,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .balances()
-                    .reserves_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn total_issuance(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .balances()
-                    .total_issuance();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
             pub async fn locks_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<
                         runtime_types::pallet_balances::types::BalanceLock<::core::primitive::u128>,
@@ -2031,21 +1817,17 @@ pub mod mainnet {
             }
             pub async fn locks_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<
-                                runtime_types::pallet_balances::types::BalanceLock<
-                                    ::core::primitive::u128,
-                                >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<
+                            runtime_types::pallet_balances::types::BalanceLock<
+                                ::core::primitive::u128,
                             >,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .balances()
@@ -2067,10 +1849,67 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
+            pub async fn reserves_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        runtime_types::pallet_balances::types::ReserveData<
+                            (),
+                            ::core::primitive::u128,
+                        >,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .balances()
+                    .reserves(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn reserves_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            runtime_types::pallet_balances::types::ReserveData<
+                                (),
+                                ::core::primitive::u128,
+                            >,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .balances()
+                    .reserves_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
             pub async fn holds_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::bounded_collections::bounded_vec::BoundedVec<
                         runtime_types::frame_support::traits::tokens::misc::IdAmount<
@@ -2091,26 +1930,79 @@ pub mod mainnet {
             }
             pub async fn holds_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                runtime_types::frame_support::traits::tokens::misc::IdAmount<
-                                    runtime_types::torus_runtime::RuntimeHoldReason,
-                                    ::core::primitive::u128,
-                                >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            runtime_types::frame_support::traits::tokens::misc::IdAmount<
+                                runtime_types::torus_runtime::RuntimeHoldReason,
+                                ::core::primitive::u128,
                             >,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .balances()
                     .holds_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn freezes_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        runtime_types::frame_support::traits::tokens::misc::IdAmount<
+                            (),
+                            ::core::primitive::u128,
+                        >,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .balances()
+                    .freezes(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn freezes_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            runtime_types::frame_support::traits::tokens::misc::IdAmount<
+                                (),
+                                ::core::primitive::u128,
+                            >,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .balances()
+                    .freezes_iter();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -2143,8 +2035,7 @@ pub mod mainnet {
                 dest: crate::interfaces::mainnet::api::balances::calls::types::transfer_allow_death::Dest,
                 value: crate::interfaces::mainnet::api::balances::calls::types::transfer_allow_death::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .transfer_allow_death(dest, value);
@@ -2159,8 +2050,7 @@ pub mod mainnet {
                 dest: crate::interfaces::mainnet::api::balances::calls::types::transfer_allow_death::Dest,
                 value: crate::interfaces::mainnet::api::balances::calls::types::transfer_allow_death::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .transfer_allow_death(dest, value);
@@ -2175,18 +2065,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn force_transfer(
                 &self,
@@ -2194,8 +2084,7 @@ pub mod mainnet {
                 dest: crate::interfaces::mainnet::api::balances::calls::types::force_transfer::Dest,
                 value: crate::interfaces::mainnet::api::balances::calls::types::force_transfer::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .force_transfer(source, dest, value);
@@ -2211,8 +2100,7 @@ pub mod mainnet {
                 dest: crate::interfaces::mainnet::api::balances::calls::types::force_transfer::Dest,
                 value: crate::interfaces::mainnet::api::balances::calls::types::force_transfer::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .force_transfer(source, dest, value);
@@ -2227,26 +2115,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn transfer_keep_alive(
                 &self,
                 dest: crate::interfaces::mainnet::api::balances::calls::types::transfer_keep_alive::Dest,
                 value: crate::interfaces::mainnet::api::balances::calls::types::transfer_keep_alive::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .transfer_keep_alive(dest, value);
@@ -2261,8 +2148,7 @@ pub mod mainnet {
                 dest: crate::interfaces::mainnet::api::balances::calls::types::transfer_keep_alive::Dest,
                 value: crate::interfaces::mainnet::api::balances::calls::types::transfer_keep_alive::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .transfer_keep_alive(dest, value);
@@ -2277,26 +2163,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn transfer_all(
                 &self,
                 dest: crate::interfaces::mainnet::api::balances::calls::types::transfer_all::Dest,
                 keep_alive: crate::interfaces::mainnet::api::balances::calls::types::transfer_all::KeepAlive,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .transfer_all(dest, keep_alive);
@@ -2311,8 +2196,7 @@ pub mod mainnet {
                 dest: crate::interfaces::mainnet::api::balances::calls::types::transfer_all::Dest,
                 keep_alive: crate::interfaces::mainnet::api::balances::calls::types::transfer_all::KeepAlive,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .transfer_all(dest, keep_alive);
@@ -2327,26 +2211,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn force_unreserve(
                 &self,
                 who: crate::interfaces::mainnet::api::balances::calls::types::force_unreserve::Who,
                 amount: crate::interfaces::mainnet::api::balances::calls::types::force_unreserve::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .force_unreserve(who, amount);
@@ -2361,8 +2244,7 @@ pub mod mainnet {
                 who: crate::interfaces::mainnet::api::balances::calls::types::force_unreserve::Who,
                 amount: crate::interfaces::mainnet::api::balances::calls::types::force_unreserve::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .force_unreserve(who, amount);
@@ -2377,25 +2259,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn upgrade_accounts(
                 &self,
                 who: crate::interfaces::mainnet::api::balances::calls::types::upgrade_accounts::Who,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .upgrade_accounts(who);
@@ -2409,8 +2290,7 @@ pub mod mainnet {
                 &self,
                 who: crate::interfaces::mainnet::api::balances::calls::types::upgrade_accounts::Who,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .upgrade_accounts(who);
@@ -2425,26 +2305,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn force_set_balance(
                 &self,
                 who: crate::interfaces::mainnet::api::balances::calls::types::force_set_balance::Who,
                 new_free: crate::interfaces::mainnet::api::balances::calls::types::force_set_balance::NewFree,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .force_set_balance(who, new_free);
@@ -2459,8 +2338,7 @@ pub mod mainnet {
                 who: crate::interfaces::mainnet::api::balances::calls::types::force_set_balance::Who,
                 new_free: crate::interfaces::mainnet::api::balances::calls::types::force_set_balance::NewFree,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .force_set_balance(who, new_free);
@@ -2475,26 +2353,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn force_adjust_total_issuance(
                 &self,
                 direction: crate::interfaces::mainnet::api::balances::calls::types::force_adjust_total_issuance::Direction,
                 delta: crate::interfaces::mainnet::api::balances::calls::types::force_adjust_total_issuance::Delta,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .force_adjust_total_issuance(direction, delta);
@@ -2509,8 +2386,7 @@ pub mod mainnet {
                 direction: crate::interfaces::mainnet::api::balances::calls::types::force_adjust_total_issuance::Direction,
                 delta: crate::interfaces::mainnet::api::balances::calls::types::force_adjust_total_issuance::Delta,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .force_adjust_total_issuance(direction, delta);
@@ -2525,26 +2401,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn burn(
                 &self,
                 value: crate::interfaces::mainnet::api::balances::calls::types::burn::Value,
                 keep_alive: crate::interfaces::mainnet::api::balances::calls::types::burn::KeepAlive,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .burn(value, keep_alive);
@@ -2559,8 +2434,7 @@ pub mod mainnet {
                 value: crate::interfaces::mainnet::api::balances::calls::types::burn::Value,
                 keep_alive: crate::interfaces::mainnet::api::balances::calls::types::burn::KeepAlive,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .balances()
                     .burn(value, keep_alive);
@@ -2575,18 +2449,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -2612,30 +2486,26 @@ pub mod mainnet {
             }
         }
         impl TransactionPaymentStorage<crate::chain::MainNet> {
-            pub async fn next_fee_multiplier(
+            pub async fn storage_version(
                 &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::fixed_point::FixedU128>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::pallet_transaction_payment::Releases>>
+            {
                 let call = crate::interfaces::mainnet::api::storage()
                     .transaction_payment()
-                    .next_fee_multiplier();
+                    .storage_version();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn storage_version(
+            pub async fn next_fee_multiplier(
                 &self,
-            ) -> Result<
-                Option<runtime_types::pallet_transaction_payment::Releases>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::fixed_point::FixedU128>>
+            {
                 let call = crate::interfaces::mainnet::api::storage()
                     .transaction_payment()
-                    .storage_version();
+                    .next_fee_multiplier();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -2665,10 +2535,7 @@ pub mod mainnet {
         impl SudoStorage<crate::chain::MainNet> {
             pub async fn key(
                 &self,
-            ) -> Result<
-                Option<::subxt::ext::subxt_core::utils::AccountId32>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::AccountId32>> {
                 let call = crate::interfaces::mainnet::api::storage().sudo().key();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
@@ -2690,8 +2557,7 @@ pub mod mainnet {
                 &self,
                 call: crate::interfaces::mainnet::api::sudo::calls::types::sudo::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().sudo().sudo(call);
                 Ok(self
                     .client
@@ -2703,8 +2569,7 @@ pub mod mainnet {
                 &self,
                 call: crate::interfaces::mainnet::api::sudo::calls::types::sudo::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().sudo().sudo(call);
                 let mut stream = self
                     .client
@@ -2717,26 +2582,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn sudo_unchecked_weight(
                 &self,
                 call: crate::interfaces::mainnet::api::sudo::calls::types::sudo_unchecked_weight::Call,
                 weight: crate::interfaces::mainnet::api::sudo::calls::types::sudo_unchecked_weight::Weight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .sudo()
                     .sudo_unchecked_weight(call, weight);
@@ -2751,8 +2615,7 @@ pub mod mainnet {
                 call: crate::interfaces::mainnet::api::sudo::calls::types::sudo_unchecked_weight::Call,
                 weight: crate::interfaces::mainnet::api::sudo::calls::types::sudo_unchecked_weight::Weight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .sudo()
                     .sudo_unchecked_weight(call, weight);
@@ -2767,25 +2630,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_key(
                 &self,
                 new: crate::interfaces::mainnet::api::sudo::calls::types::set_key::New,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().sudo().set_key(new);
                 Ok(self
                     .client
@@ -2797,8 +2659,7 @@ pub mod mainnet {
                 &self,
                 new: crate::interfaces::mainnet::api::sudo::calls::types::set_key::New,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().sudo().set_key(new);
                 let mut stream = self
                     .client
@@ -2811,26 +2672,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn sudo_as(
                 &self,
                 who: crate::interfaces::mainnet::api::sudo::calls::types::sudo_as::Who,
                 call: crate::interfaces::mainnet::api::sudo::calls::types::sudo_as::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .sudo()
                     .sudo_as(who, call);
@@ -2845,8 +2705,7 @@ pub mod mainnet {
                 who: crate::interfaces::mainnet::api::sudo::calls::types::sudo_as::Who,
                 call: crate::interfaces::mainnet::api::sudo::calls::types::sudo_as::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .sudo()
                     .sudo_as(who, call);
@@ -2861,24 +2720,23 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_key(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().sudo().remove_key();
                 Ok(self
                     .client
@@ -2889,8 +2747,7 @@ pub mod mainnet {
             pub async fn remove_key_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().sudo().remove_key();
                 let mut stream = self
                     .client
@@ -2903,18 +2760,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -2941,7 +2798,7 @@ pub mod mainnet {
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
                 key2: &[::core::primitive::u8; 32usize],
-            ) -> Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::pallet_multisig::Multisig<
                         ::core::primitive::u64,
@@ -2949,7 +2806,6 @@ pub mod mainnet {
                         ::subxt::ext::subxt_core::utils::AccountId32,
                     >,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .multisig()
@@ -2962,24 +2818,20 @@ pub mod mainnet {
             }
             pub async fn multisigs_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                [::core::primitive::u8; 32usize],
-                            ),
-                            runtime_types::pallet_multisig::Multisig<
-                                ::core::primitive::u64,
-                                ::core::primitive::u128,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            [::core::primitive::u8; 32usize],
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::pallet_multisig::Multisig<
+                            ::core::primitive::u64,
+                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .multisig()
@@ -3007,24 +2859,20 @@ pub mod mainnet {
             pub async fn multisigs_iter1(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                [::core::primitive::u8; 32usize],
-                            ),
-                            runtime_types::pallet_multisig::Multisig<
-                                ::core::primitive::u64,
-                                ::core::primitive::u128,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            [::core::primitive::u8; 32usize],
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::pallet_multisig::Multisig<
+                            ::core::primitive::u64,
+                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .multisig()
@@ -3064,8 +2912,7 @@ pub mod mainnet {
                 other_signatories: crate::interfaces::mainnet::api::multisig::calls::types::as_multi_threshold1::OtherSignatories,
                 call: crate::interfaces::mainnet::api::multisig::calls::types::as_multi_threshold1::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .multisig()
                     .as_multi_threshold_1(other_signatories, call);
@@ -3080,8 +2927,7 @@ pub mod mainnet {
                 other_signatories: crate::interfaces::mainnet::api::multisig::calls::types::as_multi_threshold1::OtherSignatories,
                 call: crate::interfaces::mainnet::api::multisig::calls::types::as_multi_threshold1::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .multisig()
                     .as_multi_threshold_1(other_signatories, call);
@@ -3096,18 +2942,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn as_multi(
                 &self,
@@ -3117,8 +2963,7 @@ pub mod mainnet {
                 call: crate::interfaces::mainnet::api::multisig::calls::types::as_multi::Call,
                 max_weight: crate::interfaces::mainnet::api::multisig::calls::types::as_multi::MaxWeight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().multisig().as_multi(
                     threshold,
                     other_signatories,
@@ -3140,8 +2985,7 @@ pub mod mainnet {
                 call: crate::interfaces::mainnet::api::multisig::calls::types::as_multi::Call,
                 max_weight: crate::interfaces::mainnet::api::multisig::calls::types::as_multi::MaxWeight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().multisig().as_multi(
                     threshold,
                     other_signatories,
@@ -3160,18 +3004,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn approve_as_multi(
                 &self,
@@ -3181,8 +3025,7 @@ pub mod mainnet {
                 call_hash: crate::interfaces::mainnet::api::multisig::calls::types::approve_as_multi::CallHash,
                 max_weight: crate::interfaces::mainnet::api::multisig::calls::types::approve_as_multi::MaxWeight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .multisig()
                     .approve_as_multi(
@@ -3206,8 +3049,7 @@ pub mod mainnet {
                 call_hash: crate::interfaces::mainnet::api::multisig::calls::types::approve_as_multi::CallHash,
                 max_weight: crate::interfaces::mainnet::api::multisig::calls::types::approve_as_multi::MaxWeight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .multisig()
                     .approve_as_multi(
@@ -3228,18 +3070,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn cancel_as_multi(
                 &self,
@@ -3248,8 +3090,7 @@ pub mod mainnet {
                 timepoint: crate::interfaces::mainnet::api::multisig::calls::types::cancel_as_multi::Timepoint,
                 call_hash: crate::interfaces::mainnet::api::multisig::calls::types::cancel_as_multi::CallHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .multisig()
                     .cancel_as_multi(threshold, other_signatories, timepoint, call_hash);
@@ -3266,8 +3107,7 @@ pub mod mainnet {
                 timepoint: crate::interfaces::mainnet::api::multisig::calls::types::cancel_as_multi::Timepoint,
                 call_hash: crate::interfaces::mainnet::api::multisig::calls::types::cancel_as_multi::CallHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .multisig()
                     .cancel_as_multi(threshold, other_signatories, timepoint, call_hash);
@@ -3282,18 +3122,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -3318,13 +3158,12 @@ pub mod mainnet {
         impl EthereumStorage<crate::chain::MainNet> {
             pub async fn current_transaction_statuses(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 Option<
                     ::subxt::ext::subxt_core::alloc::vec::Vec<
                         runtime_types::fp_rpc::TransactionStatus,
                     >,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .ethereum()
@@ -3338,7 +3177,7 @@ pub mod mainnet {
             pub async fn block_hash_get(
                 &self,
                 key: &runtime_types::primitive_types::U256,
-            ) -> anyhow::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .ethereum()
                     .block_hash(key);
@@ -3350,17 +3189,13 @@ pub mod mainnet {
             }
             pub async fn block_hash_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            runtime_types::primitive_types::U256,
-                            ::subxt::ext::subxt_core::utils::H256,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        runtime_types::primitive_types::U256,
+                        ::subxt::ext::subxt_core::utils::H256,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .ethereum()
@@ -3382,34 +3217,14 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn current_block(
-                &self,
-            ) -> Result<
-                Option<
-                    runtime_types::ethereum::block::Block<
-                        runtime_types::ethereum::transaction::TransactionV2,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .ethereum()
-                    .current_block();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
             pub async fn current_receipts(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 Option<
                     ::subxt::ext::subxt_core::alloc::vec::Vec<
                         runtime_types::ethereum::receipt::ReceiptV3,
                     >,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .ethereum()
@@ -3422,7 +3237,7 @@ pub mod mainnet {
             }
             pub async fn pending(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 Option<
                     ::subxt::ext::subxt_core::alloc::vec::Vec<(
                         runtime_types::ethereum::transaction::TransactionV2,
@@ -3430,11 +3245,28 @@ pub mod mainnet {
                         runtime_types::ethereum::receipt::ReceiptV3,
                     )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .ethereum()
                     .pending();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn current_block(
+                &self,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::ethereum::block::Block<
+                        runtime_types::ethereum::transaction::TransactionV2,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .ethereum()
+                    .current_block();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -3455,8 +3287,7 @@ pub mod mainnet {
                 &self,
                 transaction: crate::interfaces::mainnet::api::ethereum::calls::types::transact::Transaction,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .ethereum()
                     .transact(transaction);
@@ -3470,8 +3301,7 @@ pub mod mainnet {
                 &self,
                 transaction: crate::interfaces::mainnet::api::ethereum::calls::types::transact::Transaction,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .ethereum()
                     .transact(transaction);
@@ -3486,18 +3316,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -3520,57 +3350,10 @@ pub mod mainnet {
             }
         }
         impl EvmStorage<crate::chain::MainNet> {
-            pub async fn account_codes_metadata_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::H160,
-            ) -> anyhow::Result<Option<runtime_types::pallet_evm::CodeMetadata>> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .evm()
-                    .account_codes_metadata(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn account_codes_metadata_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H160,
-                            runtime_types::pallet_evm::CodeMetadata,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .evm()
-                    .account_codes_metadata_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::H160 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
             pub async fn account_codes_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::H160,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>>,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
@@ -3584,17 +3367,13 @@ pub mod mainnet {
             }
             pub async fn account_codes_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H160,
-                            ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H160,
+                        ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .evm()
@@ -3620,8 +3399,7 @@ pub mod mainnet {
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::H160,
                 key2: &::subxt::ext::subxt_core::utils::H256,
-            ) -> Result<Option<::subxt::ext::subxt_core::utils::H256>, crate::error::StorageError>
-            {
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .evm()
                     .account_storages(key1, key2);
@@ -3633,20 +3411,16 @@ pub mod mainnet {
             }
             pub async fn account_storages_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::H160,
-                                ::subxt::ext::subxt_core::utils::H256,
-                            ),
+                            ::subxt::ext::subxt_core::utils::H160,
                             ::subxt::ext::subxt_core::utils::H256,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::subxt::ext::subxt_core::utils::H256,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .evm()
@@ -3674,20 +3448,16 @@ pub mod mainnet {
             pub async fn account_storages_iter1(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::H160,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::H160,
-                                ::subxt::ext::subxt_core::utils::H256,
-                            ),
+                            ::subxt::ext::subxt_core::utils::H160,
                             ::subxt::ext::subxt_core::utils::H256,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::subxt::ext::subxt_core::utils::H256,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .evm()
@@ -3712,10 +3482,53 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
+            pub async fn account_codes_metadata_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::H160,
+            ) -> crate::Result<Option<runtime_types::pallet_evm::CodeMetadata>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .evm()
+                    .account_codes_metadata(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn account_codes_metadata_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H160,
+                        runtime_types::pallet_evm::CodeMetadata,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .evm()
+                    .account_codes_metadata_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::H160 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
             pub async fn suicided_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::H160,
-            ) -> anyhow::Result<Option<()>> {
+            ) -> crate::Result<Option<()>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .evm()
                     .suicided(key);
@@ -3727,14 +3540,8 @@ pub mod mainnet {
             }
             pub async fn suicided_iter(
                 &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (::subxt::ext::subxt_core::utils::H160, ()),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
+            ) -> crate::Result<
+                impl Stream<Item = crate::Result<(::subxt::ext::subxt_core::utils::H160, ())>>,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .evm()
@@ -3771,8 +3578,7 @@ pub mod mainnet {
                 address: crate::interfaces::mainnet::api::evm::calls::types::withdraw::Address,
                 value: crate::interfaces::mainnet::api::evm::calls::types::withdraw::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .evm()
                     .withdraw(address, value);
@@ -3787,8 +3593,7 @@ pub mod mainnet {
                 address: crate::interfaces::mainnet::api::evm::calls::types::withdraw::Address,
                 value: crate::interfaces::mainnet::api::evm::calls::types::withdraw::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .evm()
                     .withdraw(address, value);
@@ -3803,18 +3608,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn call(
                 &self,
@@ -3828,8 +3633,7 @@ pub mod mainnet {
                 nonce: crate::interfaces::mainnet::api::evm::calls::types::call::Nonce,
                 access_list: crate::interfaces::mainnet::api::evm::calls::types::call::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().evm().call(
                     source,
                     target,
@@ -3859,8 +3663,7 @@ pub mod mainnet {
                 nonce: crate::interfaces::mainnet::api::evm::calls::types::call::Nonce,
                 access_list: crate::interfaces::mainnet::api::evm::calls::types::call::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().evm().call(
                     source,
                     target,
@@ -3883,18 +3686,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn create(
                 &self,
@@ -3907,8 +3710,7 @@ pub mod mainnet {
                 nonce: crate::interfaces::mainnet::api::evm::calls::types::create::Nonce,
                 access_list: crate::interfaces::mainnet::api::evm::calls::types::create::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().evm().create(
                     source,
                     init,
@@ -3936,8 +3738,7 @@ pub mod mainnet {
                 nonce: crate::interfaces::mainnet::api::evm::calls::types::create::Nonce,
                 access_list: crate::interfaces::mainnet::api::evm::calls::types::create::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().evm().create(
                     source,
                     init,
@@ -3959,18 +3760,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn create2(
                 &self,
@@ -3984,8 +3785,7 @@ pub mod mainnet {
                 nonce: crate::interfaces::mainnet::api::evm::calls::types::create2::Nonce,
                 access_list: crate::interfaces::mainnet::api::evm::calls::types::create2::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().evm().create2(
                     source,
                     init,
@@ -4015,8 +3815,7 @@ pub mod mainnet {
                 nonce: crate::interfaces::mainnet::api::evm::calls::types::create2::Nonce,
                 access_list: crate::interfaces::mainnet::api::evm::calls::types::create2::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().evm().create2(
                     source,
                     init,
@@ -4039,18 +3838,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -4073,33 +3872,33 @@ pub mod mainnet {
             }
         }
         impl GovernanceStorage<crate::chain::MainNet> {
-            pub async fn whitelist_get(
+            pub async fn proposals_get(
                 &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<()>> {
+                key: &::core::primitive::u64,
+            ) -> crate::Result<Option<runtime_types::pallet_governance::proposal::Proposal>>
+            {
                 let call = crate::interfaces::mainnet::api::storage()
                     .governance()
-                    .whitelist(key);
+                    .proposals(key);
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn whitelist_iter(
+            pub async fn proposals_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (::subxt::ext::subxt_core::utils::AccountId32, ()),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::core::primitive::u64,
+                        runtime_types::pallet_governance::proposal::Proposal,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .governance()
-                    .whitelist_iter();
+                    .proposals_iter();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -4109,7 +3908,7 @@ pub mod mainnet {
                     .await?
                     .map(|res| {
                         let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                        let key = <::core::primitive::u64 as Decode>::decode(
                             &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
                         )?;
                         Ok((key, res.value))
@@ -4117,36 +3916,7 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn treasury_emission_fee(
-                &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::per_things::Percent>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .governance()
-                    .treasury_emission_fee();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn namespaces_frozen(
-                &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .governance()
-                    .namespaces_frozen();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn agents_frozen(
-                &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
+            pub async fn agents_frozen(&self) -> crate::Result<Option<::core::primitive::bool>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .governance()
                     .agents_frozen();
@@ -4156,54 +3926,10 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn allocators_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<()>> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .governance()
-                    .allocators(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn allocators_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (::subxt::ext::subxt_core::utils::AccountId32, ()),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .governance()
-                    .allocators_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
             pub async fn agent_applications_get(
                 &self,
                 key: &::core::primitive::u32,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<runtime_types::pallet_governance::application::AgentApplication>,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
@@ -4217,17 +3943,13 @@ pub mod mainnet {
             }
             pub async fn agent_applications_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u32,
-                            runtime_types::pallet_governance::application::AgentApplication,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::core::primitive::u32,
+                        runtime_types::pallet_governance::application::AgentApplication,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .governance()
@@ -4251,13 +3973,12 @@ pub mod mainnet {
             }
             pub async fn not_delegating_voting_power(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
                         ::subxt::ext::subxt_core::utils::AccountId32,
                     >,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .governance()
@@ -4268,75 +3989,11 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn global_governance_config(
-                &self,
-            ) -> Result<
-                Option<runtime_types::pallet_governance::config::GovernanceConfiguration>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .governance()
-                    .global_governance_config();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn proposals_get(
-                &self,
-                key: &::core::primitive::u64,
-            ) -> anyhow::Result<Option<runtime_types::pallet_governance::proposal::Proposal>>
-            {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .governance()
-                    .proposals(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn proposals_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u64,
-                            runtime_types::pallet_governance::proposal::Proposal,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .governance()
-                    .proposals_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::core::primitive::u64 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
             pub async fn unrewarded_proposals_get(
                 &self,
                 key: &::core::primitive::u64,
-            ) -> anyhow::Result<
-                Option<runtime_types::pallet_governance::proposal::UnrewardedProposal>,
-            > {
+            ) -> crate::Result<Option<runtime_types::pallet_governance::proposal::UnrewardedProposal>>
+            {
                 let call = crate::interfaces::mainnet::api::storage()
                     .governance()
                     .unrewarded_proposals(key);
@@ -4348,17 +4005,13 @@ pub mod mainnet {
             }
             pub async fn unrewarded_proposals_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u64,
-                            runtime_types::pallet_governance::proposal::UnrewardedProposal,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::core::primitive::u64,
+                        runtime_types::pallet_governance::proposal::UnrewardedProposal,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .governance()
@@ -4382,10 +4035,7 @@ pub mod mainnet {
             }
             pub async fn dao_treasury_address(
                 &self,
-            ) -> Result<
-                Option<::subxt::ext::subxt_core::utils::AccountId32>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::AccountId32>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .governance()
                     .dao_treasury_address();
@@ -4394,6 +4044,121 @@ pub mod mainnet {
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
+            }
+            pub async fn namespaces_frozen(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::bool>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .governance()
+                    .namespaces_frozen();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn global_governance_config(
+                &self,
+            ) -> crate::Result<
+                Option<runtime_types::pallet_governance::config::GovernanceConfiguration>,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .governance()
+                    .global_governance_config();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn whitelist_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<Option<()>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .governance()
+                    .whitelist(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn whitelist_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<Item = crate::Result<(::subxt::ext::subxt_core::utils::AccountId32, ())>>,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .governance()
+                    .whitelist_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn treasury_emission_fee(
+                &self,
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::per_things::Percent>>
+            {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .governance()
+                    .treasury_emission_fee();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn allocators_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<Option<()>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .governance()
+                    .allocators(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn allocators_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<Item = crate::Result<(::subxt::ext::subxt_core::utils::AccountId32, ())>>,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .governance()
+                    .allocators_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
             }
         }
         impl GovernanceClient<crate::chain::MainNet> {
@@ -4409,8 +4174,7 @@ pub mod mainnet {
                 &self,
                 key: crate::interfaces::mainnet::api::governance::calls::types::add_allocator::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_allocator(key);
@@ -4424,8 +4188,7 @@ pub mod mainnet {
                 &self,
                 key: crate::interfaces::mainnet::api::governance::calls::types::add_allocator::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_allocator(key);
@@ -4440,25 +4203,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_allocator(
                 &self,
                 key: crate::interfaces::mainnet::api::governance::calls::types::remove_allocator::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .remove_allocator(key);
@@ -4472,8 +4234,7 @@ pub mod mainnet {
                 &self,
                 key: crate::interfaces::mainnet::api::governance::calls::types::remove_allocator::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .remove_allocator(key);
@@ -4488,25 +4249,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_to_whitelist(
                 &self,
                 key: crate::interfaces::mainnet::api::governance::calls::types::add_to_whitelist::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_to_whitelist(key);
@@ -4520,8 +4280,7 @@ pub mod mainnet {
                 &self,
                 key: crate::interfaces::mainnet::api::governance::calls::types::add_to_whitelist::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_to_whitelist(key);
@@ -4536,25 +4295,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_from_whitelist(
                 &self,
                 key: crate::interfaces::mainnet::api::governance::calls::types::remove_from_whitelist::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .remove_from_whitelist(key);
@@ -4568,8 +4326,7 @@ pub mod mainnet {
                 &self,
                 key: crate::interfaces::mainnet::api::governance::calls::types::remove_from_whitelist::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .remove_from_whitelist(key);
@@ -4584,25 +4341,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn accept_application(
                 &self,
                 application_id: crate::interfaces::mainnet::api::governance::calls::types::accept_application::ApplicationId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .accept_application(application_id);
@@ -4616,8 +4372,7 @@ pub mod mainnet {
                 &self,
                 application_id: crate::interfaces::mainnet::api::governance::calls::types::accept_application::ApplicationId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .accept_application(application_id);
@@ -4632,25 +4387,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn deny_application(
                 &self,
                 application_id: crate::interfaces::mainnet::api::governance::calls::types::deny_application::ApplicationId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .deny_application(application_id);
@@ -4664,8 +4418,7 @@ pub mod mainnet {
                 &self,
                 application_id: crate::interfaces::mainnet::api::governance::calls::types::deny_application::ApplicationId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .deny_application(application_id);
@@ -4680,26 +4433,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn penalize_agent(
                 &self,
                 agent_key: crate::interfaces::mainnet::api::governance::calls::types::penalize_agent::AgentKey,
                 percentage: crate::interfaces::mainnet::api::governance::calls::types::penalize_agent::Percentage,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .penalize_agent(agent_key, percentage);
@@ -4714,8 +4466,7 @@ pub mod mainnet {
                 agent_key: crate::interfaces::mainnet::api::governance::calls::types::penalize_agent::AgentKey,
                 percentage: crate::interfaces::mainnet::api::governance::calls::types::penalize_agent::Percentage,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .penalize_agent(agent_key, percentage);
@@ -4730,18 +4481,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn submit_application(
                 &self,
@@ -4749,8 +4500,7 @@ pub mod mainnet {
                 metadata: crate::interfaces::mainnet::api::governance::calls::types::submit_application::Metadata,
                 removing: crate::interfaces::mainnet::api::governance::calls::types::submit_application::Removing,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .submit_application(agent_key, metadata, removing);
@@ -4766,8 +4516,7 @@ pub mod mainnet {
                 metadata: crate::interfaces::mainnet::api::governance::calls::types::submit_application::Metadata,
                 removing: crate::interfaces::mainnet::api::governance::calls::types::submit_application::Removing,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .submit_application(agent_key, metadata, removing);
@@ -4782,26 +4531,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_global_params_proposal(
                 &self,
                 data: crate::interfaces::mainnet::api::governance::calls::types::add_global_params_proposal::Data,
                 metadata: crate::interfaces::mainnet::api::governance::calls::types::add_global_params_proposal::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_global_params_proposal(data, metadata);
@@ -4816,8 +4564,7 @@ pub mod mainnet {
                 data: crate::interfaces::mainnet::api::governance::calls::types::add_global_params_proposal::Data,
                 metadata: crate::interfaces::mainnet::api::governance::calls::types::add_global_params_proposal::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_global_params_proposal(data, metadata);
@@ -4832,25 +4579,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_global_custom_proposal(
                 &self,
                 metadata: crate::interfaces::mainnet::api::governance::calls::types::add_global_custom_proposal::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_global_custom_proposal(metadata);
@@ -4864,8 +4610,7 @@ pub mod mainnet {
                 &self,
                 metadata: crate::interfaces::mainnet::api::governance::calls::types::add_global_custom_proposal::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_global_custom_proposal(metadata);
@@ -4880,18 +4625,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_dao_treasury_transfer_proposal(
                 &self,
@@ -4899,8 +4644,7 @@ pub mod mainnet {
                 destination_key: crate::interfaces::mainnet::api::governance::calls::types::add_dao_treasury_transfer_proposal::DestinationKey,
                 data: crate::interfaces::mainnet::api::governance::calls::types::add_dao_treasury_transfer_proposal::Data,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_dao_treasury_transfer_proposal(value, destination_key, data);
@@ -4916,8 +4660,7 @@ pub mod mainnet {
                 destination_key: crate::interfaces::mainnet::api::governance::calls::types::add_dao_treasury_transfer_proposal::DestinationKey,
                 data: crate::interfaces::mainnet::api::governance::calls::types::add_dao_treasury_transfer_proposal::Data,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_dao_treasury_transfer_proposal(value, destination_key, data);
@@ -4932,26 +4675,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn vote_proposal(
                 &self,
                 proposal_id: crate::interfaces::mainnet::api::governance::calls::types::vote_proposal::ProposalId,
                 agree: crate::interfaces::mainnet::api::governance::calls::types::vote_proposal::Agree,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .vote_proposal(proposal_id, agree);
@@ -4966,8 +4708,7 @@ pub mod mainnet {
                 proposal_id: crate::interfaces::mainnet::api::governance::calls::types::vote_proposal::ProposalId,
                 agree: crate::interfaces::mainnet::api::governance::calls::types::vote_proposal::Agree,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .vote_proposal(proposal_id, agree);
@@ -4982,25 +4723,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_vote_proposal(
                 &self,
                 proposal_id: crate::interfaces::mainnet::api::governance::calls::types::remove_vote_proposal::ProposalId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .remove_vote_proposal(proposal_id);
@@ -5014,8 +4754,7 @@ pub mod mainnet {
                 &self,
                 proposal_id: crate::interfaces::mainnet::api::governance::calls::types::remove_vote_proposal::ProposalId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .remove_vote_proposal(proposal_id);
@@ -5030,24 +4769,23 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn enable_vote_delegation(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .enable_vote_delegation();
@@ -5060,8 +4798,7 @@ pub mod mainnet {
             pub async fn enable_vote_delegation_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .enable_vote_delegation();
@@ -5076,24 +4813,23 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn disable_vote_delegation(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .disable_vote_delegation();
@@ -5106,8 +4842,7 @@ pub mod mainnet {
             pub async fn disable_vote_delegation_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .disable_vote_delegation();
@@ -5122,18 +4857,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_emission_proposal(
                 &self,
@@ -5142,8 +4877,7 @@ pub mod mainnet {
                 incentives_ratio: crate::interfaces::mainnet::api::governance::calls::types::add_emission_proposal::IncentivesRatio,
                 data: crate::interfaces::mainnet::api::governance::calls::types::add_emission_proposal::Data,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_emission_proposal(
@@ -5165,8 +4899,7 @@ pub mod mainnet {
                 incentives_ratio: crate::interfaces::mainnet::api::governance::calls::types::add_emission_proposal::IncentivesRatio,
                 data: crate::interfaces::mainnet::api::governance::calls::types::add_emission_proposal::Data,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .add_emission_proposal(
@@ -5186,26 +4919,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_emission_params(
                 &self,
                 recycling_percentage: crate::interfaces::mainnet::api::governance::calls::types::set_emission_params::RecyclingPercentage,
                 treasury_percentage: crate::interfaces::mainnet::api::governance::calls::types::set_emission_params::TreasuryPercentage,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .set_emission_params(recycling_percentage, treasury_percentage);
@@ -5220,8 +4952,7 @@ pub mod mainnet {
                 recycling_percentage: crate::interfaces::mainnet::api::governance::calls::types::set_emission_params::RecyclingPercentage,
                 treasury_percentage: crate::interfaces::mainnet::api::governance::calls::types::set_emission_params::TreasuryPercentage,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .set_emission_params(recycling_percentage, treasury_percentage);
@@ -5236,24 +4967,23 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn toggle_agent_freezing(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .toggle_agent_freezing();
@@ -5266,8 +4996,7 @@ pub mod mainnet {
             pub async fn toggle_agent_freezing_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .toggle_agent_freezing();
@@ -5282,24 +5011,23 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn toggle_namespace_freezing(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .toggle_namespace_freezing();
@@ -5312,8 +5040,7 @@ pub mod mainnet {
             pub async fn toggle_namespace_freezing_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .governance()
                     .toggle_namespace_freezing();
@@ -5328,18 +5055,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -5362,145 +5089,10 @@ pub mod mainnet {
             }
         }
         impl Torus0Storage<crate::chain::MainNet> {
-            pub async fn staking_to_get(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::AccountId32,
-                key2: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .staking_to(key1, key2);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn staking_to_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            ::core::primitive::u128,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .staking_to_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                        ) as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((pair, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn staking_to_iter1(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            ::core::primitive::u128,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .staking_to_iter1(key1);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                        ) as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((pair, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn registrations_this_block(
-                &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .registrations_this_block();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn max_allowed_validators(
-                &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .max_allowed_validators();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn burn_config(
-                &self,
-            ) -> Result<
-                Option<runtime_types::pallet_torus0::burn::BurnConfiguration>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .burn_config();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
             pub async fn namespace_pricing_config(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 Option<runtime_types::pallet_torus0::namespace::NamespacePricingConfig>,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
@@ -5511,64 +5103,32 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn min_name_length(
+            pub async fn namespace_count_get(
                 &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
+                key: &runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+            ) -> crate::Result<Option<::core::primitive::u32>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
-                    .min_name_length();
+                    .namespace_count(key);
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn max_registrations_per_block(
+            pub async fn namespace_count_iter(
                 &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .max_registrations_per_block();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn staked_by_get(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::AccountId32,
-                key2: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .staked_by(key1, key2);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn staked_by_iter(
-                &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            ::core::primitive::u128,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+                        ::core::primitive::u32,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
-                    .staked_by_iter();
+                    .namespace_count_iter();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -5578,73 +5138,17 @@ pub mod mainnet {
                     .await?
                     .map(|res| {
                         let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                        ) as Decode>::decode(
+                        let key = <runtime_types::pallet_torus0::namespace::NamespaceOwnership as Decode>::decode(
                             &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
                         )?;
-                        Ok((pair, res.value))
+                        Ok((key, res.value))
                     })
                     .into_stream();
                 Ok(stream)
-            }
-            pub async fn staked_by_iter1(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            ::core::primitive::u128,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .staked_by_iter1(key1);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                        ) as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((pair, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn min_validator_stake(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .min_validator_stake();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
             }
             pub async fn max_agent_url_length(
                 &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u16>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
                     .max_agent_url_length();
@@ -5654,36 +5158,10 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn total_stake(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .total_stake();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn min_allowed_stake(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .min_allowed_stake();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
             pub async fn dividends_participation_weight(
                 &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::per_things::Percent>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::per_things::Percent>>
+            {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
                     .dividends_participation_weight();
@@ -5693,9 +5171,86 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn reward_interval(
+            pub async fn max_allowed_validators(
                 &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u16>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .max_allowed_validators();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn min_validator_stake(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .min_validator_stake();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn registrations_this_interval(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::u16>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .registrations_this_interval();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn agents_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<Option<runtime_types::pallet_torus0::agent::Agent>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .agents(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn agents_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::pallet_torus0::agent::Agent,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .agents_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn reward_interval(&self) -> crate::Result<Option<::core::primitive::u16>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
                     .reward_interval();
@@ -5705,12 +5260,22 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn registrations_this_interval(
-                &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
+            pub async fn max_name_length(&self) -> crate::Result<Option<::core::primitive::u16>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
-                    .registrations_this_interval();
+                    .max_name_length();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn max_registrations_per_block(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::u16>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .max_registrations_per_block();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -5721,10 +5286,8 @@ pub mod mainnet {
                 &self,
                 key1: &runtime_types::pallet_torus0::namespace::NamespaceOwnership,
                 key2: &runtime_types::pallet_torus0_api::NamespacePath,
-            ) -> Result<
-                Option<runtime_types::pallet_torus0::namespace::NamespaceMetadata>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::pallet_torus0::namespace::NamespaceMetadata>>
+            {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
                     .namespaces(key1, key2);
@@ -5736,20 +5299,16 @@ pub mod mainnet {
             }
             pub async fn namespaces_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-                                runtime_types::pallet_torus0_api::NamespacePath,
-                            ),
-                            runtime_types::pallet_torus0::namespace::NamespaceMetadata,
+                            runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+                            runtime_types::pallet_torus0_api::NamespacePath,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::pallet_torus0::namespace::NamespaceMetadata,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
@@ -5777,20 +5336,16 @@ pub mod mainnet {
             pub async fn namespaces_iter1(
                 &self,
                 key1: &runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-                                runtime_types::pallet_torus0_api::NamespacePath,
-                            ),
-                            runtime_types::pallet_torus0::namespace::NamespaceMetadata,
+                            runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+                            runtime_types::pallet_torus0_api::NamespacePath,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::pallet_torus0::namespace::NamespaceMetadata,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
@@ -5815,21 +5370,228 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn agent_update_cooldown(
+            pub async fn registrations_this_block(
                 &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u16>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
-                    .agent_update_cooldown();
+                    .registrations_this_block();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn burn(
+            pub async fn min_allowed_stake(
                 &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .min_allowed_stake();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn burn_config(
+                &self,
+            ) -> crate::Result<Option<runtime_types::pallet_torus0::burn::BurnConfiguration>>
+            {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .burn_config();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn staking_to_get(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::AccountId32,
+                key2: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .staking_to(key1, key2);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn staking_to_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ),
+                        ::core::primitive::u128,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .staking_to_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn staking_to_iter1(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ),
+                        ::core::primitive::u128,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .staking_to_iter1(key1);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn min_name_length(&self) -> crate::Result<Option<::core::primitive::u16>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .min_name_length();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn staked_by_get(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::AccountId32,
+                key2: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .staked_by(key1, key2);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn staked_by_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ),
+                        ::core::primitive::u128,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .staked_by_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn staked_by_iter1(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ),
+                        ::core::primitive::u128,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .torus0()
+                    .staked_by_iter1(key1);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn burn(&self) -> crate::Result<Option<::core::primitive::u128>> {
                 let call = crate::interfaces::mainnet::api::storage().torus0().burn();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
@@ -5839,10 +5601,8 @@ pub mod mainnet {
             }
             pub async fn fee_constraints(
                 &self,
-            ) -> Result<
-                Option<runtime_types::pallet_torus0::fee::ValidatorFeeConstraints>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::pallet_torus0::fee::ValidatorFeeConstraints>>
+            {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
                     .fee_constraints();
@@ -5852,111 +5612,27 @@ pub mod mainnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn max_name_length(
+            pub async fn agent_update_cooldown(
                 &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u64>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
-                    .max_name_length();
+                    .agent_update_cooldown();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn agents_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<runtime_types::pallet_torus0::agent::Agent>> {
+            pub async fn total_stake(&self) -> crate::Result<Option<::core::primitive::u128>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .torus0()
-                    .agents(key);
+                    .total_stake();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
-            }
-            pub async fn agents_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::pallet_torus0::agent::Agent,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .agents_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn namespace_count_get(
-                &self,
-                key: &runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-            ) -> anyhow::Result<Option<::core::primitive::u32>> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .namespace_count(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn namespace_count_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-                            ::core::primitive::u32,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .torus0()
-                    .namespace_count_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <runtime_types::pallet_torus0::namespace::NamespaceOwnership as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
             }
         }
         impl Torus0Client<crate::chain::MainNet> {
@@ -5973,8 +5649,7 @@ pub mod mainnet {
                 agent_key: crate::interfaces::mainnet::api::torus0::calls::types::add_stake::AgentKey,
                 amount: crate::interfaces::mainnet::api::torus0::calls::types::add_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .add_stake(agent_key, amount);
@@ -5989,8 +5664,7 @@ pub mod mainnet {
                 agent_key: crate::interfaces::mainnet::api::torus0::calls::types::add_stake::AgentKey,
                 amount: crate::interfaces::mainnet::api::torus0::calls::types::add_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .add_stake(agent_key, amount);
@@ -6005,26 +5679,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_stake(
                 &self,
                 agent_key: crate::interfaces::mainnet::api::torus0::calls::types::remove_stake::AgentKey,
                 amount: crate::interfaces::mainnet::api::torus0::calls::types::remove_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .remove_stake(agent_key, amount);
@@ -6039,8 +5712,7 @@ pub mod mainnet {
                 agent_key: crate::interfaces::mainnet::api::torus0::calls::types::remove_stake::AgentKey,
                 amount: crate::interfaces::mainnet::api::torus0::calls::types::remove_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .remove_stake(agent_key, amount);
@@ -6055,18 +5727,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn transfer_stake(
                 &self,
@@ -6074,8 +5746,7 @@ pub mod mainnet {
                 new_agent_key: crate::interfaces::mainnet::api::torus0::calls::types::transfer_stake::NewAgentKey,
                 amount: crate::interfaces::mainnet::api::torus0::calls::types::transfer_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .transfer_stake(agent_key, new_agent_key, amount);
@@ -6091,8 +5762,7 @@ pub mod mainnet {
                 new_agent_key: crate::interfaces::mainnet::api::torus0::calls::types::transfer_stake::NewAgentKey,
                 amount: crate::interfaces::mainnet::api::torus0::calls::types::transfer_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .transfer_stake(agent_key, new_agent_key, amount);
@@ -6107,18 +5777,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn register_agent(
                 &self,
@@ -6127,8 +5797,7 @@ pub mod mainnet {
                 url: crate::interfaces::mainnet::api::torus0::calls::types::register_agent::Url,
                 metadata: crate::interfaces::mainnet::api::torus0::calls::types::register_agent::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .register_agent(agent_key, name, url, metadata);
@@ -6145,8 +5814,7 @@ pub mod mainnet {
                 url: crate::interfaces::mainnet::api::torus0::calls::types::register_agent::Url,
                 metadata: crate::interfaces::mainnet::api::torus0::calls::types::register_agent::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .register_agent(agent_key, name, url, metadata);
@@ -6161,24 +5829,23 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn unregister_agent(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .unregister_agent();
@@ -6191,8 +5858,7 @@ pub mod mainnet {
             pub async fn unregister_agent_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .unregister_agent();
@@ -6207,18 +5873,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn update_agent(
                 &self,
@@ -6227,8 +5893,7 @@ pub mod mainnet {
                 staking_fee: crate::interfaces::mainnet::api::torus0::calls::types::update_agent::StakingFee,
                 weight_control_fee: crate::interfaces::mainnet::api::torus0::calls::types::update_agent::WeightControlFee,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().torus0().update_agent(
                     url,
                     metadata,
@@ -6248,8 +5913,7 @@ pub mod mainnet {
                 staking_fee: crate::interfaces::mainnet::api::torus0::calls::types::update_agent::StakingFee,
                 weight_control_fee: crate::interfaces::mainnet::api::torus0::calls::types::update_agent::WeightControlFee,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx().torus0().update_agent(
                     url,
                     metadata,
@@ -6267,25 +5931,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_agent_update_cooldown(
                 &self,
                 new_cooldown: crate::interfaces::mainnet::api::torus0::calls::types::set_agent_update_cooldown::NewCooldown,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .set_agent_update_cooldown(new_cooldown);
@@ -6299,8 +5962,7 @@ pub mod mainnet {
                 &self,
                 new_cooldown: crate::interfaces::mainnet::api::torus0::calls::types::set_agent_update_cooldown::NewCooldown,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .set_agent_update_cooldown(new_cooldown);
@@ -6315,25 +5977,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn create_namespace(
                 &self,
                 path: crate::interfaces::mainnet::api::torus0::calls::types::create_namespace::Path,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .create_namespace(path);
@@ -6347,8 +6008,7 @@ pub mod mainnet {
                 &self,
                 path: crate::interfaces::mainnet::api::torus0::calls::types::create_namespace::Path,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .create_namespace(path);
@@ -6363,25 +6023,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn delete_namespace(
                 &self,
                 path: crate::interfaces::mainnet::api::torus0::calls::types::delete_namespace::Path,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .delete_namespace(path);
@@ -6395,8 +6054,7 @@ pub mod mainnet {
                 &self,
                 path: crate::interfaces::mainnet::api::torus0::calls::types::delete_namespace::Path,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .torus0()
                     .delete_namespace(path);
@@ -6411,18 +6069,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -6445,99 +6103,10 @@ pub mod mainnet {
             }
         }
         impl Emission0Storage<crate::chain::MainNet> {
-            pub async fn pending_emission(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .emission0()
-                    .pending_emission();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn weight_control_delegation_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<::subxt::ext::subxt_core::utils::AccountId32>> {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .emission0()
-                    .weight_control_delegation(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn weight_control_delegation_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .emission0()
-                    .weight_control_delegation_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn emission_recycling_percentage(
-                &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::per_things::Percent>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .emission0()
-                    .emission_recycling_percentage();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn incentives_ratio(
-                &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::per_things::Percent>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .emission0()
-                    .incentives_ratio();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
             pub async fn consensus_members_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<runtime_types::pallet_emission0::ConsensusMember>>
+            ) -> crate::Result<Option<runtime_types::pallet_emission0::ConsensusMember>>
             {
                 let call = crate::interfaces::mainnet::api::storage()
                     .emission0()
@@ -6550,17 +6119,13 @@ pub mod mainnet {
             }
             pub async fn consensus_members_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::pallet_emission0::ConsensusMember,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::pallet_emission0::ConsensusMember,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .emission0()
@@ -6582,6 +6147,85 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
+            pub async fn pending_emission(&self) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .emission0()
+                    .pending_emission();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn weight_control_delegation_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::AccountId32>> {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .emission0()
+                    .weight_control_delegation(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn weight_control_delegation_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .emission0()
+                    .weight_control_delegation_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn incentives_ratio(
+                &self,
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::per_things::Percent>>
+            {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .emission0()
+                    .incentives_ratio();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn emission_recycling_percentage(
+                &self,
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::per_things::Percent>>
+            {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .emission0()
+                    .emission_recycling_percentage();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
         }
         impl Emission0Client<crate::chain::MainNet> {
             pub fn calls(&self) -> Emission0Calls<crate::chain::MainNet> {
@@ -6596,8 +6240,7 @@ pub mod mainnet {
                 &self,
                 weights: crate::interfaces::mainnet::api::emission0::calls::types::set_weights::Weights,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .emission0()
                     .set_weights(weights);
@@ -6611,8 +6254,7 @@ pub mod mainnet {
                 &self,
                 weights: crate::interfaces::mainnet::api::emission0::calls::types::set_weights::Weights,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .emission0()
                     .set_weights(weights);
@@ -6627,25 +6269,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn delegate_weight_control(
                 &self,
                 target: crate::interfaces::mainnet::api::emission0::calls::types::delegate_weight_control::Target,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .emission0()
                     .delegate_weight_control(target);
@@ -6659,8 +6300,7 @@ pub mod mainnet {
                 &self,
                 target: crate::interfaces::mainnet::api::emission0::calls::types::delegate_weight_control::Target,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .emission0()
                     .delegate_weight_control(target);
@@ -6675,24 +6315,23 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn regain_weight_control(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .emission0()
                     .regain_weight_control();
@@ -6705,8 +6344,7 @@ pub mod mainnet {
             pub async fn regain_weight_control_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .emission0()
                     .regain_weight_control();
@@ -6721,18 +6359,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -6758,439 +6396,13 @@ pub mod mainnet {
             }
         }
         impl Permission0Storage<crate::chain::MainNet> {
-            pub async fn enforcement_tracking_get(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::H256,
-                key2: &runtime_types::pallet_permission0::permission::EnforcementReferendum,
-            ) -> Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                        ::subxt::ext::subxt_core::utils::AccountId32,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .enforcement_tracking(key1, key2);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn enforcement_tracking_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::H256,
-                                runtime_types::pallet_permission0::permission::EnforcementReferendum,
-                            ),
-                            runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            >{
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .enforcement_tracking_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::H256,
-                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
-                        ) as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((pair, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn enforcement_tracking_iter1(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::H256,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::H256,
-                                runtime_types::pallet_permission0::permission::EnforcementReferendum,
-                            ),
-                            runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            >{
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .enforcement_tracking_iter1(key1);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::H256,
-                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
-                        ) as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((pair, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn permissions_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::H256,
-            ) -> anyhow::Result<
-                Option<runtime_types::pallet_permission0::permission::PermissionContract>,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .permissions(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn permissions_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H256,
-                            runtime_types::pallet_permission0::permission::PermissionContract,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .permissions_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::H256 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn permissions_by_grantor_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        ::subxt::ext::subxt_core::utils::H256,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .permissions_by_grantor(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn permissions_by_grantor_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                ::subxt::ext::subxt_core::utils::H256,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .permissions_by_grantor_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn permissions_by_participants_get(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::AccountId32,
-                key2: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        ::subxt::ext::subxt_core::utils::H256,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .permissions_by_participants(key1, key2);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn permissions_by_participants_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                ::subxt::ext::subxt_core::utils::H256,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .permissions_by_participants_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                        ) as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((pair, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn permissions_by_participants_iter1(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                ::subxt::ext::subxt_core::utils::H256,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .permissions_by_participants_iter1(key1);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                        ) as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((pair, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn permissions_by_grantee_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        ::subxt::ext::subxt_core::utils::H256,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .permissions_by_grantee(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn permissions_by_grantee_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                ::subxt::ext::subxt_core::utils::H256,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .permissions_by_grantee_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn revocation_tracking_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::H256,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                        ::subxt::ext::subxt_core::utils::AccountId32,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .revocation_tracking(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn revocation_tracking_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H256,
-                            runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::mainnet::api::storage()
-                    .permission0()
-                    .revocation_tracking_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::H256 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
             /// Get storage n-map value by keys
             pub async fn accumulated_stream_amounts_get(
                 &self,
                 account_id32_1: ::subxt::ext::subxt_core::utils::AccountId32,
                 h256_2: ::subxt::ext::subxt_core::utils::H256,
                 h256_3: ::subxt::ext::subxt_core::utils::H256,
-            ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
+            ) -> crate::Result<Option<::core::primitive::u128>> {
                 let call = crate::interfaces::mainnet::api::storage()
                     .permission0()
                     .accumulated_stream_amounts(account_id32_1, h256_2, h256_3);
@@ -7200,21 +6412,17 @@ pub mod mainnet {
             /// Query all entries in storage n-map
             pub async fn accumulated_stream_amounts_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::H256,
-                                ::subxt::ext::subxt_core::utils::H256,
-                            ),
-                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::H256,
+                            ::subxt::ext::subxt_core::utils::H256,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .permission0()
@@ -7243,17 +6451,13 @@ pub mod mainnet {
             pub async fn accumulated_stream_amounts_iter1(
                 &self,
                 key0: ::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::core::primitive::u128,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .permission0()
@@ -7280,20 +6484,16 @@ pub mod mainnet {
                 &self,
                 key0: ::subxt::ext::subxt_core::utils::AccountId32,
                 key1: ::subxt::ext::subxt_core::utils::H256,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::H256,
-                            ),
-                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::H256,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::mainnet::api::storage()
                     .permission0()
@@ -7318,6 +6518,398 @@ pub mod mainnet {
                     .into_stream();
                 Ok(stream)
             }
+            pub async fn permissions_by_grantor_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        ::subxt::ext::subxt_core::utils::H256,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .permissions_by_grantor(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn permissions_by_grantor_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .permissions_by_grantor_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn permissions_by_participants_get(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::AccountId32,
+                key2: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        ::subxt::ext::subxt_core::utils::H256,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .permissions_by_participants(key1, key2);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn permissions_by_participants_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ),
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .permissions_by_participants_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn permissions_by_participants_iter1(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ),
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .permissions_by_participants_iter1(key1);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn enforcement_tracking_get(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::H256,
+                key2: &runtime_types::pallet_permission0::permission::EnforcementReferendum,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .enforcement_tracking(key1, key2);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn enforcement_tracking_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::H256,
+                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
+                        ),
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .enforcement_tracking_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::H256,
+                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn enforcement_tracking_iter1(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::H256,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::H256,
+                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
+                        ),
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .enforcement_tracking_iter1(key1);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::H256,
+                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn permissions_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::H256,
+            ) -> crate::Result<
+                Option<runtime_types::pallet_permission0::permission::PermissionContract>,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .permissions(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn permissions_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H256,
+                        runtime_types::pallet_permission0::permission::PermissionContract,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .permissions_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::H256 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn permissions_by_grantee_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        ::subxt::ext::subxt_core::utils::H256,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .permissions_by_grantee(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn permissions_by_grantee_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .permissions_by_grantee_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn revocation_tracking_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::H256,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .revocation_tracking(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn revocation_tracking_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H256,
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::mainnet::api::storage()
+                    .permission0()
+                    .revocation_tracking_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::H256 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
         }
         impl Permission0Client<crate::chain::MainNet> {
             pub fn calls(&self) -> Permission0Calls<crate::chain::MainNet> {
@@ -7338,8 +6930,7 @@ pub mod mainnet {
                 revocation: crate::interfaces::mainnet::api::permission0::calls::types::grant_emission_permission::Revocation,
                 enforcement: crate::interfaces::mainnet::api::permission0::calls::types::grant_emission_permission::Enforcement,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .grant_emission_permission(
@@ -7367,8 +6958,7 @@ pub mod mainnet {
                 revocation: crate::interfaces::mainnet::api::permission0::calls::types::grant_emission_permission::Revocation,
                 enforcement: crate::interfaces::mainnet::api::permission0::calls::types::grant_emission_permission::Enforcement,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .grant_emission_permission(
@@ -7391,25 +6981,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn revoke_permission(
                 &self,
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::revoke_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .revoke_permission(permission_id);
@@ -7423,8 +7012,7 @@ pub mod mainnet {
                 &self,
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::revoke_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .revoke_permission(permission_id);
@@ -7439,25 +7027,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn execute_permission(
                 &self,
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::execute_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .execute_permission(permission_id);
@@ -7471,8 +7058,7 @@ pub mod mainnet {
                 &self,
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::execute_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .execute_permission(permission_id);
@@ -7487,26 +7073,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn toggle_permission_accumulation(
                 &self,
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::toggle_permission_accumulation::PermissionId,
                 accumulating: crate::interfaces::mainnet::api::permission0::calls::types::toggle_permission_accumulation::Accumulating,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .toggle_permission_accumulation(permission_id, accumulating);
@@ -7521,8 +7106,7 @@ pub mod mainnet {
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::toggle_permission_accumulation::PermissionId,
                 accumulating: crate::interfaces::mainnet::api::permission0::calls::types::toggle_permission_accumulation::Accumulating,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .toggle_permission_accumulation(permission_id, accumulating);
@@ -7537,25 +7121,24 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn enforcement_execute_permission(
                 &self,
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::enforcement_execute_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .enforcement_execute_permission(permission_id);
@@ -7569,8 +7152,7 @@ pub mod mainnet {
                 &self,
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::enforcement_execute_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .enforcement_execute_permission(permission_id);
@@ -7585,26 +7167,25 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_enforcement_authority(
                 &self,
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::set_enforcement_authority::PermissionId,
                 enforcement: crate::interfaces::mainnet::api::permission0::calls::types::set_enforcement_authority::Enforcement,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .set_enforcement_authority(permission_id, enforcement);
@@ -7619,8 +7200,7 @@ pub mod mainnet {
                 permission_id: crate::interfaces::mainnet::api::permission0::calls::types::set_enforcement_authority::PermissionId,
                 enforcement: crate::interfaces::mainnet::api::permission0::calls::types::set_enforcement_authority::Enforcement,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .set_enforcement_authority(permission_id, enforcement);
@@ -7635,18 +7215,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn grant_curator_permission(
                 &self,
@@ -7656,8 +7236,7 @@ pub mod mainnet {
                 duration: crate::interfaces::mainnet::api::permission0::calls::types::grant_curator_permission::Duration,
                 revocation: crate::interfaces::mainnet::api::permission0::calls::types::grant_curator_permission::Revocation,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .grant_curator_permission(grantee, flags, cooldown, duration, revocation);
@@ -7675,8 +7254,7 @@ pub mod mainnet {
                 duration: crate::interfaces::mainnet::api::permission0::calls::types::grant_curator_permission::Duration,
                 revocation: crate::interfaces::mainnet::api::permission0::calls::types::grant_curator_permission::Revocation,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .grant_curator_permission(grantee, flags, cooldown, duration, revocation);
@@ -7691,18 +7269,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn grant_namespace_permission(
                 &self,
@@ -7711,8 +7289,7 @@ pub mod mainnet {
                 duration: crate::interfaces::mainnet::api::permission0::calls::types::grant_namespace_permission::Duration,
                 revocation: crate::interfaces::mainnet::api::permission0::calls::types::grant_namespace_permission::Revocation,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .grant_namespace_permission(grantee, paths, duration, revocation);
@@ -7729,8 +7306,7 @@ pub mod mainnet {
                 duration: crate::interfaces::mainnet::api::permission0::calls::types::grant_namespace_permission::Duration,
                 revocation: crate::interfaces::mainnet::api::permission0::calls::types::grant_namespace_permission::Revocation,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .grant_namespace_permission(grantee, paths, duration, revocation);
@@ -7745,18 +7321,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn update_emission_permission(
                 &self,
@@ -7765,8 +7341,7 @@ pub mod mainnet {
                 new_streams: crate::interfaces::mainnet::api::permission0::calls::types::update_emission_permission::NewStreams,
                 new_distribution_control: crate::interfaces::mainnet::api::permission0::calls::types::update_emission_permission::NewDistributionControl,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .update_emission_permission(
@@ -7788,8 +7363,7 @@ pub mod mainnet {
                 new_streams: crate::interfaces::mainnet::api::permission0::calls::types::update_emission_permission::NewStreams,
                 new_distribution_control: crate::interfaces::mainnet::api::permission0::calls::types::update_emission_permission::NewDistributionControl,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::mainnet::api::tx()
                     .permission0()
                     .update_emission_permission(
@@ -7809,18 +7383,18 @@ pub mod mainnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -7850,7 +7424,7 @@ pub mod testnet {
         impl SystemStorage<crate::chain::TestNet> {
             pub async fn inherents_applied(
                 &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::bool>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .system()
                     .inherents_applied();
@@ -7860,254 +7434,10 @@ pub mod testnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn digest(
-                &self,
-            ) -> Result<
-                Option<runtime_types::sp_runtime::generic::digest::Digest>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage().system().digest();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn number(
-                &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage().system().number();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn upgraded_to_u32_ref_count(
-                &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .upgraded_to_u32_ref_count();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn events(
-                &self,
-            ) -> Result<
-                Option<
-                    ::subxt::ext::subxt_core::alloc::vec::Vec<
-                        runtime_types::frame_system::EventRecord<
-                            runtime_types::torus_runtime::RuntimeEvent,
-                            ::subxt::ext::subxt_core::utils::H256,
-                        >,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage().system().events();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn extrinsic_count(
-                &self,
-            ) -> Result<Option<::core::primitive::u32>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .extrinsic_count();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn block_weight(
-                &self,
-            ) -> Result<
-                Option<
-                    runtime_types::frame_support::dispatch::PerDispatchClass<
-                        runtime_types::sp_weights::weight_v2::Weight,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .block_weight();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn block_hash_get(
-                &self,
-                key: &::core::primitive::u64,
-            ) -> anyhow::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .block_hash(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn block_hash_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u64,
-                            ::subxt::ext::subxt_core::utils::H256,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .block_hash_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::core::primitive::u64 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn last_runtime_upgrade(
-                &self,
-            ) -> Result<
-                Option<runtime_types::frame_system::LastRuntimeUpgradeInfo>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .last_runtime_upgrade();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn account_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::frame_system::AccountInfo<
-                        ::core::primitive::u32,
-                        runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .account(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn account_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::frame_system::AccountInfo<
-                                ::core::primitive::u32,
-                                runtime_types::pallet_balances::types::AccountData<
-                                    ::core::primitive::u128,
-                                >,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .account_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn all_extrinsics_len(
-                &self,
-            ) -> Result<Option<::core::primitive::u32>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .all_extrinsics_len();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn upgraded_to_triple_ref_count(
-                &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .upgraded_to_triple_ref_count();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn parent_hash(
-                &self,
-            ) -> Result<Option<::subxt::ext::subxt_core::utils::H256>, crate::error::StorageError>
-            {
-                let call = crate::interfaces::testnet::api::storage()
-                    .system()
-                    .parent_hash();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
             pub async fn extrinsic_data_get(
                 &self,
                 key: &::core::primitive::u32,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>>,
             > {
                 let call = crate::interfaces::testnet::api::storage()
@@ -8121,17 +7451,13 @@ pub mod testnet {
             }
             pub async fn extrinsic_data_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u32,
-                            ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::core::primitive::u32,
+                        ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .system()
@@ -8153,25 +7479,41 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn execution_phase(
+            pub async fn block_weight(
                 &self,
-            ) -> Result<Option<runtime_types::frame_system::Phase>, crate::error::StorageError>
-            {
+            ) -> crate::Result<
+                Option<
+                    runtime_types::frame_support::dispatch::PerDispatchClass<
+                        runtime_types::sp_weights::weight_v2::Weight,
+                    >,
+                >,
+            > {
                 let call = crate::interfaces::testnet::api::storage()
                     .system()
-                    .execution_phase();
+                    .block_weight();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn event_count(
+            pub async fn authorized_upgrade(
                 &self,
-            ) -> Result<Option<::core::primitive::u32>, crate::error::StorageError> {
+            ) -> crate::Result<Option<runtime_types::frame_system::CodeUpgradeAuthorization>>
+            {
                 let call = crate::interfaces::testnet::api::storage()
                     .system()
-                    .event_count();
+                    .authorized_upgrade();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn extrinsic_count(&self) -> crate::Result<Option<::core::primitive::u32>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .extrinsic_count();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -8181,7 +7523,7 @@ pub mod testnet {
             pub async fn event_topics_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::H256,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<
                     ::subxt::ext::subxt_core::alloc::vec::Vec<(
                         ::core::primitive::u64,
@@ -8200,20 +7542,16 @@ pub mod testnet {
             }
             pub async fn event_topics_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H256,
-                            ::subxt::ext::subxt_core::alloc::vec::Vec<(
-                                ::core::primitive::u64,
-                                ::core::primitive::u32,
-                            )>,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H256,
+                        ::subxt::ext::subxt_core::alloc::vec::Vec<(
+                            ::core::primitive::u64,
+                            ::core::primitive::u32,
+                        )>,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .system()
@@ -8235,20 +7573,224 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn authorized_upgrade(
+            pub async fn execution_phase(
                 &self,
-            ) -> Result<
-                Option<runtime_types::frame_system::CodeUpgradeAuthorization>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::frame_system::Phase>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .system()
-                    .authorized_upgrade();
+                    .execution_phase();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
+            }
+            pub async fn last_runtime_upgrade(
+                &self,
+            ) -> crate::Result<Option<runtime_types::frame_system::LastRuntimeUpgradeInfo>>
+            {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .last_runtime_upgrade();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn upgraded_to_u32_ref_count(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::bool>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .upgraded_to_u32_ref_count();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn upgraded_to_triple_ref_count(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::bool>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .upgraded_to_triple_ref_count();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn events(
+                &self,
+            ) -> crate::Result<
+                Option<
+                    ::subxt::ext::subxt_core::alloc::vec::Vec<
+                        runtime_types::frame_system::EventRecord<
+                            runtime_types::torus_runtime::RuntimeEvent,
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage().system().events();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn event_count(&self) -> crate::Result<Option<::core::primitive::u32>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .event_count();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn block_hash_get(
+                &self,
+                key: &::core::primitive::u64,
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .block_hash(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn block_hash_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::core::primitive::u64,
+                        ::subxt::ext::subxt_core::utils::H256,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .block_hash_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::core::primitive::u64 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn digest(
+                &self,
+            ) -> crate::Result<Option<runtime_types::sp_runtime::generic::digest::Digest>>
+            {
+                let call = crate::interfaces::testnet::api::storage().system().digest();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn number(&self) -> crate::Result<Option<::core::primitive::u64>> {
+                let call = crate::interfaces::testnet::api::storage().system().number();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn all_extrinsics_len(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::u32>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .all_extrinsics_len();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn parent_hash(
+                &self,
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .parent_hash();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn account_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::frame_system::AccountInfo<
+                        ::core::primitive::u32,
+                        runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .account(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn account_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::frame_system::AccountInfo<
+                            ::core::primitive::u32,
+                            runtime_types::pallet_balances::types::AccountData<
+                                ::core::primitive::u128,
+                            >,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .system()
+                    .account_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
             }
         }
         impl SystemClient<crate::chain::TestNet> {
@@ -8264,8 +7806,7 @@ pub mod testnet {
                 &self,
                 remark: crate::interfaces::testnet::api::system::calls::types::remark::Remark,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .remark(remark);
@@ -8279,8 +7820,7 @@ pub mod testnet {
                 &self,
                 remark: crate::interfaces::testnet::api::system::calls::types::remark::Remark,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .remark(remark);
@@ -8295,25 +7835,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_heap_pages(
                 &self,
                 pages: crate::interfaces::testnet::api::system::calls::types::set_heap_pages::Pages,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .set_heap_pages(pages);
@@ -8327,8 +7866,7 @@ pub mod testnet {
                 &self,
                 pages: crate::interfaces::testnet::api::system::calls::types::set_heap_pages::Pages,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .set_heap_pages(pages);
@@ -8343,25 +7881,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_code(
                 &self,
                 code: crate::interfaces::testnet::api::system::calls::types::set_code::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .set_code(code);
@@ -8375,8 +7912,7 @@ pub mod testnet {
                 &self,
                 code: crate::interfaces::testnet::api::system::calls::types::set_code::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .set_code(code);
@@ -8391,25 +7927,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_code_without_checks(
                 &self,
                 code: crate::interfaces::testnet::api::system::calls::types::set_code_without_checks::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .set_code_without_checks(code);
@@ -8423,8 +7958,7 @@ pub mod testnet {
                 &self,
                 code: crate::interfaces::testnet::api::system::calls::types::set_code_without_checks::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .set_code_without_checks(code);
@@ -8439,25 +7973,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_storage(
                 &self,
                 items: crate::interfaces::testnet::api::system::calls::types::set_storage::Items,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .set_storage(items);
@@ -8471,8 +8004,7 @@ pub mod testnet {
                 &self,
                 items: crate::interfaces::testnet::api::system::calls::types::set_storage::Items,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .set_storage(items);
@@ -8487,25 +8019,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn kill_storage(
                 &self,
                 keys: crate::interfaces::testnet::api::system::calls::types::kill_storage::Keys,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .kill_storage(keys);
@@ -8519,8 +8050,7 @@ pub mod testnet {
                 &self,
                 keys: crate::interfaces::testnet::api::system::calls::types::kill_storage::Keys,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .kill_storage(keys);
@@ -8535,26 +8065,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn kill_prefix(
                 &self,
                 prefix: crate::interfaces::testnet::api::system::calls::types::kill_prefix::Prefix,
                 subkeys: crate::interfaces::testnet::api::system::calls::types::kill_prefix::Subkeys,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .kill_prefix(prefix, subkeys);
@@ -8569,8 +8098,7 @@ pub mod testnet {
                 prefix: crate::interfaces::testnet::api::system::calls::types::kill_prefix::Prefix,
                 subkeys: crate::interfaces::testnet::api::system::calls::types::kill_prefix::Subkeys,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .kill_prefix(prefix, subkeys);
@@ -8585,25 +8113,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remark_with_event(
                 &self,
                 remark: crate::interfaces::testnet::api::system::calls::types::remark_with_event::Remark,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .remark_with_event(remark);
@@ -8617,8 +8144,7 @@ pub mod testnet {
                 &self,
                 remark: crate::interfaces::testnet::api::system::calls::types::remark_with_event::Remark,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .remark_with_event(remark);
@@ -8633,25 +8159,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn do_task(
                 &self,
                 task: crate::interfaces::testnet::api::system::calls::types::do_task::Task,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().system().do_task(task);
                 Ok(self
                     .client
@@ -8663,8 +8188,7 @@ pub mod testnet {
                 &self,
                 task: crate::interfaces::testnet::api::system::calls::types::do_task::Task,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().system().do_task(task);
                 let mut stream = self
                     .client
@@ -8677,25 +8201,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn authorize_upgrade(
                 &self,
                 code_hash: crate::interfaces::testnet::api::system::calls::types::authorize_upgrade::CodeHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .authorize_upgrade(code_hash);
@@ -8709,8 +8232,7 @@ pub mod testnet {
                 &self,
                 code_hash: crate::interfaces::testnet::api::system::calls::types::authorize_upgrade::CodeHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .authorize_upgrade(code_hash);
@@ -8725,25 +8247,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn authorize_upgrade_without_checks(
                 &self,
                 code_hash: crate::interfaces::testnet::api::system::calls::types::authorize_upgrade_without_checks::CodeHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .authorize_upgrade_without_checks(code_hash);
@@ -8757,8 +8278,7 @@ pub mod testnet {
                 &self,
                 code_hash: crate::interfaces::testnet::api::system::calls::types::authorize_upgrade_without_checks::CodeHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .authorize_upgrade_without_checks(code_hash);
@@ -8773,25 +8293,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn apply_authorized_upgrade(
                 &self,
                 code: crate::interfaces::testnet::api::system::calls::types::apply_authorized_upgrade::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .apply_authorized_upgrade(code);
@@ -8805,8 +8324,7 @@ pub mod testnet {
                 &self,
                 code: crate::interfaces::testnet::api::system::calls::types::apply_authorized_upgrade::Code,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .system()
                     .apply_authorized_upgrade(code);
@@ -8821,18 +8339,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -8855,9 +8373,7 @@ pub mod testnet {
             }
         }
         impl TimestampStorage<crate::chain::TestNet> {
-            pub async fn now(
-                &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
+            pub async fn now(&self) -> crate::Result<Option<::core::primitive::u64>> {
                 let call = crate::interfaces::testnet::api::storage().timestamp().now();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
@@ -8865,9 +8381,7 @@ pub mod testnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn did_update(
-                &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
+            pub async fn did_update(&self) -> crate::Result<Option<::core::primitive::bool>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .timestamp()
                     .did_update();
@@ -8891,8 +8405,7 @@ pub mod testnet {
                 &self,
                 now: crate::interfaces::testnet::api::timestamp::calls::types::set::Now,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().timestamp().set(now);
                 Ok(self
                     .client
@@ -8904,8 +8417,7 @@ pub mod testnet {
                 &self,
                 now: crate::interfaces::testnet::api::timestamp::calls::types::set::Now,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().timestamp().set(now);
                 let mut stream = self
                     .client
@@ -8918,18 +8430,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -8952,32 +8464,30 @@ pub mod testnet {
             }
         }
         impl AuraStorage<crate::chain::TestNet> {
-            pub async fn current_slot(
+            pub async fn authorities(
                 &self,
-            ) -> Result<Option<runtime_types::sp_consensus_slots::Slot>, crate::error::StorageError>
-            {
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        runtime_types::sp_consensus_aura::sr25519::app_sr25519::Public,
+                    >,
+                >,
+            > {
                 let call = crate::interfaces::testnet::api::storage()
                     .aura()
-                    .current_slot();
+                    .authorities();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn authorities(
+            pub async fn current_slot(
                 &self,
-            ) -> Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        runtime_types::sp_consensus_aura::sr25519::app_sr25519::Public,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::sp_consensus_slots::Slot>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .aura()
-                    .authorities();
+                    .current_slot();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -9007,14 +8517,13 @@ pub mod testnet {
         impl GrandpaStorage<crate::chain::TestNet> {
             pub async fn authorities(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<(
                         runtime_types::sp_consensus_grandpa::app::Public,
                         ::core::primitive::u64,
                     )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .grandpa()
@@ -9025,12 +8534,35 @@ pub mod testnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn next_forced(
+            pub async fn stalled(
                 &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
+            ) -> crate::Result<Option<(::core::primitive::u64, ::core::primitive::u64)>>
+            {
                 let call = crate::interfaces::testnet::api::storage()
                     .grandpa()
-                    .next_forced();
+                    .stalled();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn state(
+                &self,
+            ) -> crate::Result<
+                Option<runtime_types::pallet_grandpa::StoredState<::core::primitive::u64>>,
+            > {
+                let call = crate::interfaces::testnet::api::storage().grandpa().state();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn current_set_id(&self) -> crate::Result<Option<::core::primitive::u64>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .grandpa()
+                    .current_set_id();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -9039,9 +8571,8 @@ pub mod testnet {
             }
             pub async fn pending_change(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 Option<runtime_types::pallet_grandpa::StoredPendingChange<::core::primitive::u64>>,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .grandpa()
@@ -9052,12 +8583,10 @@ pub mod testnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn current_set_id(
-                &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
+            pub async fn next_forced(&self) -> crate::Result<Option<::core::primitive::u64>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .grandpa()
-                    .current_set_id();
+                    .next_forced();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -9067,7 +8596,7 @@ pub mod testnet {
             pub async fn set_id_session_get(
                 &self,
                 key: &::core::primitive::u64,
-            ) -> anyhow::Result<Option<::core::primitive::u32>> {
+            ) -> crate::Result<Option<::core::primitive::u32>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .grandpa()
                     .set_id_session(key);
@@ -9079,14 +8608,8 @@ pub mod testnet {
             }
             pub async fn set_id_session_iter(
                 &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (::core::primitive::u64, ::core::primitive::u32),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
+            ) -> crate::Result<
+                impl Stream<Item = crate::Result<(::core::primitive::u64, ::core::primitive::u32)>>,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .grandpa()
@@ -9108,34 +8631,6 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn state(
-                &self,
-            ) -> Result<
-                Option<runtime_types::pallet_grandpa::StoredState<::core::primitive::u64>>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage().grandpa().state();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn stalled(
-                &self,
-            ) -> Result<
-                Option<(::core::primitive::u64, ::core::primitive::u64)>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .grandpa()
-                    .stalled();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
         }
         impl GrandpaClient<crate::chain::TestNet> {
             pub fn calls(&self) -> GrandpaCalls<crate::chain::TestNet> {
@@ -9151,8 +8646,7 @@ pub mod testnet {
                 equivocation_proof: crate::interfaces::testnet::api::grandpa::calls::types::report_equivocation::EquivocationProof,
                 key_owner_proof: crate::interfaces::testnet::api::grandpa::calls::types::report_equivocation::KeyOwnerProof,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .grandpa()
                     .report_equivocation(equivocation_proof, key_owner_proof);
@@ -9167,8 +8661,7 @@ pub mod testnet {
                 equivocation_proof: crate::interfaces::testnet::api::grandpa::calls::types::report_equivocation::EquivocationProof,
                 key_owner_proof: crate::interfaces::testnet::api::grandpa::calls::types::report_equivocation::KeyOwnerProof,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .grandpa()
                     .report_equivocation(equivocation_proof, key_owner_proof);
@@ -9183,26 +8676,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn report_equivocation_unsigned(
                 &self,
                 equivocation_proof: crate::interfaces::testnet::api::grandpa::calls::types::report_equivocation_unsigned::EquivocationProof,
                 key_owner_proof: crate::interfaces::testnet::api::grandpa::calls::types::report_equivocation_unsigned::KeyOwnerProof,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .grandpa()
                     .report_equivocation_unsigned(equivocation_proof, key_owner_proof);
@@ -9217,8 +8709,7 @@ pub mod testnet {
                 equivocation_proof: crate::interfaces::testnet::api::grandpa::calls::types::report_equivocation_unsigned::EquivocationProof,
                 key_owner_proof: crate::interfaces::testnet::api::grandpa::calls::types::report_equivocation_unsigned::KeyOwnerProof,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .grandpa()
                     .report_equivocation_unsigned(equivocation_proof, key_owner_proof);
@@ -9233,26 +8724,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn note_stalled(
                 &self,
                 delay: crate::interfaces::testnet::api::grandpa::calls::types::note_stalled::Delay,
                 best_finalized_block_number: crate::interfaces::testnet::api::grandpa::calls::types::note_stalled::BestFinalizedBlockNumber,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .grandpa()
                     .note_stalled(delay, best_finalized_block_number);
@@ -9267,8 +8757,7 @@ pub mod testnet {
                 delay: crate::interfaces::testnet::api::grandpa::calls::types::note_stalled::Delay,
                 best_finalized_block_number: crate::interfaces::testnet::api::grandpa::calls::types::note_stalled::BestFinalizedBlockNumber,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .grandpa()
                     .note_stalled(delay, best_finalized_block_number);
@@ -9283,18 +8772,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -9317,9 +8806,66 @@ pub mod testnet {
             }
         }
         impl BalancesStorage<crate::chain::TestNet> {
+            pub async fn reserves_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        runtime_types::pallet_balances::types::ReserveData<
+                            (),
+                            ::core::primitive::u128,
+                        >,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .balances()
+                    .reserves(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn reserves_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            runtime_types::pallet_balances::types::ReserveData<
+                                (),
+                                ::core::primitive::u128,
+                            >,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .balances()
+                    .reserves_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
             pub async fn inactive_issuance(
                 &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u128>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .balances()
                     .inactive_issuance();
@@ -9329,191 +8875,10 @@ pub mod testnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn total_issuance(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .balances()
-                    .total_issuance();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn account_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>>,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .balances()
-                    .account(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn account_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::pallet_balances::types::AccountData<
-                                ::core::primitive::u128,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .balances()
-                    .account_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn holds_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        runtime_types::frame_support::traits::tokens::misc::IdAmount<
-                            runtime_types::torus_runtime::RuntimeHoldReason,
-                            ::core::primitive::u128,
-                        >,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .balances()
-                    .holds(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn holds_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                runtime_types::frame_support::traits::tokens::misc::IdAmount<
-                                    runtime_types::torus_runtime::RuntimeHoldReason,
-                                    ::core::primitive::u128,
-                                >,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .balances()
-                    .holds_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn locks_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<
-                        runtime_types::pallet_balances::types::BalanceLock<::core::primitive::u128>,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .balances()
-                    .locks(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn locks_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<
-                                runtime_types::pallet_balances::types::BalanceLock<
-                                    ::core::primitive::u128,
-                                >,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .balances()
-                    .locks_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
             pub async fn freezes_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::bounded_collections::bounded_vec::BoundedVec<
                         runtime_types::frame_support::traits::tokens::misc::IdAmount<
@@ -9534,22 +8899,18 @@ pub mod testnet {
             }
             pub async fn freezes_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                runtime_types::frame_support::traits::tokens::misc::IdAmount<
-                                    (),
-                                    ::core::primitive::u128,
-                                >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            runtime_types::frame_support::traits::tokens::misc::IdAmount<
+                                (),
+                                ::core::primitive::u128,
                             >,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .balances()
@@ -9571,14 +8932,67 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn reserves_get(
+            pub async fn locks_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<
+                        runtime_types::pallet_balances::types::BalanceLock<::core::primitive::u128>,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .balances()
+                    .locks(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn locks_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<
+                            runtime_types::pallet_balances::types::BalanceLock<
+                                ::core::primitive::u128,
+                            >,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .balances()
+                    .locks_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn holds_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
                 Option<
                     runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        runtime_types::pallet_balances::types::ReserveData<
-                            (),
+                        runtime_types::frame_support::traits::tokens::misc::IdAmount<
+                            runtime_types::torus_runtime::RuntimeHoldReason,
                             ::core::primitive::u128,
                         >,
                     >,
@@ -9586,35 +9000,86 @@ pub mod testnet {
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .balances()
-                    .reserves(key);
+                    .holds(key);
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn reserves_iter(
+            pub async fn holds_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                runtime_types::pallet_balances::types::ReserveData<
-                                    (),
-                                    ::core::primitive::u128,
-                                >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            runtime_types::frame_support::traits::tokens::misc::IdAmount<
+                                runtime_types::torus_runtime::RuntimeHoldReason,
+                                ::core::primitive::u128,
                             >,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .balances()
-                    .reserves_iter();
+                    .holds_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn total_issuance(&self) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .balances()
+                    .total_issuance();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn account_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>>,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .balances()
+                    .account(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn account_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .balances()
+                    .account_iter();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -9647,8 +9112,7 @@ pub mod testnet {
                 dest: crate::interfaces::testnet::api::balances::calls::types::transfer_allow_death::Dest,
                 value: crate::interfaces::testnet::api::balances::calls::types::transfer_allow_death::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .transfer_allow_death(dest, value);
@@ -9663,8 +9127,7 @@ pub mod testnet {
                 dest: crate::interfaces::testnet::api::balances::calls::types::transfer_allow_death::Dest,
                 value: crate::interfaces::testnet::api::balances::calls::types::transfer_allow_death::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .transfer_allow_death(dest, value);
@@ -9679,18 +9142,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn force_transfer(
                 &self,
@@ -9698,8 +9161,7 @@ pub mod testnet {
                 dest: crate::interfaces::testnet::api::balances::calls::types::force_transfer::Dest,
                 value: crate::interfaces::testnet::api::balances::calls::types::force_transfer::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .force_transfer(source, dest, value);
@@ -9715,8 +9177,7 @@ pub mod testnet {
                 dest: crate::interfaces::testnet::api::balances::calls::types::force_transfer::Dest,
                 value: crate::interfaces::testnet::api::balances::calls::types::force_transfer::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .force_transfer(source, dest, value);
@@ -9731,26 +9192,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn transfer_keep_alive(
                 &self,
                 dest: crate::interfaces::testnet::api::balances::calls::types::transfer_keep_alive::Dest,
                 value: crate::interfaces::testnet::api::balances::calls::types::transfer_keep_alive::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .transfer_keep_alive(dest, value);
@@ -9765,8 +9225,7 @@ pub mod testnet {
                 dest: crate::interfaces::testnet::api::balances::calls::types::transfer_keep_alive::Dest,
                 value: crate::interfaces::testnet::api::balances::calls::types::transfer_keep_alive::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .transfer_keep_alive(dest, value);
@@ -9781,26 +9240,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn transfer_all(
                 &self,
                 dest: crate::interfaces::testnet::api::balances::calls::types::transfer_all::Dest,
                 keep_alive: crate::interfaces::testnet::api::balances::calls::types::transfer_all::KeepAlive,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .transfer_all(dest, keep_alive);
@@ -9815,8 +9273,7 @@ pub mod testnet {
                 dest: crate::interfaces::testnet::api::balances::calls::types::transfer_all::Dest,
                 keep_alive: crate::interfaces::testnet::api::balances::calls::types::transfer_all::KeepAlive,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .transfer_all(dest, keep_alive);
@@ -9831,26 +9288,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn force_unreserve(
                 &self,
                 who: crate::interfaces::testnet::api::balances::calls::types::force_unreserve::Who,
                 amount: crate::interfaces::testnet::api::balances::calls::types::force_unreserve::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .force_unreserve(who, amount);
@@ -9865,8 +9321,7 @@ pub mod testnet {
                 who: crate::interfaces::testnet::api::balances::calls::types::force_unreserve::Who,
                 amount: crate::interfaces::testnet::api::balances::calls::types::force_unreserve::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .force_unreserve(who, amount);
@@ -9881,25 +9336,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn upgrade_accounts(
                 &self,
                 who: crate::interfaces::testnet::api::balances::calls::types::upgrade_accounts::Who,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .upgrade_accounts(who);
@@ -9913,8 +9367,7 @@ pub mod testnet {
                 &self,
                 who: crate::interfaces::testnet::api::balances::calls::types::upgrade_accounts::Who,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .upgrade_accounts(who);
@@ -9929,26 +9382,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn force_set_balance(
                 &self,
                 who: crate::interfaces::testnet::api::balances::calls::types::force_set_balance::Who,
                 new_free: crate::interfaces::testnet::api::balances::calls::types::force_set_balance::NewFree,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .force_set_balance(who, new_free);
@@ -9963,8 +9415,7 @@ pub mod testnet {
                 who: crate::interfaces::testnet::api::balances::calls::types::force_set_balance::Who,
                 new_free: crate::interfaces::testnet::api::balances::calls::types::force_set_balance::NewFree,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .force_set_balance(who, new_free);
@@ -9979,26 +9430,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn force_adjust_total_issuance(
                 &self,
                 direction: crate::interfaces::testnet::api::balances::calls::types::force_adjust_total_issuance::Direction,
                 delta: crate::interfaces::testnet::api::balances::calls::types::force_adjust_total_issuance::Delta,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .force_adjust_total_issuance(direction, delta);
@@ -10013,8 +9463,7 @@ pub mod testnet {
                 direction: crate::interfaces::testnet::api::balances::calls::types::force_adjust_total_issuance::Direction,
                 delta: crate::interfaces::testnet::api::balances::calls::types::force_adjust_total_issuance::Delta,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .force_adjust_total_issuance(direction, delta);
@@ -10029,26 +9478,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn burn(
                 &self,
                 value: crate::interfaces::testnet::api::balances::calls::types::burn::Value,
                 keep_alive: crate::interfaces::testnet::api::balances::calls::types::burn::KeepAlive,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .burn(value, keep_alive);
@@ -10063,8 +9511,7 @@ pub mod testnet {
                 value: crate::interfaces::testnet::api::balances::calls::types::burn::Value,
                 keep_alive: crate::interfaces::testnet::api::balances::calls::types::burn::KeepAlive,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .balances()
                     .burn(value, keep_alive);
@@ -10079,18 +9526,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -10116,30 +9563,26 @@ pub mod testnet {
             }
         }
         impl TransactionPaymentStorage<crate::chain::TestNet> {
-            pub async fn storage_version(
+            pub async fn next_fee_multiplier(
                 &self,
-            ) -> Result<
-                Option<runtime_types::pallet_transaction_payment::Releases>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::fixed_point::FixedU128>>
+            {
                 let call = crate::interfaces::testnet::api::storage()
                     .transaction_payment()
-                    .storage_version();
+                    .next_fee_multiplier();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn next_fee_multiplier(
+            pub async fn storage_version(
                 &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::fixed_point::FixedU128>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::pallet_transaction_payment::Releases>>
+            {
                 let call = crate::interfaces::testnet::api::storage()
                     .transaction_payment()
-                    .next_fee_multiplier();
+                    .storage_version();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -10169,10 +9612,7 @@ pub mod testnet {
         impl SudoStorage<crate::chain::TestNet> {
             pub async fn key(
                 &self,
-            ) -> Result<
-                Option<::subxt::ext::subxt_core::utils::AccountId32>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::AccountId32>> {
                 let call = crate::interfaces::testnet::api::storage().sudo().key();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
@@ -10194,8 +9634,7 @@ pub mod testnet {
                 &self,
                 call: crate::interfaces::testnet::api::sudo::calls::types::sudo::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().sudo().sudo(call);
                 Ok(self
                     .client
@@ -10207,8 +9646,7 @@ pub mod testnet {
                 &self,
                 call: crate::interfaces::testnet::api::sudo::calls::types::sudo::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().sudo().sudo(call);
                 let mut stream = self
                     .client
@@ -10221,26 +9659,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn sudo_unchecked_weight(
                 &self,
                 call: crate::interfaces::testnet::api::sudo::calls::types::sudo_unchecked_weight::Call,
                 weight: crate::interfaces::testnet::api::sudo::calls::types::sudo_unchecked_weight::Weight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .sudo()
                     .sudo_unchecked_weight(call, weight);
@@ -10255,8 +9692,7 @@ pub mod testnet {
                 call: crate::interfaces::testnet::api::sudo::calls::types::sudo_unchecked_weight::Call,
                 weight: crate::interfaces::testnet::api::sudo::calls::types::sudo_unchecked_weight::Weight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .sudo()
                     .sudo_unchecked_weight(call, weight);
@@ -10271,25 +9707,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_key(
                 &self,
                 new: crate::interfaces::testnet::api::sudo::calls::types::set_key::New,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().sudo().set_key(new);
                 Ok(self
                     .client
@@ -10301,8 +9736,7 @@ pub mod testnet {
                 &self,
                 new: crate::interfaces::testnet::api::sudo::calls::types::set_key::New,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().sudo().set_key(new);
                 let mut stream = self
                     .client
@@ -10315,26 +9749,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn sudo_as(
                 &self,
                 who: crate::interfaces::testnet::api::sudo::calls::types::sudo_as::Who,
                 call: crate::interfaces::testnet::api::sudo::calls::types::sudo_as::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .sudo()
                     .sudo_as(who, call);
@@ -10349,8 +9782,7 @@ pub mod testnet {
                 who: crate::interfaces::testnet::api::sudo::calls::types::sudo_as::Who,
                 call: crate::interfaces::testnet::api::sudo::calls::types::sudo_as::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .sudo()
                     .sudo_as(who, call);
@@ -10365,24 +9797,23 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_key(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().sudo().remove_key();
                 Ok(self
                     .client
@@ -10393,8 +9824,7 @@ pub mod testnet {
             pub async fn remove_key_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().sudo().remove_key();
                 let mut stream = self
                     .client
@@ -10407,18 +9837,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -10445,7 +9875,7 @@ pub mod testnet {
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
                 key2: &[::core::primitive::u8; 32usize],
-            ) -> Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::pallet_multisig::Multisig<
                         ::core::primitive::u64,
@@ -10453,7 +9883,6 @@ pub mod testnet {
                         ::subxt::ext::subxt_core::utils::AccountId32,
                     >,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .multisig()
@@ -10466,24 +9895,20 @@ pub mod testnet {
             }
             pub async fn multisigs_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                [::core::primitive::u8; 32usize],
-                            ),
-                            runtime_types::pallet_multisig::Multisig<
-                                ::core::primitive::u64,
-                                ::core::primitive::u128,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            [::core::primitive::u8; 32usize],
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::pallet_multisig::Multisig<
+                            ::core::primitive::u64,
+                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .multisig()
@@ -10511,24 +9936,20 @@ pub mod testnet {
             pub async fn multisigs_iter1(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                [::core::primitive::u8; 32usize],
-                            ),
-                            runtime_types::pallet_multisig::Multisig<
-                                ::core::primitive::u64,
-                                ::core::primitive::u128,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            [::core::primitive::u8; 32usize],
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::pallet_multisig::Multisig<
+                            ::core::primitive::u64,
+                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .multisig()
@@ -10568,8 +9989,7 @@ pub mod testnet {
                 other_signatories: crate::interfaces::testnet::api::multisig::calls::types::as_multi_threshold1::OtherSignatories,
                 call: crate::interfaces::testnet::api::multisig::calls::types::as_multi_threshold1::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .multisig()
                     .as_multi_threshold_1(other_signatories, call);
@@ -10584,8 +10004,7 @@ pub mod testnet {
                 other_signatories: crate::interfaces::testnet::api::multisig::calls::types::as_multi_threshold1::OtherSignatories,
                 call: crate::interfaces::testnet::api::multisig::calls::types::as_multi_threshold1::Call,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .multisig()
                     .as_multi_threshold_1(other_signatories, call);
@@ -10600,18 +10019,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn as_multi(
                 &self,
@@ -10621,8 +10040,7 @@ pub mod testnet {
                 call: crate::interfaces::testnet::api::multisig::calls::types::as_multi::Call,
                 max_weight: crate::interfaces::testnet::api::multisig::calls::types::as_multi::MaxWeight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().multisig().as_multi(
                     threshold,
                     other_signatories,
@@ -10644,8 +10062,7 @@ pub mod testnet {
                 call: crate::interfaces::testnet::api::multisig::calls::types::as_multi::Call,
                 max_weight: crate::interfaces::testnet::api::multisig::calls::types::as_multi::MaxWeight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().multisig().as_multi(
                     threshold,
                     other_signatories,
@@ -10664,18 +10081,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn approve_as_multi(
                 &self,
@@ -10685,8 +10102,7 @@ pub mod testnet {
                 call_hash: crate::interfaces::testnet::api::multisig::calls::types::approve_as_multi::CallHash,
                 max_weight: crate::interfaces::testnet::api::multisig::calls::types::approve_as_multi::MaxWeight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .multisig()
                     .approve_as_multi(
@@ -10710,8 +10126,7 @@ pub mod testnet {
                 call_hash: crate::interfaces::testnet::api::multisig::calls::types::approve_as_multi::CallHash,
                 max_weight: crate::interfaces::testnet::api::multisig::calls::types::approve_as_multi::MaxWeight,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .multisig()
                     .approve_as_multi(
@@ -10732,18 +10147,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn cancel_as_multi(
                 &self,
@@ -10752,8 +10167,7 @@ pub mod testnet {
                 timepoint: crate::interfaces::testnet::api::multisig::calls::types::cancel_as_multi::Timepoint,
                 call_hash: crate::interfaces::testnet::api::multisig::calls::types::cancel_as_multi::CallHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .multisig()
                     .cancel_as_multi(threshold, other_signatories, timepoint, call_hash);
@@ -10770,8 +10184,7 @@ pub mod testnet {
                 timepoint: crate::interfaces::testnet::api::multisig::calls::types::cancel_as_multi::Timepoint,
                 call_hash: crate::interfaces::testnet::api::multisig::calls::types::cancel_as_multi::CallHash,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .multisig()
                     .cancel_as_multi(threshold, other_signatories, timepoint, call_hash);
@@ -10786,18 +10199,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -10820,10 +10233,84 @@ pub mod testnet {
             }
         }
         impl EthereumStorage<crate::chain::TestNet> {
+            pub async fn current_receipts(
+                &self,
+            ) -> crate::Result<
+                Option<
+                    ::subxt::ext::subxt_core::alloc::vec::Vec<
+                        runtime_types::ethereum::receipt::ReceiptV3,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .ethereum()
+                    .current_receipts();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn current_block(
+                &self,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::ethereum::block::Block<
+                        runtime_types::ethereum::transaction::TransactionV2,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .ethereum()
+                    .current_block();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn pending(
+                &self,
+            ) -> crate::Result<
+                Option<
+                    ::subxt::ext::subxt_core::alloc::vec::Vec<(
+                        runtime_types::ethereum::transaction::TransactionV2,
+                        runtime_types::fp_rpc::TransactionStatus,
+                        runtime_types::ethereum::receipt::ReceiptV3,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .ethereum()
+                    .pending();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn current_transaction_statuses(
+                &self,
+            ) -> crate::Result<
+                Option<
+                    ::subxt::ext::subxt_core::alloc::vec::Vec<
+                        runtime_types::fp_rpc::TransactionStatus,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .ethereum()
+                    .current_transaction_statuses();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
             pub async fn block_hash_get(
                 &self,
                 key: &runtime_types::primitive_types::U256,
-            ) -> anyhow::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .ethereum()
                     .block_hash(key);
@@ -10835,17 +10322,13 @@ pub mod testnet {
             }
             pub async fn block_hash_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            runtime_types::primitive_types::U256,
-                            ::subxt::ext::subxt_core::utils::H256,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        runtime_types::primitive_types::U256,
+                        ::subxt::ext::subxt_core::utils::H256,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .ethereum()
@@ -10867,84 +10350,6 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn current_receipts(
-                &self,
-            ) -> Result<
-                Option<
-                    ::subxt::ext::subxt_core::alloc::vec::Vec<
-                        runtime_types::ethereum::receipt::ReceiptV3,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .ethereum()
-                    .current_receipts();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn current_block(
-                &self,
-            ) -> Result<
-                Option<
-                    runtime_types::ethereum::block::Block<
-                        runtime_types::ethereum::transaction::TransactionV2,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .ethereum()
-                    .current_block();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn pending(
-                &self,
-            ) -> Result<
-                Option<
-                    ::subxt::ext::subxt_core::alloc::vec::Vec<(
-                        runtime_types::ethereum::transaction::TransactionV2,
-                        runtime_types::fp_rpc::TransactionStatus,
-                        runtime_types::ethereum::receipt::ReceiptV3,
-                    )>,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .ethereum()
-                    .pending();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn current_transaction_statuses(
-                &self,
-            ) -> Result<
-                Option<
-                    ::subxt::ext::subxt_core::alloc::vec::Vec<
-                        runtime_types::fp_rpc::TransactionStatus,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .ethereum()
-                    .current_transaction_statuses();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
         }
         impl EthereumClient<crate::chain::TestNet> {
             pub fn calls(&self) -> EthereumCalls<crate::chain::TestNet> {
@@ -10959,8 +10364,7 @@ pub mod testnet {
                 &self,
                 transaction: crate::interfaces::testnet::api::ethereum::calls::types::transact::Transaction,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .ethereum()
                     .transact(transaction);
@@ -10974,8 +10378,7 @@ pub mod testnet {
                 &self,
                 transaction: crate::interfaces::testnet::api::ethereum::calls::types::transact::Transaction,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .ethereum()
                     .transact(transaction);
@@ -10990,18 +10393,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -11024,10 +10427,55 @@ pub mod testnet {
             }
         }
         impl EvmStorage<crate::chain::TestNet> {
+            pub async fn account_codes_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::H160,
+            ) -> crate::Result<
+                Option<::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>>,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .evm()
+                    .account_codes(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn account_codes_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H160,
+                        ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .evm()
+                    .account_codes_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::H160 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
             pub async fn account_codes_metadata_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::H160,
-            ) -> anyhow::Result<Option<runtime_types::pallet_evm::CodeMetadata>> {
+            ) -> crate::Result<Option<runtime_types::pallet_evm::CodeMetadata>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .evm()
                     .account_codes_metadata(key);
@@ -11039,17 +10487,13 @@ pub mod testnet {
             }
             pub async fn account_codes_metadata_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H160,
-                            runtime_types::pallet_evm::CodeMetadata,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H160,
+                        runtime_types::pallet_evm::CodeMetadata,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .evm()
@@ -11071,12 +10515,49 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
+            pub async fn suicided_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::H160,
+            ) -> crate::Result<Option<()>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .evm()
+                    .suicided(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn suicided_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<Item = crate::Result<(::subxt::ext::subxt_core::utils::H160, ())>>,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .evm()
+                    .suicided_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::H160 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
             pub async fn account_storages_get(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::H160,
                 key2: &::subxt::ext::subxt_core::utils::H256,
-            ) -> Result<Option<::subxt::ext::subxt_core::utils::H256>, crate::error::StorageError>
-            {
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::H256>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .evm()
                     .account_storages(key1, key2);
@@ -11088,20 +10569,16 @@ pub mod testnet {
             }
             pub async fn account_storages_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::H160,
-                                ::subxt::ext::subxt_core::utils::H256,
-                            ),
+                            ::subxt::ext::subxt_core::utils::H160,
                             ::subxt::ext::subxt_core::utils::H256,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::subxt::ext::subxt_core::utils::H256,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .evm()
@@ -11129,20 +10606,16 @@ pub mod testnet {
             pub async fn account_storages_iter1(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::H160,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::H160,
-                                ::subxt::ext::subxt_core::utils::H256,
-                            ),
+                            ::subxt::ext::subxt_core::utils::H160,
                             ::subxt::ext::subxt_core::utils::H256,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::subxt::ext::subxt_core::utils::H256,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .evm()
@@ -11167,99 +10640,6 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn suicided_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::H160,
-            ) -> anyhow::Result<Option<()>> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .evm()
-                    .suicided(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn suicided_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (::subxt::ext::subxt_core::utils::H160, ()),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .evm()
-                    .suicided_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::H160 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn account_codes_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::H160,
-            ) -> anyhow::Result<
-                Option<::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>>,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .evm()
-                    .account_codes(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn account_codes_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H160,
-                            ::subxt::ext::subxt_core::alloc::vec::Vec<::core::primitive::u8>,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .evm()
-                    .account_codes_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::H160 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
         }
         impl EvmClient<crate::chain::TestNet> {
             pub fn calls(&self) -> EvmCalls<crate::chain::TestNet> {
@@ -11275,8 +10655,7 @@ pub mod testnet {
                 address: crate::interfaces::testnet::api::evm::calls::types::withdraw::Address,
                 value: crate::interfaces::testnet::api::evm::calls::types::withdraw::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .evm()
                     .withdraw(address, value);
@@ -11291,8 +10670,7 @@ pub mod testnet {
                 address: crate::interfaces::testnet::api::evm::calls::types::withdraw::Address,
                 value: crate::interfaces::testnet::api::evm::calls::types::withdraw::Value,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .evm()
                     .withdraw(address, value);
@@ -11307,18 +10685,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn call(
                 &self,
@@ -11332,8 +10710,7 @@ pub mod testnet {
                 nonce: crate::interfaces::testnet::api::evm::calls::types::call::Nonce,
                 access_list: crate::interfaces::testnet::api::evm::calls::types::call::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().evm().call(
                     source,
                     target,
@@ -11363,8 +10740,7 @@ pub mod testnet {
                 nonce: crate::interfaces::testnet::api::evm::calls::types::call::Nonce,
                 access_list: crate::interfaces::testnet::api::evm::calls::types::call::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().evm().call(
                     source,
                     target,
@@ -11387,18 +10763,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn create(
                 &self,
@@ -11411,8 +10787,7 @@ pub mod testnet {
                 nonce: crate::interfaces::testnet::api::evm::calls::types::create::Nonce,
                 access_list: crate::interfaces::testnet::api::evm::calls::types::create::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().evm().create(
                     source,
                     init,
@@ -11440,8 +10815,7 @@ pub mod testnet {
                 nonce: crate::interfaces::testnet::api::evm::calls::types::create::Nonce,
                 access_list: crate::interfaces::testnet::api::evm::calls::types::create::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().evm().create(
                     source,
                     init,
@@ -11463,18 +10837,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn create2(
                 &self,
@@ -11488,8 +10862,7 @@ pub mod testnet {
                 nonce: crate::interfaces::testnet::api::evm::calls::types::create2::Nonce,
                 access_list: crate::interfaces::testnet::api::evm::calls::types::create2::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().evm().create2(
                     source,
                     init,
@@ -11519,8 +10892,7 @@ pub mod testnet {
                 nonce: crate::interfaces::testnet::api::evm::calls::types::create2::Nonce,
                 access_list: crate::interfaces::testnet::api::evm::calls::types::create2::AccessList,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().evm().create2(
                     source,
                     init,
@@ -11543,18 +10915,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -11577,167 +10949,20 @@ pub mod testnet {
             }
         }
         impl GovernanceStorage<crate::chain::TestNet> {
-            pub async fn global_governance_config(
-                &self,
-            ) -> Result<
-                Option<runtime_types::pallet_governance::config::GovernanceConfiguration>,
-                crate::error::StorageError,
-            > {
+            pub async fn agents_frozen(&self) -> crate::Result<Option<::core::primitive::bool>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .governance()
-                    .global_governance_config();
+                    .agents_frozen();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
-            }
-            pub async fn agent_applications_get(
-                &self,
-                key: &::core::primitive::u32,
-            ) -> anyhow::Result<
-                Option<runtime_types::pallet_governance::application::AgentApplication>,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .governance()
-                    .agent_applications(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn agent_applications_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u32,
-                            runtime_types::pallet_governance::application::AgentApplication,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .governance()
-                    .agent_applications_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::core::primitive::u32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn dao_treasury_address(
-                &self,
-            ) -> Result<
-                Option<::subxt::ext::subxt_core::utils::AccountId32>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .governance()
-                    .dao_treasury_address();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn treasury_emission_fee(
-                &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::per_things::Percent>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .governance()
-                    .treasury_emission_fee();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn not_delegating_voting_power(
-                &self,
-            ) -> Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                        ::subxt::ext::subxt_core::utils::AccountId32,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .governance()
-                    .not_delegating_voting_power();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn allocators_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<()>> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .governance()
-                    .allocators(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn allocators_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (::subxt::ext::subxt_core::utils::AccountId32, ()),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .governance()
-                    .allocators_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
             }
             pub async fn proposals_get(
                 &self,
                 key: &::core::primitive::u64,
-            ) -> anyhow::Result<Option<runtime_types::pallet_governance::proposal::Proposal>>
+            ) -> crate::Result<Option<runtime_types::pallet_governance::proposal::Proposal>>
             {
                 let call = crate::interfaces::testnet::api::storage()
                     .governance()
@@ -11750,17 +10975,13 @@ pub mod testnet {
             }
             pub async fn proposals_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u64,
-                            runtime_types::pallet_governance::proposal::Proposal,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::core::primitive::u64,
+                        runtime_types::pallet_governance::proposal::Proposal,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .governance()
@@ -11782,68 +11003,32 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn agents_frozen(
+            pub async fn not_delegating_voting_power(
                 &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .governance()
-                    .agents_frozen();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn whitelist_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<()>> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .governance()
-                    .whitelist(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn whitelist_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (::subxt::ext::subxt_core::utils::AccountId32, ()),
-                        crate::error::StorageError,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                        ::subxt::ext::subxt_core::utils::AccountId32,
                     >,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .governance()
-                    .whitelist_iter();
+                    .not_delegating_voting_power();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
+                Ok(api.fetch(&call).await?)
             }
-            pub async fn namespaces_frozen(
+            pub async fn global_governance_config(
                 &self,
-            ) -> Result<Option<::core::primitive::bool>, crate::error::StorageError> {
+            ) -> crate::Result<
+                Option<runtime_types::pallet_governance::config::GovernanceConfiguration>,
+            > {
                 let call = crate::interfaces::testnet::api::storage()
                     .governance()
-                    .namespaces_frozen();
+                    .global_governance_config();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -11853,9 +11038,8 @@ pub mod testnet {
             pub async fn unrewarded_proposals_get(
                 &self,
                 key: &::core::primitive::u64,
-            ) -> anyhow::Result<
-                Option<runtime_types::pallet_governance::proposal::UnrewardedProposal>,
-            > {
+            ) -> crate::Result<Option<runtime_types::pallet_governance::proposal::UnrewardedProposal>>
+            {
                 let call = crate::interfaces::testnet::api::storage()
                     .governance()
                     .unrewarded_proposals(key);
@@ -11867,17 +11051,13 @@ pub mod testnet {
             }
             pub async fn unrewarded_proposals_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::core::primitive::u64,
-                            runtime_types::pallet_governance::proposal::UnrewardedProposal,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::core::primitive::u64,
+                        runtime_types::pallet_governance::proposal::UnrewardedProposal,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .governance()
@@ -11899,6 +11079,164 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
+            pub async fn dao_treasury_address(
+                &self,
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::AccountId32>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .governance()
+                    .dao_treasury_address();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn agent_applications_get(
+                &self,
+                key: &::core::primitive::u32,
+            ) -> crate::Result<
+                Option<runtime_types::pallet_governance::application::AgentApplication>,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .governance()
+                    .agent_applications(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn agent_applications_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::core::primitive::u32,
+                        runtime_types::pallet_governance::application::AgentApplication,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .governance()
+                    .agent_applications_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::core::primitive::u32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn treasury_emission_fee(
+                &self,
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::per_things::Percent>>
+            {
+                let call = crate::interfaces::testnet::api::storage()
+                    .governance()
+                    .treasury_emission_fee();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn namespaces_frozen(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::bool>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .governance()
+                    .namespaces_frozen();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn allocators_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<Option<()>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .governance()
+                    .allocators(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn allocators_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<Item = crate::Result<(::subxt::ext::subxt_core::utils::AccountId32, ())>>,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .governance()
+                    .allocators_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn whitelist_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<Option<()>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .governance()
+                    .whitelist(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn whitelist_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<Item = crate::Result<(::subxt::ext::subxt_core::utils::AccountId32, ())>>,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .governance()
+                    .whitelist_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
         }
         impl GovernanceClient<crate::chain::TestNet> {
             pub fn calls(&self) -> GovernanceCalls<crate::chain::TestNet> {
@@ -11913,8 +11251,7 @@ pub mod testnet {
                 &self,
                 key: crate::interfaces::testnet::api::governance::calls::types::add_allocator::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_allocator(key);
@@ -11928,8 +11265,7 @@ pub mod testnet {
                 &self,
                 key: crate::interfaces::testnet::api::governance::calls::types::add_allocator::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_allocator(key);
@@ -11944,25 +11280,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_allocator(
                 &self,
                 key: crate::interfaces::testnet::api::governance::calls::types::remove_allocator::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .remove_allocator(key);
@@ -11976,8 +11311,7 @@ pub mod testnet {
                 &self,
                 key: crate::interfaces::testnet::api::governance::calls::types::remove_allocator::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .remove_allocator(key);
@@ -11992,25 +11326,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_to_whitelist(
                 &self,
                 key: crate::interfaces::testnet::api::governance::calls::types::add_to_whitelist::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_to_whitelist(key);
@@ -12024,8 +11357,7 @@ pub mod testnet {
                 &self,
                 key: crate::interfaces::testnet::api::governance::calls::types::add_to_whitelist::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_to_whitelist(key);
@@ -12040,25 +11372,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_from_whitelist(
                 &self,
                 key: crate::interfaces::testnet::api::governance::calls::types::remove_from_whitelist::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .remove_from_whitelist(key);
@@ -12072,8 +11403,7 @@ pub mod testnet {
                 &self,
                 key: crate::interfaces::testnet::api::governance::calls::types::remove_from_whitelist::Key,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .remove_from_whitelist(key);
@@ -12088,25 +11418,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn accept_application(
                 &self,
                 application_id: crate::interfaces::testnet::api::governance::calls::types::accept_application::ApplicationId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .accept_application(application_id);
@@ -12120,8 +11449,7 @@ pub mod testnet {
                 &self,
                 application_id: crate::interfaces::testnet::api::governance::calls::types::accept_application::ApplicationId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .accept_application(application_id);
@@ -12136,25 +11464,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn deny_application(
                 &self,
                 application_id: crate::interfaces::testnet::api::governance::calls::types::deny_application::ApplicationId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .deny_application(application_id);
@@ -12168,8 +11495,7 @@ pub mod testnet {
                 &self,
                 application_id: crate::interfaces::testnet::api::governance::calls::types::deny_application::ApplicationId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .deny_application(application_id);
@@ -12184,26 +11510,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn penalize_agent(
                 &self,
                 agent_key: crate::interfaces::testnet::api::governance::calls::types::penalize_agent::AgentKey,
                 percentage: crate::interfaces::testnet::api::governance::calls::types::penalize_agent::Percentage,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .penalize_agent(agent_key, percentage);
@@ -12218,8 +11543,7 @@ pub mod testnet {
                 agent_key: crate::interfaces::testnet::api::governance::calls::types::penalize_agent::AgentKey,
                 percentage: crate::interfaces::testnet::api::governance::calls::types::penalize_agent::Percentage,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .penalize_agent(agent_key, percentage);
@@ -12234,18 +11558,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn submit_application(
                 &self,
@@ -12253,8 +11577,7 @@ pub mod testnet {
                 metadata: crate::interfaces::testnet::api::governance::calls::types::submit_application::Metadata,
                 removing: crate::interfaces::testnet::api::governance::calls::types::submit_application::Removing,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .submit_application(agent_key, metadata, removing);
@@ -12270,8 +11593,7 @@ pub mod testnet {
                 metadata: crate::interfaces::testnet::api::governance::calls::types::submit_application::Metadata,
                 removing: crate::interfaces::testnet::api::governance::calls::types::submit_application::Removing,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .submit_application(agent_key, metadata, removing);
@@ -12286,26 +11608,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_global_params_proposal(
                 &self,
                 data: crate::interfaces::testnet::api::governance::calls::types::add_global_params_proposal::Data,
                 metadata: crate::interfaces::testnet::api::governance::calls::types::add_global_params_proposal::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_global_params_proposal(data, metadata);
@@ -12320,8 +11641,7 @@ pub mod testnet {
                 data: crate::interfaces::testnet::api::governance::calls::types::add_global_params_proposal::Data,
                 metadata: crate::interfaces::testnet::api::governance::calls::types::add_global_params_proposal::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_global_params_proposal(data, metadata);
@@ -12336,25 +11656,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_global_custom_proposal(
                 &self,
                 metadata: crate::interfaces::testnet::api::governance::calls::types::add_global_custom_proposal::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_global_custom_proposal(metadata);
@@ -12368,8 +11687,7 @@ pub mod testnet {
                 &self,
                 metadata: crate::interfaces::testnet::api::governance::calls::types::add_global_custom_proposal::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_global_custom_proposal(metadata);
@@ -12384,18 +11702,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_dao_treasury_transfer_proposal(
                 &self,
@@ -12403,8 +11721,7 @@ pub mod testnet {
                 destination_key: crate::interfaces::testnet::api::governance::calls::types::add_dao_treasury_transfer_proposal::DestinationKey,
                 data: crate::interfaces::testnet::api::governance::calls::types::add_dao_treasury_transfer_proposal::Data,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_dao_treasury_transfer_proposal(value, destination_key, data);
@@ -12420,8 +11737,7 @@ pub mod testnet {
                 destination_key: crate::interfaces::testnet::api::governance::calls::types::add_dao_treasury_transfer_proposal::DestinationKey,
                 data: crate::interfaces::testnet::api::governance::calls::types::add_dao_treasury_transfer_proposal::Data,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_dao_treasury_transfer_proposal(value, destination_key, data);
@@ -12436,26 +11752,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn vote_proposal(
                 &self,
                 proposal_id: crate::interfaces::testnet::api::governance::calls::types::vote_proposal::ProposalId,
                 agree: crate::interfaces::testnet::api::governance::calls::types::vote_proposal::Agree,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .vote_proposal(proposal_id, agree);
@@ -12470,8 +11785,7 @@ pub mod testnet {
                 proposal_id: crate::interfaces::testnet::api::governance::calls::types::vote_proposal::ProposalId,
                 agree: crate::interfaces::testnet::api::governance::calls::types::vote_proposal::Agree,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .vote_proposal(proposal_id, agree);
@@ -12486,25 +11800,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_vote_proposal(
                 &self,
                 proposal_id: crate::interfaces::testnet::api::governance::calls::types::remove_vote_proposal::ProposalId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .remove_vote_proposal(proposal_id);
@@ -12518,8 +11831,7 @@ pub mod testnet {
                 &self,
                 proposal_id: crate::interfaces::testnet::api::governance::calls::types::remove_vote_proposal::ProposalId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .remove_vote_proposal(proposal_id);
@@ -12534,24 +11846,23 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn enable_vote_delegation(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .enable_vote_delegation();
@@ -12564,8 +11875,7 @@ pub mod testnet {
             pub async fn enable_vote_delegation_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .enable_vote_delegation();
@@ -12580,24 +11890,23 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn disable_vote_delegation(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .disable_vote_delegation();
@@ -12610,8 +11919,7 @@ pub mod testnet {
             pub async fn disable_vote_delegation_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .disable_vote_delegation();
@@ -12626,18 +11934,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn add_emission_proposal(
                 &self,
@@ -12646,8 +11954,7 @@ pub mod testnet {
                 incentives_ratio: crate::interfaces::testnet::api::governance::calls::types::add_emission_proposal::IncentivesRatio,
                 data: crate::interfaces::testnet::api::governance::calls::types::add_emission_proposal::Data,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_emission_proposal(
@@ -12669,8 +11976,7 @@ pub mod testnet {
                 incentives_ratio: crate::interfaces::testnet::api::governance::calls::types::add_emission_proposal::IncentivesRatio,
                 data: crate::interfaces::testnet::api::governance::calls::types::add_emission_proposal::Data,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .add_emission_proposal(
@@ -12690,26 +11996,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_emission_params(
                 &self,
                 recycling_percentage: crate::interfaces::testnet::api::governance::calls::types::set_emission_params::RecyclingPercentage,
                 treasury_percentage: crate::interfaces::testnet::api::governance::calls::types::set_emission_params::TreasuryPercentage,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .set_emission_params(recycling_percentage, treasury_percentage);
@@ -12724,8 +12029,7 @@ pub mod testnet {
                 recycling_percentage: crate::interfaces::testnet::api::governance::calls::types::set_emission_params::RecyclingPercentage,
                 treasury_percentage: crate::interfaces::testnet::api::governance::calls::types::set_emission_params::TreasuryPercentage,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .set_emission_params(recycling_percentage, treasury_percentage);
@@ -12740,24 +12044,23 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn toggle_agent_freezing(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .toggle_agent_freezing();
@@ -12770,8 +12073,7 @@ pub mod testnet {
             pub async fn toggle_agent_freezing_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .toggle_agent_freezing();
@@ -12786,24 +12088,23 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn toggle_namespace_freezing(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .toggle_namespace_freezing();
@@ -12816,8 +12117,7 @@ pub mod testnet {
             pub async fn toggle_namespace_freezing_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .governance()
                     .toggle_namespace_freezing();
@@ -12832,18 +12132,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -12866,70 +12166,68 @@ pub mod testnet {
             }
         }
         impl Torus0Storage<crate::chain::TestNet> {
-            pub async fn registrations_this_interval(
+            pub async fn min_validator_stake(
                 &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u128>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
-                    .registrations_this_interval();
+                    .min_validator_stake();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn namespace_count_get(
-                &self,
-                key: &runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-            ) -> anyhow::Result<Option<::core::primitive::u32>> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .namespace_count(key);
+            pub async fn burn(&self) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::testnet::api::storage().torus0().burn();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn namespace_count_iter(
+            pub async fn max_agent_url_length(
                 &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-                            ::core::primitive::u32,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<::core::primitive::u16>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
-                    .namespace_count_iter();
+                    .max_agent_url_length();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <runtime_types::pallet_torus0::namespace::NamespaceOwnership as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn dividends_participation_weight(
+                &self,
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::per_things::Percent>>
+            {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .dividends_participation_weight();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn agent_update_cooldown(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::u64>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .agent_update_cooldown();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
             }
             pub async fn staked_by_get(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
                 key2: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u128>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
                     .staked_by(key1, key2);
@@ -12941,20 +12239,16 @@ pub mod testnet {
             }
             pub async fn staked_by_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
@@ -12982,20 +12276,16 @@ pub mod testnet {
             pub async fn staked_by_iter1(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
@@ -13020,11 +12310,126 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
+            pub async fn burn_config(
+                &self,
+            ) -> crate::Result<Option<runtime_types::pallet_torus0::burn::BurnConfiguration>>
+            {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .burn_config();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn min_allowed_stake(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .min_allowed_stake();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn min_name_length(&self) -> crate::Result<Option<::core::primitive::u16>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .min_name_length();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn namespace_count_get(
+                &self,
+                key: &runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+            ) -> crate::Result<Option<::core::primitive::u32>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .namespace_count(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn namespace_count_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+                        ::core::primitive::u32,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .namespace_count_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <runtime_types::pallet_torus0::namespace::NamespaceOwnership as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn max_name_length(&self) -> crate::Result<Option<::core::primitive::u16>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .max_name_length();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn fee_constraints(
+                &self,
+            ) -> crate::Result<Option<runtime_types::pallet_torus0::fee::ValidatorFeeConstraints>>
+            {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .fee_constraints();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn namespace_pricing_config(
+                &self,
+            ) -> crate::Result<
+                Option<runtime_types::pallet_torus0::namespace::NamespacePricingConfig>,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .namespace_pricing_config();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
             pub async fn staking_to_get(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
                 key2: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u128>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
                     .staking_to(key1, key2);
@@ -13036,20 +12441,16 @@ pub mod testnet {
             }
             pub async fn staking_to_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
@@ -13077,20 +12478,16 @@ pub mod testnet {
             pub async fn staking_to_iter1(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
@@ -13115,166 +12512,12 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn total_stake(
+            pub async fn max_registrations_per_block(
                 &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u16>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
-                    .total_stake();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn dividends_participation_weight(
-                &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::per_things::Percent>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .dividends_participation_weight();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn min_validator_stake(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .min_validator_stake();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn registrations_this_block(
-                &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .registrations_this_block();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn burn_config(
-                &self,
-            ) -> Result<
-                Option<runtime_types::pallet_torus0::burn::BurnConfiguration>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .burn_config();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn namespace_pricing_config(
-                &self,
-            ) -> Result<
-                Option<runtime_types::pallet_torus0::namespace::NamespacePricingConfig>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .namespace_pricing_config();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn max_name_length(
-                &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .max_name_length();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn min_allowed_stake(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .min_allowed_stake();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn min_name_length(
-                &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .min_name_length();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn burn(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage().torus0().burn();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn max_agent_url_length(
-                &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .max_agent_url_length();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn max_allowed_validators(
-                &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .max_allowed_validators();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn fee_constraints(
-                &self,
-            ) -> Result<
-                Option<runtime_types::pallet_torus0::fee::ValidatorFeeConstraints>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .torus0()
-                    .fee_constraints();
+                    .max_registrations_per_block();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -13285,10 +12528,8 @@ pub mod testnet {
                 &self,
                 key1: &runtime_types::pallet_torus0::namespace::NamespaceOwnership,
                 key2: &runtime_types::pallet_torus0_api::NamespacePath,
-            ) -> Result<
-                Option<runtime_types::pallet_torus0::namespace::NamespaceMetadata>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::pallet_torus0::namespace::NamespaceMetadata>>
+            {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
                     .namespaces(key1, key2);
@@ -13300,20 +12541,16 @@ pub mod testnet {
             }
             pub async fn namespaces_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-                                runtime_types::pallet_torus0_api::NamespacePath,
-                            ),
-                            runtime_types::pallet_torus0::namespace::NamespaceMetadata,
+                            runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+                            runtime_types::pallet_torus0_api::NamespacePath,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::pallet_torus0::namespace::NamespaceMetadata,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
@@ -13341,20 +12578,16 @@ pub mod testnet {
             pub async fn namespaces_iter1(
                 &self,
                 key1: &runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                runtime_types::pallet_torus0::namespace::NamespaceOwnership,
-                                runtime_types::pallet_torus0_api::NamespacePath,
-                            ),
-                            runtime_types::pallet_torus0::namespace::NamespaceMetadata,
+                            runtime_types::pallet_torus0::namespace::NamespaceOwnership,
+                            runtime_types::pallet_torus0_api::NamespacePath,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::pallet_torus0::namespace::NamespaceMetadata,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
@@ -13382,7 +12615,7 @@ pub mod testnet {
             pub async fn agents_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<runtime_types::pallet_torus0::agent::Agent>> {
+            ) -> crate::Result<Option<runtime_types::pallet_torus0::agent::Agent>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
                     .agents(key);
@@ -13394,17 +12627,13 @@ pub mod testnet {
             }
             pub async fn agents_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::pallet_torus0::agent::Agent,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::pallet_torus0::agent::Agent,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
@@ -13426,21 +12655,41 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn max_registrations_per_block(
-                &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
+            pub async fn total_stake(&self) -> crate::Result<Option<::core::primitive::u128>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
-                    .max_registrations_per_block();
+                    .total_stake();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn reward_interval(
+            pub async fn registrations_this_block(
                 &self,
-            ) -> Result<Option<::core::primitive::u16>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u16>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .registrations_this_block();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn max_allowed_validators(
+                &self,
+            ) -> crate::Result<Option<::core::primitive::u16>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .torus0()
+                    .max_allowed_validators();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn reward_interval(&self) -> crate::Result<Option<::core::primitive::u16>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
                     .reward_interval();
@@ -13450,12 +12699,12 @@ pub mod testnet {
                 };
                 Ok(api.fetch(&call).await?)
             }
-            pub async fn agent_update_cooldown(
+            pub async fn registrations_this_interval(
                 &self,
-            ) -> Result<Option<::core::primitive::u64>, crate::error::StorageError> {
+            ) -> crate::Result<Option<::core::primitive::u16>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .torus0()
-                    .agent_update_cooldown();
+                    .registrations_this_interval();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -13477,8 +12726,7 @@ pub mod testnet {
                 agent_key: crate::interfaces::testnet::api::torus0::calls::types::add_stake::AgentKey,
                 amount: crate::interfaces::testnet::api::torus0::calls::types::add_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .add_stake(agent_key, amount);
@@ -13493,8 +12741,7 @@ pub mod testnet {
                 agent_key: crate::interfaces::testnet::api::torus0::calls::types::add_stake::AgentKey,
                 amount: crate::interfaces::testnet::api::torus0::calls::types::add_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .add_stake(agent_key, amount);
@@ -13509,26 +12756,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn remove_stake(
                 &self,
                 agent_key: crate::interfaces::testnet::api::torus0::calls::types::remove_stake::AgentKey,
                 amount: crate::interfaces::testnet::api::torus0::calls::types::remove_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .remove_stake(agent_key, amount);
@@ -13543,8 +12789,7 @@ pub mod testnet {
                 agent_key: crate::interfaces::testnet::api::torus0::calls::types::remove_stake::AgentKey,
                 amount: crate::interfaces::testnet::api::torus0::calls::types::remove_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .remove_stake(agent_key, amount);
@@ -13559,18 +12804,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn transfer_stake(
                 &self,
@@ -13578,8 +12823,7 @@ pub mod testnet {
                 new_agent_key: crate::interfaces::testnet::api::torus0::calls::types::transfer_stake::NewAgentKey,
                 amount: crate::interfaces::testnet::api::torus0::calls::types::transfer_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .transfer_stake(agent_key, new_agent_key, amount);
@@ -13595,8 +12839,7 @@ pub mod testnet {
                 new_agent_key: crate::interfaces::testnet::api::torus0::calls::types::transfer_stake::NewAgentKey,
                 amount: crate::interfaces::testnet::api::torus0::calls::types::transfer_stake::Amount,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .transfer_stake(agent_key, new_agent_key, amount);
@@ -13611,18 +12854,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn register_agent(
                 &self,
@@ -13631,8 +12874,7 @@ pub mod testnet {
                 url: crate::interfaces::testnet::api::torus0::calls::types::register_agent::Url,
                 metadata: crate::interfaces::testnet::api::torus0::calls::types::register_agent::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .register_agent(agent_key, name, url, metadata);
@@ -13649,8 +12891,7 @@ pub mod testnet {
                 url: crate::interfaces::testnet::api::torus0::calls::types::register_agent::Url,
                 metadata: crate::interfaces::testnet::api::torus0::calls::types::register_agent::Metadata,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .register_agent(agent_key, name, url, metadata);
@@ -13665,24 +12906,23 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn unregister_agent(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .unregister_agent();
@@ -13695,8 +12935,7 @@ pub mod testnet {
             pub async fn unregister_agent_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .unregister_agent();
@@ -13711,18 +12950,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn update_agent(
                 &self,
@@ -13731,8 +12970,7 @@ pub mod testnet {
                 staking_fee: crate::interfaces::testnet::api::torus0::calls::types::update_agent::StakingFee,
                 weight_control_fee: crate::interfaces::testnet::api::torus0::calls::types::update_agent::WeightControlFee,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().torus0().update_agent(
                     url,
                     metadata,
@@ -13752,8 +12990,7 @@ pub mod testnet {
                 staking_fee: crate::interfaces::testnet::api::torus0::calls::types::update_agent::StakingFee,
                 weight_control_fee: crate::interfaces::testnet::api::torus0::calls::types::update_agent::WeightControlFee,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().torus0().update_agent(
                     url,
                     metadata,
@@ -13771,25 +13008,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_agent_update_cooldown(
                 &self,
                 new_cooldown: crate::interfaces::testnet::api::torus0::calls::types::set_agent_update_cooldown::NewCooldown,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .set_agent_update_cooldown(new_cooldown);
@@ -13803,8 +13039,7 @@ pub mod testnet {
                 &self,
                 new_cooldown: crate::interfaces::testnet::api::torus0::calls::types::set_agent_update_cooldown::NewCooldown,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .set_agent_update_cooldown(new_cooldown);
@@ -13819,25 +13054,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn create_namespace(
                 &self,
                 path: crate::interfaces::testnet::api::torus0::calls::types::create_namespace::Path,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .create_namespace(path);
@@ -13851,8 +13085,7 @@ pub mod testnet {
                 &self,
                 path: crate::interfaces::testnet::api::torus0::calls::types::create_namespace::Path,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .create_namespace(path);
@@ -13867,25 +13100,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn delete_namespace(
                 &self,
                 path: crate::interfaces::testnet::api::torus0::calls::types::delete_namespace::Path,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .delete_namespace(path);
@@ -13899,8 +13131,7 @@ pub mod testnet {
                 &self,
                 path: crate::interfaces::testnet::api::torus0::calls::types::delete_namespace::Path,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .torus0()
                     .delete_namespace(path);
@@ -13915,18 +13146,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -13949,10 +13180,33 @@ pub mod testnet {
             }
         }
         impl Emission0Storage<crate::chain::TestNet> {
+            pub async fn incentives_ratio(
+                &self,
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::per_things::Percent>>
+            {
+                let call = crate::interfaces::testnet::api::storage()
+                    .emission0()
+                    .incentives_ratio();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn pending_emission(&self) -> crate::Result<Option<::core::primitive::u128>> {
+                let call = crate::interfaces::testnet::api::storage()
+                    .emission0()
+                    .pending_emission();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
             pub async fn weight_control_delegation_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<::subxt::ext::subxt_core::utils::AccountId32>> {
+            ) -> crate::Result<Option<::subxt::ext::subxt_core::utils::AccountId32>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .emission0()
                     .weight_control_delegation(key);
@@ -13964,17 +13218,13 @@ pub mod testnet {
             }
             pub async fn weight_control_delegation_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .emission0()
@@ -13996,27 +13246,13 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn incentives_ratio(
+            pub async fn emission_recycling_percentage(
                 &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::per_things::Percent>,
-                crate::error::StorageError,
-            > {
+            ) -> crate::Result<Option<runtime_types::sp_arithmetic::per_things::Percent>>
+            {
                 let call = crate::interfaces::testnet::api::storage()
                     .emission0()
-                    .incentives_ratio();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn pending_emission(
-                &self,
-            ) -> Result<Option<::core::primitive::u128>, crate::error::StorageError> {
-                let call = crate::interfaces::testnet::api::storage()
-                    .emission0()
-                    .pending_emission();
+                    .emission_recycling_percentage();
                 let api = match &self.block {
                     Some(block_hash) => self.client.storage().at(*block_hash),
                     None => self.client.storage().at_latest().await?,
@@ -14026,7 +13262,7 @@ pub mod testnet {
             pub async fn consensus_members_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<Option<runtime_types::pallet_emission0::ConsensusMember>>
+            ) -> crate::Result<Option<runtime_types::pallet_emission0::ConsensusMember>>
             {
                 let call = crate::interfaces::testnet::api::storage()
                     .emission0()
@@ -14039,17 +13275,13 @@ pub mod testnet {
             }
             pub async fn consensus_members_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::pallet_emission0::ConsensusMember,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::pallet_emission0::ConsensusMember,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .emission0()
@@ -14071,21 +13303,6 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn emission_recycling_percentage(
-                &self,
-            ) -> Result<
-                Option<runtime_types::sp_arithmetic::per_things::Percent>,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .emission0()
-                    .emission_recycling_percentage();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
         }
         impl Emission0Client<crate::chain::TestNet> {
             pub fn calls(&self) -> Emission0Calls<crate::chain::TestNet> {
@@ -14100,8 +13317,7 @@ pub mod testnet {
                 &self,
                 weights: crate::interfaces::testnet::api::emission0::calls::types::set_weights::Weights,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .emission0()
                     .set_weights(weights);
@@ -14115,8 +13331,7 @@ pub mod testnet {
                 &self,
                 weights: crate::interfaces::testnet::api::emission0::calls::types::set_weights::Weights,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .emission0()
                     .set_weights(weights);
@@ -14131,25 +13346,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn delegate_weight_control(
                 &self,
                 target: crate::interfaces::testnet::api::emission0::calls::types::delegate_weight_control::Target,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .emission0()
                     .delegate_weight_control(target);
@@ -14163,8 +13377,7 @@ pub mod testnet {
                 &self,
                 target: crate::interfaces::testnet::api::emission0::calls::types::delegate_weight_control::Target,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .emission0()
                     .delegate_weight_control(target);
@@ -14179,24 +13392,23 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn regain_weight_control(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .emission0()
                     .regain_weight_control();
@@ -14209,8 +13421,7 @@ pub mod testnet {
             pub async fn regain_weight_control_wait(
                 &self,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .emission0()
                     .regain_weight_control();
@@ -14225,18 +13436,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -14262,13 +13473,257 @@ pub mod testnet {
             }
         }
         impl Permission0Storage<crate::chain::TestNet> {
+            pub async fn permissions_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::H256,
+            ) -> crate::Result<
+                Option<runtime_types::pallet_permission0::permission::PermissionContract>,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .permission0()
+                    .permissions(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn permissions_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H256,
+                        runtime_types::pallet_permission0::permission::PermissionContract,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .permission0()
+                    .permissions_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::H256 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn enforcement_tracking_get(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::H256,
+                key2: &runtime_types::pallet_permission0::permission::EnforcementReferendum,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .permission0()
+                    .enforcement_tracking(key1, key2);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn enforcement_tracking_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::H256,
+                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
+                        ),
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .permission0()
+                    .enforcement_tracking_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::H256,
+                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn enforcement_tracking_iter1(
+                &self,
+                key1: &::subxt::ext::subxt_core::utils::H256,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        (
+                            ::subxt::ext::subxt_core::utils::H256,
+                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
+                        ),
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .permission0()
+                    .enforcement_tracking_iter1(key1);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let pair = <(
+                            ::subxt::ext::subxt_core::utils::H256,
+                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
+                        ) as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((pair, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn permissions_by_grantee_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        ::subxt::ext::subxt_core::utils::H256,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .permission0()
+                    .permissions_by_grantee(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn permissions_by_grantee_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .permission0()
+                    .permissions_by_grantee_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
+            pub async fn permissions_by_grantor_get(
+                &self,
+                key: &::subxt::ext::subxt_core::utils::AccountId32,
+            ) -> crate::Result<
+                Option<
+                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                        ::subxt::ext::subxt_core::utils::H256,
+                    >,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .permission0()
+                    .permissions_by_grantor(key);
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                Ok(api.fetch(&call).await?)
+            }
+            pub async fn permissions_by_grantor_iter(
+                &self,
+            ) -> crate::Result<
+                impl Stream<
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    )>,
+                >,
+            > {
+                let call = crate::interfaces::testnet::api::storage()
+                    .permission0()
+                    .permissions_by_grantor_iter();
+                let api = match &self.block {
+                    Some(block_hash) => self.client.storage().at(*block_hash),
+                    None => self.client.storage().at_latest().await?,
+                };
+                let stream = api
+                    .iter(call)
+                    .await?
+                    .map(|res| {
+                        let res = res?;
+                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
+                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
+                        )?;
+                        Ok((key, res.value))
+                    })
+                    .into_stream();
+                Ok(stream)
+            }
             /// Get storage n-map value by keys
             pub async fn accumulated_stream_amounts_get(
                 &self,
                 account_id32_1: ::subxt::ext::subxt_core::utils::AccountId32,
                 h256_2: ::subxt::ext::subxt_core::utils::H256,
                 h256_3: ::subxt::ext::subxt_core::utils::H256,
-            ) -> Result<Option<::core::primitive::u128>, Box<dyn std::error::Error>> {
+            ) -> crate::Result<Option<::core::primitive::u128>> {
                 let call = crate::interfaces::testnet::api::storage()
                     .permission0()
                     .accumulated_stream_amounts(account_id32_1, h256_2, h256_3);
@@ -14278,21 +13733,17 @@ pub mod testnet {
             /// Query all entries in storage n-map
             pub async fn accumulated_stream_amounts_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::H256,
-                                ::subxt::ext::subxt_core::utils::H256,
-                            ),
-                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::H256,
+                            ::subxt::ext::subxt_core::utils::H256,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .permission0()
@@ -14321,17 +13772,13 @@ pub mod testnet {
             pub async fn accumulated_stream_amounts_iter1(
                 &self,
                 key0: ::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            ::core::primitive::u128,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::AccountId32,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .permission0()
@@ -14358,20 +13805,16 @@ pub mod testnet {
                 &self,
                 key0: ::subxt::ext::subxt_core::utils::AccountId32,
                 key1: ::subxt::ext::subxt_core::utils::H256,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::H256,
-                            ),
-                            ::core::primitive::u128,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::H256,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        ::core::primitive::u128,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .permission0()
@@ -14396,66 +13839,16 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn permissions_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::H256,
-            ) -> anyhow::Result<
-                Option<runtime_types::pallet_permission0::permission::PermissionContract>,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .permission0()
-                    .permissions(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn permissions_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H256,
-                            runtime_types::pallet_permission0::permission::PermissionContract,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .permission0()
-                    .permissions_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::H256 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
             pub async fn permissions_by_participants_get(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
                 key2: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::bounded_collections::bounded_vec::BoundedVec<
                         ::subxt::ext::subxt_core::utils::H256,
                     >,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .permission0()
@@ -14468,22 +13861,18 @@ pub mod testnet {
             }
             pub async fn permissions_by_participants_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                ::subxt::ext::subxt_core::utils::H256,
-                            >,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .permission0()
@@ -14511,22 +13900,18 @@ pub mod testnet {
             pub async fn permissions_by_participants_iter1(
                 &self,
                 key1: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
+                    Item = crate::Result<(
                         (
-                            (
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            ),
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                ::subxt::ext::subxt_core::utils::H256,
-                            >,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                            ::subxt::ext::subxt_core::utils::AccountId32,
                         ),
-                        crate::error::StorageError,
-                    >,
+                        runtime_types::bounded_collections::bounded_vec::BoundedVec<
+                            ::subxt::ext::subxt_core::utils::H256,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .permission0()
@@ -14551,120 +13936,10 @@ pub mod testnet {
                     .into_stream();
                 Ok(stream)
             }
-            pub async fn permissions_by_grantor_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        ::subxt::ext::subxt_core::utils::H256,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .permission0()
-                    .permissions_by_grantor(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn permissions_by_grantor_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                ::subxt::ext::subxt_core::utils::H256,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .permission0()
-                    .permissions_by_grantor_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn permissions_by_grantee_get(
-                &self,
-                key: &::subxt::ext::subxt_core::utils::AccountId32,
-            ) -> anyhow::Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                        ::subxt::ext::subxt_core::utils::H256,
-                    >,
-                >,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .permission0()
-                    .permissions_by_grantee(key);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn permissions_by_grantee_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::AccountId32,
-                            runtime_types::bounded_collections::bounded_vec::BoundedVec<
-                                ::subxt::ext::subxt_core::utils::H256,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .permission0()
-                    .permissions_by_grantee_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let key = <::subxt::ext::subxt_core::utils::AccountId32 as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
             pub async fn revocation_tracking_get(
                 &self,
                 key: &::subxt::ext::subxt_core::utils::H256,
-            ) -> anyhow::Result<
+            ) -> crate::Result<
                 Option<
                     runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
                         ::subxt::ext::subxt_core::utils::AccountId32,
@@ -14682,19 +13957,15 @@ pub mod testnet {
             }
             pub async fn revocation_tracking_iter(
                 &self,
-            ) -> Result<
+            ) -> crate::Result<
                 impl Stream<
-                    Item = Result<
-                        (
-                            ::subxt::ext::subxt_core::utils::H256,
-                            runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
+                    Item = crate::Result<(
+                        ::subxt::ext::subxt_core::utils::H256,
+                        runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
+                            ::subxt::ext::subxt_core::utils::AccountId32,
+                        >,
+                    )>,
                 >,
-                crate::error::StorageError,
             > {
                 let call = crate::interfaces::testnet::api::storage()
                     .permission0()
@@ -14712,112 +13983,6 @@ pub mod testnet {
                             &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
                         )?;
                         Ok((key, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn enforcement_tracking_get(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::H256,
-                key2: &runtime_types::pallet_permission0::permission::EnforcementReferendum,
-            ) -> Result<
-                Option<
-                    runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                        ::subxt::ext::subxt_core::utils::AccountId32,
-                    >,
-                >,
-                crate::error::StorageError,
-            > {
-                let call = crate::interfaces::testnet::api::storage()
-                    .permission0()
-                    .enforcement_tracking(key1, key2);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                Ok(api.fetch(&call).await?)
-            }
-            pub async fn enforcement_tracking_iter(
-                &self,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::H256,
-                                runtime_types::pallet_permission0::permission::EnforcementReferendum,
-                            ),
-                            runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            >{
-                let call = crate::interfaces::testnet::api::storage()
-                    .permission0()
-                    .enforcement_tracking_iter();
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::H256,
-                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
-                        ) as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((pair, res.value))
-                    })
-                    .into_stream();
-                Ok(stream)
-            }
-            pub async fn enforcement_tracking_iter1(
-                &self,
-                key1: &::subxt::ext::subxt_core::utils::H256,
-            ) -> Result<
-                impl Stream<
-                    Item = Result<
-                        (
-                            (
-                                ::subxt::ext::subxt_core::utils::H256,
-                                runtime_types::pallet_permission0::permission::EnforcementReferendum,
-                            ),
-                            runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet<
-                                ::subxt::ext::subxt_core::utils::AccountId32,
-                            >,
-                        ),
-                        crate::error::StorageError,
-                    >,
-                >,
-                crate::error::StorageError,
-            >{
-                let call = crate::interfaces::testnet::api::storage()
-                    .permission0()
-                    .enforcement_tracking_iter1(key1);
-                let api = match &self.block {
-                    Some(block_hash) => self.client.storage().at(*block_hash),
-                    None => self.client.storage().at_latest().await?,
-                };
-                let stream = api
-                    .iter(call)
-                    .await?
-                    .map(|res| {
-                        let res = res?;
-                        let pair = <(
-                            ::subxt::ext::subxt_core::utils::H256,
-                            runtime_types::pallet_permission0::permission::EnforcementReferendum,
-                        ) as Decode>::decode(
-                            &mut res.key_bytes.get(32..).unwrap_or(&res.key_bytes[..]),
-                        )?;
-                        Ok((pair, res.value))
                     })
                     .into_stream();
                 Ok(stream)
@@ -14842,8 +14007,7 @@ pub mod testnet {
                 revocation: crate::interfaces::testnet::api::permission0::calls::types::grant_emission_permission::Revocation,
                 enforcement: crate::interfaces::testnet::api::permission0::calls::types::grant_emission_permission::Enforcement,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .grant_emission_permission(
@@ -14871,8 +14035,7 @@ pub mod testnet {
                 revocation: crate::interfaces::testnet::api::permission0::calls::types::grant_emission_permission::Revocation,
                 enforcement: crate::interfaces::testnet::api::permission0::calls::types::grant_emission_permission::Enforcement,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .grant_emission_permission(
@@ -14895,25 +14058,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn revoke_permission(
                 &self,
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::revoke_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .revoke_permission(permission_id);
@@ -14927,8 +14089,7 @@ pub mod testnet {
                 &self,
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::revoke_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .revoke_permission(permission_id);
@@ -14943,25 +14104,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn execute_permission(
                 &self,
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::execute_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .execute_permission(permission_id);
@@ -14975,8 +14135,7 @@ pub mod testnet {
                 &self,
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::execute_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .execute_permission(permission_id);
@@ -14991,26 +14150,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn toggle_permission_accumulation(
                 &self,
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::toggle_permission_accumulation::PermissionId,
                 accumulating: crate::interfaces::testnet::api::permission0::calls::types::toggle_permission_accumulation::Accumulating,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .toggle_permission_accumulation(permission_id, accumulating);
@@ -15025,8 +14183,7 @@ pub mod testnet {
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::toggle_permission_accumulation::PermissionId,
                 accumulating: crate::interfaces::testnet::api::permission0::calls::types::toggle_permission_accumulation::Accumulating,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .toggle_permission_accumulation(permission_id, accumulating);
@@ -15041,25 +14198,24 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn enforcement_execute_permission(
                 &self,
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::enforcement_execute_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .enforcement_execute_permission(permission_id);
@@ -15073,8 +14229,7 @@ pub mod testnet {
                 &self,
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::enforcement_execute_permission::PermissionId,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .enforcement_execute_permission(permission_id);
@@ -15089,26 +14244,25 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn set_enforcement_authority(
                 &self,
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::set_enforcement_authority::PermissionId,
                 enforcement: crate::interfaces::testnet::api::permission0::calls::types::set_enforcement_authority::Enforcement,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .set_enforcement_authority(permission_id, enforcement);
@@ -15123,8 +14277,7 @@ pub mod testnet {
                 permission_id: crate::interfaces::testnet::api::permission0::calls::types::set_enforcement_authority::PermissionId,
                 enforcement: crate::interfaces::testnet::api::permission0::calls::types::set_enforcement_authority::Enforcement,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .set_enforcement_authority(permission_id, enforcement);
@@ -15139,18 +14292,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn grant_curator_permission(
                 &self,
@@ -15160,8 +14313,7 @@ pub mod testnet {
                 duration: crate::interfaces::testnet::api::permission0::calls::types::grant_curator_permission::Duration,
                 revocation: crate::interfaces::testnet::api::permission0::calls::types::grant_curator_permission::Revocation,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .grant_curator_permission(grantee, flags, cooldown, duration, revocation);
@@ -15179,8 +14331,7 @@ pub mod testnet {
                 duration: crate::interfaces::testnet::api::permission0::calls::types::grant_curator_permission::Duration,
                 revocation: crate::interfaces::testnet::api::permission0::calls::types::grant_curator_permission::Revocation,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .grant_curator_permission(grantee, flags, cooldown, duration, revocation);
@@ -15195,18 +14346,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn grant_namespace_permission(
                 &self,
@@ -15215,8 +14366,7 @@ pub mod testnet {
                 duration: crate::interfaces::testnet::api::permission0::calls::types::grant_namespace_permission::Duration,
                 revocation: crate::interfaces::testnet::api::permission0::calls::types::grant_namespace_permission::Revocation,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .grant_namespace_permission(grantee, paths, duration, revocation);
@@ -15233,8 +14383,7 @@ pub mod testnet {
                 duration: crate::interfaces::testnet::api::permission0::calls::types::grant_namespace_permission::Duration,
                 revocation: crate::interfaces::testnet::api::permission0::calls::types::grant_namespace_permission::Revocation,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .grant_namespace_permission(grantee, paths, duration, revocation);
@@ -15249,18 +14398,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
             pub async fn update_emission_permission(
                 &self,
@@ -15269,8 +14418,7 @@ pub mod testnet {
                 new_streams: crate::interfaces::testnet::api::permission0::calls::types::update_emission_permission::NewStreams,
                 new_distribution_control: crate::interfaces::testnet::api::permission0::calls::types::update_emission_permission::NewDistributionControl,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .update_emission_permission(
@@ -15292,8 +14440,7 @@ pub mod testnet {
                 new_streams: crate::interfaces::testnet::api::permission0::calls::types::update_emission_permission::NewStreams,
                 new_distribution_control: crate::interfaces::testnet::api::permission0::calls::types::update_emission_permission::NewDistributionControl,
                 signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx()
                     .permission0()
                     .update_emission_permission(
@@ -15313,18 +14460,18 @@ pub mod testnet {
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
@@ -15345,8 +14492,7 @@ pub mod testnet {
                 nonce: crate::interfaces::testnet::api::faucet::calls::types::faucet::Nonce,
                 work: crate::interfaces::testnet::api::faucet::calls::types::faucet::Work,
                 key: crate::interfaces::testnet::api::faucet::calls::types::faucet::Key,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, subxt::error::Error>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().faucet().faucet(
                     block_number,
                     nonce,
@@ -15361,8 +14507,7 @@ pub mod testnet {
                 nonce: crate::interfaces::testnet::api::faucet::calls::types::faucet::Nonce,
                 work: crate::interfaces::testnet::api::faucet::calls::types::faucet::Work,
                 key: crate::interfaces::testnet::api::faucet::calls::types::faucet::Key,
-            ) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, subxt::error::Error>
-            {
+            ) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::testnet::api::tx().faucet().faucet(
                     block_number,
                     nonce,

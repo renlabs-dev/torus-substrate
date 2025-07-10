@@ -22,3 +22,9 @@ pub fn hex_to_bytes(hex: &str) -> Result<Vec<u8>, hex::FromHexError> {
 pub fn bytes_to_hex(bytes: &[u8]) -> String {
     format!("0x{}", hex::encode(bytes))
 }
+
+const ONE_TORUS: u128 = 10u128.pow(18);
+
+pub fn to_torus(tokens: f64) -> u128 {
+    return (tokens.abs() * ONE_TORUS as f64) as u128;
+}

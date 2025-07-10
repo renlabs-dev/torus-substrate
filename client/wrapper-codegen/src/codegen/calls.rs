@@ -59,12 +59,12 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
 
     if !UNSIGNED_CALLS.contains(&fn_name.to_string().as_str()) {
         quote! {
-            pub async fn #fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)* signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError> {
+            pub async fn #fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)* signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
                 Ok(self.client.tx().sign_and_submit_default(&call, &signer).await?)
             }
 
-            pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)* signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, crate::error::CallError> {
+            pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)* signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
 
                 let mut stream = self.client.tx().sign_and_submit_then_watch_default(&call, &signer).await?;
@@ -75,29 +75,29 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
 
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     } else {
         quote! {
-            pub async fn #fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)*) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, subxt::error::Error> {
+            pub async fn #fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)*) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
                 Ok(self.client.tx().create_unsigned(&call)?.submit())
             }
 
-            pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)*) -> Result<<subxt::PolkadotConfig as subxt::Config>::Hash, subxt::error::Error> {
+            pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)*) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
 
                 let stream = self.client.tx().create_unsigned(&call)?.submit_and_watch().await?;

@@ -8,7 +8,8 @@ pub mod utils;
 
 mod chain;
 pub mod client;
-pub mod error;
+mod error;
+pub use error::*;
 
 #[allow(clippy::too_many_arguments, dead_code)]
 pub mod wrappers;

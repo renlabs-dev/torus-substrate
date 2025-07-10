@@ -4,17 +4,17 @@ use subxt::{config::Header, OnlineClient, PolkadotConfig};
 
 use crate::chain::Chain;
 
-pub struct TorusClient<C: Chain> {
+pub struct TorusClient<C> {
     pub(crate) client: OnlineClient<PolkadotConfig>,
     _pd: PhantomData<C>,
 }
 
-impl<C: Chain> TorusClient<C> {
-    const MAINNET_URL: &'static str = "wss://api.torus.client";
-    const TESTNET_URL: &'static str = "wss://api.testnet.torus.client";
+impl TorusClient<()> {
+    const MAINNET_URL: &'static str = "wss://api.torus.network";
+    const TESTNET_URL: &'static str = "wss://api.testnet.torus.network";
 
     #[cfg(feature = "mainnet")]
-    pub async fn for_mainnet() -> anyhow::Result<TorusClient<crate::chain::MainNet>> {
+    pub async fn for_mainnet() -> crate::Result<TorusClient<crate::chain::MainNet>> {
         Ok(TorusClient {
             client: OnlineClient::from_url(Self::MAINNET_URL).await?,
             _pd: PhantomData,
@@ -22,20 +22,22 @@ impl<C: Chain> TorusClient<C> {
     }
 
     #[cfg(feature = "testnet")]
-    pub async fn for_testnet() -> anyhow::Result<TorusClient<crate::chain::TestNet>> {
+    pub async fn for_testnet() -> crate::Result<TorusClient<crate::chain::TestNet>> {
         Ok(TorusClient {
             client: OnlineClient::from_url(Self::TESTNET_URL).await?,
             _pd: PhantomData,
         })
     }
 
-    // pub fn torus0(&self) -> Torus0<C> {
-    //     Torus0 {
-    //         client: self.client.clone(),
-    //         _pd: PhantomData,
-    //     }
-    // }
+    pub async fn for_url<C: Chain>(url: impl AsRef<str>) -> crate::Result<TorusClient<C>> {
+        Ok(TorusClient {
+            client: OnlineClient::from_url(url).await?,
+            _pd: PhantomData,
+        })
+    }
+}
 
+impl<C: Chain> TorusClient<C> {
     /// Get the latest block hash
     pub async fn latest_block_hash(&self) -> Result<subxt::utils::H256, subxt::Error> {
         let block = self.client.blocks().at_latest().await?;
