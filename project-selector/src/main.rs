@@ -384,6 +384,25 @@ fn generate_project_json<'a>(
                 }
             }
 
+            if matches!(
+                target.kind,
+                TargetKind::Example | TargetKind::Bench | TargetKind::Test
+            ) {
+                let pkg = &resolved_crates[pkg_id];
+                if let Some(dep_crate_idx) = pkg
+                    .targets
+                    .iter()
+                    .enumerate()
+                    .find(|t| t.1.target.is_lib())
+                    .and_then(|(idx, _)| target_to_crate_idx.get(&(pkg_id, idx)))
+                {
+                    deps.push(json::Dep {
+                        krate: json::CrateArrayIdx(*dep_crate_idx),
+                        name: pkg.package.name.replace('-', "_"),
+                    });
+                };
+            }
+
             crates[crate_idx].deps = deps;
         }
     }
