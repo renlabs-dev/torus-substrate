@@ -440,7 +440,7 @@ pub mod pallet {
         ProposalExpired(ProposalId),
         /// A vote has been cast on a proposal.
         ProposalVoted(u64, T::AccountId, bool),
-        /// A vote has been unregistered from a proposal.
+        /// A vote has been deregistered from a proposal.
         ProposalVoteUnregistered(u64, T::AccountId),
         /// An agent account has been added to the whitelist.
         WhitelistAdded(T::AccountId),

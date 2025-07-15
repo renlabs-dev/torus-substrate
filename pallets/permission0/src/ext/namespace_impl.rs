@@ -1,7 +1,7 @@
 use crate::{
     generate_permission_id, permission::NamespaceScope, update_permission_indices, Config, Error,
     Event, Pallet, PermissionContract, PermissionDuration, PermissionId, PermissionScope,
-    Permissions, PermissionsByGrantor, RevocationTerms,
+    Permissions, PermissionsByDelegator, RevocationTerms,
 };
 use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner, Torus0Api};
@@ -14,33 +14,35 @@ use polkadot_sdk::{
 };
 
 impl<T: Config> Permission0NamespacesApi<T::AccountId, NamespacePath> for Pallet<T> {
-    fn is_delegating_namespace(grantor: &T::AccountId, path: &NamespacePath) -> bool {
-        PermissionsByGrantor::<T>::get(grantor).iter().any(|id| {
-            Permissions::<T>::get(id)
-                .filter(|permission| {
-                    if let PermissionScope::Namespace(scope) = &permission.scope {
-                        for p in &scope.paths {
-                            if p == path || path.is_parent_of(p) {
-                                return true;
+    fn is_delegating_namespace(delegator: &T::AccountId, path: &NamespacePath) -> bool {
+        PermissionsByDelegator::<T>::get(delegator)
+            .iter()
+            .any(|id| {
+                Permissions::<T>::get(id)
+                    .filter(|permission| {
+                        if let PermissionScope::Namespace(scope) = &permission.scope {
+                            for p in &scope.paths {
+                                if p == path || path.is_parent_of(p) || p.is_parent_of(path) {
+                                    return true;
+                                }
                             }
                         }
-                    }
 
-                    false
-                })
-                .is_some()
-        })
+                        false
+                    })
+                    .is_some()
+            })
     }
 }
 
-pub fn grant_namespace_permission_impl<T: Config>(
-    grantor: OriginFor<T>,
-    grantee: T::AccountId,
+pub fn delegate_namespace_permission_impl<T: Config>(
+    delegator: OriginFor<T>,
+    recipient: T::AccountId,
     paths: BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
 ) -> Result<PermissionId, DispatchError> {
-    let grantor = ensure_signed(grantor)?;
+    let delegator = ensure_signed(delegator)?;
 
     let paths = paths
         .into_iter()
@@ -48,7 +50,7 @@ pub fn grant_namespace_permission_impl<T: Config>(
             let path =
                 NamespacePath::new_agent(&path).map_err(|_| Error::<T>::NamespacePathIsInvalid)?;
             ensure!(
-                T::Torus::namespace_exists(&grantor, &path),
+                T::Torus::namespace_exists(&delegator, &path),
                 Error::<T>::NamespaceDoesNotExist
             );
 
@@ -60,11 +62,11 @@ pub fn grant_namespace_permission_impl<T: Config>(
         .map_err(|_| Error::<T>::NamespacePathIsInvalid)?;
 
     let scope = PermissionScope::Namespace(NamespaceScope { paths });
-    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope)?;
+    let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
 
     let contract = PermissionContract {
-        grantor,
-        grantee,
+        delegator,
+        recipient,
         scope,
         duration,
         revocation,
@@ -77,11 +79,11 @@ pub fn grant_namespace_permission_impl<T: Config>(
     };
 
     Permissions::<T>::insert(permission_id, &contract);
-    update_permission_indices::<T>(&contract.grantor, &contract.grantee, permission_id)?;
+    update_permission_indices::<T>(&contract.delegator, &contract.recipient, permission_id)?;
 
-    <Pallet<T>>::deposit_event(Event::PermissionGranted {
-        grantor: contract.grantor,
-        grantee: contract.grantee,
+    <Pallet<T>>::deposit_event(Event::Permissiondelegated {
+        delegator: contract.delegator,
+        recipient: contract.recipient,
         permission_id,
     });
 

@@ -89,7 +89,7 @@ fn weights_are_filtered_and_normalized() {
         let mut member = ConsensusMember::<Test>::default();
         member.update_weights(BoundedVec::truncate_from(vec![
             (0, 0),  // self-weight is discarded
-            (1, 10), // unregistered agent still in members
+            (1, 10), // deregistered agent still in members
             (2, 20), // new agent not in members
             (3, 40), // unknown agent
         ]));
@@ -155,7 +155,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
         let validator = 0;
         let new = 1;
         let delegating_registered = 2;
-        let delegating_unregistered = 3;
+        let delegating_deregistered = 3;
         let delegating_unknown = 4;
         let miner = 5;
         let staker = 6;
@@ -166,7 +166,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
             register_empty_agent(id);
         }
 
-        for id in [miner, delegating_registered, delegating_unregistered] {
+        for id in [miner, delegating_registered, delegating_deregistered] {
             ConsensusMembers::<Test>::set(id, Some(Default::default()));
         }
 
@@ -179,7 +179,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
 
         for id in [
             delegating_registered,
-            delegating_unregistered,
+            delegating_deregistered,
             delegating_unknown,
         ] {
             WeightControlDelegation::<Test>::set(id, Some(validator));
@@ -231,9 +231,9 @@ fn creates_list_of_all_member_inputs_for_rewards() {
         );
 
         assert_eq!(
-            members[&delegating_unregistered],
+            members[&delegating_deregistered],
             ConsensusMemberInput {
-                agent_id: delegating_unregistered,
+                agent_id: delegating_deregistered,
                 validator_permit: false,
                 weights: vec![],
                 stakes: vec![],

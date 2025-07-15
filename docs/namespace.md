@@ -112,7 +112,7 @@ pub struct NamespaceScope<T: Config> {
 }
 ```
 
-The namespace permission scope contains a set of paths that the grantee can access. The permission system's existing infrastructure handles the complexity of duration, revocation terms, and enforcement authorities. This means namespace permissions can be temporary, require multi-signature revocation, or include third-party controllers. Read more in [permission0.md](permission0.md).
+The namespace permission scope contains a set of paths that the recipient can access. The permission system's existing infrastructure handles the complexity of duration, revocation terms, and enforcement authorities. This means namespace permissions can be temporary, require multi-signature revocation, or include third-party controllers. Read more in [permission0.md](permission0.md).
 
 This integration creates composition possibilities. An agent running a data aggregation service could delegate read access to `agent.alice.data.public` while keeping `agent.alice.data.private` restricted, or delegate the entire data scope: `agent.alice.data`. The delegation could be time-limited, revocable by designated arbiters, or controlled by enforcement authorities who verify off-chain conditions.
 
@@ -120,7 +120,7 @@ This integration creates composition possibilities. An agent running a data aggr
 
 A memory service agent registers `agent.memory` and creates specialized sub-namespaces like `agent.memory.twitter`, `agent.memory.discord`, and `agent.memory.telegram`. Each represents a different data source with potentially different access requirements. The agent can delegate read access to `agent.memory.twitter` to analytics agents while keeping other sources private.
 
-A compute marketplace might use `agent.compute.gpu.nvidia.a100` to represent specific hardware resources. Delegating this namespace grants access to submit jobs to those specific GPUs. The hierarchical structure naturally represents the hardware taxonomy while permissions control access.
+A compute marketplace might use `agent.compute.gpu.nvidia.a100` to represent specific hardware resources. Delegating this namespace delegates access to submit jobs to those specific GPUs. The hierarchical structure naturally represents the hardware taxonomy while permissions control access.
 
 API versioning is viable with paths like `agent.api.v1` and `agent.api.v2`. Services can maintain backward compatibility by keeping old namespaces active while encouraging migration to newer versions. Permissions can be time-limited to enforce deprecation schedules.
 

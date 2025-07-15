@@ -426,9 +426,9 @@ pub type NegativeImbalanceOf = <pallet_balances::Pallet<Test> as Currency<
 >>::NegativeImbalance;
 
 #[allow(clippy::too_many_arguments)]
-pub fn grant_emission_permission(
-    grantor: AccountId,
-    grantee: AccountId,
+pub fn delegate_emission_permission(
+    delegator: AccountId,
+    recipient: AccountId,
     allocation: pallet_permission0_api::EmissionAllocation<Balance>,
     targets: Vec<(AccountId, u16)>,
     distribution: pallet_permission0_api::DistributionControl<Balance, BlockNumber>,
@@ -443,9 +443,9 @@ pub fn grant_emission_permission(
         BlockNumber,
         Balance,
         NegativeImbalanceOf,
-    >>::grant_emission_permission(
-        grantor,
-        grantee,
+    >>::delegate_emission_permission(
+        delegator,
+        recipient,
         allocation,
         targets,
         distribution,
@@ -455,7 +455,7 @@ pub fn grant_emission_permission(
     )
 }
 
-pub fn grant_curator_permission(
+pub fn delegate_curator_permission(
     key: AccountId,
     flags: CuratorPermissions,
     cooldown: Option<BlockNumber>,
@@ -465,7 +465,7 @@ pub fn grant_curator_permission(
         AccountId,
         RuntimeOrigin,
         BlockNumber,
-    >>::grant_curator_permission(
+    >>::delegate_curator_permission(
         RawOrigin::Root.into(),
         key,
         flags,

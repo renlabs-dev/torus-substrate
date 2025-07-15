@@ -1,7 +1,7 @@
 use crate::{
     generate_permission_id, pallet, update_permission_indices, Config, CuratorPermissions,
     CuratorScope, Error, Event, Pallet, PermissionContract, PermissionDuration, PermissionScope,
-    Permissions, PermissionsByGrantee, RevocationTerms,
+    Permissions, PermissionsByRecipient, RevocationTerms,
 };
 
 use pallet_permission0_api::{
@@ -22,9 +22,9 @@ use polkadot_sdk::{
 impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor<T>>
     for pallet::Pallet<T>
 {
-    fn grant_curator_permission(
-        grantor: OriginFor<T>,
-        grantee: T::AccountId,
+    fn delegate_curator_permission(
+        delegator: OriginFor<T>,
+        recipient: T::AccountId,
         flags: ApiCuratorPermissions,
         cooldown: Option<BlockNumberFor<T>>,
         duration: ApiPermissionDuration<BlockNumberFor<T>>,
@@ -34,18 +34,20 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
         let revocation = super::translate_revocation_terms::<T>(revocation)?;
 
         let flags = CuratorPermissions::from_bits_truncate(flags.bits());
-        grant_curator_permission_impl(grantor, grantee, flags, cooldown, duration, revocation)
+        delegate_curator_permission_impl(
+            delegator, recipient, flags, cooldown, duration, revocation,
+        )
     }
 
     fn ensure_curator_permission(
-        grantee: OriginFor<T>,
+        recipient: OriginFor<T>,
         flags: ApiCuratorPermissions,
     ) -> Result<T::AccountId, DispatchError> {
-        let Some(grantee) = ensure_signed_or_root(grantee)? else {
+        let Some(recipient) = ensure_signed_or_root(recipient)? else {
             return Ok(T::PalletId::get().into_account_truncating());
         };
 
-        let permissions = PermissionsByGrantee::<T>::get(&grantee);
+        let permissions = PermissionsByRecipient::<T>::get(&recipient);
         let Some((_, contract)) = permissions.into_iter().find_map(|permission_id| {
             let contract = Permissions::<T>::get(permission_id)?;
 
@@ -78,11 +80,11 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
             }
         }
 
-        Ok(grantee)
+        Ok(recipient)
     }
 
-    fn get_curator_permission(grantee: &T::AccountId) -> Option<PermissionId> {
-        PermissionsByGrantee::<T>::get(grantee)
+    fn get_curator_permission(recipient: &T::AccountId) -> Option<PermissionId> {
+        PermissionsByRecipient::<T>::get(recipient)
             .into_iter()
             .find_map(|permission_id| {
                 let contract = Permissions::<T>::get(permission_id)?;
@@ -96,29 +98,29 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
     }
 }
 
-pub fn grant_curator_permission_impl<T: Config>(
-    grantor: OriginFor<T>,
-    grantee: T::AccountId,
+pub fn delegate_curator_permission_impl<T: Config>(
+    delegator: OriginFor<T>,
+    recipient: T::AccountId,
     mut flags: CuratorPermissions,
     cooldown: Option<BlockNumberFor<T>>,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
 ) -> Result<PermissionId, DispatchError> {
-    ensure_root(grantor)?;
+    ensure_root(delegator)?;
 
-    // Root permission is not grantable
+    // Root permission is not delegateable
     flags.remove(CuratorPermissions::ROOT);
 
     ensure!(!flags.is_empty(), Error::<T>::InvalidCuratorPermissions);
 
-    let grantor = <T as Config>::PalletId::get().into_account_truncating();
+    let delegator = <T as Config>::PalletId::get().into_account_truncating();
 
     // We do not check for the ROOT curator permission at the moment.
     // This is mainly due to our use of a SUDO key at the moment.
     // Once we move away from centralized chain management, a ROOT curator
     // will be appointed by the system.
 
-    for perm in PermissionsByGrantee::<T>::get(&grantee) {
+    for perm in PermissionsByRecipient::<T>::get(&recipient) {
         let Some(contract) = Permissions::<T>::get(perm) else {
             continue;
         };
@@ -129,11 +131,11 @@ pub fn grant_curator_permission_impl<T: Config>(
     }
 
     let scope = PermissionScope::Curator(CuratorScope { flags, cooldown });
-    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope)?;
+    let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
 
     let contract = PermissionContract {
-        grantor,
-        grantee,
+        delegator,
+        recipient,
         scope,
         duration,
         revocation,
@@ -146,11 +148,11 @@ pub fn grant_curator_permission_impl<T: Config>(
     };
 
     Permissions::<T>::insert(permission_id, &contract);
-    update_permission_indices::<T>(&contract.grantor, &contract.grantee, permission_id)?;
+    update_permission_indices::<T>(&contract.delegator, &contract.recipient, permission_id)?;
 
-    <Pallet<T>>::deposit_event(Event::PermissionGranted {
-        grantor: contract.grantor,
-        grantee: contract.grantee,
+    <Pallet<T>>::deposit_event(Event::Permissiondelegated {
+        delegator: contract.delegator,
+        recipient: contract.recipient,
         permission_id,
     });
 

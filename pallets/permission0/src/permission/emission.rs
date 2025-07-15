@@ -31,16 +31,16 @@ impl<T: Config> EmissionScope<T> {
         self,
         permission_id: H256,
         last_executed: &Option<BlockNumberFor<T>>,
-        grantor: &T::AccountId,
+        delegator: &T::AccountId,
     ) {
         match self.allocation {
             EmissionAllocation::Streams(streams) => {
                 for stream in streams.keys() {
-                    AccumulatedStreamAmounts::<T>::remove((grantor, stream, &permission_id));
+                    AccumulatedStreamAmounts::<T>::remove((delegator, stream, &permission_id));
                 }
             }
             EmissionAllocation::FixedAmount(amount) if last_executed.is_none() => {
-                T::Currency::unreserve(grantor, amount);
+                T::Currency::unreserve(delegator, amount);
             }
             _ => {}
         }
@@ -60,7 +60,7 @@ pub enum EmissionAllocation<T: Config> {
 #[derive(Encode, Decode, CloneNoBound, PartialEq, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub enum DistributionControl<T: Config> {
-    /// Manual distribution by the grantor
+    /// Manual distribution by the delegator
     Manual,
     /// Automatic distribution after accumulation threshold
     Automatic(BalanceOf<T>),
@@ -136,7 +136,7 @@ pub(crate) fn do_auto_distribution<T: Config>(
                 EmissionAllocation::Streams(streams) => streams
                     .keys()
                     .filter_map(|id| {
-                        AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))
+                        AccumulatedStreamAmounts::<T>::get((&contract.delegator, id, permission_id))
                     })
                     .fold(BalanceOf::<T>::zero(), |acc, e| acc.saturating_add(e)), // The Balance AST does not enforce the Sum trait
                 EmissionAllocation::FixedAmount(amount) => *amount,
@@ -204,12 +204,12 @@ pub(crate) fn do_distribute_emission<T: Config>(
         EmissionAllocation::Streams(streams) => {
             let streams = streams.keys().filter_map(|id| {
                 let acc =
-                    AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))?;
+                    AccumulatedStreamAmounts::<T>::get((&contract.delegator, id, permission_id))?;
 
                 // You cannot remove the stream from the storage as
                 // it's needed in the accumulation code
                 AccumulatedStreamAmounts::<T>::set(
-                    (&contract.grantor, id, permission_id),
+                    (&contract.delegator, id, permission_id),
                     Some(Zero::zero()),
                 );
 
@@ -237,7 +237,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
                 let remainder = imbalance.peek();
                 if !remainder.is_zero() {
                     AccumulatedStreamAmounts::<T>::mutate(
-                        (&contract.grantor, stream, permission_id),
+                        (&contract.delegator, stream, permission_id),
                         |acc| {
                             if let Some(acc_value) = acc {
                                 *acc_value = acc_value.saturating_add(remainder);
@@ -256,9 +256,9 @@ pub(crate) fn do_distribute_emission<T: Config>(
             }
 
             // For fixed amount allocations, transfer from reserved funds
-            let _ = T::Currency::unreserve(&contract.grantor, *amount);
+            let _ = T::Currency::unreserve(&contract.delegator, *amount);
             let mut imbalance = T::Currency::withdraw(
-                &contract.grantor,
+                &contract.delegator,
                 *amount,
                 WithdrawReasons::TRANSFER,
                 ExistenceRequirement::KeepAlive,
@@ -328,15 +328,15 @@ fn do_distribute_to_targets<T: Config>(
     if !amount.is_zero() {
         <Pallet<T>>::deposit_event(match reason {
             DistributionReason::Automatic => Event::AutoDistributionExecuted {
-                grantor: contract.grantor.clone(),
-                grantee: contract.grantee.clone(),
+                delegator: contract.delegator.clone(),
+                recipient: contract.recipient.clone(),
                 permission_id,
                 stream_id: None,
                 amount,
             },
             DistributionReason::Manual => Event::PermissionExecuted {
-                grantor: contract.grantor.clone(),
-                grantee: contract.grantee.clone(),
+                delegator: contract.delegator.clone(),
+                recipient: contract.recipient.clone(),
                 permission_id,
                 stream_id: None,
                 amount,

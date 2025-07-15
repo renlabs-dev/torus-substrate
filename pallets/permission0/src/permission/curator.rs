@@ -73,7 +73,7 @@ impl<T: Config> CuratorScope<T> {
         &self,
         _permission_id: polkadot_sdk::sp_core::H256,
         _last_execution: &Option<crate::BlockNumberFor<T>>,
-        _grantor: &T::AccountId,
+        _delegator: &T::AccountId,
     ) {
         // No special cleanup needed for curator permissions
     }

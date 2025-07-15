@@ -33,7 +33,7 @@ fn stream_fails_if_overflow() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(98));
 
-        assert_ok!(grant_emission_permission(
+        assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -50,7 +50,7 @@ fn stream_fails_if_overflow() {
         streams.insert(stream_id, Percent::from_percent(3));
 
         assert_err!(
-            grant_emission_permission(
+            delegate_emission_permission(
                 agent_0,
                 agent_1,
                 pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -82,7 +82,7 @@ fn stream_creates() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -129,7 +129,7 @@ fn stream_manual_executes() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -186,7 +186,7 @@ fn stream_accumulates_and_executes_at_threshold() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             miner,
             miner,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -255,7 +255,7 @@ fn random_cannot_change_permission() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -290,7 +290,7 @@ fn random_cannot_change_permission() {
 }
 
 #[test]
-fn grantor_cannot_change_irrevocable_permission() {
+fn delegator_cannot_change_irrevocable_permission() {
     test_utils::new_test_ext().execute_with(|| {
         zero_min_burn();
         let agent_0 = 0;
@@ -306,7 +306,7 @@ fn grantor_cannot_change_irrevocable_permission() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -344,7 +344,7 @@ fn grantor_cannot_change_irrevocable_permission() {
 }
 
 #[test]
-fn grantor_cannot_change_arbiter_permission() {
+fn delegator_cannot_change_arbiter_permission() {
     test_utils::new_test_ext().execute_with(|| {
         zero_min_burn();
         let agent_0 = 0;
@@ -366,7 +366,7 @@ fn grantor_cannot_change_arbiter_permission() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -407,7 +407,7 @@ fn grantor_cannot_change_arbiter_permission() {
 }
 
 #[test]
-fn grantor_cannot_change_permission_before_block() {
+fn delegator_cannot_change_permission_before_block() {
     test_utils::new_test_ext().execute_with(|| {
         zero_min_burn();
         let agent_0 = 0;
@@ -429,7 +429,7 @@ fn grantor_cannot_change_permission_before_block() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -482,7 +482,7 @@ fn grantor_cannot_change_permission_before_block() {
 }
 
 #[test]
-fn grantee_can_only_change_targets() {
+fn recipient_can_only_change_targets() {
     test_utils::new_test_ext().execute_with(|| {
         zero_min_burn();
         let agent_0 = 0;
@@ -504,7 +504,7 @@ fn grantee_can_only_change_targets() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams),
@@ -579,14 +579,14 @@ fn updating_works() {
         let mut streams = BTreeMap::new();
         streams.insert(stream, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_1,
             pallet_permission0_api::EmissionAllocation::Streams(streams.clone()),
             vec![(agent_0, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
-            pallet_permission0_api::RevocationTerms::RevocableByGrantor,
+            pallet_permission0_api::RevocationTerms::RevocableByDelegator,
             pallet_permission0_api::EnforcementAuthority::None,
         ));
 
@@ -652,7 +652,7 @@ fn updating_works() {
 }
 
 #[test]
-fn update_prevents_overarching_update_when_grantor_is_grantee() {
+fn update_prevents_overarching_update_when_delegator_is_recipient() {
     test_utils::new_test_ext().execute_with(|| {
         zero_min_burn();
         let agent_0 = 0;
@@ -673,7 +673,7 @@ fn update_prevents_overarching_update_when_grantor_is_grantee() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(grant_emission_permission(
+        let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
             agent_0,
             pallet_permission0_api::EmissionAllocation::Streams(streams.clone()),

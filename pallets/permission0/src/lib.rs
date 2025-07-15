@@ -39,7 +39,7 @@ pub mod pallet {
 
     use super::*;
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -99,7 +99,7 @@ pub mod pallet {
     #[pallet::storage]
     pub type Permissions<T: Config> = StorageMap<_, Identity, PermissionId, PermissionContract<T>>;
 
-    /// Mapping from (grantor, grantee) to permission IDs
+    /// Mapping from (delegator, recipient) to permission IDs
     #[pallet::storage]
     pub type PermissionsByParticipants<T: Config> = StorageMap<
         _,
@@ -109,9 +109,9 @@ pub mod pallet {
         ValueQuery,
     >;
 
-    /// Permissions granted by a specific account
+    /// Permissions delegated by a specific account
     #[pallet::storage]
-    pub type PermissionsByGrantor<T: Config> = StorageMap<
+    pub type PermissionsByDelegator<T: Config> = StorageMap<
         _,
         Identity,
         T::AccountId,
@@ -121,7 +121,7 @@ pub mod pallet {
 
     /// Permissions received by a specific account
     #[pallet::storage]
-    pub type PermissionsByGrantee<T: Config> = StorageMap<
+    pub type PermissionsByRecipient<T: Config> = StorageMap<
         _,
         Identity,
         T::AccountId,
@@ -166,39 +166,39 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Permission granted from grantor to grantee with ID
-        PermissionGranted {
-            grantor: T::AccountId,
-            grantee: T::AccountId,
+        /// Permission delegated from delegator to recipient with ID
+        Permissiondelegated {
+            delegator: T::AccountId,
+            recipient: T::AccountId,
             permission_id: PermissionId,
         },
         /// Permission revoked with ID
         PermissionRevoked {
-            grantor: T::AccountId,
-            grantee: T::AccountId,
+            delegator: T::AccountId,
+            recipient: T::AccountId,
             revoked_by: Option<T::AccountId>,
             permission_id: PermissionId,
         },
         /// Permission executed (manual distribution) with ID
         PermissionExecuted {
-            grantor: T::AccountId,
-            grantee: T::AccountId,
+            delegator: T::AccountId,
+            recipient: T::AccountId,
             permission_id: PermissionId,
             stream_id: Option<StreamId>,
             amount: BalanceOf<T>,
         },
         /// Auto-distribution executed
         AutoDistributionExecuted {
-            grantor: T::AccountId,
-            grantee: T::AccountId,
+            delegator: T::AccountId,
+            recipient: T::AccountId,
             permission_id: PermissionId,
             stream_id: Option<StreamId>,
             amount: BalanceOf<T>,
         },
         /// Permission expired with ID
         PermissionExpired {
-            grantor: T::AccountId,
-            grantee: T::AccountId,
+            delegator: T::AccountId,
+            recipient: T::AccountId,
             permission_id: PermissionId,
         },
         /// Permission accumulation state toggled
@@ -253,10 +253,10 @@ pub mod pallet {
         NotAuthorizedToRevoke,
         /// Total allocation exceeded 100%
         TotalAllocationExceeded,
-        /// Not the grantee of the permission
-        NotPermissionGrantee,
-        /// Not the grantor of the permission
-        NotPermissionGrantor,
+        /// Not the recipient of the permission
+        NotPermissionRecipient,
+        /// Not the delegator of the permission
+        NotPermissionDelegator,
         /// Too many streams
         TooManyStreams,
         /// Too many targets
@@ -294,7 +294,7 @@ pub mod pallet {
         PermissionInCooldown,
         /// Curator flags provided are invalid.
         InvalidCuratorPermissions,
-        /// Tried granting unknown namespace.
+        /// Tried delegating unknown namespace.
         NamespaceDoesNotExist,
         /// Namespace path provided contains illegal character or is malformatted.
         NamespacePathIsInvalid,
@@ -317,12 +317,12 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// Grant a permission for emission delegation
+        /// Delegate a permission for emission delegation
         #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::grant_emission_permission())]
-        pub fn grant_emission_permission(
+        #[pallet::weight(T::WeightInfo::delegate_emission_permission())]
+        pub fn delegate_emission_permission(
             origin: OriginFor<T>,
-            grantee: T::AccountId,
+            recipient: T::AccountId,
             allocation: EmissionAllocation<T>,
             targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
             distribution: DistributionControl<T>,
@@ -330,11 +330,11 @@ pub mod pallet {
             revocation: RevocationTerms<T>,
             enforcement: EnforcementAuthority<T>,
         ) -> DispatchResult {
-            let grantor = ensure_signed(origin)?;
+            let delegator = ensure_signed(origin)?;
 
-            ext::emission_impl::grant_emission_permission_impl::<T>(
-                grantor,
-                grantee,
+            ext::emission_impl::delegate_emission_permission_impl::<T>(
+                delegator,
+                recipient,
                 allocation,
                 targets,
                 distribution,
@@ -395,7 +395,7 @@ pub mod pallet {
         }
 
         /// Set enforcement authority for a permission
-        /// Only the grantor or root can set enforcement authority
+        /// Only the delegator or root can set enforcement authority
         #[pallet::call_index(5)]
         #[pallet::weight(T::WeightInfo::set_enforcement_authority())]
         pub fn set_enforcement_authority(
@@ -409,26 +409,29 @@ pub mod pallet {
                 Permissions::<T>::get(permission_id).ok_or(Error::<T>::PermissionNotFound)?;
 
             if let Some(who) = &who {
-                ensure!(who == &contract.grantor, Error::<T>::NotPermissionGrantor);
+                ensure!(
+                    who == &contract.delegator,
+                    Error::<T>::NotPermissionDelegator
+                );
             }
 
             contract.update_enforcement(permission_id, enforcement)
         }
 
-        /// Grant a permission for curator delegation
+        /// Delegate a permission for curator delegation
         #[pallet::call_index(6)]
-        #[pallet::weight(T::WeightInfo::grant_curator_permission())]
-        pub fn grant_curator_permission(
+        #[pallet::weight(T::WeightInfo::delegate_curator_permission())]
+        pub fn delegate_curator_permission(
             origin: OriginFor<T>,
-            grantee: T::AccountId,
+            recipient: T::AccountId,
             flags: u32,
             cooldown: Option<BlockNumberFor<T>>,
             duration: PermissionDuration<T>,
             revocation: RevocationTerms<T>,
         ) -> DispatchResult {
-            ext::curator_impl::grant_curator_permission_impl::<T>(
+            ext::curator_impl::delegate_curator_permission_impl::<T>(
                 origin,
-                grantee,
+                recipient,
                 CuratorPermissions::from_bits_truncate(flags),
                 cooldown,
                 duration,
@@ -438,26 +441,26 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Grant a permission over namespaces
+        /// Delegate a permission over namespaces
         #[pallet::call_index(7)]
-        #[pallet::weight(T::WeightInfo::grant_curator_permission())]
-        pub fn grant_namespace_permission(
+        #[pallet::weight(T::WeightInfo::delegate_curator_permission())]
+        pub fn delegate_namespace_permission(
             origin: OriginFor<T>,
-            grantee: T::AccountId,
+            recipient: T::AccountId,
             paths: BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
             duration: PermissionDuration<T>,
             revocation: RevocationTerms<T>,
         ) -> DispatchResult {
-            ext::namespace_impl::grant_namespace_permission_impl::<T>(
-                origin, grantee, paths, duration, revocation,
+            ext::namespace_impl::delegate_namespace_permission_impl::<T>(
+                origin, recipient, paths, duration, revocation,
             )?;
 
             Ok(())
         }
 
-        /// Allows Grantor/Grantee to edit stream emission permission
+        /// Allows Delegator/Recipient to edit stream emission permission
         #[pallet::call_index(8)]
-        #[pallet::weight(T::WeightInfo::grant_curator_permission())]
+        #[pallet::weight(T::WeightInfo::delegate_curator_permission())]
         pub fn update_emission_permission(
             origin: OriginFor<T>,
             permission_id: PermissionId,
@@ -478,9 +481,12 @@ pub mod pallet {
     }
 }
 
-/// Get total allocated percentage for a grantor
-fn get_total_allocated_percentage<T: Config>(grantor: &T::AccountId, stream: &StreamId) -> Percent {
-    AccumulatedStreamAmounts::<T>::iter_key_prefix((grantor, stream))
+/// Get total allocated percentage for a delegator
+fn get_total_allocated_percentage<T: Config>(
+    delegator: &T::AccountId,
+    stream: &StreamId,
+) -> Percent {
+    AccumulatedStreamAmounts::<T>::iter_key_prefix((delegator, stream))
         .filter_map(Permissions::<T>::get)
         .map(|contract| match contract.scope {
             PermissionScope::Emission(EmissionScope {
@@ -496,13 +502,13 @@ fn get_total_allocated_percentage<T: Config>(grantor: &T::AccountId, stream: &St
 
 /// Update storage indices when creating a new permission
 fn update_permission_indices<T: Config>(
-    grantor: &T::AccountId,
-    grantee: &T::AccountId,
+    delegator: &T::AccountId,
+    recipient: &T::AccountId,
     permission_id: PermissionId,
 ) -> Result<(), DispatchError> {
-    // Update (grantor, grantee) -> [permission_id] mapping
+    // Update (delegator, recipient) -> [permission_id] mapping
     PermissionsByParticipants::<T>::try_mutate(
-        (grantor.clone(), grantee.clone()),
+        (delegator.clone(), recipient.clone()),
         |permissions| -> Result<(), DispatchError> {
             permissions
                 .try_push(permission_id)
@@ -511,9 +517,9 @@ fn update_permission_indices<T: Config>(
         },
     )?;
 
-    // Update grantor -> [permission_id] mapping
-    PermissionsByGrantor::<T>::try_mutate(
-        grantor.clone(),
+    // Update delegator -> [permission_id] mapping
+    PermissionsByDelegator::<T>::try_mutate(
+        delegator.clone(),
         |permissions| -> Result<(), DispatchError> {
             permissions
                 .try_push(permission_id)
@@ -522,9 +528,9 @@ fn update_permission_indices<T: Config>(
         },
     )?;
 
-    // Update grantee -> [permission_id] mapping
-    PermissionsByGrantee::<T>::try_mutate(
-        grantee.clone(),
+    // Update recipient -> [permission_id] mapping
+    PermissionsByRecipient::<T>::try_mutate(
+        recipient.clone(),
         |permissions| -> Result<(), DispatchError> {
             permissions
                 .try_push(permission_id)
@@ -538,19 +544,19 @@ fn update_permission_indices<T: Config>(
 
 /// Remove a permission from storage indices
 fn remove_permission_from_indices<T: Config>(
-    grantor: &T::AccountId,
-    grantee: &T::AccountId,
+    delegator: &T::AccountId,
+    recipient: &T::AccountId,
     permission_id: PermissionId,
 ) {
-    PermissionsByParticipants::<T>::mutate((grantor.clone(), grantee.clone()), |permissions| {
+    PermissionsByParticipants::<T>::mutate((delegator.clone(), recipient.clone()), |permissions| {
         permissions.retain(|id| *id != permission_id);
     });
 
-    PermissionsByGrantor::<T>::mutate(grantor, |permissions| {
+    PermissionsByDelegator::<T>::mutate(delegator, |permissions| {
         permissions.retain(|id| *id != permission_id);
     });
 
-    PermissionsByGrantee::<T>::mutate(grantee, |permissions| {
+    PermissionsByRecipient::<T>::mutate(recipient, |permissions| {
         permissions.retain(|id| *id != permission_id);
     });
 }

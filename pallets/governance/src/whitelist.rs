@@ -29,7 +29,7 @@ pub fn remove_from_whitelist<T: crate::Config>(key: AccountIdOf<T>) -> DispatchR
     }
 
     crate::Whitelist::<T>::remove(&key);
-    let _ = pallet_torus0::agent::unregister::<T>(key.clone());
+    let _ = pallet_torus0::agent::deregister::<T>(key.clone());
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::WhitelistRemoved(key));
     Ok(())
 }

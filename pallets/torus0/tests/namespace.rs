@@ -7,7 +7,10 @@ use polkadot_sdk::{
     pallet_balances,
     sp_runtime::{BoundedVec, Percent},
 };
-use test_utils::{as_tors, get_origin, new_test_ext, pallet_governance, Balances, Test};
+use test_utils::{
+    as_tors, get_origin, new_test_ext, pallet_governance, pallet_permission0::Permissions,
+    Balances, Test,
+};
 
 /// Helper function to register an agent with a specific name and balance
 fn register_agent_with(account_id: u32, name: &str, balance: u128) {
@@ -934,31 +937,59 @@ fn delete_namespace_being_delegated() {
         set_namespace_config();
         register_agent_with(0, "alice", as_tors(1000));
 
-        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
-            get_origin(0),
-            BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
-        ));
+        for path in ["agent.alice.compute.cpu.2vcpu", "agent.alice.storage.block"] {
+            assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(path.as_bytes().to_vec())
+            ));
+        }
 
         let mut paths = polkadot_sdk::sp_runtime::BoundedBTreeSet::new();
         paths
-            .try_insert(b"agent.alice.compute".to_vec().try_into().unwrap())
+            .try_insert(b"agent.alice.compute.cpu".to_vec().try_into().unwrap())
             .unwrap();
 
-        assert_ok!(test_utils::Permission0::grant_namespace_permission(
+        assert_ok!(test_utils::Permission0::delegate_namespace_permission(
             get_origin(0),
             1,
             paths,
             test_utils::pallet_permission0::PermissionDuration::Indefinite,
-            test_utils::pallet_permission0::RevocationTerms::RevocableByGrantor,
+            test_utils::pallet_permission0::RevocationTerms::RevocableByDelegator,
         ));
 
-        assert_err!(
-            pallet_torus0::Pallet::<Test>::delete_namespace(
+        let delegated = [
+            "agent.alice.compute",
+            "agent.alice.compute.cpu",
+            "agent.alice.compute.cpu.2vcpu",
+        ];
+
+        for to_fail in delegated {
+            assert_err!(
+                pallet_torus0::Pallet::<Test>::delete_namespace(
+                    get_origin(0),
+                    BoundedVec::truncate_from(to_fail.as_bytes().to_vec())
+                ),
+                pallet_torus0::Error::<Test>::NamespaceBeingDelegated
+            );
+        }
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::delete_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.storage".to_vec())
+        ));
+
+        let permission_id = Permissions::<Test>::iter().next().unwrap().0;
+        assert_ok!(test_utils::Permission0::revoke_permission(
+            get_origin(0),
+            permission_id
+        ));
+
+        for to_fail in delegated.iter().rev() {
+            assert_ok!(pallet_torus0::Pallet::<Test>::delete_namespace(
                 get_origin(0),
-                BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
-            ),
-            pallet_torus0::Error::<Test>::NamespaceBeingDelegated
-        );
+                BoundedVec::truncate_from(to_fail.as_bytes().to_vec())
+            ));
+        }
     });
 }
 

@@ -38,13 +38,13 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for `pallet_permission0`.
 pub trait WeightInfo {
-	fn grant_emission_permission() -> Weight;
+	fn delegate_emission_permission() -> Weight;
 	fn revoke_permission() -> Weight;
 	fn execute_permission() -> Weight;
 	fn toggle_permission_accumulation() -> Weight;
 	fn enforcement_execute_permission() -> Weight;
 	fn set_enforcement_authority() -> Weight;
-	fn grant_curator_permission() -> Weight;
+	fn delegate_curator_permission() -> Weight;
 }
 
 /// Weights for `pallet_permission0` using the Substrate node and recommended hardware.
@@ -58,11 +58,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: `Permission0::Permissions` (`max_values`: None, `max_size`: Some(7535), added: 10010, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::PermissionsByParticipants` (r:1 w:1)
 	/// Proof: `Permission0::PermissionsByParticipants` (`max_values`: None, `max_size`: Some(3266), added: 5741, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantor` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantor` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantee` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantee` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
-	fn grant_emission_permission() -> Weight {
+	/// Storage: `Permission0::PermissionsByDelegator` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByDelegator` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	/// Storage: `Permission0::PermissionsByRecipient` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByRecipient` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	fn delegate_emission_permission() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `279`
 		//  Estimated: `11000`
@@ -75,10 +75,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Proof: `Permission0::Permissions` (`max_values`: None, `max_size`: Some(7535), added: 10010, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::PermissionsByParticipants` (r:1 w:1)
 	/// Proof: `Permission0::PermissionsByParticipants` (`max_values`: None, `max_size`: Some(3266), added: 5741, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantor` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantor` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantee` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantee` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	/// Storage: `Permission0::PermissionsByDelegator` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByDelegator` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	/// Storage: `Permission0::PermissionsByRecipient` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByRecipient` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::AccumulatedStreamAmounts` (r:0 w:1)
 	/// Proof: `Permission0::AccumulatedStreamAmounts` (`max_values`: None, `max_size`: Some(112), added: 2587, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::RevocationTracking` (r:0 w:1)
@@ -148,15 +148,15 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
-	/// Storage: `Permission0::PermissionsByGrantee` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantee` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	/// Storage: `Permission0::PermissionsByRecipient` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByRecipient` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::Permissions` (r:1 w:1)
 	/// Proof: `Permission0::Permissions` (`max_values`: None, `max_size`: Some(7535), added: 10010, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::PermissionsByParticipants` (r:1 w:1)
 	/// Proof: `Permission0::PermissionsByParticipants` (`max_values`: None, `max_size`: Some(3266), added: 5741, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantor` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantor` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
-	fn grant_curator_permission() -> Weight {
+	/// Storage: `Permission0::PermissionsByDelegator` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByDelegator` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	fn delegate_curator_permission() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `42`
 		//  Estimated: `11000`
@@ -177,11 +177,11 @@ impl WeightInfo for () {
 	/// Proof: `Permission0::Permissions` (`max_values`: None, `max_size`: Some(7535), added: 10010, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::PermissionsByParticipants` (r:1 w:1)
 	/// Proof: `Permission0::PermissionsByParticipants` (`max_values`: None, `max_size`: Some(3266), added: 5741, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantor` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantor` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantee` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantee` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
-	fn grant_emission_permission() -> Weight {
+	/// Storage: `Permission0::PermissionsByDelegator` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByDelegator` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	/// Storage: `Permission0::PermissionsByRecipient` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByRecipient` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	fn delegate_emission_permission() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `279`
 		//  Estimated: `11000`
@@ -194,10 +194,10 @@ impl WeightInfo for () {
 	/// Proof: `Permission0::Permissions` (`max_values`: None, `max_size`: Some(7535), added: 10010, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::PermissionsByParticipants` (r:1 w:1)
 	/// Proof: `Permission0::PermissionsByParticipants` (`max_values`: None, `max_size`: Some(3266), added: 5741, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantor` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantor` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantee` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantee` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	/// Storage: `Permission0::PermissionsByDelegator` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByDelegator` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	/// Storage: `Permission0::PermissionsByRecipient` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByRecipient` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::AccumulatedStreamAmounts` (r:0 w:1)
 	/// Proof: `Permission0::AccumulatedStreamAmounts` (`max_values`: None, `max_size`: Some(112), added: 2587, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::RevocationTracking` (r:0 w:1)
@@ -267,15 +267,15 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
-	/// Storage: `Permission0::PermissionsByGrantee` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantee` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	/// Storage: `Permission0::PermissionsByRecipient` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByRecipient` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::Permissions` (r:1 w:1)
 	/// Proof: `Permission0::Permissions` (`max_values`: None, `max_size`: Some(7535), added: 10010, mode: `MaxEncodedLen`)
 	/// Storage: `Permission0::PermissionsByParticipants` (r:1 w:1)
 	/// Proof: `Permission0::PermissionsByParticipants` (`max_values`: None, `max_size`: Some(3266), added: 5741, mode: `MaxEncodedLen`)
-	/// Storage: `Permission0::PermissionsByGrantor` (r:1 w:1)
-	/// Proof: `Permission0::PermissionsByGrantor` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
-	fn grant_curator_permission() -> Weight {
+	/// Storage: `Permission0::PermissionsByDelegator` (r:1 w:1)
+	/// Proof: `Permission0::PermissionsByDelegator` (`max_values`: None, `max_size`: Some(3234), added: 5709, mode: `MaxEncodedLen`)
+	fn delegate_curator_permission() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `42`
 		//  Estimated: `11000`
