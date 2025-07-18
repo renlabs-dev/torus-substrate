@@ -1,0 +1,53 @@
+[package]
+name = "torus-client"
+version = "0.1.0"
+edition = "2021"
+authors = ["Renlabs <contact@renlabs.dev>"]
+description = "Torus substrate client library using subxt"
+license = "MIT"
+
+[dependencies]
+
+anyhow = "1.0.98"
+
+codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }
+scale-info = { version = "2.11.1", default-features = false }
+
+subxt = { version = "0.41.0" }
+subxt-signer = "0.41.0"
+
+serde_json = "1.0"
+
+tokio = { version = "1.35", features = ["macros", "time", "rt-multi-thread"] }
+
+thiserror = "2.0.12"
+
+hex = "0.4.3"
+
+rand = "0.9.1"
+
+keccak-hash = { git = "https://github.com/paritytech/parity-common", rev = "f0dade11ac0b2450e6a54f36035f74b2b8ce4c00" }
+
+schnorrkel = "0.11.4"
+futures = "0.3.31"
+
+sha2 = "0.10.9"
+
+paste = "1.0.15"
+
+[build-dependencies]
+tokio = { version = "1.35", features = ["macros", "time", "rt-multi-thread"] }
+torus-client-codegen = { path = "codegen" }
+
+[features]
+
+default = ["std", "mainnet"]
+std = ["codec/std", "codec/derive", "codec/max-encoded-len", "scale-info/std"]
+
+# Network-specific features
+mainnet = []
+testnet = []
+dev = []
+
+# Enable all networks
+all-networks = ["mainnet", "testnet", "dev"]

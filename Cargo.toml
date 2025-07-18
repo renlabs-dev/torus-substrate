@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "client",
+    "client/codegen",
     "node",
     "runtime",
     "pallets/*",
@@ -29,6 +31,7 @@ infinite_loop = "deny"
 # Local
 torus-node = { path = "./node", default-features = false }
 torus-runtime = { path = "./runtime", default-features = false }
+torus-client = { path = "./client", default-features = false }
 pallet-governance = { path = "./pallets/governance", default-features = false }
 pallet-governance-api = { path = "./pallets/governance/api", default-features = false }
 pallet-emission0 = { path = "./pallets/emission0", default-features = false }
@@ -78,6 +81,8 @@ pallet-evm-precompile-modexp = { git = "https://github.com/paritytech/frontier.g
 pallet-evm-precompile-sha3fips = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
 pallet-evm-precompile-simple = { git = "https://github.com/paritytech/frontier.git", rev = "b9b1c620c8b418bdeeadc79725f9cfa4703c0333", default-features = false }
 
+keccak-hash = { git = "https://github.com/paritytech/parity-common", rev = "f0dade11ac0b2450e6a54f36035f74b2b8ce4c00" }
+
 # CLI
 clap = { version = "4.5.22", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
@@ -88,3 +93,7 @@ jsonrpsee = { version = "0.24", features = ["full"] }
 # Async
 futures = "0.3"
 futures-timer = "3"
+
+anyhow = "1.0.98"
+
+paste = "1.0.15"
