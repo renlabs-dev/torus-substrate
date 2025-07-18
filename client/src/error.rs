@@ -8,6 +8,8 @@ pub enum Error {
     SubxtError(#[from] subxt::error::Error),
     #[error(transparent)]
     CodecError(#[from] codec::Error),
+    #[error(transparent)]
+    Rpc(#[from] subxt::ext::subxt_rpcs::Error),
 }
 
 #[derive(Debug, thiserror::Error)]

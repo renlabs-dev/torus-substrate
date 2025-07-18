@@ -1,16 +1,16 @@
-use std::{collections::HashMap, ops::Deref};
+use std::error::Error;
 
 use syn::{
     GenericArgument, Ident, ImplItem, Item, ItemImpl, ItemMod, PathArguments, ReturnType, Type,
     TypeArray, TypePath, TypeReference, TypeSlice, TypeTuple,
 };
 
-use crate::{error::ParseError, ir::CallPattern, parser::is_api_impl};
+use crate::{ir::CallPattern, parser::is_api_impl};
 
 pub(super) fn parse_calls_module(
     calls_mod: &ItemMod,
     pallet_name: &Ident,
-) -> Result<Vec<CallPattern>, ParseError> {
+) -> Result<Vec<CallPattern>, Box<dyn Error>> {
     let mut calls = Vec::new();
 
     if let Some((_, items)) = &calls_mod.content {
@@ -30,7 +30,7 @@ fn extract_calls(
     impl_item: &ItemImpl,
     calls: &mut Vec<CallPattern>,
     pallet: &Ident,
-) -> Result<(), ParseError> {
+) -> Result<(), Box<dyn Error>> {
     for item in &impl_item.items {
         if let ImplItem::Fn(method) = item {
             let params = method

@@ -1,5 +1,5 @@
 [package]
-name = "torus-client-wrapper-codegen"
+name = "torus-client-codegen"
 version = "0.1.0"
 edition = "2024"
 
@@ -11,7 +11,11 @@ prettyplease = "0.2"
 thiserror = "1.0"
 clap = { version = "4.0", features = ["derive"] }
 hex = "0.4.3"
-subxt = { version = "0.41.0" }
+subxt = { version = "0.42.1" }
+subxt-codegen = { version = "0.42.1" }
+subxt-utils-fetchmetadata = { version = "0.42.1", features = ["url"] }
 codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }
 stringcase = "0.4.0"
 paste = "1.0.15"
+tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }
+scale-typegen = "0.11.1"

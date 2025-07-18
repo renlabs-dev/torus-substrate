@@ -1,9 +1,8 @@
-use std::collections::HashMap;
+use std::error::Error;
 
 use syn::{Item, ItemImpl, ItemMod, Type, TypePath};
 
 use crate::{
-    error::ParseError,
     ir::PalletPattern,
     parser::{calls::parse_calls_module, storage::parse_storage_module},
 };
@@ -22,7 +21,7 @@ const IGNORED_MODULES: [&'static str; 8] = [
     "root_mod",
 ];
 
-pub fn parse_api_file(content: &str) -> Result<Vec<PalletPattern>, ParseError> {
+pub fn parse_api_file(content: &str) -> Result<Vec<PalletPattern>, Box<dyn Error>> {
     let syntax_tree = syn::parse_file(content)?;
 
     let api_mod = syntax_tree
@@ -40,10 +39,10 @@ pub fn parse_api_file(content: &str) -> Result<Vec<PalletPattern>, ParseError> {
         .unwrap();
 
     let Some((_, items)) = &api_mod.content else {
-        return Err(ParseError::ApiModuleNotFound);
+        return Err("api module not found".into());
     };
 
-    let pallets: Result<Vec<PalletPattern>, ParseError> = items
+    let pallets: Result<Vec<PalletPattern>, Box<dyn Error>> = items
         .iter()
         .filter_map(|item| match item {
             Item::Mod(item_mod) => {
@@ -61,13 +60,13 @@ pub fn parse_api_file(content: &str) -> Result<Vec<PalletPattern>, ParseError> {
     let pallets = pallets?;
 
     if pallets.is_empty() {
-        return Err(ParseError::ApiModuleNotFound);
+        return Err("api module not found".into());
     }
 
     Ok(pallets)
 }
 
-fn parse_pallet_module(pallet_mod: &ItemMod) -> Result<PalletPattern, ParseError> {
+fn parse_pallet_module(pallet_mod: &ItemMod) -> Result<PalletPattern, Box<dyn Error>> {
     let pallet_name = &pallet_mod.ident;
 
     let mut storages = Vec::new();

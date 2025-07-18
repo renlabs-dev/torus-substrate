@@ -1,14 +1,14 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, error::Error};
 
 use syn::{ImplItem, Item, ItemImpl, ItemMod};
 
 use super::is_api_impl;
-use crate::{error::ParseError, ir::StoragePattern, parser::type_to_string};
+use crate::{ir::StoragePattern, parser::type_to_string};
 
 pub(super) fn parse_storage_module(
     storage_mod: &ItemMod,
     pallet_name: &str,
-) -> Result<Vec<StoragePattern>, ParseError> {
+) -> Result<Vec<StoragePattern>, Box<dyn Error>> {
     let mut patterns = Vec::new();
 
     if let Some((_, items)) = &storage_mod.content {
@@ -29,7 +29,7 @@ pub(super) fn parse_storage_module(
     Ok(patterns)
 }
 
-fn extract_storage_methods(impl_item: &ItemImpl) -> Result<Vec<MethodInfo>, ParseError> {
+fn extract_storage_methods(impl_item: &ItemImpl) -> Result<Vec<MethodInfo>, Box<dyn Error>> {
     let mut methods = Vec::new();
 
     for item in &impl_item.items {
@@ -53,7 +53,7 @@ fn analyze_storage_methods(
     methods: Vec<MethodInfo>,
     type_info: &HashMap<String, TypeInfo>,
     pallet_name: &str,
-) -> Result<Vec<StoragePattern>, ParseError> {
+) -> Result<Vec<StoragePattern>, Box<dyn Error>> {
     let mut patterns = Vec::new();
     let mut method_groups: HashMap<String, Vec<&MethodInfo>> = HashMap::new();
 
@@ -92,7 +92,7 @@ fn determine_storage_pattern(
     methods: Vec<&MethodInfo>,
     type_info: &HashMap<String, TypeInfo>,
     pallet_name: &str,
-) -> Result<Option<StoragePattern>, ParseError> {
+) -> Result<Option<StoragePattern>, Box<dyn Error>> {
     let has_iter = methods.iter().any(|m| m.is_iter);
     let non_iter_methods: Vec<_> = methods.iter().filter(|m| !m.is_iter).collect();
 
@@ -174,7 +174,7 @@ struct TypeInfo {
     param_types: Vec<String>,
 }
 
-fn extract_type_info(items: &[Item]) -> Result<HashMap<String, TypeInfo>, ParseError> {
+fn extract_type_info(items: &[Item]) -> Result<HashMap<String, TypeInfo>, Box<dyn Error>> {
     let mut type_info = HashMap::new();
 
     // Find the types module
@@ -197,7 +197,7 @@ fn extract_type_info(items: &[Item]) -> Result<HashMap<String, TypeInfo>, ParseE
     Ok(type_info)
 }
 
-fn parse_storage_type_mod(storage_type_mod: &ItemMod) -> Result<TypeInfo, ParseError> {
+fn parse_storage_type_mod(storage_type_mod: &ItemMod) -> Result<TypeInfo, Box<dyn Error>> {
     let mut return_type = String::new();
     let mut param_types = Vec::new();
 

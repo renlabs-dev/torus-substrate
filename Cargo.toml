@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "client",
-    "client/wrapper-codegen",
+    "client/codegen",
     "node",
     "runtime",
     "pallets/*",

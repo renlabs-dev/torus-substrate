@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use stringcase::pascal_case;
-use syn::{Ident, PatIdent, Type, parse_quote};
+use syn::{Ident, Type};
 
 use crate::{
     InterfaceSource,

@@ -6,6 +6,7 @@ use crate::chain::Chain;
 
 pub struct TorusClient<C> {
     pub(crate) client: OnlineClient<PolkadotConfig>,
+    pub(crate) url: String,
     _pd: PhantomData<C>,
 }
 
@@ -17,6 +18,7 @@ impl TorusClient<()> {
     pub async fn for_mainnet() -> crate::Result<TorusClient<crate::chain::MainNet>> {
         Ok(TorusClient {
             client: OnlineClient::from_url(Self::MAINNET_URL).await?,
+            url: Self::MAINNET_URL.to_string(),
             _pd: PhantomData,
         })
     }
@@ -25,13 +27,15 @@ impl TorusClient<()> {
     pub async fn for_testnet() -> crate::Result<TorusClient<crate::chain::TestNet>> {
         Ok(TorusClient {
             client: OnlineClient::from_url(Self::TESTNET_URL).await?,
+            url: Self::TESTNET_URL.to_string(),
             _pd: PhantomData,
         })
     }
 
     pub async fn for_url<C: Chain>(url: impl AsRef<str>) -> crate::Result<TorusClient<C>> {
         Ok(TorusClient {
-            client: OnlineClient::from_url(url).await?,
+            client: OnlineClient::from_url(url.as_ref().to_string()).await?,
+            url: url.as_ref().to_string(),
             _pd: PhantomData,
         })
     }

@@ -10,22 +10,11 @@ mod chain;
 pub mod client;
 mod error;
 pub use error::*;
+pub mod events;
+pub mod rpc;
 
 #[allow(clippy::too_many_arguments, dead_code)]
-pub mod wrappers;
-
-// Generated interfaces for different networks
-pub(crate) mod interfaces {
-    // These modules will be populated by the `just gen_interfaces` command
-    #[cfg(feature = "mainnet")]
-    pub mod mainnet;
-
-    #[cfg(feature = "testnet")]
-    pub mod testnet;
-
-    // #[cfg(feature = "dev")]
-    // pub mod dev;
-}
+pub(crate) mod interfaces;
 
 #[cfg(feature = "testnet")]
 mod faucet;
