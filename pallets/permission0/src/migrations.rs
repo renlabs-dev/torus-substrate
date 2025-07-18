@@ -114,38 +114,35 @@ pub mod v4 {
                     let _ = pids.try_push(pid);
                 });
 
-                crate::Permissions::<T>::set(
-                    pid,
-                    Some(crate::PermissionContract {
-                        delegator: contract.grantor,
-                        recipient: contract.grantee,
-                        scope: contract.scope,
-                        duration: contract.duration,
-                        revocation: match contract.revocation {
-                            old_storage::RevocationTerms::Irrevocable => {
-                                crate::RevocationTerms::Irrevocable
-                            }
-                            old_storage::RevocationTerms::RevocableByGrantor => {
-                                crate::RevocationTerms::RevocableByDelegator
-                            }
-                            old_storage::RevocationTerms::RevocableByArbiters {
-                                accounts,
-                                required_votes,
-                            } => crate::RevocationTerms::RevocableByArbiters {
-                                accounts,
-                                required_votes,
-                            },
-                            old_storage::RevocationTerms::RevocableAfter(block) => {
-                                crate::RevocationTerms::RevocableAfter(block)
-                            }
+                let mut new = crate::PermissionContract::<T>::new(
+                    contract.grantor,
+                    contract.grantee,
+                    contract.scope,
+                    contract.duration,
+                    match contract.revocation {
+                        old_storage::RevocationTerms::Irrevocable => {
+                            crate::RevocationTerms::Irrevocable
+                        }
+                        old_storage::RevocationTerms::RevocableByGrantor => {
+                            crate::RevocationTerms::RevocableByDelegator
+                        }
+                        old_storage::RevocationTerms::RevocableByArbiters {
+                            accounts,
+                            required_votes,
+                        } => crate::RevocationTerms::RevocableByArbiters {
+                            accounts,
+                            required_votes,
                         },
-                        enforcement: contract.enforcement,
-                        last_execution: contract.last_execution,
-                        execution_count: contract.execution_count,
-                        parent: contract.parent,
-                        created_at: contract.created_at,
-                    }),
+                        old_storage::RevocationTerms::RevocableAfter(block) => {
+                            crate::RevocationTerms::RevocableAfter(block)
+                        }
+                    },
+                    contract.enforcement,
+                    1,
                 );
+                new.created_at = contract.created_at;
+
+                crate::Permissions::<T>::set(pid, Some(new));
             }
 
             Weight::zero()

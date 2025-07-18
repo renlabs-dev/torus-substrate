@@ -135,7 +135,7 @@ pub(crate) fn do_auto_distribution<T: Config>(
     permission_id: H256,
     current_block: BlockNumberFor<T>,
     contract: &PermissionContract<T>,
-) {
+) -> DispatchResult {
     match emission_scope.distribution {
         DistributionControl::Automatic(threshold) => {
             let accumulated = match &emission_scope.allocation {
@@ -149,7 +149,11 @@ pub(crate) fn do_auto_distribution<T: Config>(
             };
 
             if accumulated >= threshold {
-                do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
+                do_distribute_emission::<T>(
+                    permission_id,
+                    contract,
+                    DistributionReason::Automatic,
+                )?;
             }
         }
 
@@ -159,27 +163,29 @@ pub(crate) fn do_auto_distribution<T: Config>(
             // we also verify that the last execution occurred before the target block
             // (or haven't occurred at all)
             if contract
-                .last_execution
+                .last_execution()
                 .is_some_and(|last_execution| last_execution >= target_block)
             {
-                return;
+                return Ok(());
             }
 
-            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
+            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic)?;
         }
 
         DistributionControl::Interval(interval) => {
             let last_execution = contract.last_execution.unwrap_or(contract.created_at);
             if current_block.saturating_sub(last_execution) < interval {
-                return;
+                return Ok(());
             }
 
-            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
+            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic)?;
         }
 
         // Manual distribution doesn't need auto-processing
         _ => {}
     }
+
+    Ok(())
 }
 
 #[derive(
@@ -195,17 +201,17 @@ pub(crate) fn do_distribute_emission<T: Config>(
     permission_id: PermissionId,
     contract: &PermissionContract<T>,
     reason: DistributionReason,
-) {
+) -> DispatchResult {
     #[allow(irrefutable_let_patterns)]
     let PermissionScope::Emission(emission_scope) = &contract.scope
     else {
-        return;
+        return Ok(());
     };
 
     let total_weight =
         FixedU128::from_u32(emission_scope.targets.values().map(|w| *w as u32).sum());
     if total_weight.is_zero() {
-        return;
+        return Ok(());
     }
 
     match &emission_scope.allocation {
@@ -257,9 +263,9 @@ pub(crate) fn do_distribute_emission<T: Config>(
             }
         }
         EmissionAllocation::FixedAmount(amount) => {
-            if contract.last_execution.is_some() {
+            if contract.last_execution().is_some() {
                 // The fixed amount was already distributed
-                return;
+                return Ok(());
             }
 
             // For fixed amount allocations, transfer from reserved funds
@@ -283,12 +289,12 @@ pub(crate) fn do_distribute_emission<T: Config>(
         }
     }
 
-    Permissions::<T>::mutate(permission_id, |maybe_contract| {
-        if let Some(c) = maybe_contract {
-            c.last_execution = Some(<frame_system::Pallet<T>>::block_number());
-            c.execution_count = c.execution_count.saturating_add(1);
-        }
-    });
+    if let Some(mut contract) = Permissions::<T>::get(permission_id) {
+        contract.tick_execution(<frame_system::Pallet<T>>::block_number())?;
+        Permissions::<T>::set(permission_id, Some(contract));
+    }
+
+    Ok(())
 }
 
 fn do_distribute_to_targets<T: Config>(

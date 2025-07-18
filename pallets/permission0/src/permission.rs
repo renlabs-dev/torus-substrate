@@ -13,6 +13,7 @@ use polkadot_sdk::{
         BoundedBTreeMap, BoundedVec, DispatchError, Percent,
     },
     sp_std::vec::Vec,
+    sp_tracing::error,
 };
 use scale_info::TypeInfo;
 
@@ -64,12 +65,41 @@ pub struct PermissionContract<T: Config> {
     /// Enforcement authority that can toggle the permission
     pub enforcement: EnforcementAuthority<T>,
     /// Last execution block
-    pub last_execution: Option<BlockNumberFor<T>>,
+    last_execution: Option<BlockNumberFor<T>>,
     /// Number of times the permission was executed
-    pub execution_count: u32,
-    /// Parent permission ID (None for root permissions)
-    pub parent: Option<PermissionId>,
+    execution_count: u32,
+    /// Maximum number of instances of this permission
+    pub max_instances: u32,
+    /// Children permissions
+    pub children: BoundedBTreeSet<H256, T::MaxChildrenPerPermission>,
     pub created_at: BlockNumberFor<T>,
+}
+
+impl<T: Config> PermissionContract<T> {
+    pub(crate) fn new(
+        delegator: T::AccountId,
+        recipient: T::AccountId,
+        scope: PermissionScope<T>,
+        duration: PermissionDuration<T>,
+        revocation: RevocationTerms<T>,
+        enforcement: EnforcementAuthority<T>,
+        max_instances: u32,
+    ) -> Self {
+        Self {
+            delegator,
+            recipient,
+            scope,
+            duration,
+            revocation,
+            enforcement,
+            max_instances,
+
+            last_execution: None,
+            execution_count: 0,
+            children: BoundedBTreeSet::new(),
+            created_at: frame_system::Pallet::<T>::block_number(),
+        }
+    }
 }
 
 impl<T: Config> PermissionContract<T> {
@@ -78,6 +108,38 @@ impl<T: Config> PermissionContract<T> {
             PermissionDuration::UntilBlock(block) => current_block > block,
             PermissionDuration::Indefinite => false,
         }
+    }
+
+    /// Returns the last execution block of this permission.
+    pub fn last_execution(&self) -> Option<BlockNumberFor<T>> {
+        self.last_execution
+    }
+
+    /// Returns the number of times this permission was executed.
+    pub fn execution_count(&self) -> u32 {
+        self.execution_count
+    }
+
+    /// Returns the number of available instances of this permission.
+    pub fn available_instances(&self) -> u32 {
+        let mut available = self.max_instances;
+        for child in &self.children {
+            available = available.saturating_sub(
+                Permissions::<T>::get(child).map_or(0, |child| child.max_instances),
+            );
+        }
+        available
+    }
+
+    pub fn tick_execution(&mut self, block: BlockNumberFor<T>) -> DispatchResult {
+        if self.available_instances() == 0 {
+            return Err(Error::<T>::NotEnoughInstances.into());
+        }
+
+        self.last_execution = Some(block);
+        self.execution_count = self.execution_count.saturating_add(1);
+
+        Ok(())
     }
 
     pub fn revoke(self, origin: OriginFor<T>, permission_id: H256) -> DispatchResult {
@@ -243,7 +305,11 @@ pub enum PermissionScope<T: Config> {
 #[scale_info(skip_type_params(T))]
 pub struct NamespaceScope<T: Config> {
     /// Set of namespace paths this permission delegates access to
-    pub paths: BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
+    pub paths: BoundedBTreeMap<
+        Option<PermissionId>,
+        BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
+        T::MaxNamespacesPerPermission,
+    >,
 }
 
 #[derive(
@@ -329,12 +395,14 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
         #[allow(clippy::single_match)]
         match &contract.scope {
             PermissionScope::Emission(emission_scope) => {
-                emission::do_auto_distribution(
+                if let Err(err) = emission::do_auto_distribution(
                     emission_scope,
                     permission_id,
                     current_block,
                     &contract,
-                );
+                ) {
+                    error!("failed to auto distribute emissions for permission {permission_id:?}: {err:?}");
+                }
             }
             _ => (),
         }

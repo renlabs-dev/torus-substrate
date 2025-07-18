@@ -263,6 +263,7 @@ impl pallet_permission0::Config for Test {
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 
     type MaxNamespacesPerPermission = ConstU32<0>;
+    type MaxChildrenPerPermission = ConstU32<0>;
 }
 
 impl pallet_balances::Config for Test {

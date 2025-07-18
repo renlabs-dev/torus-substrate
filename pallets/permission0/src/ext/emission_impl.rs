@@ -13,7 +13,7 @@ use pallet_permission0_api::{
 };
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure, traits::ReservableCurrency},
-    frame_system::{self, ensure_signed, ensure_signed_or_root},
+    frame_system::{ensure_signed, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{Get, TryCollect},
     sp_runtime::{
@@ -177,18 +177,15 @@ pub(crate) fn delegate_emission_permission_impl<T: Config>(
 
     let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
 
-    let contract = PermissionContract {
-        delegator: delegator.clone(),
-        recipient: recipient.clone(),
+    let contract = PermissionContract::<T>::new(
+        delegator.clone(),
+        recipient.clone(),
         scope,
         duration,
         revocation,
         enforcement,
-        last_execution: None,
-        execution_count: 0,
-        parent: parent_id,
-        created_at: <frame_system::Pallet<T>>::block_number(),
-    };
+        1,
+    );
 
     // Reserve funds if fixed amount allocation. We use the Balances API for this.
     // This means total issuance is always correct.
@@ -210,7 +207,7 @@ pub(crate) fn delegate_emission_permission_impl<T: Config>(
 
     update_permission_indices::<T>(&delegator, &recipient, permission_id)?;
 
-    <Pallet<T>>::deposit_event(Event::Permissiondelegated {
+    <Pallet<T>>::deposit_event(Event::PermissionDelegated {
         delegator,
         recipient,
         permission_id,
@@ -247,7 +244,7 @@ pub fn execute_permission_impl<T: Config>(
                 *permission_id,
                 contract,
                 DistributionReason::Manual,
-            );
+            )?;
 
             Ok(())
         }
@@ -369,7 +366,7 @@ pub(crate) fn update_emission_permission<T: Config>(
                     permission_id,
                     &permission,
                     DistributionReason::Manual,
-                );
+                )?;
 
                 for stream in streams.keys() {
                     AccumulatedStreamAmounts::<T>::remove((
