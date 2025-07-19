@@ -67,19 +67,14 @@ fn transfer_stake_correctly() {
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
-        <<<<<<< HEAD
-                    to,
-        =======
-                    old_staked,
-                    old_staked,
-        >>>>>>> 77dd61d (refac(torus0): stake in reserved balance)
-                    "to".as_bytes().to_vec(),
-                    "to://idk".as_bytes().to_vec(),
-                    "idk".as_bytes().to_vec()
-                ));
+            old_staked,
+            "to".as_bytes().to_vec(),
+            "to://idk".as_bytes().to_vec(),
+            "idk".as_bytes().to_vec()
+        ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
-            transfer,
+            new_staked,
             "transfer".as_bytes().to_vec(),
             "transfer://idk".as_bytes().to_vec(),
             "idk".as_bytes().to_vec()

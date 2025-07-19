@@ -177,7 +177,7 @@ pub mod v6 {
         },
         sp_core::Get,
         sp_std::collections::btree_set::BTreeSet,
-        sp_tracing::{error, info},
+        sp_tracing::{error, info, warn},
         sp_weights::Weight,
     };
 
@@ -188,42 +188,92 @@ pub mod v6 {
 
     impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV6<T> {
         fn on_runtime_upgrade() -> Weight {
+            let ed = T::ExistentialDeposit::get();
             let mut minted = 0u128;
-            for (staker, _, amount) in crate::StakingTo::<T>::iter() {
-                let to_mint = if T::Currency::free_balance(&staker) == 0 {
-                    amount.saturating_add(T::ExistentialDeposit::get())
+
+            let total_stake_before = crate::TotalStake::<T>::get();
+            let total_issuance_before = T::Currency::total_issuance();
+            let total_tokens_before = total_stake_before.saturating_add(total_issuance_before);
+
+            for (staker, staked, original_stake) in crate::StakingTo::<T>::iter() {
+                let free = T::Currency::free_balance(&staker);
+
+                let mint = original_stake;
+                let stake = if free < ed {
+                    original_stake.checked_sub(ed).unwrap_or_default()
                 } else {
-                    amount
+                    original_stake
                 };
 
-                let imbalance = T::Currency::deposit_creating(&staker, to_mint);
-                if imbalance.peek() != to_mint {
+                let imbalance = T::Currency::deposit_creating(&staker, mint);
+                if imbalance.peek() != mint {
                     error!(
-                        "failed to mint {to_mint} stake tokens for account {staker:?}: actual {}",
+                        "failed to mint {mint} stake tokens for account {staker:?}: actual {}",
                         imbalance.peek()
                     );
                     continue;
                 }
-                if let Err(err) = T::Currency::reserve_named(STAKE_IDENTIFIER, &staker, amount) {
-                    error!("failed to reserve minted {amount} stake tokens for account {staker:?}: {err:?}");
+
+                if stake > 0 {
+                    if let Err(err) = T::Currency::reserve_named(STAKE_IDENTIFIER, &staker, stake) {
+                        error!(
+                            "failed to reserve {stake} stake tokens for account {staker:?}: {err:?}"
+                        );
+                    }
                 }
-                minted = minted.saturating_add(amount);
+
+                if original_stake != stake {
+                    let diff = mint.saturating_sub(stake);
+                    warn!(
+                        "updating total stake for a difference of {diff} tokens for stake {staker:?} -> {staked:?}",
+                    );
+
+                    crate::TotalStake::<T>::mutate(|total| {
+                        *total = total.saturating_sub(diff);
+                    });
+                    crate::StakingTo::<T>::mutate(&staker, &staked, |total| {
+                        if let Some(total) = total {
+                            *total = stake;
+                        }
+                    });
+                    crate::StakedBy::<T>::mutate(&staked, &staker, |total| {
+                        if let Some(total) = total {
+                            *total = stake;
+                        }
+                    });
+                }
+
+                minted = minted.saturating_add(mint);
             }
 
-            info!("total stake minted: {minted}");
-
+            let total_staking_to: u128 = crate::StakingTo::<T>::iter_values().sum();
+            let total_staked_by: u128 = crate::StakedBy::<T>::iter_values().sum();
             let total_reserved: u128 = crate::StakingTo::<T>::iter_keys()
                 .map(|(staker, _)| staker)
                 .collect::<BTreeSet<_>>()
                 .into_iter()
                 .map(|staker| T::Currency::reserved_balance_named(STAKE_IDENTIFIER, &staker))
                 .sum();
-            let total_staked = crate::TotalStake::<T>::get();
 
-            if total_reserved != total_staked {
-                error!("total reserved balance does not match total tracked state: {total_reserved} != {total_staked}");
-            } else {
-                info!("all stake was minted and reserved correctly");
+            let total_stake_after = crate::TotalStake::<T>::get();
+            let total_issuance_after = T::Currency::total_issuance();
+
+            info!("total stake minted: {minted}. total issuance: {total_issuance_after}. total issuance before: {total_issuance_before}");
+
+            if total_issuance_after != total_tokens_before {
+                error!("total issuance does not match total tokens before migration");
+            }
+
+            if total_staking_to != total_staked_by {
+                error!("total staking to does not match total staked by");
+            }
+
+            if total_staking_to != total_stake_after {
+                error!("total staking to does not match total staked after");
+            }
+
+            if total_reserved != total_stake_after {
+                error!("total reserved balance does not match total tracked state: {total_reserved} != {total_stake_after}");
             }
 
             Weight::default()
