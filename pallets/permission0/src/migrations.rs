@@ -1,10 +1,12 @@
 pub mod v4 {
+    use num_traits::Zero;
     use polkadot_sdk::{
         frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
+        sp_tracing::warn,
         sp_weights::Weight,
     };
 
-    use crate::{Config, Pallet};
+    use crate::{Config, EmissionAllocation, Pallet, PermissionScope};
 
     pub type Migration<T, W> = VersionedMigration<3, 4, MigrateToV6<T>, Pallet<T>, W>;
     pub struct MigrateToV6<T>(core::marker::PhantomData<T>);
@@ -83,9 +85,37 @@ pub mod v4 {
             let _ = old_storage::PermissionsByGrantor::<T>::clear(u32::MAX, None);
             let _ = old_storage::PermissionsByGrantee::<T>::clear(u32::MAX, None);
 
-            for (id, contract) in old_storage::Permissions::<T>::iter() {
+            for (pid, contract) in old_storage::Permissions::<T>::iter() {
+                if let PermissionScope::Emission(scope) = &contract.scope {
+                    if let EmissionAllocation::Streams(streams) = &scope.allocation {
+                        for stream in streams.keys() {
+                            if !crate::AccumulatedStreamAmounts::<T>::contains_key((
+                                &contract.grantor,
+                                &stream,
+                                &pid,
+                            )) {
+                                warn!(
+                                    "inserting accumulated stream value for broken contract: {pid}, stream: {stream}"
+                                );
+                                crate::AccumulatedStreamAmounts::<T>::set(
+                                    (&contract.grantor, &stream, &pid),
+                                    Some(Zero::zero()),
+                                );
+                            }
+                        }
+                    }
+                }
+
+                crate::PermissionsByDelegator::<T>::mutate(&contract.grantor, |pids| {
+                    let _ = pids.try_push(pid);
+                });
+
+                crate::PermissionsByRecipient::<T>::mutate(&contract.grantee, |pids| {
+                    let _ = pids.try_push(pid);
+                });
+
                 crate::Permissions::<T>::set(
-                    id,
+                    pid,
                     Some(crate::PermissionContract {
                         delegator: contract.grantor,
                         recipient: contract.grantee,
