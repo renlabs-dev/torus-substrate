@@ -11,12 +11,17 @@ use polkadot_sdk::{frame_support::assert_ok, sp_runtime::Percent};
 use polkadot_sdk::{frame_support::traits::Get, sp_runtime::BoundedVec};
 use test_utils::{
     add_balance, as_tors, get_balance, get_origin, new_test_ext, step_block, zero_min_burn,
-    AccountId, Governance, Test,
+    AccountId, ExistentialDeposit, Governance, Test,
 };
 
-fn register(account: AccountId, _unused: u16, module: AccountId, stake: u128) {
-    if get_balance(account) < stake {
-        add_balance(account, stake);
+fn register(account: AccountId, module: AccountId, stake: u128) {
+    let ed = ExistentialDeposit::get();
+    let cost = {
+        let config = pallet_governance::GlobalGovernanceConfig::<Test>::get();
+        config.proposal_cost.max(config.agent_application_cost)
+    };
+    if get_balance(account) < stake + ed + cost {
+        add_balance(account, stake + ed + cost);
     }
 
     let _ = pallet_governance::whitelist::add_to_whitelist::<Test>(module);
@@ -28,17 +33,9 @@ fn register(account: AccountId, _unused: u16, module: AccountId, stake: u128) {
         b"metadata".to_vec(),
     ));
 
-    assert!(get_balance(account) >= stake);
-
-    let min_stake: u128 = pallet_torus0::MinAllowedStake::<Test>::get();
-    if stake >= min_stake {
-        if get_balance(account) - stake < 1 {
-            add_balance(account, 1);
-        }
-        assert_ok!(pallet_torus0::stake::add_stake::<Test>(
-            account, module, stake
-        ));
-    }
+    assert_ok!(pallet_torus0::stake::add_stake::<Test>(
+        account, module, stake
+    ));
 }
 
 fn config(proposal_cost: u128, proposal_expiration: u64) {
@@ -76,16 +73,15 @@ pub fn stake(account: u32, module: u32, stake: u128) {
 fn removes_vote_correctly() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+        config(1, 100);
 
         const FOR: u32 = 0;
         const AGAINST: u32 = 1;
 
         let key = 0;
 
-        register(FOR, 0, 0, as_tors(10));
-        register(AGAINST, 0, 1, as_tors(5));
-
-        config(1, 100);
+        register(FOR, 0, as_tors(10));
+        register(AGAINST, 1, as_tors(5));
 
         add_balance(key, 1);
         assert_ok!(
@@ -114,18 +110,18 @@ fn removes_vote_correctly() {
 #[test]
 fn global_proposal_is_refused_correctly() {
     new_test_ext().execute_with(|| {
+        zero_min_burn();
+        config(1, 100);
+
         PendingEmission::<Test>::set(0);
         TreasuryEmissionFee::<Test>::set(Percent::zero());
         let balance = get_balance(DaoTreasuryAddress::<Test>::get());
 
-        zero_min_burn();
         const FOR: u32 = 0;
         const AGAINST: u32 = 1;
 
-        register(FOR, 0, 0, as_tors(5));
-        register(AGAINST, 0, 1, as_tors(10));
-
-        config(1, 100);
+        register(FOR, 0, as_tors(5));
+        register(AGAINST, 1, as_tors(10));
 
         assert_ok!(
             pallet_governance::Pallet::<Test>::add_global_custom_proposal(
@@ -163,14 +159,13 @@ fn global_proposal_is_refused_correctly() {
 fn adds_vote_correctly() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+        config(1, 100);
 
         const FOR: u32 = 0;
         const AGAINST: u32 = 1;
 
-        register(FOR, 0, 0, as_tors(10));
-        register(AGAINST, 0, 1, as_tors(10));
-
-        config(1, 100);
+        register(FOR, 0, as_tors(10));
+        register(AGAINST, 1, as_tors(10));
 
         assert_ok!(
             pallet_governance::Pallet::<Test>::add_global_custom_proposal(
@@ -200,6 +195,7 @@ fn adds_vote_correctly() {
 fn ensures_proposal_exists() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+        config(1, 100);
 
         const MODULE: u32 = 0;
         PendingEmission::<Test>::set(0);
@@ -210,11 +206,9 @@ fn ensures_proposal_exists() {
         let default_proposal_expiration: u64 =
             <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
 
-        config(1, 100);
-
         let origin = get_origin(0);
         add_balance(0, as_tors(2));
-        register(0, 0, 0, as_tors(1) - min_stake);
+        register(0, 0, as_tors(1) - min_stake);
 
         if pallet_torus0::stake::sum_staked_by::<Test>(&MODULE) < 1 {
             stake(MODULE, MODULE, as_tors(1));
@@ -249,20 +243,19 @@ fn ensures_proposal_exists() {
 #[test]
 fn creates_emission_proposal_with_invalid_params_and_it_fails() {
     new_test_ext().execute_with(|| {
-        const MODULE: AccountId = 0;
-
         zero_min_burn();
 
         let default_proposal_expiration: u64 =
             <Test as pallet_governance::Config>::DefaultProposalExpiration::get();
+        config(1, default_proposal_expiration);
+
+        const MODULE: AccountId = 0;
 
         let min_stake: u128 = <Test as pallet_torus0::Config>::DefaultMinAllowedStake::get();
 
-        config(1, default_proposal_expiration);
-
         let origin = get_origin(MODULE);
         add_balance(MODULE, as_tors(2));
-        register(MODULE, 0, MODULE, as_tors(1) - min_stake);
+        register(MODULE, MODULE, as_tors(1) - min_stake);
 
         assert_err!(
             pallet_governance::Pallet::<Test>::vote_proposal(origin.clone(), 0, true),
@@ -285,12 +278,11 @@ fn creates_emission_proposal_with_invalid_params_and_it_fails() {
 fn ensures_proposal_is_open() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+        config(1, 100);
 
         const MODULE: u32 = 0;
 
-        register(MODULE, 0, 0, as_tors(10));
-
-        config(1, 100);
+        register(MODULE, 0, as_tors(10));
 
         Proposals::<Test>::set(
             0,
@@ -327,12 +319,11 @@ fn ensures_proposal_is_open() {
 fn ensures_module_hasnt_voted() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+        config(1, 100);
 
         const MODULE: u32 = 0;
 
-        register(MODULE, 0, 0, as_tors(10));
-
-        config(1, 100);
+        register(MODULE, 0, as_tors(10));
 
         assert_ok!(
             pallet_governance::Pallet::<Test>::add_global_custom_proposal(
@@ -358,12 +349,11 @@ fn ensures_module_hasnt_voted() {
 fn ensures_module_has_voted() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+        config(1, 100);
 
         const MODULE: u32 = 0;
 
-        register(MODULE, 0, 0, as_tors(10));
-
-        config(1, 100);
+        register(MODULE, 0, as_tors(10));
 
         assert_ok!(
             pallet_governance::Pallet::<Test>::add_global_custom_proposal(

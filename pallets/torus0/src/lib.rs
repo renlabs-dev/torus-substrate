@@ -34,14 +34,14 @@ use crate::{agent::Agent, burn::BurnConfiguration, fee::ValidatorFeeConstraints}
 
 #[frame::pallet]
 pub mod pallet {
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(5);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(6);
 
     use frame::prelude::BlockNumberFor;
     use pallet_emission0_api::Emission0Api;
     use pallet_governance_api::GovernanceApi;
     use pallet_permission0_api::Permission0NamespacesApi;
     use pallet_torus0_api::NamespacePathInner;
-    use polkadot_sdk::frame_support::traits::ReservableCurrency;
+    use polkadot_sdk::frame_support::traits::{NamedReservableCurrency, ReservableCurrency};
     use weights::WeightInfo;
 
     use super::*;
@@ -257,8 +257,10 @@ pub mod pallet {
 
         type Currency: Currency<Self::AccountId, Balance = u128>
             + ReservableCurrency<Self::AccountId>
+            + NamedReservableCurrency<Self::AccountId, ReserveIdentifier = [u8; 8]>
             + Send
             + Sync;
+        type ExistentialDeposit: Get<BalanceOf<Self>>;
 
         type Governance: GovernanceApi<Self::AccountId>;
 
@@ -577,8 +579,8 @@ impl<T: Config>
         staker: &T::AccountId,
         staked: &T::AccountId,
         amount: <T::Currency as Currency<T::AccountId>>::Balance,
-    ) -> Result<(), <T::Currency as Currency<T::AccountId>>::Balance> {
-        stake::add_stake::<T>(staker.clone(), staked.clone(), amount).map_err(|_| amount)
+    ) -> DispatchResult {
+        stake::add_stake::<T>(staker.clone(), staked.clone(), amount)
     }
 
     fn agent_ids() -> impl Iterator<Item = T::AccountId> {

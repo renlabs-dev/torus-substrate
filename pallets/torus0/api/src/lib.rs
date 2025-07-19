@@ -10,6 +10,7 @@ use core::{
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
+    frame_support::dispatch::DispatchResult,
     sp_core::ConstU32,
     sp_runtime::{BoundedVec, Percent},
     sp_std::vec::Vec,
@@ -33,7 +34,7 @@ pub trait Torus0Api<AccountId, Balance> {
     fn sum_staking_to(staker: &AccountId) -> Balance;
 
     fn staked_by(staked: &AccountId) -> alloc::vec::Vec<(AccountId, Balance)>;
-    fn stake_to(staker: &AccountId, staked: &AccountId, amount: Balance) -> Result<(), Balance>;
+    fn stake_to(staker: &AccountId, staked: &AccountId, amount: Balance) -> DispatchResult;
 
     fn agent_ids() -> impl Iterator<Item = AccountId>;
     fn is_agent_registered(agent: &AccountId) -> bool;
@@ -47,7 +48,7 @@ pub trait Torus0Api<AccountId, Balance> {
         name: alloc::vec::Vec<u8>,
         url: alloc::vec::Vec<u8>,
         metadata: alloc::vec::Vec<u8>,
-    ) -> polkadot_sdk::frame_support::dispatch::DispatchResult;
+    ) -> DispatchResult;
 
     #[doc(hidden)]
     #[cfg(feature = "runtime-benchmarks")]
