@@ -936,6 +936,7 @@ fn delete_namespace_being_delegated() {
     new_test_ext().execute_with(|| {
         set_namespace_config();
         register_agent_with(0, "alice", as_tors(1000));
+        register_agent_with(1, "bob", as_tors(1000));
 
         for path in ["agent.alice.compute.cpu.2vcpu", "agent.alice.storage.block"] {
             assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(

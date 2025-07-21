@@ -44,6 +44,15 @@ pub fn delegate_namespace_permission_impl<T: Config>(
 ) -> Result<PermissionId, DispatchError> {
     let delegator = ensure_signed(delegator)?;
 
+    ensure!(
+        T::Torus::is_agent_registered(&delegator),
+        Error::<T>::NotRegisteredAgent
+    );
+    ensure!(
+        T::Torus::is_agent_registered(&recipient),
+        Error::<T>::NotRegisteredAgent
+    );
+
     let paths = paths
         .into_iter()
         .map(|path| {
