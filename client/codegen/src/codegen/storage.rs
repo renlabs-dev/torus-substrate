@@ -475,7 +475,7 @@ fn simplify_type_for_param_name(type_str: &str) -> String {
             } else {
                 element_type
             };
-            return format!("{}_array", simplified_element);
+            return format!("{simplified_element}_array");
         }
     }
 

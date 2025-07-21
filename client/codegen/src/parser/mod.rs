@@ -10,7 +10,7 @@ use crate::{
 mod calls;
 mod storage;
 
-const IGNORED_MODULES: [&'static str; 8] = [
+const IGNORED_MODULES: [&str; 8] = [
     "runtime_types",
     "constants",
     "storage",
@@ -29,12 +29,13 @@ pub fn parse_api_file(content: &str) -> Result<Vec<PalletPattern>, Box<dyn Error
         .iter()
         .find_map(|item| match item {
             Item::Mod(item_mod) => {
-                if item_mod.ident.to_string() == "api" {
+                if item_mod.ident == "api" {
                     return Some(item_mod);
                 }
-                return None;
+
+                None
             }
-            _ => return None,
+            _ => None,
         })
         .unwrap();
 
@@ -81,7 +82,7 @@ fn parse_pallet_module(pallet_mod: &ItemMod) -> Result<PalletPattern, Box<dyn Er
                 }
 
                 if item_mod.ident == "calls" {
-                    calls.extend(parse_calls_module(item_mod, &pallet_name)?);
+                    calls.extend(parse_calls_module(item_mod, pallet_name)?);
                 }
             }
         }

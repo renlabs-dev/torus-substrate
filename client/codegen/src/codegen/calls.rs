@@ -8,7 +8,7 @@ use crate::{
     ir::{CallPattern, PalletPattern},
 };
 
-const UNSIGNED_CALLS: [&'static str; 1] = ["faucet"];
+const UNSIGNED_CALLS: [&str; 1] = ["faucet"];
 
 pub(super) fn generate_pallet_calls(
     network: &InterfaceSource,

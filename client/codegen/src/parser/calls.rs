@@ -54,7 +54,7 @@ fn extract_calls(
                     paren_token: Default::default(),
                 }),
                 ReturnType::Type(_, ty) => {
-                    extract_all_generics(&ty).first().cloned().cloned().unwrap()
+                    extract_all_generics(ty).first().cloned().cloned().unwrap()
                 }
             };
 
@@ -76,17 +76,14 @@ fn extract_all_generics(ty: &Type) -> Vec<&Type> {
     match ty {
         Type::Path(TypePath { path, .. }) => {
             for segment in &path.segments {
-                match &segment.arguments {
-                    PathArguments::AngleBracketed(args) => {
-                        for arg in &args.args {
-                            if let GenericArgument::Type(inner_ty) = arg {
-                                generics.push(inner_ty);
-                                // Recursively extract generics from nested types
-                                generics.extend(extract_all_generics(inner_ty));
-                            }
+                if let PathArguments::AngleBracketed(args) = &segment.arguments {
+                    for arg in &args.args {
+                        if let GenericArgument::Type(inner_ty) = arg {
+                            generics.push(inner_ty);
+                            // Recursively extract generics from nested types
+                            generics.extend(extract_all_generics(inner_ty));
                         }
                     }
-                    _ => {}
                 }
             }
         }

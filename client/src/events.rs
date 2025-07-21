@@ -33,7 +33,7 @@ impl<C> Events<C> {
             .and_then(|block| async move {
                 let events = block.events().await?;
                 let all_events: Result<Vec<_>, _> = events.iter().collect();
-                Ok(all_events?)
+                all_events
             })
             .map_ok(|events| stream::iter(events.into_iter().map(Ok)))
             .try_flatten();
@@ -50,7 +50,7 @@ impl<C> Events<C> {
             .and_then(|block| async move {
                 let events = block.events().await?;
                 let all_events: Result<Vec<_>, _> = events.find::<E>().collect();
-                Ok(all_events?)
+                all_events
             })
             .map_ok(|events| stream::iter(events.into_iter().map(Ok)))
             .try_flatten();

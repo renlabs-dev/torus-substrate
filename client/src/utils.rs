@@ -13,5 +13,5 @@ const ONE_TORUS: u128 = 10u128.pow(18);
 
 /// Utility to convert a floating number representing tokens to the chain-ready fixed u128
 pub fn to_torus(tokens: f64) -> u128 {
-    return (tokens.abs() * ONE_TORUS as f64) as u128;
+    (tokens.abs() * ONE_TORUS as f64) as u128
 }

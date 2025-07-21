@@ -129,7 +129,7 @@ fn determine_storage_pattern(
             StoragePattern::Map {
                 name: base_name.to_string(),
                 pallet: pallet_name.to_string(),
-                key_type: types.param_types.get(0).cloned().unwrap_or_default(),
+                key_type: types.param_types.first().cloned().unwrap_or_default(),
                 return_type: types.return_type.clone(),
             }
         }
@@ -138,7 +138,7 @@ fn determine_storage_pattern(
             StoragePattern::DoubleMap {
                 name: base_name.to_string(),
                 pallet: pallet_name.to_string(),
-                key1_type: types.param_types.get(0).cloned().unwrap_or_default(),
+                key1_type: types.param_types.first().cloned().unwrap_or_default(),
                 key2_type: types.param_types.get(1).cloned().unwrap_or_default(),
                 return_type: types.return_type.clone(),
             }

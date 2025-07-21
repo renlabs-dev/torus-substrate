@@ -78,9 +78,9 @@ fn generate_client_structs(pallet_names: &[String]) -> TokenStream {
         .iter()
         .map(|name| {
             (
-                format_ident!("{}", pascal_case(&format!("{}_client", name))),
-                format_ident!("{}", pascal_case(&format!("{}_storage", name))),
-                format_ident!("{}", pascal_case(&format!("{}_calls", name))),
+                format_ident!("{}", pascal_case(&format!("{name}_client"))),
+                format_ident!("{}", pascal_case(&format!("{name}_storage"))),
+                format_ident!("{}", pascal_case(&format!("{name}_calls"))),
                 format_ident!("{}", name),
             )
         })

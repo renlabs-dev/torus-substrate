@@ -76,15 +76,14 @@ pub async fn generate_interfaces(output: &Path) -> Result<(), Box<dyn std::error
         }
     };
 
-    let wrappers_code = format!("{}", prettyplease::unparse(&wrappers_file));
+    let wrappers_code = prettyplease::unparse(&wrappers_file).to_string();
 
     // Create output directory if it doesn't exist
     if let Some(parent) = output.parent() {
         std::fs::create_dir_all(parent)?;
     }
 
-    std::fs::write(&output, wrappers_code)?;
-    println!("Generated wrappers: {:?}", output);
+    std::fs::write(output, wrappers_code)?;
 
     Ok(())
 }
