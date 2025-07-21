@@ -179,22 +179,6 @@ pub mod pallet {
             revoked_by: Option<T::AccountId>,
             permission_id: PermissionId,
         },
-        /// Permission executed (manual distribution) with ID
-        PermissionExecuted {
-            delegator: T::AccountId,
-            recipient: T::AccountId,
-            permission_id: PermissionId,
-            stream_id: Option<StreamId>,
-            amount: BalanceOf<T>,
-        },
-        /// Auto-distribution executed
-        AutoDistributionExecuted {
-            delegator: T::AccountId,
-            recipient: T::AccountId,
-            permission_id: PermissionId,
-            stream_id: Option<StreamId>,
-            amount: BalanceOf<T>,
-        },
         /// Permission expired with ID
         PermissionExpired {
             delegator: T::AccountId,
@@ -223,6 +207,20 @@ pub mod pallet {
             permission_id: PermissionId,
             controllers_count: u32,
             required_votes: u32,
+        },
+        /// An emission distribution happened
+        EmissionDistribution {
+            permission_id: PermissionId,
+            stream_id: Option<StreamId>,
+            target: T::AccountId,
+            amount: BalanceOf<T>,
+            reason: permission::emission::DistributionReason,
+        },
+        /// Accumulated emission for stream
+        AccumulatedEmission {
+            permission_id: PermissionId,
+            stream_id: StreamId,
+            amount: BalanceOf<T>,
         },
     }
 

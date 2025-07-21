@@ -73,7 +73,7 @@ pub enum DistributionControl<T: Config> {
 /// Accumulate emissions for a specific agent, distributes if control is met.
 pub(crate) fn do_accumulate_emissions<T: Config>(
     agent: &T::AccountId,
-    stream: &StreamId,
+    stream_id: &StreamId,
     imbalance: &mut NegativeImbalanceOf<T>,
 ) {
     let initial_balance = imbalance.peek();
@@ -83,7 +83,7 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
         return;
     }
 
-    let streams = AccumulatedStreamAmounts::<T>::iter_prefix((agent, stream));
+    let streams = AccumulatedStreamAmounts::<T>::iter_prefix((agent, stream_id));
     for (permission_id, accumulated) in streams {
         let Some(contract) = Permissions::<T>::get(permission_id) else {
             continue;
@@ -104,7 +104,7 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
             continue;
         }
 
-        let Some(percentage) = streams.get(stream) else {
+        let Some(percentage) = streams.get(stream_id) else {
             continue;
         };
 
@@ -118,9 +118,15 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
             .peek();
 
         AccumulatedStreamAmounts::<T>::set(
-            (agent, stream, &permission_id),
+            (agent, stream_id, &permission_id),
             Some(accumulated.saturating_add(delegated_amount)),
         );
+
+        Pallet::<T>::deposit_event(Event::AccumulatedEmission {
+            permission_id,
+            stream_id: *stream_id,
+            amount: delegated_amount,
+        });
     }
 }
 
@@ -176,8 +182,10 @@ pub(crate) fn do_auto_distribution<T: Config>(
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub(crate) enum DistributionReason {
+#[derive(
+    Encode, Decode, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, TypeInfo, MaxEncodedLen,
+)]
+pub enum DistributionReason {
     Automatic,
     Manual,
 }
@@ -227,7 +235,6 @@ pub(crate) fn do_distribute_emission<T: Config>(
                 do_distribute_to_targets(
                     &mut imbalance,
                     permission_id,
-                    contract,
                     emission_scope,
                     Some(stream),
                     total_weight,
@@ -268,7 +275,6 @@ pub(crate) fn do_distribute_emission<T: Config>(
             do_distribute_to_targets(
                 &mut imbalance,
                 permission_id,
-                contract,
                 emission_scope,
                 None,
                 total_weight,
@@ -288,7 +294,6 @@ pub(crate) fn do_distribute_emission<T: Config>(
 fn do_distribute_to_targets<T: Config>(
     imbalance: &mut NegativeImbalanceOf<T>,
     permission_id: PermissionId,
-    contract: &PermissionContract<T>,
     emission_scope: &EmissionScope<T>,
     stream: Option<&StreamId>,
     total_weight: FixedU128,
@@ -322,25 +327,13 @@ fn do_distribute_to_targets<T: Config>(
         }
 
         T::Currency::resolve_creating(target, imbalance);
-    }
 
-    let amount = initial_balance.saturating_sub(imbalance.peek());
-    if !amount.is_zero() {
-        <Pallet<T>>::deposit_event(match reason {
-            DistributionReason::Automatic => Event::AutoDistributionExecuted {
-                delegator: contract.delegator.clone(),
-                recipient: contract.recipient.clone(),
-                permission_id,
-                stream_id: None,
-                amount,
-            },
-            DistributionReason::Manual => Event::PermissionExecuted {
-                delegator: contract.delegator.clone(),
-                recipient: contract.recipient.clone(),
-                permission_id,
-                stream_id: None,
-                amount,
-            },
+        Pallet::<T>::deposit_event(Event::EmissionDistribution {
+            permission_id,
+            stream_id: stream.cloned(),
+            target: target.clone(),
+            amount: target_amount,
+            reason,
         });
     }
 }
