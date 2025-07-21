@@ -146,7 +146,7 @@ fn key_name(pallet: &[u8], key: &[u8]) -> String {
 /// Fetches the chain state from a running node
 async fn crate_chain_spec(flags: &flags::Replica) -> Box<dyn ChainSpec> {
     let mut chain_spec = sc_service::GenericChainSpec::<sc_service::NoExtension>::from_json_bytes(
-        include_bytes!("../../node/specs/main.json"),
+        include_bytes!("../../data/mainnet/spec.json"),
     )
     .unwrap();
 
