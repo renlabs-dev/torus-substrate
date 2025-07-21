@@ -126,14 +126,14 @@ fn creates_member_input_correctly() {
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
-                registered: false
+                whitelisted: false
             }
         );
 
         register_empty_agent(0);
 
         let input = ConsensusMemberInput::<Test>::from_agent(0, member.weights.clone(), 0);
-        assert!(input.registered);
+        assert!(input.whitelisted);
 
         StakedBy::<Test>::set(0, 1, Some(10));
         StakedBy::<Test>::set(0, 2, Some(20));
@@ -198,7 +198,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: stake * 3,
                 normalized_stake: FixedU128::from_float(0.75f64),
                 delegating_to: None,
-                registered: true,
+                whitelisted: true,
             }
         );
 
@@ -212,7 +212,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
-                registered: true,
+                whitelisted: true,
             }
         );
 
@@ -226,7 +226,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: stake,
                 normalized_stake: FixedU128::from_float(0.25f64),
                 delegating_to: Some(validator),
-                registered: true,
+                whitelisted: true,
             }
         );
 
@@ -240,7 +240,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: Some(validator),
-                registered: false,
+                whitelisted: false,
             }
         );
 
@@ -254,7 +254,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: Some(validator),
-                registered: false,
+                whitelisted: false,
             }
         );
 
@@ -268,7 +268,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
-                registered: true,
+                whitelisted: true,
             }
         );
     });
