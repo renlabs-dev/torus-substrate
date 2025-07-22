@@ -316,6 +316,8 @@ pub mod pallet {
         NotEnoughInstances,
         /// Too many children for a permission.
         TooManyChildren,
+        /// Revocation terms are too strong for a permission re-delegation.
+        RevocationTermsTooStrong,
     }
 
     #[pallet::hooks]

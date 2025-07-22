@@ -62,6 +62,8 @@ pub fn delegate_namespace_permission_impl<T: Config>(
         Error::<T>::NotRegisteredAgent
     );
 
+    ensure!(instances > 0, Error::<T>::NotEnoughInstances);
+
     let total_multi_parent = paths.keys().filter(|p| p.is_some()).count();
     ensure!(total_multi_parent <= 1, Error::<T>::MultiParentForbidden);
 
@@ -77,27 +79,35 @@ pub fn delegate_namespace_permission_impl<T: Config>(
                 Error::<T>::TooManyNamespaces
             );
 
-            let permission = pid.and_then(|pid| Some((pid, Permissions::<T>::get(pid)?)));
-            let namespaces = if let Some((pid, permission)) = permission {
+            let namespaces = if let Some(pid) = pid {
+                let Some(parent) = Permissions::<T>::get(pid) else {
+                    return Err(Error::<T>::ParentPermissionNotFound.into());
+                };
+
                 ensure!(
-                    permission.recipient == delegator,
+                    parent.recipient == delegator,
                     Error::<T>::NotPermissionRecipient
                 );
 
-                let PermissionScope::Namespace(namespace) = &permission.scope else {
+                let PermissionScope::Namespace(namespace) = &parent.scope else {
                     return Err(Error::<T>::UnsupportedPermissionType.into());
                 };
 
                 ensure!(
-                    instances <= permission.available_instances(),
+                    instances <= parent.available_instances(),
                     Error::<T>::NotEnoughInstances
+                );
+
+                ensure!(
+                    RevocationTerms::<T>::is_weaker(&parent.revocation, &revocation),
+                    Error::<T>::RevocationTermsTooStrong
                 );
 
                 parents.push(pid);
 
-                resolve_paths::<T>(&delegator, Some(&namespace), &paths)
+                resolve_paths::<T>(&delegator, Some(namespace), paths)
             } else {
-                resolve_paths::<T>(&delegator, None, &paths)
+                resolve_paths::<T>(&delegator, None, paths)
             }?;
 
             Ok((*pid, namespaces))
@@ -115,7 +125,7 @@ pub fn delegate_namespace_permission_impl<T: Config>(
         Permissions::<T>::mutate_extant(parent, |parent| {
             parent.children.try_insert(permission_id).ok()
         })
-        .ok_or_else(|| Error::<T>::TooManyChildren)?;
+        .ok_or(Error::<T>::TooManyChildren)?;
     }
 
     let contract = PermissionContract::<T>::new(
@@ -145,27 +155,43 @@ fn resolve_paths<T: Config>(
     parent: Option<&NamespaceScope<T>>,
     paths: &BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
 ) -> Result<BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>, DispatchError> {
-    let paths = paths.iter().map(|path| {
-        NamespacePath::new_agent(&path).map_err(|_| Error::<T>::NamespacePathIsInvalid.into())
+    let children = paths.iter().map(|path| {
+        NamespacePath::new_agent(path).map_err(|_| Error::<T>::NamespacePathIsInvalid.into())
     });
 
     let paths = if let Some(parent) = &parent {
-        let paths = paths.collect::<Result<BTreeSet<_>, DispatchError>>()?;
+        let children = children.collect::<Result<BTreeSet<_>, DispatchError>>()?;
         let matched_count = parent
             .paths
             .values()
             .flat_map(|parent| parent.iter())
-            .filter(|p| paths.contains(*p))
+            .filter_map(|parent_path| {
+                if children.contains(parent_path) {
+                    Some(())
+                } else {
+                    let agent_name = parent_path.agent_name()?;
+                    let child_path = children
+                        .iter()
+                        .find(|child| parent_path.is_parent_of(child))?;
+
+                    let agent = T::Torus::find_agent_by_name(agent_name)?;
+                    if !T::Torus::namespace_exists(&agent, child_path) {
+                        return None;
+                    }
+
+                    Some(())
+                }
+            })
             .count();
 
         ensure!(
-            matched_count == paths.len(),
+            matched_count == children.len(),
             Error::<T>::ParentPermissionNotFound
         );
 
-        paths
+        children
     } else {
-        paths
+        children
             .map(|path| {
                 path.and_then(|path| {
                     if T::Torus::namespace_exists(delegator, &path) {

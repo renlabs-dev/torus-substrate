@@ -1,7 +1,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_emission0_api::Emission0Api;
 use pallet_governance_api::GovernanceApi;
-use pallet_torus0_api::NamespacePath;
+use pallet_torus0_api::{NamespacePath, Torus0Api};
 use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::{
@@ -62,7 +62,7 @@ pub fn register<T: crate::Config>(
     );
 
     ensure!(
-        !exists::<T>(&agent_key),
+        !exists::<T>(&agent_key) && crate::Pallet::<T>::find_agent_by_name(&name).is_none(),
         crate::Error::<T>::AgentAlreadyRegistered
     );
 

@@ -5,7 +5,7 @@ use polkadot_sdk::{
         dispatch::DispatchResult, ensure, CloneNoBound, DebugNoBound, DefaultNoBound, EqNoBound,
         PartialEqNoBound,
     },
-    frame_system::{self, ensure_signed_or_root},
+    frame_system::{self, ensure_signed_or_root, RawOrigin},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{H256, U256},
     sp_runtime::{
@@ -13,7 +13,7 @@ use polkadot_sdk::{
         BoundedBTreeMap, BoundedVec, DispatchError, Percent,
     },
     sp_std::vec::Vec,
-    sp_tracing::error,
+    sp_tracing::{error, info, trace},
 };
 use scale_info::TypeInfo;
 
@@ -99,6 +99,16 @@ impl<T: Config> PermissionContract<T> {
             children: BoundedBTreeSet::new(),
             created_at: frame_system::Pallet::<T>::block_number(),
         }
+    }
+
+    #[deprecated]
+    pub(crate) fn set_execution_info(
+        &mut self,
+        block: Option<BlockNumberFor<T>>,
+        execution_count: u32,
+    ) {
+        self.last_execution = block;
+        self.execution_count = execution_count;
     }
 }
 
@@ -189,7 +199,21 @@ impl<T: Config> PermissionContract<T> {
             };
         }
 
-        self.cleanup(permission_id);
+        for child_id in &self.children {
+            let Some(child) = Permissions::<T>::get(child_id) else {
+                continue;
+            };
+
+            let revoker = if who.is_none() {
+                RawOrigin::Root
+            } else {
+                RawOrigin::Signed(self.recipient.clone())
+            };
+
+            child.revoke(revoker.into(), *child_id)?;
+        }
+
+        self.cleanup(permission_id)?;
 
         <Pallet<T>>::deposit_event(Event::PermissionRevoked {
             delegator,
@@ -260,7 +284,7 @@ impl<T: Config> PermissionContract<T> {
         Ok(())
     }
 
-    fn cleanup(self, permission_id: H256) {
+    fn cleanup(self, permission_id: H256) -> DispatchResult {
         crate::remove_permission_from_indices::<T>(&self.delegator, &self.recipient, permission_id);
 
         Permissions::<T>::remove(permission_id);
@@ -269,15 +293,17 @@ impl<T: Config> PermissionContract<T> {
 
         match self.scope {
             PermissionScope::Emission(emission) => {
-                emission.cleanup(permission_id, &self.last_execution, &self.delegator)
+                emission.cleanup(permission_id, &self.last_execution, &self.delegator);
             }
             PermissionScope::Curator(curator) => {
-                curator.cleanup(permission_id, &self.last_execution, &self.delegator)
+                curator.cleanup(permission_id, &self.last_execution, &self.delegator);
             }
-            PermissionScope::Namespace(_) => {
-                // No cleanup needed for namespace permissions
+            PermissionScope::Namespace(namespace) => {
+                namespace.cleanup(permission_id, &self.last_execution, &self.delegator);
             }
         }
+
+        Ok(())
     }
 
     pub fn is_updatable(&self) -> bool {
@@ -312,6 +338,22 @@ pub struct NamespaceScope<T: Config> {
     >,
 }
 
+impl<T: Config> NamespaceScope<T> {
+    /// Cleanup operations when permission is revoked or expired
+    fn cleanup(
+        &self,
+        permission_id: polkadot_sdk::sp_core::H256,
+        _last_execution: &Option<crate::BlockNumberFor<T>>,
+        _delegator: &T::AccountId,
+    ) {
+        for pid in self.paths.keys().cloned().flatten() {
+            Permissions::<T>::mutate_extant(pid, |parent| {
+                parent.children.remove(&permission_id);
+            });
+        }
+    }
+}
+
 #[derive(
     Encode, Decode, CloneNoBound, PartialEqNoBound, EqNoBound, TypeInfo, MaxEncodedLen, DebugNoBound,
 )]
@@ -339,6 +381,25 @@ pub enum RevocationTerms<T: Config> {
     },
     /// Time-based revocation
     RevocableAfter(BlockNumberFor<T>),
+}
+
+impl<T: Config> RevocationTerms<T> {
+    /// Checks if the child revocation terms are weaker than the parent.
+    pub fn is_weaker(parent: &Self, child: &Self) -> bool {
+        match (parent, child) {
+            (_, RevocationTerms::RevocableByDelegator) => true,
+
+            (RevocationTerms::RevocableAfter(a), RevocationTerms::RevocableAfter(b)) if a >= b => {
+                true
+            }
+
+            (RevocationTerms::Irrevocable, RevocationTerms::RevocableAfter(_)) => true,
+
+            (RevocationTerms::Irrevocable, RevocationTerms::Irrevocable) => true,
+
+            _ => false,
+        }
+    }
 }
 
 /// Types of enforcement actions that can be voted on
@@ -391,10 +452,17 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
     let permissions: Vec<_> = Permissions::<T>::iter().collect();
     let mut expired = Vec::with_capacity(permissions.len());
 
+    info!(
+        target: "auto_permission_execution",
+        "executing auto permission execution for {} permissions",
+        permissions.len()
+    );
+
     for (permission_id, contract) in Permissions::<T>::iter() {
         #[allow(clippy::single_match)]
         match &contract.scope {
             PermissionScope::Emission(emission_scope) => {
+                trace!(target: "auto_permission_execution", "executing auto permission execution for permission {permission_id:?}");
                 if let Err(err) = emission::do_auto_distribution(
                     emission_scope,
                     permission_id,
@@ -416,7 +484,9 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
         let delegator = contract.delegator.clone();
         let recipient = contract.recipient.clone();
 
-        contract.cleanup(permission_id);
+        if let Err(err) = contract.cleanup(permission_id) {
+            error!("failed to cleanup expired permission {permission_id:?}: {err:?}");
+        }
 
         <Pallet<T>>::deposit_event(Event::PermissionExpired {
             delegator,

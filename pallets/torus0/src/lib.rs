@@ -587,6 +587,12 @@ impl<T: Config>
         Agents::<T>::iter_keys()
     }
 
+    fn find_agent_by_name(name: &[u8]) -> Option<T::AccountId> {
+        Agents::<T>::iter()
+            .find(|(_, agent)| *agent.name == name)
+            .map(|(id, _)| id)
+    }
+
     fn is_agent_registered(agent: &T::AccountId) -> bool {
         Agents::<T>::contains_key(agent)
     }

@@ -202,28 +202,30 @@ pub(crate) fn do_distribute_emission<T: Config>(
     contract: &PermissionContract<T>,
     reason: DistributionReason,
 ) -> DispatchResult {
-    #[allow(irrefutable_let_patterns)]
-    let PermissionScope::Emission(emission_scope) = &contract.scope
-    else {
+    let PermissionScope::Emission(emission_scope) = &contract.scope else {
         return Ok(());
     };
 
     let total_weight =
         FixedU128::from_u32(emission_scope.targets.values().map(|w| *w as u32).sum());
     if total_weight.is_zero() {
+        trace!("permission {permission_id:?} does not have enough target weight");
         return Ok(());
     }
 
     match &emission_scope.allocation {
         EmissionAllocation::Streams(streams) => {
-            let streams = streams.keys().filter_map(|id| {
-                let acc =
-                    AccumulatedStreamAmounts::<T>::get((&contract.delegator, id, permission_id))?;
+            let streams = streams.keys().filter_map(|stream_id| {
+                let acc = AccumulatedStreamAmounts::<T>::get((
+                    &contract.delegator,
+                    stream_id,
+                    permission_id,
+                ))?;
 
                 // You cannot remove the stream from the storage as
-                // it's needed in the accumulation code
+                // it's needed in the accumulation code, avoid using `take`
                 AccumulatedStreamAmounts::<T>::set(
-                    (&contract.delegator, id, permission_id),
+                    (&contract.delegator, stream_id, permission_id),
                     Some(Zero::zero()),
                 );
 
@@ -233,7 +235,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
                     // For percentage allocations, mint new tokens
                     // This is safe because we're only distributing a percentage of
                     // tokens that were already allocated to emission rewards
-                    Some((id, T::Currency::issue(acc)))
+                    Some((stream_id, T::Currency::issue(acc)))
                 }
             });
 
@@ -251,13 +253,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
                 if !remainder.is_zero() {
                     AccumulatedStreamAmounts::<T>::mutate(
                         (&contract.delegator, stream, permission_id),
-                        |acc| {
-                            if let Some(acc_value) = acc {
-                                *acc_value = acc_value.saturating_add(remainder);
-                            } else {
-                                *acc = Some(remainder)
-                            }
-                        },
+                        |acc| *acc = Some(acc.unwrap_or_default().saturating_add(remainder)),
                     );
                 }
             }
@@ -309,6 +305,7 @@ fn do_distribute_to_targets<T: Config>(
     let total_initial_amount =
         FixedU128::from_inner(initial_balance.try_into().unwrap_or_default());
     if total_initial_amount.is_zero() {
+        trace!("no amount to distribute for permission {permission_id:?} and stream {stream:?}");
         return;
     }
 

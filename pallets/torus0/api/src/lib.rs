@@ -37,6 +37,7 @@ pub trait Torus0Api<AccountId, Balance> {
     fn stake_to(staker: &AccountId, staked: &AccountId, amount: Balance) -> DispatchResult;
 
     fn agent_ids() -> impl Iterator<Item = AccountId>;
+    fn find_agent_by_name(name: &[u8]) -> Option<AccountId>;
     fn is_agent_registered(agent: &AccountId) -> bool;
 
     fn namespace_exists(agent: &AccountId, path: &NamespacePath) -> bool;
@@ -210,6 +211,17 @@ impl NamespacePath {
             root == b"agent"
         } else {
             false
+        }
+    }
+
+    /// Get the agent name from the agent root path: "agent.<name>".
+    pub fn agent_name(&self) -> Option<&[u8]> {
+        let mut segments = self.segments();
+
+        if self.segments().next().is_some_and(|f| f == b"agent") {
+            segments.nth(1)
+        } else {
+            None
         }
     }
 }

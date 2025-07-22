@@ -1,10 +1,14 @@
+#![allow(clippy::indexing_slicing)]
+
 use pallet_permission0::{
-    Error, Pallet, PermissionDuration, PermissionScope, Permissions, RevocationTerms,
+    CuratorPermissions, Error, Pallet, PermissionDuration, PermissionScope, Permissions,
+    PermissionsByDelegator, PermissionsByRecipient, RevocationTerms,
 };
 use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner};
+use polkadot_sdk::sp_core::H256;
 use polkadot_sdk::{
-    frame_support::{assert_err, assert_ok, BoundedBTreeSet},
+    frame_support::{assert_err, assert_ok, BoundedBTreeMap, BoundedBTreeSet},
     frame_system::RawOrigin,
 };
 use test_utils::*;
@@ -13,7 +17,10 @@ fn register_agent(id: AccountId) {
     let name = match id {
         0 => &b"alice"[..],
         1 => &b"bob"[..],
-        _ => &b"charlie"[..],
+        2 => &b"charlie"[..],
+        3 => &b"dave"[..],
+        4 => &b"eve"[..],
+        _ => &b"foo"[..],
     };
 
     Balances::force_set_balance(RawOrigin::Root.into(), id, u128::MAX).unwrap();
@@ -52,8 +59,10 @@ fn is_delegating_namespace_returns_true_for_exact_match() {
 
         let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
 
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_namespace).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(delegator),
@@ -61,6 +70,7 @@ fn is_delegating_namespace_returns_true_for_exact_match() {
             paths,
             PermissionDuration::Indefinite,
             RevocationTerms::Irrevocable,
+            1
         ));
 
         let query_path = NamespacePath::new_agent(b"agent.alice.compute").unwrap();
@@ -83,8 +93,10 @@ fn is_delegating_namespace_returns_true_for_parent_child_relationship() {
         let bounded_parent = register_namespace(delegator, b"agent.alice.compute");
         let bounded_child = register_namespace(delegator, b"agent.alice.compute.gpu.h100");
 
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_child.clone()).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_child.clone()).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(delegator),
@@ -92,6 +104,7 @@ fn is_delegating_namespace_returns_true_for_parent_child_relationship() {
             paths,
             PermissionDuration::Indefinite,
             RevocationTerms::Irrevocable,
+            1
         ));
 
         for path in [bounded_parent, bounded_child] {
@@ -115,8 +128,10 @@ fn is_delegating_namespace_returns_true_for_child_parent_relationship() {
 
         let bounded_parent = register_namespace(delegator, b"agent.alice.compute");
 
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_parent.clone()).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_parent.clone()).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(delegator),
@@ -124,6 +139,7 @@ fn is_delegating_namespace_returns_true_for_child_parent_relationship() {
             paths,
             PermissionDuration::Indefinite,
             RevocationTerms::Irrevocable,
+            1
         ));
 
         for path in [bounded_parent.as_slice(), b"agent.alice.compute.gpu.h100"] {
@@ -147,8 +163,10 @@ fn is_delegating_namespace_returns_false_for_unrelated_paths() {
 
         let bounded_compute = register_namespace(delegator, b"agent.alice.compute.gpu.h100");
 
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_compute).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_compute).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(delegator),
@@ -156,6 +174,7 @@ fn is_delegating_namespace_returns_false_for_unrelated_paths() {
             paths,
             PermissionDuration::Indefinite,
             RevocationTerms::Irrevocable,
+            1
         ));
 
         let storage_query = NamespacePath::new_agent(b"agent.alice.storage.ssd.100tb").unwrap();
@@ -182,8 +201,12 @@ fn is_delegating_namespace_handles_multiple_permissions() {
         let bounded_compute = register_namespace(delegator, b"agent.alice.compute");
         let bounded_storage = register_namespace(delegator, b"agent.alice.storage");
 
-        let mut compute_paths = BoundedBTreeSet::new();
-        compute_paths.try_insert(bounded_compute).unwrap();
+        let mut compute_namespace_set = BoundedBTreeSet::new();
+        compute_namespace_set.try_insert(bounded_compute).unwrap();
+        let mut compute_paths = BoundedBTreeMap::new();
+        compute_paths
+            .try_insert(None, compute_namespace_set)
+            .unwrap();
 
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(delegator),
@@ -191,10 +214,15 @@ fn is_delegating_namespace_handles_multiple_permissions() {
             compute_paths,
             PermissionDuration::Indefinite,
             RevocationTerms::Irrevocable,
+            1
         ));
 
-        let mut storage_paths = BoundedBTreeSet::new();
-        storage_paths.try_insert(bounded_storage).unwrap();
+        let mut storage_namespace_set = BoundedBTreeSet::new();
+        storage_namespace_set.try_insert(bounded_storage).unwrap();
+        let mut storage_paths = BoundedBTreeMap::new();
+        storage_paths
+            .try_insert(None, storage_namespace_set)
+            .unwrap();
 
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(delegator),
@@ -202,6 +230,7 @@ fn is_delegating_namespace_handles_multiple_permissions() {
             storage_paths,
             PermissionDuration::Indefinite,
             RevocationTerms::Irrevocable,
+            1
         ));
 
         for path in [b"agent.alice.compute.gpu", b"agent.alice.storage.ssd"] {
@@ -232,8 +261,10 @@ fn delegate_namespace_permission_fails_for_unregistered_delegator() {
 
         let namespace_path = b"agent.alice.compute".to_vec();
         let bounded_namespace: NamespacePathInner = namespace_path.try_into().unwrap();
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_namespace).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_err!(
             Permission0::delegate_namespace_permission(
@@ -242,6 +273,7 @@ fn delegate_namespace_permission_fails_for_unregistered_delegator() {
                 paths,
                 PermissionDuration::Indefinite,
                 RevocationTerms::Irrevocable,
+                1
             ),
             Error::<Test>::NotRegisteredAgent
         );
@@ -258,8 +290,10 @@ fn delegate_namespace_permission_fails_for_unregistered_recipient() {
 
         let namespace_path = b"agent.alice.compute".to_vec();
         let bounded_namespace: NamespacePathInner = namespace_path.try_into().unwrap();
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_namespace).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_err!(
             Permission0::delegate_namespace_permission(
@@ -268,6 +302,7 @@ fn delegate_namespace_permission_fails_for_unregistered_recipient() {
                 paths,
                 PermissionDuration::Indefinite,
                 RevocationTerms::Irrevocable,
+                1
             ),
             Error::<Test>::NotRegisteredAgent
         );
@@ -285,8 +320,10 @@ fn delegate_namespace_permission_fails_for_nonexistent_namespace() {
 
         let nonexistent_namespace = b"agent.alice.nonexistent".to_vec();
         let bounded_namespace: NamespacePathInner = nonexistent_namespace.try_into().unwrap();
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_namespace).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_err!(
             Permission0::delegate_namespace_permission(
@@ -295,6 +332,7 @@ fn delegate_namespace_permission_fails_for_nonexistent_namespace() {
                 paths,
                 PermissionDuration::Indefinite,
                 RevocationTerms::Irrevocable,
+                1
             ),
             Error::<Test>::NamespaceDoesNotExist
         );
@@ -312,8 +350,10 @@ fn delegate_namespace_permission_fails_for_invalid_namespace_path() {
 
         let invalid_namespace = b"invalid.path".to_vec();
         let bounded_namespace: NamespacePathInner = invalid_namespace.try_into().unwrap();
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_namespace).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_err!(
             Permission0::delegate_namespace_permission(
@@ -322,6 +362,7 @@ fn delegate_namespace_permission_fails_for_invalid_namespace_path() {
                 paths,
                 PermissionDuration::Indefinite,
                 RevocationTerms::Irrevocable,
+                1
             ),
             Error::<Test>::NamespacePathIsInvalid
         );
@@ -339,8 +380,10 @@ fn delegate_namespace_permission_creates_permission_successfully() {
 
         let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
 
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_namespace).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(delegator),
@@ -348,6 +391,7 @@ fn delegate_namespace_permission_creates_permission_successfully() {
             paths.clone(),
             PermissionDuration::Indefinite,
             RevocationTerms::Irrevocable,
+            1
         ));
 
         let query_path = NamespacePath::new_agent(b"agent.alice.compute").unwrap();
@@ -370,9 +414,11 @@ fn delegate_namespace_permission_handles_multiple_paths() {
         let bounded_compute = register_namespace(delegator, b"agent.alice.compute");
         let bounded_storage = register_namespace(delegator, b"agent.alice.storage");
 
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_compute).unwrap();
-        paths.try_insert(bounded_storage).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_compute).unwrap();
+        namespace_set.try_insert(bounded_storage).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(delegator),
@@ -380,6 +426,7 @@ fn delegate_namespace_permission_handles_multiple_paths() {
             paths,
             PermissionDuration::Indefinite,
             RevocationTerms::Irrevocable,
+            1
         ));
 
         for path in [b"agent.alice.compute", b"agent.alice.storage"] {
@@ -403,8 +450,10 @@ fn delegate_namespace_permission_creates_correct_scope() {
 
         let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
 
-        let mut paths = BoundedBTreeSet::new();
-        paths.try_insert(bounded_namespace).unwrap();
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(delegator),
@@ -412,6 +461,7 @@ fn delegate_namespace_permission_creates_correct_scope() {
             paths,
             PermissionDuration::Indefinite,
             RevocationTerms::Irrevocable,
+            1
         ));
 
         let permissions: Vec<_> = Permissions::<Test>::iter().collect();
@@ -425,9 +475,1105 @@ fn delegate_namespace_permission_creates_correct_scope() {
             PermissionScope::Namespace(namespace_scope) => {
                 assert_eq!(namespace_scope.paths.len(), 1);
                 let expected_path = NamespacePath::new_agent(b"agent.alice.compute").unwrap();
-                assert!(namespace_scope.paths.contains(&expected_path));
+                // Check that the path exists in the map under the None key (delegator's own namespace)
+                let delegator_paths = namespace_scope.paths.get(&None).unwrap();
+                assert!(delegator_paths.contains(&expected_path));
             }
             _ => panic!("Expected Namespace scope"),
         }
+    });
+}
+
+#[test]
+fn delegate_namespace_permission_fails_with_multiple_parent_permissions() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let delegator = 0;
+        register_agent(delegator);
+
+        let bounded_gpu = register_namespace(delegator, b"agent.alice.compute.gpu");
+        let bounded_ssd = register_namespace(delegator, b"agent.alice.storage.ssd");
+
+        let mut gpu_set = BoundedBTreeSet::new();
+        gpu_set.try_insert(bounded_gpu).unwrap();
+        let mut ssd_set = BoundedBTreeSet::new();
+        ssd_set.try_insert(bounded_ssd).unwrap();
+
+        let mut multi_parent_paths = BoundedBTreeMap::new();
+        multi_parent_paths
+            .try_insert(Some(H256::from([0; 32])), gpu_set)
+            .unwrap();
+        multi_parent_paths
+            .try_insert(Some(H256::from([1; 32])), ssd_set)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(delegator),
+                delegator,
+                multi_parent_paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable,
+                1
+            ),
+            Error::<Test>::MultiParentForbidden
+        );
+    });
+}
+
+#[test]
+fn delegate_namespace_permission_fails_with_too_many_total_namespaces_across_parents() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let delegator = 0;
+        register_agent(delegator);
+
+        let mut parent_namespace_set = BoundedBTreeSet::new();
+        for i in 0..6 {
+            let namespace_name = format!("agent.alice.compute.gpu.{i}");
+            let bounded_namespace = register_namespace(delegator, namespace_name.as_bytes());
+            parent_namespace_set.try_insert(bounded_namespace).unwrap();
+        }
+
+        let mut parent_paths = BoundedBTreeMap::new();
+        parent_paths
+            .try_insert(None, parent_namespace_set.clone())
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(delegator),
+            delegator,
+            parent_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            1
+        ));
+        let parent_permission_id = PermissionsByDelegator::<Test>::get(delegator)[0];
+
+        let mut child_namespace_set = BoundedBTreeSet::new();
+        for i in 0..6 {
+            let namespace_name = format!("agent.alice.storage.ssd.{i}");
+            let bounded_namespace = register_namespace(delegator, namespace_name.as_bytes());
+            child_namespace_set.try_insert(bounded_namespace).unwrap();
+        }
+
+        let mut child_paths = BoundedBTreeMap::new();
+        child_paths.try_insert(None, child_namespace_set).unwrap();
+        child_paths
+            .try_insert(Some(parent_permission_id), parent_namespace_set)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(delegator),
+                delegator,
+                child_paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable,
+                1
+            ),
+            Error::<Test>::TooManyNamespaces
+        );
+    });
+}
+
+#[test]
+fn delegate_namespace_permission_fails_with_nonexistent_parent_permission() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let delegator = 0;
+        let recipient = 1;
+        register_agent(delegator);
+        register_agent(recipient);
+
+        let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+
+        let fake_permission_id = H256::from_low_u64_be(999);
+        let mut paths = BoundedBTreeMap::new();
+        paths
+            .try_insert(Some(fake_permission_id), namespace_set)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(delegator),
+                recipient,
+                paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable,
+                1
+            ),
+            Error::<Test>::ParentPermissionNotFound
+        );
+    });
+}
+
+#[test]
+fn delegate_namespace_permission_fails_when_delegator_not_recipient_of_parent() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let original_delegator = 0;
+        let wrong_delegator = 1;
+        let recipient = 2;
+        register_agent(original_delegator);
+        register_agent(wrong_delegator);
+        register_agent(recipient);
+
+        // Create parent permission
+        let bounded_namespace = register_namespace(original_delegator, b"agent.alice.compute");
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut parent_paths = BoundedBTreeMap::new();
+        parent_paths.try_insert(None, namespace_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(original_delegator),
+            recipient, // recipient is the one who received the permission
+            parent_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            1
+        ));
+        let parent_permission_id = PermissionsByDelegator::<Test>::get(original_delegator)[0];
+
+        // Try to use the parent permission from wrong_delegator (who is not the recipient)
+        let bounded_gpu = register_namespace(original_delegator, b"agent.alice.compute.gpu");
+        let mut gpu_set = BoundedBTreeSet::new();
+        gpu_set.try_insert(bounded_gpu).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths
+            .try_insert(Some(parent_permission_id), gpu_set)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(wrong_delegator),
+                recipient,
+                paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable,
+                1
+            ),
+            Error::<Test>::NotPermissionRecipient
+        );
+    });
+}
+
+#[test]
+fn delegate_namespace_permission_fails_when_parent_has_wrong_scope() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let delegator = 0;
+        let recipient = 1;
+        register_agent(delegator);
+        register_agent(recipient);
+
+        // Create a curator permission (non-namespace scope)
+        assert_ok!(Permission0::delegate_curator_permission(
+            RawOrigin::Root.into(),
+            recipient,
+            CuratorPermissions::all().bits(), // flags
+            None,                             // cooldown
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable
+        ));
+        let curator_permission_id = PermissionsByRecipient::<Test>::get(recipient)[0];
+
+        // Try to use the curator permission as parent for namespace permission
+        let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths
+            .try_insert(Some(curator_permission_id), namespace_set)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(recipient),
+                delegator,
+                paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable,
+                1
+            ),
+            Error::<Test>::UnsupportedPermissionType
+        );
+    });
+}
+
+#[test]
+fn delegate_namespace_permission_fails_when_exceeding_available_instances() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let delegator = 0;
+        let recipient = 1;
+        let final_recipient = 2;
+        register_agent(delegator);
+        register_agent(recipient);
+        register_agent(final_recipient);
+
+        // Create parent permission with limited instances
+        let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut parent_paths = BoundedBTreeMap::new();
+        parent_paths.try_insert(None, namespace_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(delegator),
+            recipient,
+            parent_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            2 // Only 2 instances available
+        ));
+        let parent_permission_id = PermissionsByDelegator::<Test>::get(delegator)[0];
+
+        // Try to create child permission that requires more instances than available
+        let bounded_gpu = register_namespace(delegator, b"agent.alice.compute.gpu");
+        let mut gpu_set = BoundedBTreeSet::new();
+        gpu_set.try_insert(bounded_gpu).unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths
+            .try_insert(Some(parent_permission_id), gpu_set)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(recipient),
+                final_recipient,
+                paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable,
+                3 // Requesting 3 instances but only 2 available
+            ),
+            Error::<Test>::NotEnoughInstances
+        );
+    });
+}
+
+#[test]
+fn permission_contract_available_instances_reduces_with_children() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let delegator = 0;
+        let recipient = 1;
+        let final_recipient = 2;
+        register_agent(delegator);
+        register_agent(recipient);
+        register_agent(final_recipient);
+
+        // Create parent permission with 5 instances
+        let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set.try_insert(bounded_namespace).unwrap();
+        let mut parent_paths = BoundedBTreeMap::new();
+        parent_paths.try_insert(None, namespace_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(delegator),
+            recipient,
+            parent_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            5 // 5 instances total
+        ));
+        let parent_permission_id = PermissionsByDelegator::<Test>::get(delegator)[0];
+
+        // Verify initial available instances
+        let parent_permission = Permissions::<Test>::get(parent_permission_id).unwrap();
+        assert_eq!(parent_permission.available_instances(), 5);
+
+        // Create child permission with 2 instances
+        let bounded_gpu = register_namespace(delegator, b"agent.alice.compute.gpu");
+        let mut gpu_set = BoundedBTreeSet::new();
+        gpu_set.try_insert(bounded_gpu).unwrap();
+        let mut child_paths = BoundedBTreeMap::new();
+        child_paths
+            .try_insert(Some(parent_permission_id), gpu_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(recipient),
+            final_recipient,
+            child_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            2 // Child uses 2 instances
+        ));
+
+        // Verify available instances reduced to 3 (5 - 2)
+        let parent_permission = Permissions::<Test>::get(parent_permission_id).unwrap();
+        assert_eq!(parent_permission.available_instances(), 3);
+    });
+}
+
+#[test]
+fn delegate_granular_namespace_from_parent_permission_succeeds() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+        let charlie = 2;
+
+        register_agent(alice);
+        register_agent(bob);
+        register_agent(charlie);
+
+        let parent_compute = register_namespace(alice, b"agent.alice.compute");
+        let granular_gpu = register_namespace(alice, b"agent.alice.compute.gpu");
+        let very_granular_h100 = register_namespace(alice, b"agent.alice.compute.gpu.h100");
+
+        let mut parent_namespace_set = BoundedBTreeSet::new();
+        parent_namespace_set.try_insert(parent_compute).unwrap();
+        let mut alice_paths = BoundedBTreeMap::new();
+        alice_paths.try_insert(None, parent_namespace_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            5
+        ));
+        let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
+
+        // Bob (as intermediary) can delegate more granular namespaces that exist
+        // This tests the behavior in resolve_paths where it checks:
+        // 1. parent_path.is_parent_of(child)
+        // 2. agent_name extraction from parent_path
+        // 3. find_agent_by_name to get the agent
+        // 4. namespace_exists check on the granular namespace
+        let mut bob_granular_set = BoundedBTreeSet::new();
+        bob_granular_set.try_insert(granular_gpu).unwrap();
+        let mut bob_paths = BoundedBTreeMap::new();
+        bob_paths
+            .try_insert(Some(alice_permission_id), bob_granular_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(bob),
+            charlie,
+            bob_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            2
+        ));
+        let bob_permission_id = PermissionsByDelegator::<Test>::get(bob)[0];
+
+        // Charlie can further delegate even more granular namespaces
+        let mut charlie_very_granular_set = BoundedBTreeSet::new();
+        charlie_very_granular_set
+            .try_insert(very_granular_h100)
+            .unwrap();
+        let mut charlie_paths = BoundedBTreeMap::new();
+        charlie_paths
+            .try_insert(Some(bob_permission_id), charlie_very_granular_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(charlie),
+            alice, // Full circle back to Alice
+            charlie_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            1
+        ));
+
+        // Verify all permissions were created successfully
+        assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 1); // Alice's original
+        assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 1); // Bob's granular
+        assert_eq!(PermissionsByDelegator::<Test>::get(charlie).len(), 1); // Charlie's very granular
+    });
+}
+
+#[test]
+fn delegate_granular_namespace_fails_when_granular_namespace_does_not_exist() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+
+        register_agent(alice);
+        register_agent(bob);
+
+        let parent_compute = register_namespace(alice, b"agent.alice.compute");
+        // Note: We do NOT create agent.alice.compute.gpu namespace
+
+        // Alice delegates broad permission to Bob
+        let mut parent_namespace_set = BoundedBTreeSet::new();
+        parent_namespace_set.try_insert(parent_compute).unwrap();
+        let mut alice_paths = BoundedBTreeMap::new();
+        alice_paths.try_insert(None, parent_namespace_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            5
+        ));
+        let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
+
+        // Bob tries to delegate granular namespace that doesn't exist
+        // This should fail because namespace_exists check returns false
+        let nonexistent_gpu = b"agent.alice.compute.gpu".to_vec().try_into().unwrap();
+        let mut bob_granular_set = BoundedBTreeSet::new();
+        bob_granular_set.try_insert(nonexistent_gpu).unwrap();
+        let mut bob_paths = BoundedBTreeMap::new();
+        bob_paths
+            .try_insert(Some(alice_permission_id), bob_granular_set)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(bob),
+                alice,
+                bob_paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable,
+                2
+            ),
+            Error::<Test>::ParentPermissionNotFound // This error is thrown when matched_count != children.len()
+        );
+    });
+}
+
+#[test]
+fn delegate_namespace_fails_when_child_not_granular_of_parent() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+
+        register_agent(alice);
+        register_agent(bob);
+
+        // Alice creates compute namespace and unrelated storage namespace
+        let parent_compute = register_namespace(alice, b"agent.alice.compute");
+        let unrelated_storage = register_namespace(alice, b"agent.alice.storage.ssd"); // Not granular of compute
+
+        // Alice delegates compute permission to Bob
+        let mut parent_namespace_set = BoundedBTreeSet::new();
+        parent_namespace_set.try_insert(parent_compute).unwrap();
+        let mut alice_paths = BoundedBTreeMap::new();
+        alice_paths.try_insert(None, parent_namespace_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            5
+        ));
+        let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
+
+        // Bob tries to delegate storage namespace using compute parent permission
+        // This should fail because storage is not granular of compute
+        let mut bob_unrelated_set = BoundedBTreeSet::new();
+        bob_unrelated_set.try_insert(unrelated_storage).unwrap();
+        let mut bob_paths = BoundedBTreeMap::new();
+        bob_paths
+            .try_insert(Some(alice_permission_id), bob_unrelated_set)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(bob),
+                alice,
+                bob_paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable,
+                2
+            ),
+            Error::<Test>::ParentPermissionNotFound // matched_count will be 0, children.len() will be 1
+        );
+    });
+}
+
+#[test]
+fn delegate_namespace_succeeds_with_exact_match_from_parent() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+
+        register_agent(alice);
+        register_agent(bob);
+
+        // Alice creates namespace
+        let compute_gpu = register_namespace(alice, b"agent.alice.compute.gpu");
+
+        // Alice delegates permission to Bob
+        let mut parent_namespace_set = BoundedBTreeSet::new();
+        parent_namespace_set
+            .try_insert(compute_gpu.clone())
+            .unwrap();
+        let mut alice_paths = BoundedBTreeMap::new();
+        alice_paths.try_insert(None, parent_namespace_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            5
+        ));
+        let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
+
+        // Bob can delegate the exact same namespace (exact match case in resolve_paths)
+        let mut bob_exact_set = BoundedBTreeSet::new();
+        bob_exact_set.try_insert(compute_gpu).unwrap();
+        let mut bob_paths = BoundedBTreeMap::new();
+        bob_paths
+            .try_insert(Some(alice_permission_id), bob_exact_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(bob),
+            alice,
+            bob_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            2
+        ));
+
+        // Verify both permissions exist
+        assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 1);
+        assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 1);
+    });
+}
+
+#[test]
+fn revoke_namespace_permission_cascades_through_multiple_levels() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+        let charlie = 2;
+        let dave = 3;
+        let eve = 4;
+
+        // Register all agents
+        register_agent(alice);
+        register_agent(bob);
+        register_agent(charlie);
+        register_agent(dave);
+        register_agent(eve);
+
+        // Create hierarchical namespaces
+        let level1_compute = register_namespace(alice, b"agent.alice.compute");
+        let level2_gpu = register_namespace(alice, b"agent.alice.compute.gpu");
+        let level3_h100 = register_namespace(alice, b"agent.alice.compute.gpu.h100");
+        let level4_cluster = register_namespace(alice, b"agent.alice.compute.gpu.h100.cluster01");
+
+        // Level 1: Alice delegates to Bob (RevocableByDelegator for testing revocation)
+        let mut alice_paths = BoundedBTreeMap::new();
+        let mut alice_namespace_set = BoundedBTreeSet::new();
+        alice_namespace_set.try_insert(level1_compute).unwrap();
+        alice_paths.try_insert(None, alice_namespace_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator, // Alice can revoke
+            10                                     // Plenty of instances
+        ));
+        let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
+
+        // Level 2: Bob delegates to Charlie
+        let mut bob_paths = BoundedBTreeMap::new();
+        let mut bob_namespace_set = BoundedBTreeSet::new();
+        bob_namespace_set.try_insert(level2_gpu).unwrap();
+        bob_paths
+            .try_insert(Some(alice_permission_id), bob_namespace_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(bob),
+            charlie,
+            bob_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator, // Bob can revoke
+            8
+        ));
+        let bob_permission_id = PermissionsByDelegator::<Test>::get(bob)[0];
+
+        // Level 3: Charlie delegates to Dave
+        let mut charlie_paths = BoundedBTreeMap::new();
+        let mut charlie_namespace_set = BoundedBTreeSet::new();
+        charlie_namespace_set.try_insert(level3_h100).unwrap();
+        charlie_paths
+            .try_insert(Some(bob_permission_id), charlie_namespace_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(charlie),
+            dave,
+            charlie_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator, // Charlie can revoke
+            5
+        ));
+        let charlie_permission_id = PermissionsByDelegator::<Test>::get(charlie)[0];
+
+        // Level 4: Dave delegates to Eve (final level)
+        let mut dave_paths = BoundedBTreeMap::new();
+        let mut dave_namespace_set = BoundedBTreeSet::new();
+        dave_namespace_set.try_insert(level4_cluster).unwrap();
+        dave_paths
+            .try_insert(Some(charlie_permission_id), dave_namespace_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(dave),
+            eve,
+            dave_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator, // Dave can revoke
+            2
+        ));
+        let dave_permission_id = PermissionsByDelegator::<Test>::get(dave)[0];
+
+        // Verify the full delegation chain exists
+        assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 1);
+        assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 1);
+        assert_eq!(PermissionsByDelegator::<Test>::get(charlie).len(), 1);
+        assert_eq!(PermissionsByDelegator::<Test>::get(dave).len(), 1);
+
+        // Verify parent-child relationships
+        let alice_permission = Permissions::<Test>::get(alice_permission_id).unwrap();
+        assert!(alice_permission.children.contains(&bob_permission_id));
+        assert_eq!(alice_permission.available_instances(), 2); // 10 - 8 = 2
+
+        let bob_permission = Permissions::<Test>::get(bob_permission_id).unwrap();
+        assert!(bob_permission.children.contains(&charlie_permission_id));
+        assert_eq!(bob_permission.available_instances(), 3); // 8 - 5 = 3
+
+        let charlie_permission = Permissions::<Test>::get(charlie_permission_id).unwrap();
+        assert!(charlie_permission.children.contains(&dave_permission_id));
+        assert_eq!(charlie_permission.available_instances(), 3); // 5 - 2 = 3
+
+        let dave_permission = Permissions::<Test>::get(dave_permission_id).unwrap();
+        assert_eq!(dave_permission.children.len(), 0); // No children
+        assert_eq!(dave_permission.available_instances(), 2); // Full instances available
+
+        // FIRST REVOCATION: Revoke the last permission (Dave's to Eve)
+        // This should only affect Dave's permission, removing it from Charlie's children
+        assert_ok!(Permission0::revoke_permission(
+            get_origin(dave), // Dave revokes his own delegation
+            dave_permission_id
+        ));
+
+        // Verify Dave's permission is gone
+        assert!(!Permissions::<Test>::contains_key(dave_permission_id));
+        assert_eq!(PermissionsByDelegator::<Test>::get(dave).len(), 0);
+
+        // Verify Charlie's children count decreased
+        let charlie_permission_after_dave_revoke =
+            Permissions::<Test>::get(charlie_permission_id).unwrap();
+        assert!(!charlie_permission_after_dave_revoke
+            .children
+            .contains(&dave_permission_id));
+        assert_eq!(
+            charlie_permission_after_dave_revoke.available_instances(),
+            5
+        ); // Back to full 5 instances
+
+        // Verify other permissions still exist
+        assert!(Permissions::<Test>::contains_key(alice_permission_id));
+        assert!(Permissions::<Test>::contains_key(bob_permission_id));
+        assert!(Permissions::<Test>::contains_key(charlie_permission_id));
+        assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 1);
+        assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 1);
+        assert_eq!(PermissionsByDelegator::<Test>::get(charlie).len(), 1);
+
+        // SECOND REVOCATION: Revoke the first permission (Alice's to Bob)
+        // This should cascade and remove all remaining permissions
+        assert_ok!(Permission0::revoke_permission(
+            get_origin(alice), // Alice revokes her delegation to Bob
+            alice_permission_id
+        ));
+
+        // Verify everything is erased correctly (cascade revocation)
+        assert!(!Permissions::<Test>::contains_key(alice_permission_id));
+        assert!(!Permissions::<Test>::contains_key(bob_permission_id));
+        assert!(!Permissions::<Test>::contains_key(charlie_permission_id));
+
+        // Verify all delegator indices are cleared
+        assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 0);
+        assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 0);
+        assert_eq!(PermissionsByDelegator::<Test>::get(charlie).len(), 0);
+        assert_eq!(PermissionsByDelegator::<Test>::get(dave).len(), 0);
+
+        // Verify recipient indices are also cleared
+        assert_eq!(PermissionsByRecipient::<Test>::get(bob).len(), 0);
+        assert_eq!(PermissionsByRecipient::<Test>::get(charlie).len(), 0);
+        assert_eq!(PermissionsByRecipient::<Test>::get(dave).len(), 0);
+        assert_eq!(PermissionsByRecipient::<Test>::get(eve).len(), 0);
+    });
+}
+
+#[test]
+fn revoke_middle_permission_cascades_to_children_only() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+        let charlie = 2;
+        let dave = 3;
+
+        register_agent(alice);
+        register_agent(bob);
+        register_agent(charlie);
+        register_agent(dave);
+
+        let level1 = register_namespace(alice, b"agent.alice.compute");
+        let level2 = register_namespace(alice, b"agent.alice.compute.gpu");
+        let level3 = register_namespace(alice, b"agent.alice.compute.gpu.h100");
+
+        // Create 3-level chain: Alice -> Bob -> Charlie -> Dave
+        let mut alice_paths = BoundedBTreeMap::new();
+        let mut alice_set = BoundedBTreeSet::new();
+        alice_set.try_insert(level1).unwrap();
+        alice_paths.try_insert(None, alice_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator,
+            10
+        ));
+        let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
+
+        let mut bob_paths = BoundedBTreeMap::new();
+        let mut bob_set = BoundedBTreeSet::new();
+        bob_set.try_insert(level2).unwrap();
+        bob_paths
+            .try_insert(Some(alice_permission_id), bob_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(bob),
+            charlie,
+            bob_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator,
+            7
+        ));
+        let bob_permission_id = PermissionsByDelegator::<Test>::get(bob)[0];
+
+        let mut charlie_paths = BoundedBTreeMap::new();
+        let mut charlie_set = BoundedBTreeSet::new();
+        charlie_set.try_insert(level3).unwrap();
+        charlie_paths
+            .try_insert(Some(bob_permission_id), charlie_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(charlie),
+            dave,
+            charlie_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator,
+            3
+        ));
+        let charlie_permission_id = PermissionsByDelegator::<Test>::get(charlie)[0];
+
+        // Verify initial state
+        assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 1);
+        assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 1);
+        assert_eq!(PermissionsByDelegator::<Test>::get(charlie).len(), 1);
+
+        // Revoke Bob's permission (middle of chain)
+        // This should cascade to Charlie and Dave, but leave Alice's permission intact
+        assert_ok!(Permission0::revoke_permission(
+            get_origin(bob),
+            bob_permission_id
+        ));
+
+        // Verify Alice's permission still exists but Bob's children are gone
+        assert!(Permissions::<Test>::contains_key(alice_permission_id));
+        let alice_permission = Permissions::<Test>::get(alice_permission_id).unwrap();
+        assert!(!alice_permission.children.contains(&bob_permission_id));
+        assert_eq!(alice_permission.available_instances(), 10); // Back to full instances
+
+        // Verify Bob, Charlie, and Dave permissions are all gone (cascaded)
+        assert!(!Permissions::<Test>::contains_key(bob_permission_id));
+        assert!(!Permissions::<Test>::contains_key(charlie_permission_id));
+
+        assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 0);
+        assert_eq!(PermissionsByDelegator::<Test>::get(charlie).len(), 0);
+
+        // Alice still has her permission
+        assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 1);
+    });
+}
+
+#[test]
+fn revocation_terms_is_weaker_function_tests() {
+    new_test_ext().execute_with(|| {
+        // RevocableByDelegator is always weaker than anything
+        assert!(RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::Irrevocable,
+            &RevocationTerms::RevocableByDelegator
+        ));
+        assert!(RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableByDelegator,
+            &RevocationTerms::RevocableByDelegator
+        ));
+        assert!(RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableAfter(100),
+            &RevocationTerms::RevocableByDelegator
+        ));
+        assert!(RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableByArbiters {
+                accounts: Default::default(),
+                required_votes: 0
+            },
+            &RevocationTerms::RevocableByDelegator
+        ));
+
+        // RevocableAfter(a) vs RevocableAfter(b) is weaker if a >= b
+        assert!(RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableAfter(100),
+            &RevocationTerms::RevocableAfter(100)
+        ));
+        assert!(RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableAfter(200),
+            &RevocationTerms::RevocableAfter(100)
+        ));
+        assert!(!RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableAfter(50),
+            &RevocationTerms::RevocableAfter(100)
+        ));
+
+        // Irrevocable parent allows RevocableAfter child (weaker)
+        assert!(RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::Irrevocable,
+            &RevocationTerms::RevocableAfter(100)
+        ));
+
+        assert!(RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::Irrevocable,
+            &RevocationTerms::Irrevocable
+        ));
+
+        // All other combinations are not weaker
+        assert!(!RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableByDelegator,
+            &RevocationTerms::Irrevocable
+        ));
+        assert!(!RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableAfter(100),
+            &RevocationTerms::Irrevocable
+        ));
+        assert!(!RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableByArbiters {
+                accounts: Default::default(),
+                required_votes: 0
+            },
+            &RevocationTerms::Irrevocable
+        ));
+
+        // RevocableByDelegator to RevocableAfter is not weaker
+        assert!(!RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableByDelegator,
+            &RevocationTerms::RevocableAfter(100)
+        ));
+
+        // RevocableAfter to RevocableByArbiters is not weaker
+        assert!(!RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::RevocableAfter(100),
+            &RevocationTerms::RevocableByArbiters {
+                accounts: Default::default(),
+                required_votes: 0
+            }
+        ));
+
+        // Irrevocable to RevocableByArbiters is not weaker
+        assert!(!RevocationTerms::<Test>::is_weaker(
+            &RevocationTerms::Irrevocable,
+            &RevocationTerms::RevocableByArbiters {
+                accounts: Default::default(),
+                required_votes: 2
+            }
+        ));
+    });
+}
+
+#[test]
+fn delegate_namespace_permission_requires_weaker_revocation_terms() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+        let charlie = 2;
+        let dave = 3;
+        let eve = 4;
+
+        register_agent(alice);
+        register_agent(bob);
+        register_agent(charlie);
+        register_agent(dave);
+        register_agent(eve);
+
+        let compute_namespace = register_namespace(alice, b"agent.alice.compute");
+        let gpu_namespace = register_namespace(alice, b"agent.alice.compute.gpu");
+
+        // Alice creates a permission with RevocableAfter(200) terms
+        let mut alice_paths = BoundedBTreeMap::new();
+        let mut alice_set = BoundedBTreeSet::new();
+        alice_set.try_insert(compute_namespace).unwrap();
+        alice_paths.try_insert(None, alice_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableAfter(200), // Parent has RevocableAfter(200)
+            5
+        ));
+        let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
+
+        // Bob tries to re-delegate with STRONGER terms (RevocableAfter(300)) - should fail
+        let mut bob_paths_stronger = BoundedBTreeMap::new();
+        let mut bob_set_stronger = BoundedBTreeSet::new();
+        bob_set_stronger.try_insert(gpu_namespace.clone()).unwrap();
+        bob_paths_stronger
+            .try_insert(Some(alice_permission_id), bob_set_stronger)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(bob),
+                charlie,
+                bob_paths_stronger,
+                PermissionDuration::Indefinite,
+                RevocationTerms::RevocableAfter(300), // Stronger than parent (300 > 200)
+                2
+            ),
+            Error::<Test>::RevocationTermsTooStrong
+        );
+
+        // Bob tries to re-delegate with Irrevocable terms - should fail
+        let mut bob_paths_irrevocable = BoundedBTreeMap::new();
+        let mut bob_set_irrevocable = BoundedBTreeSet::new();
+        bob_set_irrevocable
+            .try_insert(gpu_namespace.clone())
+            .unwrap();
+        bob_paths_irrevocable
+            .try_insert(Some(alice_permission_id), bob_set_irrevocable)
+            .unwrap();
+
+        assert_err!(
+            Permission0::delegate_namespace_permission(
+                get_origin(bob),
+                dave, // Different recipient to avoid DuplicatePermissionInBlock
+                bob_paths_irrevocable,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable, // Stronger than parent
+                2
+            ),
+            Error::<Test>::RevocationTermsTooStrong
+        );
+
+        // Bob re-delegates with WEAKER terms (RevocableAfter(100)) - should succeed
+        let mut bob_paths_weaker = BoundedBTreeMap::new();
+        let mut bob_set_weaker = BoundedBTreeSet::new();
+        bob_set_weaker.try_insert(gpu_namespace.clone()).unwrap();
+        bob_paths_weaker
+            .try_insert(Some(alice_permission_id), bob_set_weaker)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(bob),
+            charlie,
+            bob_paths_weaker,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableAfter(100), // Weaker than parent (100 < 200)
+            2
+        ));
+
+        // Bob re-delegates with RevocableByDelegator (always weaker) - should succeed
+        let mut bob_paths_delegator = BoundedBTreeMap::new();
+        let mut bob_set_delegator = BoundedBTreeSet::new();
+        bob_set_delegator.try_insert(gpu_namespace).unwrap();
+        bob_paths_delegator
+            .try_insert(Some(alice_permission_id), bob_set_delegator)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(bob),
+            eve, // Different recipient to avoid DuplicatePermissionInBlock
+            bob_paths_delegator,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator, // Always weaker
+            1
+        ));
+    });
+}
+
+#[test]
+fn delegate_namespace_permission_irrevocable_parent_allows_revocable_after() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+
+        register_agent(alice);
+        register_agent(bob);
+
+        let compute_namespace = register_namespace(alice, b"agent.alice.compute");
+        let gpu_namespace = register_namespace(alice, b"agent.alice.compute.gpu");
+
+        // Alice creates an Irrevocable permission
+        let mut alice_paths = BoundedBTreeMap::new();
+        let mut alice_set = BoundedBTreeSet::new();
+        alice_set.try_insert(compute_namespace).unwrap();
+        alice_paths.try_insert(None, alice_set).unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable, // Parent is Irrevocable
+            3
+        ));
+        let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
+
+        // Bob can re-delegate with RevocableAfter terms (weaker than Irrevocable)
+        let mut bob_paths = BoundedBTreeMap::new();
+        let mut bob_set = BoundedBTreeSet::new();
+        bob_set.try_insert(gpu_namespace).unwrap();
+        bob_paths
+            .try_insert(Some(alice_permission_id), bob_set)
+            .unwrap();
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(bob),
+            alice, // Back to Alice
+            bob_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableAfter(100), // Weaker than Irrevocable
+            1
+        ));
+
+        // Verify both permissions exist
+        assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 1);
+        assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 1);
     });
 }
