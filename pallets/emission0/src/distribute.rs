@@ -375,8 +375,11 @@ fn linear_rewards<T: Config>(mut emission: NegativeImbalanceOf<T>) -> NegativeIm
             );
 
             let raw_amount = amount.peek();
+
             T::Currency::resolve_creating(&staker, amount);
-            let _ = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount);
+            if let Err(err) = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount) {
+                error!("failed to stake {raw_amount} tokens to {staker:?}: {err:?}");
+            }
         };
 
         if dividend.peek() != 0 {

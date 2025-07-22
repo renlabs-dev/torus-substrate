@@ -8,6 +8,7 @@ use pallet_emission0::{
     PendingEmission, WeightControlDelegation,
 };
 use polkadot_sdk::{
+    frame_support::traits::Currency,
     pallet_balances,
     sp_core::Get,
     sp_runtime::{BoundedVec, FixedU128, Perbill, Percent},
@@ -19,7 +20,7 @@ use test_utils::{
         stake::sum_staked_by, Agents, FeeConstraints, MaxAllowedValidators, MinAllowedStake,
         MinValidatorStake, StakedBy,
     },
-    register_empty_agent, step_block, Test,
+    register_empty_agent, step_block, AccountId, Balances, ExistentialDeposit, Test,
 };
 
 #[test]
@@ -396,6 +397,9 @@ fn pays_dividends_to_stakers() {
         ConsensusMembers::<Test>::set(miner, Some(Default::default()));
 
         for id in [validator, miner] {
+            let _ =
+                <Balances as Currency<AccountId>>::deposit_creating(&id, ExistentialDeposit::get());
+
             register_empty_agent(id);
         }
 
@@ -594,6 +598,9 @@ fn pays_weight_delegation_fee_to_validators_without_permits() {
         ConsensusMembers::<Test>::set(miner, Some(Default::default()));
 
         for id in [val_1, val_2, miner] {
+            let _ =
+                <Balances as Currency<AccountId>>::deposit_creating(&id, ExistentialDeposit::get());
+
             register_empty_agent(id);
         }
 
