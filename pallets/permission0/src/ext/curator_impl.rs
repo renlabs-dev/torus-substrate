@@ -73,7 +73,7 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
             let now = <frame_system::Pallet<T>>::block_number();
 
             if contract
-                .last_execution
+                .last_execution()
                 .is_some_and(|last_execution| last_execution.saturating_add(cooldown) > now)
             {
                 return Err(Error::<T>::PermissionInCooldown.into());
@@ -133,24 +133,20 @@ pub fn delegate_curator_permission_impl<T: Config>(
     let scope = PermissionScope::Curator(CuratorScope { flags, cooldown });
     let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
 
-    let contract = PermissionContract {
+    let contract = PermissionContract::<T>::new(
         delegator,
         recipient,
         scope,
         duration,
         revocation,
-        enforcement: crate::EnforcementAuthority::None,
-        last_execution: None,
-        execution_count: 0,
-        // Will change once we have a ROOT curator.
-        parent: None,
-        created_at: <frame_system::Pallet<T>>::block_number(),
-    };
+        crate::EnforcementAuthority::None,
+        1,
+    );
 
     Permissions::<T>::insert(permission_id, &contract);
     update_permission_indices::<T>(&contract.delegator, &contract.recipient, permission_id)?;
 
-    <Pallet<T>>::deposit_event(Event::Permissiondelegated {
+    <Pallet<T>>::deposit_event(Event::PermissionDelegated {
         delegator: contract.delegator,
         recipient: contract.recipient,
         permission_id,
@@ -160,12 +156,10 @@ pub fn delegate_curator_permission_impl<T: Config>(
 }
 
 pub fn execute_permission_impl<T: Config>(permission_id: &PermissionId) -> DispatchResult {
-    Permissions::<T>::mutate(permission_id, |maybe_contract| {
-        if let Some(c) = maybe_contract {
-            c.last_execution = Some(<frame_system::Pallet<T>>::block_number());
-            c.execution_count = c.execution_count.saturating_add(1);
-        }
-    });
+    if let Some(mut contract) = Permissions::<T>::get(permission_id) {
+        contract.tick_execution(<frame_system::Pallet<T>>::block_number())?;
+        Permissions::<T>::insert(permission_id, &contract);
+    }
 
     Ok(())
 }

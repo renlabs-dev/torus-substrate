@@ -80,6 +80,10 @@ pub mod pallet {
         /// Maximum number of namespaces a single permission can delegate.
         #[pallet::constant]
         type MaxNamespacesPerPermission: Get<u32>;
+
+        /// Maximum number of children a single permission can have.
+        #[pallet::constant]
+        type MaxChildrenPerPermission: Get<u32>;
     }
 
     pub type BalanceOf<T> =
@@ -167,7 +171,7 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Permission delegated from delegator to recipient with ID
-        Permissiondelegated {
+        PermissionDelegated {
             delegator: T::AccountId,
             recipient: T::AccountId,
             permission_id: PermissionId,
@@ -304,6 +308,16 @@ pub mod pallet {
         NotEditable,
         /// Namespace creation was disabled by a curator.
         NamespaceCreationDisabled,
+        /// Deriving a permission from multiple parents is still forbidden.
+        MultiParentForbidden,
+        /// Not enough instances available to delegate/execute a permission.
+        /// This might mean the execution requires more than the available instances
+        /// or that all instances are locked behind redelegations.
+        NotEnoughInstances,
+        /// Too many children for a permission.
+        TooManyChildren,
+        /// Revocation terms are too strong for a permission re-delegation.
+        RevocationTermsTooStrong,
     }
 
     #[pallet::hooks]
@@ -445,12 +459,17 @@ pub mod pallet {
         pub fn delegate_namespace_permission(
             origin: OriginFor<T>,
             recipient: T::AccountId,
-            paths: BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
+            paths: BoundedBTreeMap<
+                Option<PermissionId>,
+                BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
+                T::MaxNamespacesPerPermission,
+            >,
             duration: PermissionDuration<T>,
             revocation: RevocationTerms<T>,
+            instances: u32,
         ) -> DispatchResult {
             ext::namespace_impl::delegate_namespace_permission_impl::<T>(
-                origin, recipient, paths, duration, revocation,
+                origin, recipient, paths, duration, revocation, instances,
             )?;
 
             Ok(())

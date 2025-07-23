@@ -28,7 +28,7 @@ fn register(account: AccountId, module: AccountId, stake: u128) {
 
     assert_ok!(pallet_torus0::agent::register::<Test>(
         module,
-        b"agent".to_vec(),
+        format!("agent{account}").as_bytes().to_vec(),
         b"url".to_vec(),
         b"metadata".to_vec(),
     ));

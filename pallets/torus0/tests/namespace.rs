@@ -5,7 +5,7 @@ use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{
     frame_support::{assert_err, assert_ok, traits::Currency},
     pallet_balances,
-    sp_runtime::{BoundedVec, Percent},
+    sp_runtime::{BoundedBTreeMap, BoundedBTreeSet, BoundedVec, Percent},
 };
 use test_utils::{
     as_tors, get_origin, new_test_ext, pallet_governance, pallet_permission0::Permissions,
@@ -939,10 +939,12 @@ fn delete_namespace_being_delegated() {
             ));
         }
 
-        let mut paths = polkadot_sdk::sp_runtime::BoundedBTreeSet::new();
-        paths
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set
             .try_insert(b"agent.alice.compute.cpu".to_vec().try_into().unwrap())
             .unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
         assert_ok!(test_utils::Permission0::delegate_namespace_permission(
             get_origin(0),
@@ -950,6 +952,7 @@ fn delete_namespace_being_delegated() {
             paths,
             test_utils::pallet_permission0::PermissionDuration::Indefinite,
             test_utils::pallet_permission0::RevocationTerms::RevocableByDelegator,
+            1
         ));
 
         let delegated = [

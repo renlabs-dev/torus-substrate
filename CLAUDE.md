@@ -21,12 +21,35 @@ Torus is a stake-driven peer-to-peer network built on Substrate. The blockchain 
 - **`governance`**: Proposals, voting, treasury, roles (allocators, curators)
 - **`permission0`**: Permission and access control
 
+### Permission0 Pallet Structure
+
+The `permission0` pallet manages delegated permissions and access control within the Torus network. Key components:
+
+**Core Permission Types** (`pallets/permission0/src/permission.rs`):
+- `PermissionContract<T>` - Main permission structure with delegator, recipient, scope, duration, and enforcement
+- `PermissionId` - Unique permission identifier (H256 hash)
+- `PermissionScope<T>` - Defines what actions the permission covers
+- `NamespaceScope<T>` - Defines namespace path permissions for delegation
+
+**Permission Scopes** (`pallets/permission0/src/permission/`):
+- `pallets/permission0/src/permission/curator.rs` - `CuratorPermissions` and `CuratorScope` types
+- `pallets/permission0/src/permission/emission.rs` - `EmissionAllocation`, `DistributionControl`, and `EmissionScope` types
+
+**Implementation Handlers** (`pallets/permission0/src/ext/`):
+- `pallets/permission0/src/ext/curator_impl.rs` - Functions for curator permission enforcement
+- `pallets/permission0/src/ext/emission_impl.rs` - Functions for emission permission enforcement  
+- `pallets/permission0/src/ext/namespace_impl.rs` - Functions for namespace permission enforcement
+
 ## Architecture Principles
 
 - **API-first design**: Each pallet has separate `api` crate to prevent circular dependencies
 - **Domain separation**: Complex logic split into focused modules (agent.rs, stake.rs, etc.)
 - **Storage efficiency**: Use container types to minimize state size
 - **Zero-panic policy**: Runtime code must NEVER panic under any circumstances
+
+## Project Structure
+
+- All pallet tests are located within the /tests folder in each pallet's folder
 
 ## Essential Commands
 

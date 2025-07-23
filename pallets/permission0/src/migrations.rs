@@ -2,26 +2,33 @@ pub mod v4 {
     use num_traits::Zero;
     use polkadot_sdk::{
         frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
+        sp_runtime::BoundedBTreeMap,
         sp_tracing::warn,
         sp_weights::Weight,
     };
 
-    use crate::{Config, EmissionAllocation, Pallet, PermissionScope};
+    use crate::{
+        permission::NamespaceScope, Config, EmissionAllocation, Pallet, PermissionId,
+        PermissionScope,
+    };
 
     pub type Migration<T, W> = VersionedMigration<3, 4, MigrateToV6<T>, Pallet<T>, W>;
     pub struct MigrateToV6<T>(core::marker::PhantomData<T>);
 
     mod old_storage {
         use codec::{Decode, Encode, MaxEncodedLen};
+        use pallet_torus0_api::NamespacePath;
         use polkadot_sdk::{
-            frame_support::Identity, frame_support_procedural::storage_alias,
-            polkadot_sdk_frame::prelude::BlockNumberFor, sp_runtime::BoundedVec,
+            frame_support::Identity,
+            frame_support_procedural::storage_alias,
+            polkadot_sdk_frame::prelude::BlockNumberFor,
+            sp_runtime::{BoundedBTreeSet, BoundedVec},
         };
         use scale_info::TypeInfo;
 
         use crate::{
-            permission::{EnforcementAuthority, PermissionDuration, PermissionScope},
-            AccountIdOf, Config, Pallet, PermissionId,
+            permission::{EnforcementAuthority, PermissionDuration},
+            AccountIdOf, Config, CuratorScope, EmissionScope, Pallet, PermissionId,
         };
 
         #[storage_alias]
@@ -63,6 +70,23 @@ pub mod v4 {
             pub created_at: BlockNumberFor<T>,
         }
 
+        /// Defines what the permission applies to
+        #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+        #[scale_info(skip_type_params(T))]
+        pub enum PermissionScope<T: Config> {
+            Emission(EmissionScope<T>),
+            Curator(CuratorScope<T>),
+            Namespace(NamespaceScope<T>),
+        }
+
+        /// Scope for namespace permissions
+        #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+        #[scale_info(skip_type_params(T))]
+        pub struct NamespaceScope<T: Config> {
+            /// Set of namespace paths this permission delegates access to
+            pub paths: BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
+        }
+
         #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
         #[scale_info(skip_type_params(T))]
         pub enum RevocationTerms<T: Config> {
@@ -86,7 +110,7 @@ pub mod v4 {
             let _ = old_storage::PermissionsByGrantee::<T>::clear(u32::MAX, None);
 
             for (pid, contract) in old_storage::Permissions::<T>::iter() {
-                if let PermissionScope::Emission(scope) = &contract.scope {
+                if let old_storage::PermissionScope::Emission(scope) = &contract.scope {
                     if let EmissionAllocation::Streams(streams) = &scope.allocation {
                         for stream in streams.keys() {
                             if !crate::AccumulatedStreamAmounts::<T>::contains_key((
@@ -114,38 +138,52 @@ pub mod v4 {
                     let _ = pids.try_push(pid);
                 });
 
-                crate::Permissions::<T>::set(
-                    pid,
-                    Some(crate::PermissionContract {
-                        delegator: contract.grantor,
-                        recipient: contract.grantee,
-                        scope: contract.scope,
-                        duration: contract.duration,
-                        revocation: match contract.revocation {
-                            old_storage::RevocationTerms::Irrevocable => {
-                                crate::RevocationTerms::Irrevocable
-                            }
-                            old_storage::RevocationTerms::RevocableByGrantor => {
-                                crate::RevocationTerms::RevocableByDelegator
-                            }
-                            old_storage::RevocationTerms::RevocableByArbiters {
-                                accounts,
-                                required_votes,
-                            } => crate::RevocationTerms::RevocableByArbiters {
-                                accounts,
-                                required_votes,
-                            },
-                            old_storage::RevocationTerms::RevocableAfter(block) => {
-                                crate::RevocationTerms::RevocableAfter(block)
-                            }
-                        },
-                        enforcement: contract.enforcement,
-                        last_execution: contract.last_execution,
-                        execution_count: contract.execution_count,
-                        parent: contract.parent,
-                        created_at: contract.created_at,
+                let scope = match contract.scope {
+                    old_storage::PermissionScope::Emission(scope) => {
+                        PermissionScope::Emission(scope)
+                    }
+                    old_storage::PermissionScope::Curator(scope) => PermissionScope::Curator(scope),
+                    old_storage::PermissionScope::Namespace(scope) => PermissionScope::Namespace({
+                        let mut paths = BoundedBTreeMap::new();
+                        let _ = paths.try_insert(Option::<PermissionId>::None, scope.paths);
+                        NamespaceScope { paths }
                     }),
+                };
+
+                let revocation = match contract.revocation {
+                    old_storage::RevocationTerms::Irrevocable => {
+                        crate::RevocationTerms::Irrevocable
+                    }
+                    old_storage::RevocationTerms::RevocableByGrantor => {
+                        crate::RevocationTerms::RevocableByDelegator
+                    }
+                    old_storage::RevocationTerms::RevocableByArbiters {
+                        accounts,
+                        required_votes,
+                    } => crate::RevocationTerms::RevocableByArbiters {
+                        accounts,
+                        required_votes,
+                    },
+                    old_storage::RevocationTerms::RevocableAfter(block) => {
+                        crate::RevocationTerms::RevocableAfter(block)
+                    }
+                };
+
+                let mut new = crate::PermissionContract::<T>::new(
+                    contract.grantor,
+                    contract.grantee,
+                    scope,
+                    contract.duration,
+                    revocation,
+                    contract.enforcement,
+                    1,
                 );
+
+                new.created_at = contract.created_at;
+                #[allow(deprecated)]
+                new.set_execution_info(contract.last_execution, contract.execution_count);
+
+                crate::Permissions::<T>::set(pid, Some(new));
             }
 
             Weight::zero()
