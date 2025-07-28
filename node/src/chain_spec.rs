@@ -19,7 +19,7 @@ use polkadot_sdk::{
     sc_service::{ChainType, Properties},
     *,
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use torus_runtime::WASM_BINARY;
 
 /// This is a specialization of the general Substrate ChainSpec type.
@@ -53,8 +53,8 @@ fn testnet_genesis() -> Value {
         sp_keyring::{Ed25519Keyring, Sr25519Keyring},
     };
     use torus_runtime::{
-        interface::{Balance, MinimumBalance},
         BalancesConfig, SudoConfig,
+        interface::{Balance, MinimumBalance},
     };
 
     let endowment = <MinimumBalance as Get<Balance>>::get().max(1) * 1000;

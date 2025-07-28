@@ -3,7 +3,7 @@
 #[cfg(not(feature = "std"))]
 use num_traits::float::FloatCore;
 use polkadot_sdk::{
-    sp_runtime::{traits::Saturating, FixedPointNumber, FixedU128},
+    sp_runtime::{FixedPointNumber, FixedU128, traits::Saturating},
     sp_std::vec,
     sp_std::vec::Vec,
 };

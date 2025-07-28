@@ -5,16 +5,16 @@ use pallet_torus0_api::{NamespacePath, Torus0Api};
 use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::{
+        DebugNoBound,
         dispatch::DispatchResult,
         ensure,
         traits::{Currency, ExistenceRequirement},
-        DebugNoBound,
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
-    sp_runtime::{traits::Saturating, BoundedVec, DispatchError, Percent},
+    sp_runtime::{BoundedVec, DispatchError, Percent, traits::Saturating},
     sp_tracing::{debug_span, warn},
 };
-use scale_info::{prelude::vec::Vec, TypeInfo};
+use scale_info::{TypeInfo, prelude::vec::Vec};
 
 use crate::AccountIdOf;
 

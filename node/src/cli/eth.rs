@@ -14,7 +14,7 @@ use futures::{future, prelude::*};
 use polkadot_sdk::{
     sc_client_api::BlockchainEvents,
     sc_network_sync::SyncingService,
-    sc_service::{error::Error as ServiceError, Configuration, TaskManager},
+    sc_service::{Configuration, TaskManager, error::Error as ServiceError},
 };
 use torus_runtime::opaque::Block;
 

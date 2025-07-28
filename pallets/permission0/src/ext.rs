@@ -1,7 +1,7 @@
 use crate::permission::EnforcementReferendum;
 use crate::{
-    pallet, Config, EnforcementAuthority, EnforcementTracking, Error, Event, Pallet,
-    PermissionDuration, PermissionId, PermissionScope, Permissions, RevocationTerms,
+    Config, EnforcementAuthority, EnforcementTracking, Error, Event, Pallet, PermissionDuration,
+    PermissionId, PermissionScope, Permissions, RevocationTerms, pallet,
 };
 use pallet_permission0_api::{
     EnforcementAuthority as ApiEnforcementAuthority, Permission0Api,

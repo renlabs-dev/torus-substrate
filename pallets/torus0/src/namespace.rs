@@ -3,13 +3,13 @@ use pallet_governance_api::GovernanceApi;
 use pallet_permission0_api::Permission0NamespacesApi;
 use polkadot_sdk::{
     frame_support::{
-        traits::{ExistenceRequirement, ReservableCurrency},
         CloneNoBound, DebugNoBound, EqNoBound, PartialEqNoBound,
+        traits::{ExistenceRequirement, ReservableCurrency},
     },
     frame_system::{self, pallet_prelude::BlockNumberFor},
     sp_runtime::{
-        traits::{One, Saturating, Zero},
         DispatchResult, FixedPointNumber, FixedU128,
+        traits::{One, Saturating, Zero},
     },
 };
 use scale_info::TypeInfo;
@@ -17,8 +17,8 @@ use scale_info::TypeInfo;
 use crate::*;
 
 pub use pallet_torus0_api::{
-    NamespacePath, MAX_NAMESPACE_PATH_LENGTH, MAX_NAMESPACE_SEGMENTS, MAX_SEGMENT_LENGTH,
-    NAMESPACE_SEPARATOR,
+    MAX_NAMESPACE_PATH_LENGTH, MAX_NAMESPACE_SEGMENTS, MAX_SEGMENT_LENGTH, NAMESPACE_SEPARATOR,
+    NamespacePath,
 };
 
 /// Describes the ownership of the namespace.

@@ -1,15 +1,15 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
     frame_election_provider_support::Get,
-    frame_support::{dispatch::DispatchResult, traits::Currency, DebugNoBound},
+    frame_support::{DebugNoBound, dispatch::DispatchResult, traits::Currency},
     polkadot_sdk_frame::prelude::BlockNumberFor,
-    sp_runtime::{traits::Saturating, BoundedVec},
+    sp_runtime::{BoundedVec, traits::Saturating},
     sp_std::vec::Vec,
 };
 use scale_info::TypeInfo;
 
 use crate::{
-    frame::traits::ExistenceRequirement, whitelist, AccountIdOf, AgentApplications, BalanceOf,
+    AccountIdOf, AgentApplications, BalanceOf, frame::traits::ExistenceRequirement, whitelist,
 };
 
 /// Decentralized autonomous organization application, it's used to do agent

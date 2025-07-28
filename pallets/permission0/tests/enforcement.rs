@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 
 use pallet_permission0::permission::emission::StreamId;
 use pallet_permission0::{EnforcementAuthority, EnforcementReferendum};
-use pallet_permission0_api::{generate_root_stream_id, Permission0EmissionApi};
+use pallet_permission0_api::{Permission0EmissionApi, generate_root_stream_id};
 use polkadot_sdk::frame_support::{assert_err, traits::Currency};
 use polkadot_sdk::sp_core::bounded_vec;
 use polkadot_sdk::sp_runtime::Percent;

@@ -8,8 +8,8 @@ use polkadot_sdk::{
     sp_runtime::{BoundedBTreeMap, BoundedBTreeSet, BoundedVec, Percent},
 };
 use test_utils::{
-    as_tors, get_origin, new_test_ext, pallet_governance, pallet_permission0::Permissions,
-    Balances, Test, Torus0,
+    Balances, Test, Torus0, as_tors, get_origin, new_test_ext, pallet_governance,
+    pallet_permission0::Permissions,
 };
 
 /// Helper function to register an agent with a specific name and balance

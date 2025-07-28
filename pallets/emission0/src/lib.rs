@@ -7,7 +7,7 @@ pub(crate) use ext::*;
 pub use pallet::*;
 use pallet_emission0_api::Emission0Api;
 use polkadot_sdk::{
-    frame_support::{dispatch::DispatchResult, pallet_prelude::*, DefaultNoBound},
+    frame_support::{DefaultNoBound, dispatch::DispatchResult, pallet_prelude::*},
     frame_system,
     frame_system::pallet_prelude::OriginFor,
     polkadot_sdk_frame::{self as frame, traits::Currency},

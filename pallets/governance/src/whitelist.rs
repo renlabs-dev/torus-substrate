@@ -1,6 +1,6 @@
 use polkadot_sdk::frame_support::dispatch::DispatchResult;
 
-use crate::{application, AccountIdOf};
+use crate::{AccountIdOf, application};
 
 /// Adds a key to the DAO whitelist, allowing it to register an agent.
 pub fn add_to_whitelist<T: crate::Config>(key: AccountIdOf<T>) -> DispatchResult {

@@ -1,6 +1,6 @@
 use polkadot_sdk::frame_support::{dispatch::DispatchResult, ensure};
 
-use crate::{proposal::ProposalStatus, AccountIdOf, Error, Event, Proposals};
+use crate::{AccountIdOf, Error, Event, Proposals, proposal::ProposalStatus};
 
 /// Casts a vote on behalf of a voter.
 pub fn add_vote<T: crate::Config>(

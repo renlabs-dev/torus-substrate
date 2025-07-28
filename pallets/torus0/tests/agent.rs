@@ -1,12 +1,12 @@
 use pallet_governance_api::GovernanceApi;
-use pallet_torus0::{agent::Agent, AgentUpdateCooldown, Agents, Burn, Error};
+use pallet_torus0::{AgentUpdateCooldown, Agents, Burn, Error, agent::Agent};
 use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
 use test_utils::{
-    assert_ok, clear_cooldown, get_balance, get_origin,
+    Governance, Test, assert_ok, clear_cooldown, get_balance, get_origin,
     pallet_emission0::{PendingEmission, WeightControlDelegation},
     pallet_governance::{self, Allocators, DaoTreasuryAddress, TreasuryEmissionFee},
-    step_block, Governance, Test,
+    step_block,
 };
 
 #[test]

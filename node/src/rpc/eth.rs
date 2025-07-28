@@ -93,9 +93,9 @@ where
     CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
 {
     use fc_rpc::{
-        pending::AuraConsensusDataProvider, Debug, DebugApiServer, Eth, EthApiServer, EthDevSigner,
-        EthFilter, EthFilterApiServer, EthPubSub, EthPubSubApiServer, EthSigner, Net, NetApiServer,
-        TxPool, TxPoolApiServer, Web3, Web3ApiServer,
+        Debug, DebugApiServer, Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer,
+        EthPubSub, EthPubSubApiServer, EthSigner, Net, NetApiServer, TxPool, TxPoolApiServer, Web3,
+        Web3ApiServer, pending::AuraConsensusDataProvider,
     };
 
     let EthDeps {

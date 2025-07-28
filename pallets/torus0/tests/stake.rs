@@ -1,11 +1,11 @@
 use pallet_torus0::{
-    stake::STAKE_IDENTIFIER, Error, MinAllowedStake, StakedBy, StakingTo, TotalStake,
+    Error, MinAllowedStake, StakedBy, StakingTo, TotalStake, stake::STAKE_IDENTIFIER,
 };
 use polkadot_sdk::frame_support::{
     assert_err,
     traits::{Currency, NamedReservableCurrency},
 };
-use test_utils::{as_tors, assert_ok, get_origin, pallet_governance, Balances, Test};
+use test_utils::{Balances, Test, as_tors, assert_ok, get_origin, pallet_governance};
 
 #[test]
 fn add_stake_correctly() {

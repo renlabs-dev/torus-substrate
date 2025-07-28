@@ -4,7 +4,7 @@
 use codec::{Decode, Encode};
 use polkadot_sdk::{
     frame_support::dispatch::DispatchResult,
-    sp_core::{blake2_256, H256},
+    sp_core::{H256, blake2_256},
     sp_runtime::{DispatchError, Percent},
     sp_std::collections::btree_map::BTreeMap,
     sp_std::vec::Vec,
@@ -142,17 +142,6 @@ bitflags::bitflags! {
 }
 
 pub trait Permission0CuratorApi<AccountId, Origin, BlockNumber> {
-    /// Delegates a curator permission, bounded by the given flags.
-    /// Only available for the root key, currently.
-    fn delegate_curator_permission(
-        delegator: Origin,
-        recipient: AccountId,
-        flags: CuratorPermissions,
-        cooldown: Option<BlockNumber>,
-        duration: PermissionDuration<BlockNumber>,
-        revocation: RevocationTerms<AccountId, BlockNumber>,
-    ) -> Result<PermissionId, DispatchError>;
-
     /// Verifies the recipient's curator permission and returns the registered
     /// cooldown between actions.
     fn ensure_curator_permission(

@@ -5,15 +5,15 @@ use std::{cell::RefCell, num::NonZeroU128};
 pub use pallet_emission0;
 pub use pallet_governance;
 pub use pallet_permission0;
+use pallet_permission0::CuratorPermissions;
 pub use pallet_torus0;
 
-use pallet_permission0_api::{CuratorPermissions, PermissionId};
+use pallet_permission0_api::PermissionId;
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
-        self, parameter_types,
+        self, PalletId, parameter_types,
         traits::{Currency, Everything, Hooks},
-        PalletId,
     },
     frame_system::{self, RawOrigin},
     pallet_balances,
@@ -21,8 +21,8 @@ use polkadot_sdk::{
     sp_core::{Get, H256},
     sp_io,
     sp_runtime::{
+        BoundedBTreeMap, BuildStorage, Percent,
         traits::{BlakeTwo256, IdentityLookup},
-        BuildStorage, Percent,
     },
     sp_tracing,
 };
@@ -269,6 +269,7 @@ impl pallet_permission0::Config for Test {
 
     type MaxNamespacesPerPermission = ConstU32<10>;
     type MaxChildrenPerPermission = ConstU32<10>;
+    type MaxCuratorSubpermissionsPerPermission = ConstU32<10>;
 }
 
 impl pallet_balances::Config for Test {
@@ -462,18 +463,17 @@ pub fn delegate_curator_permission(
     flags: CuratorPermissions,
     cooldown: Option<BlockNumber>,
 ) {
-    use pallet_permission0_api::Permission0CuratorApi;
-    <pallet_permission0::Pallet<Test> as Permission0CuratorApi<
-        AccountId,
-        RuntimeOrigin,
-        BlockNumber,
-    >>::delegate_curator_permission(
+    let mut map = BoundedBTreeMap::new();
+    map.try_insert(None, flags.bits()).unwrap();
+
+    Permission0::delegate_curator_permission(
         RawOrigin::Root.into(),
         key,
-        flags,
+        map,
         cooldown,
-        pallet_permission0_api::PermissionDuration::Indefinite,
-        pallet_permission0_api::RevocationTerms::Irrevocable,
+        pallet_permission0::PermissionDuration::Indefinite,
+        pallet_permission0::RevocationTerms::Irrevocable,
+        1,
     )
     .expect("failed to register curator");
 }

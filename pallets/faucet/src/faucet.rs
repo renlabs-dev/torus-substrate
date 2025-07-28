@@ -36,10 +36,10 @@ use crate::Vec;
 use crate::{AccountIdOf, BalanceOf};
 use crate::{Error, Event};
 use codec::Encode;
-use polkadot_sdk::frame_support::{traits::Currency, LOG_TARGET};
+use polkadot_sdk::frame_support::{LOG_TARGET, traits::Currency};
 use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
-use polkadot_sdk::sp_core::{keccak_256, H256};
-use polkadot_sdk::sp_core::{sha2_256, U256};
+use polkadot_sdk::sp_core::{H256, keccak_256};
+use polkadot_sdk::sp_core::{U256, sha2_256};
 use polkadot_sdk::sp_runtime::{DispatchError, MultiAddress};
 use polkadot_sdk::{
     frame_support::ensure,
@@ -60,7 +60,9 @@ pub fn execute<T: crate::Config>(
         <frame_system::Pallet<T>>::inc_providers(&key);
     }
 
-    info!("do faucet with key: {key:?} and block number: {block_number} and nonce: {nonce} and hash: {work:?}");
+    info!(
+        "do faucet with key: {key:?} and block number: {block_number} and nonce: {nonce} and hash: {work:?}"
+    );
 
     let current_block_number: u64 = frame_system::Pallet::<T>::block_number()
         .try_into()
@@ -160,16 +162,16 @@ pub fn create_seal_hash<T: crate::Config>(
     let seal_hash: H256 = H256::from_slice(&keccak_256_seal_hash_vec);
 
     trace!(
-            "hotkey:{hotkey:?} \nblock_number: {block_number:?}, \nnonce_u64: {nonce:?}, \nblock_hash: {block_hash_at_number:?}, \nfull_bytes: {full_bytes:?}, \nsha256_seal_hash_vec: {sha256_seal_hash_vec:?},  \nkeccak_256_seal_hash_vec: {keccak_256_seal_hash_vec:?}, \nseal_hash: {seal_hash:?}",
-        );
+        "hotkey:{hotkey:?} \nblock_number: {block_number:?}, \nnonce_u64: {nonce:?}, \nblock_hash: {block_hash_at_number:?}, \nfull_bytes: {full_bytes:?}, \nsha256_seal_hash_vec: {sha256_seal_hash_vec:?},  \nkeccak_256_seal_hash_vec: {keccak_256_seal_hash_vec:?}, \nseal_hash: {seal_hash:?}",
+    );
 
     Ok(seal_hash)
 }
 
 pub fn get_block_hash_from_u64<T: crate::Config>(block_number: u64) -> Result<H256, DispatchError> {
-    let block_number: BlockNumberFor<T> = block_number.try_into().map_err(|_| {
-        "Block number {block_number} is too large to be converted to BlockNumberFor<T>"
-    })?;
+    let block_number: BlockNumberFor<T> = block_number.try_into().map_err(
+        |_| "Block number {block_number} is too large to be converted to BlockNumberFor<T>",
+    )?;
 
     let block_hash_at_number = frame_system::Pallet::<T>::block_hash(block_number);
 

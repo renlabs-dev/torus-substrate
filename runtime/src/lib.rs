@@ -38,7 +38,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("torus-runtime"),
     impl_name: create_runtime_str!("torus-runtime"),
     authoring_version: 1,
-    spec_version: 22,
+    spec_version: 23,
     impl_version: 1,
     apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -84,9 +84,8 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
 type Migrations = (
-    pallet_governance::migrations::v5::Migration<Runtime, RocksDbWeight>,
-    pallet_emission0::migrations::v2::Migration<Runtime, RocksDbWeight>,
     pallet_permission0::migrations::v4::Migration<Runtime, RocksDbWeight>,
+    pallet_permission0::migrations::v5::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v4::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v5::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v6::Migration<Runtime, RocksDbWeight>,
@@ -180,7 +179,7 @@ pub mod interface {
     use polkadot_sdk::{
         frame_system, pallet_balances,
         sp_core::H160,
-        sp_runtime::{self, generic, traits::BlakeTwo256, MultiSignature},
+        sp_runtime::{self, MultiSignature, generic, traits::BlakeTwo256},
     };
     pub use polkadot_sdk::{
         frame_system::Call as SystemCall, pallet_balances::Call as BalancesCall,
@@ -217,8 +216,8 @@ pub mod interface {
 // structures.
 pub mod opaque {
     use frame::traits::BlakeTwo256;
-    use sp_runtime::generic;
     pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+    use sp_runtime::generic;
 
     use super::*;
 

@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
+use benchmarking::{RemarkBuilder, TransferKeepAliveBuilder, inherent_benchmark_data};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::TryFutureExt;
 use polkadot_sdk::{sc_cli::SubstrateCli, sc_service::PartialComponents, *};

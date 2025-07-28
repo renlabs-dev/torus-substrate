@@ -1,7 +1,7 @@
 use crate::{
-    generate_permission_id, permission::NamespaceScope, update_permission_indices, Config, Error,
-    Event, Pallet, PermissionContract, PermissionDuration, PermissionId, PermissionScope,
-    Permissions, PermissionsByDelegator, RevocationTerms,
+    Config, Error, Event, Pallet, PermissionContract, PermissionDuration, PermissionId,
+    PermissionScope, Permissions, PermissionsByDelegator, RevocationTerms, generate_permission_id,
+    permission::NamespaceScope, update_permission_indices,
 };
 use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner, Torus0Api};
