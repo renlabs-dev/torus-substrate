@@ -1,78 +1,53 @@
 # Torus Client
 
-A Rust client library for interacting with the Torus blockchain network using `subxt`.
+[![Crates.io](https://img.shields.io/crates/v/torus-client.svg)](https://crates.io/crates/torus-client)
+[![Documentation](https://docs.rs/torus-client/badge.svg)](https://docs.rs/torus-client)
+[![Build Status](https://github.com/renlabs-dev/torus-substrate/workflows/CI/badge.svg)](https://github.com/renlabs-dev/torus-substrate/actions)
 
-## Features
+A Rust client library for interacting with the Torus blockchain.
 
-- Connect to Torus Mainnet, Testnet, or Development nodes
-- Type-safe interaction with the Torus runtime
-- Network-specific metadata and interfaces
-- Submit transactions
-- Query blockchain state
-- Subscribe to events
-- Unified API across different networks
+## Overview
 
-## Setup
+The Torus client provides type-safe, ergonomic access to all Torus blockchain functionality. Built with auto-generated interfaces from runtime metadata, it ensures compatibility and type safety.
 
-### Prerequisites
+## Quick Start
 
-- [Rust](https://rustup.rs/)
-- [Nix](https://nixos.org/) (optional, for development environment)
-- [just](https://github.com/casey/just) command runner
+Add to your `Cargo.toml`:
 
-### Development Environment
-
-The repository contains a Nix flake that provides a complete development environment:
-
-```sh
-nix develop
+```toml
+[dependencies]
+torus-client = "0.1.0"
+tokio = { version = "1.0", features = ["full"] }
 ```
 
-## Generating Network Interfaces
+Basic Usage
 
-This crate uses `subxt` to generate Rust code from blockchain metadata. Generated code enables type-safe interaction with the Torus runtime.
+```
+    use torus_client::{Client, Config};
 
-### Available Commands
+    #[tokio::main]
+    async fn main() -> Result<(), Box<dyn std::error::Error>> {
+        // Connect to testnet
+        let client = Client::from_url("wss://testnet.torus.dev").await?;
 
-```sh
-# Generate interfaces for mainnet (default)
-just gen_interfaces
+        // Get chain info
+        let info = client.chain_info().await?;
+        println!("Connected to {} v{}", info.chain, info.version);
 
-# Generate interfaces for testnet
-just gen_interfaces testnet
+        // Subscribe to events
+        let mut events = client.events().subscribe().await?;
+        while let Some(event) = events.next().await {
+            println!("Event: {:?}", event);
+        }
 
-# Generate interfaces for local development node
-just gen_interfaces dev
-
-# Generate interfaces for all live networks (mainnet and testnet)
-just gen_for_live
+        Ok(())
+    }
 ```
 
-## Usage
+## Contributing
 
-```rust
-use torus_client::{TorusClient, Network};
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Connect to mainnet
-    let client = TorusClient::for_network(Network::Mainnet).await?;
-
-    // Get the latest finalized block hash
-    let block_hash = client.client().rpc().finalized_head().await?;
-    println!("Latest finalized block: {:?}", block_hash);
-
-    Ok(())
-}
-```
-
-## Create features
-
-- `mainnet` (enabled by default): Include mainnet-specific interfaces
-- `testnet`: Include testnet-specific interfaces
-- `dev`: Include development node interfaces
-- `all-networks`: Include interfaces for all networks
+See ../CONTRIBUTING.md for development setup and guidelines.
 
 ## License
 
-This project is licensed under the MIT License.
+Licensed under ../LICENSE.

@@ -4,6 +4,7 @@ use subxt::{config::Header, OnlineClient, PolkadotConfig};
 
 use crate::chain::Chain;
 
+#[deruve(Clone)]
 pub struct TorusClient<C> {
     pub(crate) client: OnlineClient<PolkadotConfig>,
     pub(crate) url: String,

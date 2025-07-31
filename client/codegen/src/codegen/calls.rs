@@ -94,13 +94,13 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
         quote! {
             pub async fn #fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)*) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
-                Ok(self.client.tx().create_unsigned(&call)?.submit())
+                Ok(self.client.tx().create_unsigned(&call)?.submit().await?)
             }
 
             pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)*) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
 
-                let stream = self.client.tx().create_unsigned(&call)?.submit_and_watch().await?;
+                let mut stream = self.client.tx().create_unsigned(&call)?.submit_and_watch().await?;
 
                 while let Some(res) = stream.next().await {
                     match res? {
@@ -108,19 +108,19 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
                             return Ok(tx_in_block.extrinsic_hash());
                         }
                         subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message));
+                            return Err(crate::error::CallError::Failed(message).into());
                         }
                         subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message));
+                            return Err(crate::error::CallError::Invalid(message).into());
                         }
                         subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message));
+                            return Err(crate::error::CallError::Dropped(message).into());
                         }
                         _ => {}
                     }
                 }
 
-                Err(crate::error::CallError::Dropped("Unknown".to_string()))
+                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
             }
         }
     }
