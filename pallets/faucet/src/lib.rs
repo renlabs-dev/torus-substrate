@@ -56,7 +56,7 @@ type AccountIdLookupOf<T> =
 #[frame::pallet]
 pub mod pallet {
 
-    use frame::prelude::{ensure_none, BlockNumberFor};
+    use frame::prelude::{BlockNumberFor, ensure_none};
 
     use super::*;
 

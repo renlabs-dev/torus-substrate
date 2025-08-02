@@ -1,66 +1,93 @@
-use pallet_permission0::{Error, Pallet, PermissionScope, Permissions};
-use pallet_permission0_api::{CuratorPermissions, Permission0CuratorApi};
+use pallet_permission0::{Config, CuratorPermissions, Error, Pallet, PermissionId};
+use pallet_permission0_api::{CuratorPermissions as ApiCuratorPermissions, Permission0CuratorApi};
 use polkadot_sdk::{
     frame_support::{assert_err, dispatch::DispatchResult},
     frame_system::RawOrigin,
     polkadot_sdk_frame::prelude::OriginFor,
-    sp_runtime::traits::BadOrigin,
+    sp_runtime::BoundedBTreeMap,
 };
 use test_utils::*;
 
 fn ensure_curator(origin: OriginFor<Test>, flags: CuratorPermissions) -> DispatchResult {
-    Pallet::<Test>::ensure_curator_permission(origin, flags)?;
+    Pallet::<Test>::ensure_curator_permission(
+        origin,
+        ApiCuratorPermissions::from_bits_retain(flags.bits()),
+    )?;
     Ok(())
+}
+
+fn root_permissions(
+    flags: CuratorPermissions,
+) -> BoundedBTreeMap<
+    Option<PermissionId>,
+    u32,
+    <Test as Config>::MaxCuratorSubpermissionsPerPermission,
+> {
+    let mut map = BoundedBTreeMap::new();
+    map.try_insert(None, flags.bits()).unwrap();
+    map
 }
 
 #[test]
 fn delegate_curator_permission_correctly() {
     new_test_ext().execute_with(|| {
-        assert_err!(<Permission0 as Permission0CuratorApi<AccountId, RuntimeOrigin, BlockNumber>>::delegate_curator_permission(
-            RawOrigin::Signed(0).into(),
-            1,
-            CuratorPermissions::all(),
-            None,
-            Default::default(),
-            Default::default(),
-        ), BadOrigin);
+        assert_err!(
+            Permission0::delegate_curator_permission(
+                RawOrigin::Signed(0).into(),
+                1,
+                root_permissions(CuratorPermissions::all()),
+                None,
+                pallet_permission0::PermissionDuration::Indefinite,
+                pallet_permission0::RevocationTerms::Irrevocable,
+                1
+            ),
+            Error::<Test>::NotPermissionRecipient
+        );
 
         let existing_curator = 1;
         delegate_curator_permission(existing_curator, CuratorPermissions::all(), None);
 
-        assert_err!(<Permission0 as Permission0CuratorApi<AccountId, RuntimeOrigin, BlockNumber>>::delegate_curator_permission(
+        assert_err!(
+            Permission0::delegate_curator_permission(
+                RawOrigin::Root.into(),
+                existing_curator,
+                root_permissions(CuratorPermissions::all()),
+                None,
+                pallet_permission0::PermissionDuration::Indefinite,
+                pallet_permission0::RevocationTerms::Irrevocable,
+                1
+            ),
+            Error::<Test>::DuplicatePermissionInBlock
+        );
+
+        step_block(1);
+
+        assert_ok!(Permission0::delegate_curator_permission(
             RawOrigin::Root.into(),
             existing_curator,
-            CuratorPermissions::all(),
+            root_permissions(CuratorPermissions::all()),
             None,
-            Default::default(),
-            Default::default(),
-        ), Error::<Test>::DuplicatePermission);
+            pallet_permission0::PermissionDuration::Indefinite,
+            pallet_permission0::RevocationTerms::Irrevocable,
+            1
+        ));
 
         let key = 0;
 
-        assert_err!(<Permission0 as Permission0CuratorApi<AccountId, RuntimeOrigin, BlockNumber>>::delegate_curator_permission(
-            RawOrigin::Root.into(),
-            key,
-            CuratorPermissions::from_bits_retain(pallet_permission0::CuratorPermissions::ROOT.bits()),
-            None,
-            Default::default(),
-            Default::default(),
-        ), Error::<Test>::InvalidCuratorPermissions);
-
-        let id = assert_ok!(<Permission0 as Permission0CuratorApi<AccountId, RuntimeOrigin, BlockNumber>>::delegate_curator_permission(
-            RawOrigin::Root.into(),
-            key,
-            // ugly way to check that ROOT is being filtered out
-            CuratorPermissions::from_bits_retain(pallet_permission0::CuratorPermissions::all().bits()),
-            None,
-            Default::default(),
-            Default::default(),
-        ));
-
-        let contract = Permissions::<Test>::get(id).unwrap();
-        let PermissionScope::Curator(scope) = contract.scope else { unreachable!() };
-        assert_eq!(scope.flags, pallet_permission0::CuratorPermissions::all() & !pallet_permission0::CuratorPermissions::ROOT);
+        assert_err!(
+            Permission0::delegate_curator_permission(
+                RawOrigin::Root.into(),
+                key,
+                root_permissions(CuratorPermissions::from_bits_retain(
+                    pallet_permission0::CuratorPermissions::ROOT.bits()
+                )),
+                None,
+                pallet_permission0::PermissionDuration::Indefinite,
+                pallet_permission0::RevocationTerms::Irrevocable,
+                1
+            ),
+            Error::<Test>::InvalidCuratorPermissions
+        );
     });
 }
 

@@ -2,15 +2,15 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{
     frame_support::{
-        dispatch::DispatchResult, ensure, CloneNoBound, DebugNoBound, DefaultNoBound, EqNoBound,
-        PartialEqNoBound,
+        CloneNoBound, DebugNoBound, DefaultNoBound, EqNoBound, PartialEqNoBound,
+        dispatch::DispatchResult, ensure,
     },
-    frame_system::{self, ensure_signed_or_root, RawOrigin},
+    frame_system::{self, RawOrigin, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{H256, U256},
     sp_runtime::{
-        traits::{BlakeTwo256, Hash},
         BoundedBTreeMap, BoundedVec, DispatchError, Percent,
+        traits::{BlakeTwo256, Hash},
     },
     sp_std::vec::Vec,
     sp_tracing::{error, info, trace},
@@ -184,17 +184,17 @@ impl<T: Config> PermissionContract<T> {
                     }
                 }
                 RevocationTerms::RevocableByArbiters { .. } => {
-                    return Err(Error::<T>::NotAuthorizedToRevoke.into())
+                    return Err(Error::<T>::NotAuthorizedToRevoke.into());
                 }
                 RevocationTerms::RevocableAfter(block) if who == &delegator => ensure!(
                     <frame_system::Pallet<T>>::block_number() >= *block,
                     Error::<T>::NotAuthorizedToRevoke
                 ),
                 RevocationTerms::RevocableAfter(_) => {
-                    return Err(Error::<T>::NotAuthorizedToRevoke.into())
+                    return Err(Error::<T>::NotAuthorizedToRevoke.into());
                 }
                 RevocationTerms::Irrevocable => {
-                    return Err(Error::<T>::NotAuthorizedToRevoke.into())
+                    return Err(Error::<T>::NotAuthorizedToRevoke.into());
                 }
             };
         }
@@ -469,7 +469,9 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
                     current_block,
                     &contract,
                 ) {
-                    error!("failed to auto distribute emissions for permission {permission_id:?}: {err:?}");
+                    error!(
+                        "failed to auto distribute emissions for permission {permission_id:?}: {err:?}"
+                    );
                 }
             }
             _ => (),

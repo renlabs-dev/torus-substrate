@@ -3,8 +3,8 @@ use polkadot_sdk::{
     sp_std::{collections::btree_map::BTreeMap, vec::Vec},
 };
 
-use crate::{agent, StakedBy, StakingTo, TotalStake};
 use crate::{AccountIdOf, BalanceOf};
+use crate::{StakedBy, StakingTo, TotalStake, agent};
 
 pub const STAKE_IDENTIFIER: &[u8; 8] = b"torstake";
 

@@ -20,10 +20,10 @@ use namespace::{NamespaceMetadata, NamespaceOwnership, NamespacePath};
 pub use pallet::*;
 use polkadot_sdk::{
     frame_support::{
+        Identity,
         dispatch::DispatchResult,
         pallet_prelude::{ValueQuery, *},
         traits::Currency,
-        Identity,
     },
     frame_system::pallet_prelude::OriginFor,
     polkadot_sdk_frame as frame, sp_std,

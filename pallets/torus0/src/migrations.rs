@@ -11,7 +11,7 @@ pub mod v4 {
 
     pub mod storage {
         use codec::{Decode, Encode, MaxEncodedLen};
-        use polkadot_sdk::frame_support::{storage_alias, DebugNoBound, Identity};
+        use polkadot_sdk::frame_support::{DebugNoBound, Identity, storage_alias};
         use polkadot_sdk::polkadot_sdk_frame::prelude::BlockNumberFor;
         use polkadot_sdk::sp_runtime::{BoundedVec, Percent};
         use scale_info::TypeInfo;
@@ -72,7 +72,7 @@ pub mod v5 {
     };
 
     use crate::{
-        burn::BurnConfiguration, namespace::NamespaceOwnership, Agents, BurnConfig, Config, Pallet,
+        Agents, BurnConfig, Config, Pallet, burn::BurnConfiguration, namespace::NamespaceOwnership,
     };
 
     pub mod storage {
@@ -181,7 +181,7 @@ pub mod v6 {
         sp_weights::Weight,
     };
 
-    use crate::{stake::STAKE_IDENTIFIER, Config, Pallet};
+    use crate::{Config, Pallet, stake::STAKE_IDENTIFIER};
 
     pub type Migration<T, W> = VersionedMigration<5, 6, MigrateToV6<T>, Pallet<T>, W>;
     pub struct MigrateToV6<T>(core::marker::PhantomData<T>);
@@ -258,7 +258,9 @@ pub mod v6 {
             let total_stake_after = crate::TotalStake::<T>::get();
             let total_issuance_after = T::Currency::total_issuance();
 
-            info!("total stake minted: {minted}. total issuance: {total_issuance_after}. total issuance before: {total_issuance_before}");
+            info!(
+                "total stake minted: {minted}. total issuance: {total_issuance_after}. total issuance before: {total_issuance_before}"
+            );
 
             if total_issuance_after != total_tokens_before {
                 error!("total issuance does not match total tokens before migration");
@@ -273,7 +275,9 @@ pub mod v6 {
             }
 
             if total_reserved != total_stake_after {
-                error!("total reserved balance does not match total tracked state: {total_reserved} != {total_stake_after}");
+                error!(
+                    "total reserved balance does not match total tracked state: {total_reserved} != {total_stake_after}"
+                );
             }
 
             Weight::default()

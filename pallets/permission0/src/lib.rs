@@ -12,34 +12,34 @@ pub mod permission;
 pub use pallet::*;
 
 pub use permission::{
-    generate_permission_id, CuratorPermissions, CuratorScope, DistributionControl,
-    EmissionAllocation, EmissionScope, EnforcementAuthority, EnforcementReferendum,
-    PermissionContract, PermissionDuration, PermissionId, PermissionScope, RevocationTerms,
+    CuratorPermissions, CuratorScope, DistributionControl, EmissionAllocation, EmissionScope,
+    EnforcementAuthority, EnforcementReferendum, PermissionContract, PermissionDuration,
+    PermissionId, PermissionScope, RevocationTerms, generate_permission_id,
 };
 
-pub use pallet_permission0_api::{generate_root_stream_id, StreamId};
+pub use pallet_permission0_api::{StreamId, generate_root_stream_id};
 
 use polkadot_sdk::{
     frame_support::{
+        BoundedVec,
         dispatch::DispatchResult,
         pallet_prelude::*,
         traits::{Currency, Get, ReservableCurrency},
-        BoundedVec,
     },
     frame_system::{self, pallet_prelude::*},
     polkadot_sdk_frame as frame,
-    sp_runtime::{traits::Saturating, Percent},
+    sp_runtime::{Percent, traits::Saturating},
     sp_std::prelude::*,
 };
 
 #[frame::pallet]
 pub mod pallet {
     use pallet_torus0_api::NamespacePathInner;
-    use polkadot_sdk::frame_support::PalletId;
+    use polkadot_sdk::{frame_support::PalletId, sp_core::TryCollect};
 
     use super::*;
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(5);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -80,6 +80,10 @@ pub mod pallet {
         /// Maximum number of namespaces a single permission can delegate.
         #[pallet::constant]
         type MaxNamespacesPerPermission: Get<u32>;
+
+        /// Maximum number of curator subpermissions a single permission can delegate.
+        #[pallet::constant]
+        type MaxCuratorSubpermissionsPerPermission: Get<u32>;
 
         /// Maximum number of children a single permission can have.
         #[pallet::constant]
@@ -318,6 +322,8 @@ pub mod pallet {
         TooManyChildren,
         /// Revocation terms are too strong for a permission re-delegation.
         RevocationTermsTooStrong,
+        /// Too many curator permissions being delegated in a single permission.
+        TooManyCuratorPermissions,
     }
 
     #[pallet::hooks]
@@ -436,18 +442,23 @@ pub mod pallet {
         pub fn delegate_curator_permission(
             origin: OriginFor<T>,
             recipient: T::AccountId,
-            flags: u32,
+            flags: BoundedBTreeMap<
+                Option<PermissionId>,
+                u32,
+                T::MaxCuratorSubpermissionsPerPermission,
+            >,
             cooldown: Option<BlockNumberFor<T>>,
             duration: PermissionDuration<T>,
             revocation: RevocationTerms<T>,
+            instances: u32,
         ) -> DispatchResult {
+            let flags = flags
+                .into_iter()
+                .map(|(pid, flags)| (pid, CuratorPermissions::from_bits_truncate(flags)))
+                .try_collect()?;
+
             ext::curator_impl::delegate_curator_permission_impl::<T>(
-                origin,
-                recipient,
-                CuratorPermissions::from_bits_truncate(flags),
-                cooldown,
-                duration,
-                revocation,
+                origin, recipient, flags, cooldown, duration, revocation, instances,
             )?;
 
             Ok(())

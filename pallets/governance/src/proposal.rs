@@ -8,16 +8,16 @@ use polkadot_sdk::{
     polkadot_sdk_frame::{prelude::BlockNumberFor, traits::CheckedAdd},
     sp_core::{ConstU32, U256},
     sp_runtime::{
-        traits::Saturating, BoundedBTreeMap, DispatchError, FixedPointNumber, FixedU128, Percent,
+        BoundedBTreeMap, DispatchError, FixedPointNumber, FixedU128, Percent, traits::Saturating,
     },
     sp_std::{collections::btree_set::BTreeSet, vec::Vec},
     sp_tracing::error,
 };
 
 use crate::{
-    frame::traits::ExistenceRequirement, AccountIdOf, BalanceOf, BoundedBTreeSet, BoundedVec,
-    DaoTreasuryAddress, DebugNoBound, Error, GlobalGovernanceConfig, GovernanceConfiguration,
-    NotDelegatingVotingPower, Proposals, TypeInfo, UnrewardedProposals,
+    AccountIdOf, BalanceOf, BoundedBTreeSet, BoundedVec, DaoTreasuryAddress, DebugNoBound, Error,
+    GlobalGovernanceConfig, GovernanceConfiguration, NotDelegatingVotingPower, Proposals, TypeInfo,
+    UnrewardedProposals, frame::traits::ExistenceRequirement,
 };
 
 pub type ProposalId = u64;

@@ -17,13 +17,13 @@ use frame::prelude::ensure_root;
 pub use pallet::*;
 use polkadot_sdk::{
     frame_support::{
+        Identity, PalletId,
         dispatch::DispatchResult,
         pallet_prelude::{ValueQuery, *},
         sp_runtime::Percent,
         traits::Currency,
-        Identity, PalletId,
     },
-    frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor},
+    frame_system::pallet_prelude::{BlockNumberFor, OriginFor, ensure_signed},
     polkadot_sdk_frame::{
         traits::AccountIdConversion,
         {self as frame},

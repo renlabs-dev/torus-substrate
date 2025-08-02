@@ -1,8 +1,8 @@
 use polkadot_sdk::{
     frame_support::assert_err,
-    sp_runtime::{traits::BadOrigin, Percent},
+    sp_runtime::{Percent, traits::BadOrigin},
 };
-use test_utils::{assert_ok, get_origin, new_test_ext, RuntimeOrigin, Test};
+use test_utils::{RuntimeOrigin, Test, assert_ok, get_origin, new_test_ext};
 
 #[test]
 fn set_emission_params() {

@@ -32,8 +32,8 @@ use pallet_torus0_rpc::{Torus0ApiServer, Torus0Rpc};
 use polkadot_sdk::{
     pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer},
     sc_consensus_manual_seal::{
-        rpc::{ManualSeal, ManualSealApiServer},
         EngineCommand,
+        rpc::{ManualSeal, ManualSealApiServer},
     },
     sc_rpc::SubscriptionTaskExecutor,
     sc_transaction_pool::ChainApi,

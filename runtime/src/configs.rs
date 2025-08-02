@@ -4,9 +4,9 @@ use polkadot_sdk::{
     frame_support::{
         traits::VariantCountOf,
         weights::{
-            constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
             ConstantMultiplier, WeightToFeeCoefficient, WeightToFeeCoefficients,
             WeightToFeePolynomial,
+            constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
         },
     },
     pallet_aura::MinimumPeriodTimesTwo,
@@ -470,6 +470,7 @@ parameter_types! {
 
     pub const MaxNamespacesPerPermission: u32 = 16;
     pub const MaxChildrenPerPermission: u32 = 16;
+    pub const MaxCuratorSubpermissionsPerPermission: u32 = 16;
 }
 
 impl pallet_permission0::Config for Runtime {
@@ -492,6 +493,7 @@ impl pallet_permission0::Config for Runtime {
 
     type MaxNamespacesPerPermission = MaxNamespacesPerPermission;
     type MaxChildrenPerPermission = MaxChildrenPerPermission;
+    type MaxCuratorSubpermissionsPerPermission = MaxCuratorSubpermissionsPerPermission;
 }
 
 impl pallet_faucet::Config for Runtime {

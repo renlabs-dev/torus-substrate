@@ -1,10 +1,10 @@
 use pallet_emission0::{
-    weight_control::{delegate_weight_control, regain_weight_control, set_weights},
     ConsensusMembers, Error, WeightControlDelegation, Weights,
+    weight_control::{delegate_weight_control, regain_weight_control, set_weights},
 };
 use test_utils::{
-    add_stake, get_origin, pallet_governance::Allocators, pallet_torus0::MinValidatorStake,
-    register_empty_agent, Test,
+    Test, add_stake, get_origin, pallet_governance::Allocators, pallet_torus0::MinValidatorStake,
+    register_empty_agent,
 };
 
 #[test]

@@ -8,7 +8,7 @@ use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner};
 use polkadot_sdk::sp_core::H256;
 use polkadot_sdk::{
-    frame_support::{assert_err, assert_ok, BoundedBTreeMap, BoundedBTreeSet},
+    frame_support::{BoundedBTreeMap, BoundedBTreeSet, assert_err, assert_ok},
     frame_system::RawOrigin,
 };
 use test_utils::*;
@@ -671,14 +671,7 @@ fn delegate_namespace_permission_fails_when_parent_has_wrong_scope() {
         register_agent(recipient);
 
         // Create a curator permission (non-namespace scope)
-        assert_ok!(Permission0::delegate_curator_permission(
-            RawOrigin::Root.into(),
-            recipient,
-            CuratorPermissions::all().bits(), // flags
-            None,                             // cooldown
-            PermissionDuration::Indefinite,
-            RevocationTerms::Irrevocable
-        ));
+        delegate_curator_permission(recipient, CuratorPermissions::all(), None);
         let curator_permission_id = PermissionsByRecipient::<Test>::get(recipient)[0];
 
         // Try to use the curator permission as parent for namespace permission
@@ -1181,9 +1174,11 @@ fn revoke_namespace_permission_cascades_through_multiple_levels() {
         // Verify Charlie's children count decreased
         let charlie_permission_after_dave_revoke =
             Permissions::<Test>::get(charlie_permission_id).unwrap();
-        assert!(!charlie_permission_after_dave_revoke
-            .children
-            .contains(&dave_permission_id));
+        assert!(
+            !charlie_permission_after_dave_revoke
+                .children
+                .contains(&dave_permission_id)
+        );
         assert_eq!(
             charlie_permission_after_dave_revoke.available_instances(),
             5

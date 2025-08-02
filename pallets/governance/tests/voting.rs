@@ -2,16 +2,16 @@
 
 use pallet_emission0::PendingEmission;
 use pallet_governance::{
-    proposal::{Proposal, ProposalData, ProposalStatus},
     DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals, TreasuryEmissionFee,
+    proposal::{Proposal, ProposalData, ProposalStatus},
 };
 use pallet_governance_api::GovernanceApi;
 use polkadot_sdk::{frame_support::assert_err, frame_system::RawOrigin};
 use polkadot_sdk::{frame_support::assert_ok, sp_runtime::Percent};
 use polkadot_sdk::{frame_support::traits::Get, sp_runtime::BoundedVec};
 use test_utils::{
-    add_balance, as_tors, get_balance, get_origin, new_test_ext, step_block, zero_min_burn,
-    AccountId, ExistentialDeposit, Governance, Test,
+    AccountId, ExistentialDeposit, Governance, Test, add_balance, as_tors, get_balance, get_origin,
+    new_test_ext, step_block, zero_min_burn,
 };
 
 fn register(account: AccountId, module: AccountId, stake: u128) {

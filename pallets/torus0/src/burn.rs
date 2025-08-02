@@ -3,9 +3,9 @@ use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::DebugNoBound,
     polkadot_sdk_frame::prelude::BlockNumberFor,
-    sp_runtime::{traits::Saturating, FixedU128},
+    sp_runtime::{FixedU128, traits::Saturating},
 };
-use scale_info::{prelude::marker::PhantomData, TypeInfo};
+use scale_info::{TypeInfo, prelude::marker::PhantomData};
 
 use crate::BalanceOf;
 

@@ -1,10 +1,10 @@
 use pallet_emission0::PendingEmission;
 use pallet_governance::{
-    application::ApplicationStatus, AgentApplications, GlobalGovernanceConfig, Whitelist,
+    AgentApplications, GlobalGovernanceConfig, Whitelist, application::ApplicationStatus,
 };
 use pallet_governance::{DaoTreasuryAddress, TreasuryEmissionFee};
 use pallet_governance_api::GovernanceApi;
-use pallet_permission0_api::CuratorPermissions;
+use pallet_permission0::CuratorPermissions;
 use polkadot_sdk::frame_support::assert_err;
 use polkadot_sdk::sp_runtime::Percent;
 use test_utils::*;
