@@ -88,6 +88,7 @@ fn generate_client_structs(pallet_names: &[String]) -> TokenStream {
 
     quote! {
         #(
+            #[derive(Clone)]
             pub struct #struct_idents<C: crate::chain::Chain> {
                 pub(crate) client: OnlineClient<PolkadotConfig>,
                 pub(crate) _pd: PhantomData<C>
@@ -102,12 +103,14 @@ fn generate_client_structs(pallet_names: &[String]) -> TokenStream {
                 }
             }
 
+            #[derive(Clone)]
             pub struct #storage_struct_idents<C: crate::chain::Chain> {
                 pub(crate) client: OnlineClient<PolkadotConfig>,
                 pub(crate) block: Option<H256>,
                 pub(crate) _pd: PhantomData<C>,
             }
 
+            #[derive(Clone)]
             pub struct #calls_struct_idents<C: crate::chain::Chain> {
                 pub(crate) client: OnlineClient<PolkadotConfig>,
                 pub(crate) _pd: PhantomData<C>,

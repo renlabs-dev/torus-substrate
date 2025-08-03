@@ -1,11 +1,12 @@
 use std::marker::PhantomData;
 
-use subxt::{config::Header, OnlineClient, PolkadotConfig};
+use subxt::{backend::rpc::RpcClient, blocks::Block, utils::H256, OnlineClient, PolkadotConfig};
 
 use crate::chain::Chain;
 
-#[deruve(Clone)]
+#[derive(Clone)]
 pub struct TorusClient<C> {
+    pub(crate) rpc_client: RpcClient,
     pub(crate) client: OnlineClient<PolkadotConfig>,
     pub(crate) url: String,
     _pd: PhantomData<C>,
@@ -17,8 +18,12 @@ impl TorusClient<()> {
 
     #[cfg(feature = "mainnet")]
     pub async fn for_mainnet() -> crate::Result<TorusClient<crate::chain::MainNet>> {
+        let rpc_client = RpcClient::from_insecure_url(Self::MAINNET_URL).await?;
+        let client = OnlineClient::from_rpc_client(rpc_client.clone()).await?;
+
         Ok(TorusClient {
-            client: OnlineClient::from_url(Self::MAINNET_URL).await?,
+            rpc_client,
+            client,
             url: Self::MAINNET_URL.to_string(),
             _pd: PhantomData,
         })
@@ -26,16 +31,23 @@ impl TorusClient<()> {
 
     #[cfg(feature = "testnet")]
     pub async fn for_testnet() -> crate::Result<TorusClient<crate::chain::TestNet>> {
+        let rpc_client = RpcClient::from_insecure_url(Self::MAINNET_URL).await?;
+        let client = OnlineClient::from_rpc_client(rpc_client.clone()).await?;
+
         Ok(TorusClient {
-            client: OnlineClient::from_url(Self::TESTNET_URL).await?,
+            rpc_client,
+            client,
             url: Self::TESTNET_URL.to_string(),
             _pd: PhantomData,
         })
     }
 
     pub async fn for_url<C: Chain>(url: impl AsRef<str>) -> crate::Result<TorusClient<C>> {
+        let rpc_client = RpcClient::from_insecure_url(url.as_ref()).await?;
+        let client = OnlineClient::from_rpc_client(rpc_client.clone()).await?;
         Ok(TorusClient {
-            client: OnlineClient::from_url(url.as_ref().to_string()).await?,
+            rpc_client,
+            client,
             url: url.as_ref().to_string(),
             _pd: PhantomData,
         })
@@ -43,16 +55,28 @@ impl TorusClient<()> {
 }
 
 impl<C: Chain> TorusClient<C> {
-    /// Get the latest block hash
-    pub async fn latest_block_hash(&self) -> Result<subxt::utils::H256, subxt::Error> {
-        let block = self.client.blocks().at_latest().await?;
-        let hash = block.header().hash();
-        Ok(hash)
+    /// Get the latest block
+    pub async fn latest_block(
+        &self,
+    ) -> crate::Result<Block<PolkadotConfig, OnlineClient<PolkadotConfig>>> {
+        Ok(self.client.blocks().at_latest().await?)
     }
 
-    /// Get the latest block number
-    pub async fn latest_block_number(&self) -> Result<u32, subxt::Error> {
-        let block = self.client.blocks().at_latest().await?;
-        Ok(block.header().number)
+    /// Get a block via its hash
+    pub async fn block_at(
+        &self,
+        hash: H256,
+    ) -> crate::Result<Block<PolkadotConfig, OnlineClient<PolkadotConfig>>> {
+        Ok(self.client.blocks().at(hash).await?)
+    }
+
+    /// Access to the underlying subxt client
+    pub fn inner_client(&self) -> &OnlineClient<PolkadotConfig> {
+        &self.client
+    }
+
+    /// Access to the underlying subxt client
+    pub fn inner_rpc_client(&self) -> &RpcClient {
+        &self.rpc_client
     }
 }

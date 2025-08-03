@@ -22,23 +22,29 @@ tokio = { version = "1.0", features = ["full"] }
 
 Basic Usage
 
-```
-    use torus_client::{Client, Config};
-
+```rs
     #[tokio::main]
     async fn main() -> Result<(), Box<dyn std::error::Error>> {
-        // Connect to testnet
-        let client = Client::from_url("wss://testnet.torus.dev").await?;
+        // Connect to mainnet
+        let client = TorusClient::for_mainnet().await?;
 
-        // Get chain info
-        let info = client.chain_info().await?;
-        println!("Connected to {} v{}", info.chain, info.version);
+        // Or to testnet
+        let client = TorusClient::for_testnet().await?;
+
+        // Call extrinsics
+        client.torus0().calls().register_agent(...);
+
+        // Fetch storages
+        client.governance().storage().agent_applications_get(...);
 
         // Subscribe to events
-        let mut events = client.events().subscribe().await?;
-        while let Some(event) = events.next().await {
-            println!("Event: {:?}", event);
-        }
+        client.events().subscribe::<...>();
+
+        // Call rpcs
+        client.rpc().namespace_path_creation_cost(...);
+
+        // Access subxt client
+        client.inner_client();
 
         Ok(())
     }
