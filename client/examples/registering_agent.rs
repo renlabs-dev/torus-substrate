@@ -11,12 +11,12 @@ pub async fn main() {
 
     let client = TorusClient::for_mainnet().await.unwrap();
 
-    if let Err(_) = client
+    if let Err(err) = client
         .torus0()
         .calls()
         .register_agent_wait(agent_key, name, url, metadata, signer)
         .await
     {
-        print!("could not register agent");
+        print!("could not register agent: {err}");
     }
 }

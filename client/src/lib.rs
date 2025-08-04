@@ -47,6 +47,8 @@
 //!         Ok(())
 //!     }
 //! ```
+//!
+//! More examples on the `examples/` folder.
 
 pub use subxt;
 pub use subxt_signer;

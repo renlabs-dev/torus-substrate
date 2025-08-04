@@ -50,6 +50,8 @@ Basic Usage
     }
 ```
 
+More examples on the `examples/` folder.
+
 ## Contributing
 
 See ../CONTRIBUTING.md for development setup and guidelines.

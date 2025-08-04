@@ -8,7 +8,7 @@ use subxt::{OnlineClient, PolkadotConfig};
 use crate::client::TorusClient;
 
 impl<C> TorusClient<C> {
-    pub async fn rpc(&self) -> crate::Result<Rpc<C>> {
+    pub fn rpc(&self) -> crate::Result<Rpc<C>> {
         Ok(Rpc {
             client: self.client.clone(),
             rpc_client: self.rpc_client.clone(),
