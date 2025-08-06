@@ -15,7 +15,7 @@
 /docker/volumes/
 
 # Rust
-/target/
+**/target/
 
 # Git Hooks
 .pre-commit-config.yaml

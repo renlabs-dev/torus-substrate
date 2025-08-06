@@ -19,12 +19,16 @@
   "cSpell.words": [
     "alice",
     "buildx",
+    "codegen",
     "devcontainers",
     "extrinsics",
     "irongut",
     "jwalton",
     "mainnet",
+    "nocapture",
     "presign",
+    "println",
+    "subxt",
     "Swatinem",
     "wbuild"
   ]
