@@ -67,27 +67,9 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
             pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)* signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
 
-                let mut stream = self.client.tx().sign_and_submit_then_watch_default(&call, &signer).await?;
+                self.client.tx().sign_and_submit_then_watch_default(&call, &signer).await?.wait_for_finalized_success().await?;
 
-                while let Some(res) = stream.next().await {
-                    match res? {
-                        subxt::tx::TxStatus::InFinalizedBlock(tx_in_block) => {
-                            return Ok(tx_in_block.extrinsic_hash());
-                        }
-                        subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message).into());
-                        }
-                        subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message).into());
-                        }
-                        subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message).into());
-                        }
-                        _ => {}
-                    }
-                }
-
-                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
+                Ok(H256::zero())
             }
         }
     } else {
@@ -100,27 +82,9 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
             pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)*) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
 
-                let mut stream = self.client.tx().create_unsigned(&call)?.submit_and_watch().await?;
+                self.client.tx().create_unsigned(&call)?.submit_and_watch().await?.wait_for_finalized_success().await?;
 
-                while let Some(res) = stream.next().await {
-                    match res? {
-                        subxt::tx::TxStatus::InFinalizedBlock(tx_in_block) => {
-                            return Ok(tx_in_block.extrinsic_hash());
-                        }
-                        subxt::tx::TxStatus::Error { message } => {
-                            return Err(crate::error::CallError::Failed(message).into());
-                        }
-                        subxt::tx::TxStatus::Invalid { message } => {
-                            return Err(crate::error::CallError::Invalid(message).into());
-                        }
-                        subxt::tx::TxStatus::Dropped { message } => {
-                            return Err(crate::error::CallError::Dropped(message).into());
-                        }
-                        _ => {}
-                    }
-                }
-
-                Err(crate::error::CallError::Dropped("Unknown".to_string()).into())
+                Ok(H256::zero())
             }
         }
     }

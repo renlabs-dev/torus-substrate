@@ -9,7 +9,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
         std::env::var("OUT_DIR").unwrap()
     ));
 
-    generate_interfaces(&output_file).await?;
+    let devnet_url = if std::env::var("CARGO_FEATURE_DEVNET").is_ok() {
+        Some(std::env::var("DEVNET_URL").unwrap_or("wss://localhost:9944".to_string()))
+    } else {
+        None
+    };
+
+    generate_interfaces(&output_file, devnet_url).await?;
 
     Ok(())
 }

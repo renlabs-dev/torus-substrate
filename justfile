@@ -79,3 +79,11 @@ run-workflows:
     -P 'ubuntu-24.04-8core-bakunin=ghcr.io/catthehacker/act-ubuntu:24.04' \
     -P 'ubuntu-24.04-16core-friedrich=ghcr.io/catthehacker/act-ubuntu:24.04' \
     -P 'ubuntu-22.04-32core-karl=ghcr.io/catthehacker/ubuntu:act-22.04'
+
+# Mcp
+
+build-devnet-mcp:
+  cargo b -p torus-mcp -r --no-default-features --features devnet
+
+build-testnet-mcp:
+  cargo b -p torus-mcp -r

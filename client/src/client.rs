@@ -15,6 +15,7 @@ pub struct TorusClient<C> {
 impl TorusClient<()> {
     const MAINNET_URL: &'static str = "wss://api.torus.network";
     const TESTNET_URL: &'static str = "wss://api.testnet.torus.network";
+    const DEVNET_URL: &'static str = "wss://localhost:9944";
 
     #[cfg(feature = "mainnet")]
     pub async fn for_mainnet() -> crate::Result<TorusClient<crate::chain::MainNet>> {
@@ -31,7 +32,7 @@ impl TorusClient<()> {
 
     #[cfg(feature = "testnet")]
     pub async fn for_testnet() -> crate::Result<TorusClient<crate::chain::TestNet>> {
-        let rpc_client = RpcClient::from_insecure_url(Self::MAINNET_URL).await?;
+        let rpc_client = RpcClient::from_insecure_url(Self::TESTNET_URL).await?;
         let client = OnlineClient::from_rpc_client(rpc_client.clone()).await?;
 
         Ok(TorusClient {
@@ -42,9 +43,23 @@ impl TorusClient<()> {
         })
     }
 
+    #[cfg(feature = "devnet")]
+    pub async fn for_devnet() -> crate::Result<TorusClient<crate::chain::DevNet>> {
+        let rpc_client = RpcClient::from_insecure_url(Self::DEVNET_URL).await?;
+        let client = OnlineClient::from_rpc_client(rpc_client.clone()).await?;
+
+        Ok(TorusClient {
+            rpc_client,
+            client,
+            url: Self::DEVNET_URL.to_string(),
+            _pd: PhantomData,
+        })
+    }
+
     pub async fn for_url<C: Chain>(url: impl AsRef<str>) -> crate::Result<TorusClient<C>> {
         let rpc_client = RpcClient::from_insecure_url(url.as_ref()).await?;
         let client = OnlineClient::from_rpc_client(rpc_client.clone()).await?;
+
         Ok(TorusClient {
             rpc_client,
             client,

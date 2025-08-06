@@ -10,6 +10,7 @@ members = [
     "test-utils",
     "xtask",
     "project-selector",
+    "mcp",
 ]
 resolver = "2"
 
