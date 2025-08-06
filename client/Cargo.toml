@@ -6,8 +6,14 @@ authors = ["Renlabs <contact@renlabs.dev>"]
 description = "Torus substrate client library using subxt"
 license = "MIT"
 
-[dependencies]
+[features]
+default = ["std", "mainnet"]
+std = ["codec/std", "codec/derive", "codec/max-encoded-len", "scale-info/std"]
 
+mainnet = []
+testnet = []
+
+[dependencies]
 anyhow = "1.0.98"
 
 codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }
@@ -39,15 +45,3 @@ paste = "1.0.15"
 tokio = { version = "1.35", features = ["macros", "time", "rt-multi-thread"] }
 torus-client-codegen = { path = "codegen" }
 
-[features]
-
-default = ["std", "mainnet"]
-std = ["codec/std", "codec/derive", "codec/max-encoded-len", "scale-info/std"]
-
-# Network-specific features
-mainnet = []
-testnet = []
-dev = []
-
-# Enable all networks
-all-networks = ["mainnet", "testnet", "dev"]
