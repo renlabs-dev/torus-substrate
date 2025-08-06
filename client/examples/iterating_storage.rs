@@ -1,5 +1,4 @@
 use futures::StreamExt;
-use subxt_signer::ecdsa::dev::{alice, bob};
 use torus_client::client::TorusClient;
 
 #[tokio::main]

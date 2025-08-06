@@ -1,8 +1,4 @@
-use futures::StreamExt;
-use subxt_signer::ecdsa::dev::{alice, bob};
-use torus_client::{
-    client::TorusClient, interfaces::mainnet::api::emission0::storage::types::pending_emission,
-};
+use torus_client::client::TorusClient;
 
 #[tokio::main]
 pub async fn main() {

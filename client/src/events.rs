@@ -38,7 +38,7 @@ impl<C> Events<C> {
             .map_ok(|events| stream::iter(events.into_iter().map(Ok)))
             .try_flatten();
 
-        Ok(events_stream)
+        Ok(Box::pin(events_stream))
     }
 
     pub async fn subscribe<E: StaticEvent>(
@@ -55,6 +55,6 @@ impl<C> Events<C> {
             .map_ok(|events| stream::iter(events.into_iter().map(Ok)))
             .try_flatten();
 
-        Ok(events_stream)
+        Ok(Box::pin(events_stream))
     }
 }
