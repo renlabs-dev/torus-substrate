@@ -3,23 +3,24 @@
 use std::array::from_fn;
 
 use pallet_emission0::{
-    distribute::{get_total_emission_per_block, ConsensusMemberInput},
     Config, ConsensusMember, ConsensusMembers, EmissionRecyclingPercentage, IncentivesRatio,
     PendingEmission, WeightControlDelegation,
+    distribute::{ConsensusMemberInput, get_total_emission_per_block},
 };
 use polkadot_sdk::{
+    frame_support::traits::Currency,
     pallet_balances,
     sp_core::Get,
     sp_runtime::{BoundedVec, FixedU128, Perbill, Percent},
 };
 use test_utils::{
-    add_balance, add_stake,
+    AccountId, Balances, ExistentialDeposit, Test, add_balance, add_stake,
     pallet_governance::{Allocators, TreasuryEmissionFee},
     pallet_torus0::{
-        stake::sum_staked_by, Agents, FeeConstraints, MaxAllowedValidators, MinAllowedStake,
-        MinValidatorStake, StakedBy,
+        Agents, FeeConstraints, MaxAllowedValidators, MinAllowedStake, MinValidatorStake, StakedBy,
+        stake::sum_staked_by,
     },
-    register_empty_agent, step_block, Test,
+    register_empty_agent, step_block,
 };
 
 #[test]
@@ -89,7 +90,7 @@ fn weights_are_filtered_and_normalized() {
         let mut member = ConsensusMember::<Test>::default();
         member.update_weights(BoundedVec::truncate_from(vec![
             (0, 0),  // self-weight is discarded
-            (1, 10), // unregistered agent still in members
+            (1, 10), // deregistered agent still in members
             (2, 20), // new agent not in members
             (3, 40), // unknown agent
         ]));
@@ -126,14 +127,14 @@ fn creates_member_input_correctly() {
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
-                registered: false
+                whitelisted: false
             }
         );
 
         register_empty_agent(0);
 
         let input = ConsensusMemberInput::<Test>::from_agent(0, member.weights.clone(), 0);
-        assert!(input.registered);
+        assert!(input.whitelisted);
 
         StakedBy::<Test>::set(0, 1, Some(10));
         StakedBy::<Test>::set(0, 2, Some(20));
@@ -155,7 +156,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
         let validator = 0;
         let new = 1;
         let delegating_registered = 2;
-        let delegating_unregistered = 3;
+        let delegating_deregistered = 3;
         let delegating_unknown = 4;
         let miner = 5;
         let staker = 6;
@@ -166,7 +167,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
             register_empty_agent(id);
         }
 
-        for id in [miner, delegating_registered, delegating_unregistered] {
+        for id in [miner, delegating_registered, delegating_deregistered] {
             ConsensusMembers::<Test>::set(id, Some(Default::default()));
         }
 
@@ -179,7 +180,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
 
         for id in [
             delegating_registered,
-            delegating_unregistered,
+            delegating_deregistered,
             delegating_unknown,
         ] {
             WeightControlDelegation::<Test>::set(id, Some(validator));
@@ -198,7 +199,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: stake * 3,
                 normalized_stake: FixedU128::from_float(0.75f64),
                 delegating_to: None,
-                registered: true,
+                whitelisted: true,
             }
         );
 
@@ -212,7 +213,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
-                registered: true,
+                whitelisted: true,
             }
         );
 
@@ -226,21 +227,21 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: stake,
                 normalized_stake: FixedU128::from_float(0.25f64),
                 delegating_to: Some(validator),
-                registered: true,
+                whitelisted: true,
             }
         );
 
         assert_eq!(
-            members[&delegating_unregistered],
+            members[&delegating_deregistered],
             ConsensusMemberInput {
-                agent_id: delegating_unregistered,
+                agent_id: delegating_deregistered,
                 validator_permit: false,
                 weights: vec![],
                 stakes: vec![],
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: Some(validator),
-                registered: false,
+                whitelisted: false,
             }
         );
 
@@ -254,7 +255,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: Some(validator),
-                registered: false,
+                whitelisted: false,
             }
         );
 
@@ -268,7 +269,7 @@ fn creates_list_of_all_member_inputs_for_rewards() {
                 total_stake: 0,
                 normalized_stake: FixedU128::from_inner(0),
                 delegating_to: None,
-                registered: true,
+                whitelisted: true,
             }
         );
     });
@@ -396,6 +397,9 @@ fn pays_dividends_to_stakers() {
         ConsensusMembers::<Test>::set(miner, Some(Default::default()));
 
         for id in [validator, miner] {
+            let _ =
+                <Balances as Currency<AccountId>>::deposit_creating(&id, ExistentialDeposit::get());
+
             register_empty_agent(id);
         }
 
@@ -594,6 +598,9 @@ fn pays_weight_delegation_fee_to_validators_without_permits() {
         ConsensusMembers::<Test>::set(miner, Some(Default::default()));
 
         for id in [val_1, val_2, miner] {
+            let _ =
+                <Balances as Currency<AccountId>>::deposit_creating(&id, ExistentialDeposit::get());
+
             register_empty_agent(id);
         }
 

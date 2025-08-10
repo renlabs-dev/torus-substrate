@@ -1,9 +1,9 @@
 #![allow(clippy::arithmetic_side_effects)]
 
 use pallet_governance::{
+    Config, DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
     config::GovernanceConfiguration,
     proposal::{GlobalParamsData, ProposalStatus},
-    Config, DaoTreasuryAddress, Error, GlobalGovernanceConfig, Proposals,
 };
 use polkadot_sdk::{
     frame_support::{assert_err, assert_ok, traits::Get},
@@ -11,8 +11,8 @@ use polkadot_sdk::{
     sp_runtime::{BoundedBTreeSet, Percent},
 };
 use test_utils::{
-    add_balance, as_tors, get_balance, get_origin, new_test_ext, step_block, zero_min_burn,
-    AccountId, Test,
+    AccountId, Test, add_balance, as_tors, get_balance, get_origin, new_test_ext, step_block,
+    zero_min_burn,
 };
 
 fn default_params<T: Config>() -> GlobalParamsData<T> {
@@ -38,8 +38,7 @@ fn register(account: AccountId, _unused: u16, module: AccountId, stake: u128) {
 
     assert_ok!(pallet_torus0::agent::register::<Test>(
         module,
-        module,
-        b"agent".to_vec(),
+        format!("agent{account}").as_bytes().to_vec(),
         b"url".to_vec(),
         b"metadata".to_vec(),
     ));

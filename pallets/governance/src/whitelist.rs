@@ -1,6 +1,6 @@
 use polkadot_sdk::frame_support::dispatch::DispatchResult;
 
-use crate::{application, AccountIdOf};
+use crate::{AccountIdOf, application};
 
 /// Adds a key to the DAO whitelist, allowing it to register an agent.
 pub fn add_to_whitelist<T: crate::Config>(key: AccountIdOf<T>) -> DispatchResult {
@@ -14,6 +14,7 @@ pub fn add_to_whitelist<T: crate::Config>(key: AccountIdOf<T>) -> DispatchResult
 
     crate::Whitelist::<T>::insert(key.clone(), ());
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::WhitelistAdded(key));
+
     Ok(())
 }
 
@@ -29,8 +30,8 @@ pub fn remove_from_whitelist<T: crate::Config>(key: AccountIdOf<T>) -> DispatchR
     }
 
     crate::Whitelist::<T>::remove(&key);
-    let _ = pallet_torus0::agent::unregister::<T>(key.clone());
     crate::Pallet::<T>::deposit_event(crate::Event::<T>::WhitelistRemoved(key));
+
     Ok(())
 }
 

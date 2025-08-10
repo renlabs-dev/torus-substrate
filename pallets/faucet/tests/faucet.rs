@@ -5,18 +5,16 @@ use std::{cell::RefCell, io::Read, num::NonZeroU128};
 use crate::frame_support::assert_ok;
 use polkadot_sdk::{
     frame_support::{
-        self, parameter_types,
+        self, PalletId, parameter_types,
         traits::{Currency, Everything, Hooks},
-        PalletId,
     },
     frame_system, pallet_balances,
     polkadot_sdk_frame::{prelude::BlockNumberFor, runtime::prelude::*},
-    sp_core::{hex2array, keccak_256, ByteArray, Get, H256, U256},
+    sp_core::{ByteArray, Get, H256, U256, hex2array, keccak_256},
     sp_io,
     sp_runtime::{
-        self,
+        self, BoundedVec, BuildStorage, Percent,
         traits::{AccountIdConversion, BlakeTwo256, BlockNumberProvider, IdentityLookup},
-        BoundedVec, BuildStorage, Percent,
     },
     sp_tracing,
 };
@@ -148,6 +146,7 @@ impl pallet_torus0::Config for Test {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type ExistentialDeposit = ExistentialDeposit;
 
     type Governance = Governance;
 
@@ -262,6 +261,8 @@ impl pallet_permission0::Config for Test {
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 
     type MaxNamespacesPerPermission = ConstU32<0>;
+    type MaxChildrenPerPermission = ConstU32<0>;
+    type MaxCuratorSubpermissionsPerPermission = ConstU32<0>;
 }
 
 impl pallet_balances::Config for Test {
@@ -273,7 +274,7 @@ impl pallet_balances::Config for Test {
     type MaxLocks = MaxLocks;
     type WeightInfo = ();
     type MaxReserves = MaxReserves;
-    type ReserveIdentifier = ();
+    type ReserveIdentifier = [u8; 8];
     type RuntimeHoldReason = ();
     type FreezeIdentifier = ();
     type MaxFreezes = polkadot_sdk::frame_support::traits::ConstU32<16>;

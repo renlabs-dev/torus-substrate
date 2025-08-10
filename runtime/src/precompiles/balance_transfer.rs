@@ -10,8 +10,8 @@ use polkadot_sdk::{
 use sp_std::vec;
 
 use crate::{
-    precompiles::{bytes_to_account_id, get_method_id, get_slice},
     Runtime, RuntimeCall,
+    precompiles::{bytes_to_account_id, get_method_id, get_slice},
 };
 
 pub const BALANCE_TRANSFER_INDEX: u64 = 2048;

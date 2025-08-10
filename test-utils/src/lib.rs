@@ -5,15 +5,15 @@ use std::{cell::RefCell, num::NonZeroU128};
 pub use pallet_emission0;
 pub use pallet_governance;
 pub use pallet_permission0;
+use pallet_permission0::CuratorPermissions;
 pub use pallet_torus0;
 
-use pallet_permission0_api::{CuratorPermissions, PermissionId};
+use pallet_permission0_api::PermissionId;
 use pallet_torus0::MinAllowedStake;
 use polkadot_sdk::{
     frame_support::{
-        self, parameter_types,
+        self, PalletId, parameter_types,
         traits::{Currency, Everything, Hooks},
-        PalletId,
     },
     frame_system::{self, RawOrigin},
     pallet_balances,
@@ -21,8 +21,8 @@ use polkadot_sdk::{
     sp_core::{Get, H256},
     sp_io,
     sp_runtime::{
+        BoundedBTreeMap, BuildStorage, Percent,
         traits::{BlakeTwo256, IdentityLookup},
-        BuildStorage, Percent,
     },
     sp_tracing,
 };
@@ -154,6 +154,7 @@ impl pallet_torus0::Config for Test {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type ExistentialDeposit = ExistentialDeposit;
 
     type Governance = Governance;
 
@@ -267,6 +268,8 @@ impl pallet_permission0::Config for Test {
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 
     type MaxNamespacesPerPermission = ConstU32<10>;
+    type MaxChildrenPerPermission = ConstU32<10>;
+    type MaxCuratorSubpermissionsPerPermission = ConstU32<10>;
 }
 
 impl pallet_balances::Config for Test {
@@ -278,7 +281,7 @@ impl pallet_balances::Config for Test {
     type MaxLocks = MaxLocks;
     type WeightInfo = ();
     type MaxReserves = MaxReserves;
-    type ReserveIdentifier = ();
+    type ReserveIdentifier = [u8; 8];
     type RuntimeHoldReason = ();
     type FreezeIdentifier = ();
     type MaxFreezes = polkadot_sdk::frame_support::traits::ConstU32<16>;
@@ -426,9 +429,9 @@ pub type NegativeImbalanceOf = <pallet_balances::Pallet<Test> as Currency<
 >>::NegativeImbalance;
 
 #[allow(clippy::too_many_arguments)]
-pub fn grant_emission_permission(
-    grantor: AccountId,
-    grantee: AccountId,
+pub fn delegate_emission_permission(
+    delegator: AccountId,
+    recipient: AccountId,
     allocation: pallet_permission0_api::EmissionAllocation<Balance>,
     targets: Vec<(AccountId, u16)>,
     distribution: pallet_permission0_api::DistributionControl<Balance, BlockNumber>,
@@ -443,9 +446,9 @@ pub fn grant_emission_permission(
         BlockNumber,
         Balance,
         NegativeImbalanceOf,
-    >>::grant_emission_permission(
-        grantor,
-        grantee,
+    >>::delegate_emission_permission(
+        delegator,
+        recipient,
         allocation,
         targets,
         distribution,
@@ -455,23 +458,22 @@ pub fn grant_emission_permission(
     )
 }
 
-pub fn grant_curator_permission(
+pub fn delegate_curator_permission(
     key: AccountId,
     flags: CuratorPermissions,
     cooldown: Option<BlockNumber>,
 ) {
-    use pallet_permission0_api::Permission0CuratorApi;
-    <pallet_permission0::Pallet<Test> as Permission0CuratorApi<
-        AccountId,
-        RuntimeOrigin,
-        BlockNumber,
-    >>::grant_curator_permission(
+    let mut map = BoundedBTreeMap::new();
+    map.try_insert(None, flags.bits()).unwrap();
+
+    Permission0::delegate_curator_permission(
         RawOrigin::Root.into(),
         key,
-        flags,
+        map,
         cooldown,
-        pallet_permission0_api::PermissionDuration::Indefinite,
-        pallet_permission0_api::RevocationTerms::Irrevocable,
+        pallet_permission0::PermissionDuration::Indefinite,
+        pallet_permission0::RevocationTerms::Irrevocable,
+        1,
     )
     .expect("failed to register curator");
 }

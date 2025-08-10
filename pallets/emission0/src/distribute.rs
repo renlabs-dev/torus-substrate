@@ -3,15 +3,15 @@ use pallet_permission0_api::Permission0EmissionApi;
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_support::{
+        DebugNoBound,
         dispatch::DispatchResult,
         storage::with_storage_layer,
         traits::{Currency, Imbalance},
-        DebugNoBound,
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
     sp_core::Get,
     sp_runtime::{
-        traits::Saturating, ArithmeticError, DispatchError, FixedU128, Percent, Perquintill,
+        ArithmeticError, DispatchError, FixedU128, Percent, Perquintill, traits::Saturating,
     },
     sp_std::{
         borrow::Cow,
@@ -92,11 +92,11 @@ pub struct ConsensusMemberInput<T: Config> {
     pub total_stake: u128,
     pub normalized_stake: FixedU128,
     pub delegating_to: Option<T::AccountId>,
-    pub registered: bool,
+    pub whitelisted: bool,
 }
 
 impl<T: Config> ConsensusMemberInput<T> {
-    pub fn from_new_agent(agent_id: T::AccountId, registered: bool) -> Self {
+    pub fn from_new_agent(agent_id: T::AccountId, whitelisted: bool) -> Self {
         Self {
             agent_id,
             validator_permit: Default::default(),
@@ -105,7 +105,7 @@ impl<T: Config> ConsensusMemberInput<T> {
             total_stake: Default::default(),
             normalized_stake: Default::default(),
             delegating_to: Default::default(),
-            registered,
+            whitelisted,
         }
     }
 
@@ -113,39 +113,39 @@ impl<T: Config> ConsensusMemberInput<T> {
     pub fn all_members() -> BTreeMap<T::AccountId, ConsensusMemberInput<T>> {
         let min_validator_stake = <T::Torus>::min_validator_stake();
 
-        let mut registered_agents: BTreeSet<_> = <T::Torus>::agent_ids()
+        let mut whitelisted_agents: BTreeSet<_> = <T::Torus>::agent_ids()
             .filter(<T::Governance>::is_whitelisted)
             .collect();
         let mut consensus_members: BTreeMap<_, _> = crate::ConsensusMembers::<T>::iter().collect();
 
         let mut inputs: Vec<_> = crate::WeightControlDelegation::<T>::iter()
-            .map(|(delegator, delegatee)| {
-                let is_registered = registered_agents.remove(&delegator);
+            .map(|(delegator, recipient)| {
+                let is_whitelisted = whitelisted_agents.remove(&delegator);
                 consensus_members.remove(&delegator);
 
-                let mut input = if let Some(delegatee_input) = consensus_members.get(&delegatee) {
+                let mut input = if let Some(delegatee_input) = consensus_members.get(&recipient) {
                     Self::from_agent(
                         delegator.clone(),
                         delegatee_input.weights.clone(),
                         min_validator_stake,
                     )
                 } else {
-                    Self::from_new_agent(delegator.clone(), is_registered)
+                    Self::from_new_agent(delegator.clone(), is_whitelisted)
                 };
 
-                input.delegating_to = Some(delegatee);
+                input.delegating_to = Some(recipient);
 
                 (delegator, input)
             })
             .collect();
 
-        inputs.extend(registered_agents.into_iter().map(|agent_id| {
-            let input = consensus_members
-                .remove(&agent_id)
-                .map(|member| {
-                    Self::from_agent(agent_id.clone(), member.weights, min_validator_stake)
-                })
-                .unwrap_or_else(|| Self::from_new_agent(agent_id.clone(), true));
+        inputs.extend(whitelisted_agents.into_iter().map(|agent_id| {
+            let input = if let Some(member) = consensus_members.remove(&agent_id) {
+                Self::from_agent(agent_id.clone(), member.weights, min_validator_stake)
+            } else {
+                Self::from_new_agent(agent_id.clone(), true)
+            };
+
             (agent_id, input)
         }));
 
@@ -211,7 +211,7 @@ impl<T: Config> ConsensusMemberInput<T> {
         };
 
         ConsensusMemberInput {
-            registered: <T::Torus>::is_agent_registered(&agent_id)
+            whitelisted: <T::Torus>::is_agent_registered(&agent_id)
                 && <T::Governance>::is_whitelisted(&agent_id),
 
             agent_id,
@@ -236,7 +236,8 @@ impl<T: Config> ConsensusMemberInput<T> {
             .filter(|(id, _)| {
                 id != agent_id
                     && (crate::ConsensusMembers::<T>::contains_key(id)
-                        || <T::Torus>::is_agent_registered(id))
+                        || (<T::Torus>::is_agent_registered(id)
+                            && <T::Governance>::is_whitelisted(id)))
             })
             .map(|(id, weight)| {
                 let weight = FixedU128::from_u32(weight as u32);
@@ -374,8 +375,11 @@ fn linear_rewards<T: Config>(mut emission: NegativeImbalanceOf<T>) -> NegativeIm
             );
 
             let raw_amount = amount.peek();
+
             T::Currency::resolve_creating(&staker, amount);
-            let _ = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount);
+            if let Err(err) = <T::Torus>::stake_to(&staker, &input.agent_id, raw_amount) {
+                error!("failed to stake {raw_amount} tokens to {staker:?}: {err:?}");
+            }
         };
 
         if dividend.peek() != 0 {
@@ -398,7 +402,7 @@ fn linear_rewards<T: Config>(mut emission: NegativeImbalanceOf<T>) -> NegativeIm
             add_stake(input.agent_id.clone(), remaining_emission);
         }
 
-        if input.registered {
+        if input.whitelisted {
             crate::ConsensusMembers::<T>::mutate(
                 &input.agent_id,
                 |member: &mut Option<ConsensusMember<T>>| {

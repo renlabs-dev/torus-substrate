@@ -1,12 +1,12 @@
 use pallet_governance_api::GovernanceApi;
-use pallet_torus0::{agent::Agent, AgentUpdateCooldown, Agents, Burn, Error};
+use pallet_torus0::{AgentUpdateCooldown, Agents, Burn, Error, agent::Agent};
 use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{frame_support::assert_err, sp_core::Get, sp_runtime::Percent};
 use test_utils::{
-    assert_ok, clear_cooldown, get_balance, get_origin,
+    Governance, Test, assert_ok, clear_cooldown, get_balance, get_origin,
     pallet_emission0::{PendingEmission, WeightControlDelegation},
     pallet_governance::{self, Allocators, DaoTreasuryAddress, TreasuryEmissionFee},
-    step_block, Governance, Test,
+    step_block,
 };
 
 #[test]
@@ -48,7 +48,6 @@ fn register_correctly() {
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent_id,
-            agent_id,
             name.clone(),
             url.clone(),
             metadata.clone(),
@@ -72,7 +71,6 @@ fn register_correctly() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
-                agent_id,
                 agent_id,
                 name.clone(),
                 url.clone(),
@@ -98,7 +96,6 @@ fn register_without_being_whitelisted() {
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
             agent,
-            agent,
             name.clone(),
             url.clone(),
             metadata.clone(),
@@ -122,7 +119,6 @@ fn register_without_enough_balance() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
-                agent,
                 agent,
                 name.clone(),
                 url.clone(),
@@ -149,7 +145,6 @@ fn register_fail_name_validation() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
-                agent,
                 "".as_bytes().to_vec(),
                 url.clone(),
                 metadata.clone(),
@@ -159,7 +154,6 @@ fn register_fail_name_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
-                agent,
                 agent,
                 " ".repeat(pallet_torus0::MaxNameLength::<Test>::get() as usize + 1)
                     .as_bytes()
@@ -172,7 +166,6 @@ fn register_fail_name_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
-                agent,
                 agent,
                 vec![249u8, 9u8, 42u8],
                 url.clone(),
@@ -197,7 +190,6 @@ fn register_fail_url_validation() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
-                agent,
                 name.clone(),
                 "".as_bytes().to_vec(),
                 metadata.clone(),
@@ -207,7 +199,6 @@ fn register_fail_url_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
-                agent,
                 agent,
                 name.clone(),
                 "X".repeat(pallet_torus0::MaxAgentUrlLength::<Test>::get() as usize + 1)
@@ -220,7 +211,6 @@ fn register_fail_url_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
-                agent,
                 agent,
                 name.clone(),
                 vec![249u8, 9u8, 42u8],
@@ -245,7 +235,6 @@ fn register_fail_metadata_validation() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
-                agent,
                 name.clone(),
                 url.clone(),
                 "".as_bytes().to_vec(),
@@ -260,7 +249,6 @@ fn register_fail_metadata_validation() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
-                agent,
                 name.clone(),
                 url.clone(),
                 " ".repeat(max_metadata_length + 1).as_bytes().to_vec(),
@@ -270,7 +258,6 @@ fn register_fail_metadata_validation() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
-                agent,
                 agent,
                 name.clone(),
                 url.clone(),
@@ -297,7 +284,6 @@ fn register_more_than_allowed_registrations_per_block() {
 
         assert_err!(
             pallet_torus0::agent::register::<Test>(
-                agent,
                 agent,
                 name.clone(),
                 url.clone(),
@@ -329,7 +315,6 @@ fn register_more_than_registrations_per_interval() {
         assert_err!(
             pallet_torus0::agent::register::<Test>(
                 agent,
-                agent,
                 name.clone(),
                 url.clone(),
                 metadata.clone(),
@@ -342,7 +327,7 @@ fn register_more_than_registrations_per_interval() {
 }
 
 #[test]
-fn unregister_correctly() {
+fn deregister_correctly() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = b"alice".to_vec();
@@ -355,7 +340,6 @@ fn unregister_correctly() {
 
         assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
             get_origin(agent),
-            agent,
             name.clone(),
             url.clone(),
             metadata.clone(),
@@ -366,7 +350,7 @@ fn unregister_correctly() {
             "agent.alice".parse::<NamespacePath>().unwrap()
         ));
 
-        assert_ok!(pallet_torus0::Pallet::<Test>::unregister_agent(get_origin(
+        assert_ok!(pallet_torus0::Pallet::<Test>::deregister_agent(get_origin(
             agent
         )));
 
@@ -380,7 +364,7 @@ fn unregister_correctly() {
 }
 
 #[test]
-fn unregister_twice() {
+fn deregister_twice() {
     test_utils::new_test_ext().execute_with(|| {
         let agent = 0;
         let name = b"agent".to_vec();
@@ -393,17 +377,16 @@ fn unregister_twice() {
 
         assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
             get_origin(agent),
-            agent,
             name.clone(),
             url.clone(),
             metadata.clone(),
         ));
 
-        assert_ok!(pallet_torus0::Pallet::<Test>::unregister_agent(get_origin(
+        assert_ok!(pallet_torus0::Pallet::<Test>::deregister_agent(get_origin(
             agent
         )));
         assert_err!(
-            pallet_torus0::agent::unregister::<Test>(agent),
+            pallet_torus0::agent::deregister::<Test>(agent),
             Error::<Test>::AgentDoesNotExist
         );
 
@@ -432,7 +415,6 @@ fn update_correctly() {
 
         assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
             get_origin(agent),
-            agent,
             name,
             url,
             metadata,
@@ -477,7 +459,6 @@ fn update_with_zero_staking_fee() {
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
-            agent,
             agent,
             name.clone(),
             url.clone(),
@@ -527,7 +508,6 @@ fn update_with_zero_weight_control_fee() {
         ));
 
         assert_ok!(pallet_torus0::agent::register::<Test>(
-            agent,
             agent,
             name.clone(),
             url.clone(),
@@ -581,7 +561,6 @@ fn fails_updating_whitout_waiting_cooldown() {
 
         assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
             get_origin(agent),
-            agent,
             name,
             url,
             metadata,
@@ -635,7 +614,6 @@ fn agent_freezing() {
         assert_err!(
             pallet_torus0::Pallet::<Test>::register_agent(
                 get_origin(0),
-                0,
                 b"agent name".to_vec(),
                 b"agent url".to_vec(),
                 vec![],

@@ -9,19 +9,19 @@ use polkadot_sdk::{
     polkadot_sdk_frame::prelude::{TransactionValidity, TransactionValidityError},
     sp_core::{ConstU32, H160, U256},
     sp_runtime::{
-        traits::{BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, PostDispatchInfoOf},
         ConsensusEngineId, DispatchResultWithInfo, FixedPointNumber, RuntimeAppPublic,
+        traits::{BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, PostDispatchInfoOf},
     },
     sp_weights::Weight,
 };
 
 use super::{
-    precompiles::FrontierPrecompiles, Aura, Balances, Runtime, RuntimeCall, RuntimeEvent,
-    RuntimeOrigin, Timestamp, UncheckedExtrinsic, NORMAL_DISPATCH_RATIO,
+    Aura, Balances, NORMAL_DISPATCH_RATIO, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
+    Timestamp, UncheckedExtrinsic, precompiles::FrontierPrecompiles,
 };
 use crate::{
-    configs::{currency, WEIGHT_REF_TIME_PER_SECOND},
     TransactionPayment,
+    configs::{WEIGHT_REF_TIME_PER_SECOND, currency},
 };
 
 impl pallet_evm_chain_id::Config for Runtime {}

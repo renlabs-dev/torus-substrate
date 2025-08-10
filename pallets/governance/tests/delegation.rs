@@ -1,6 +1,6 @@
 use pallet_governance::NotDelegatingVotingPower;
 use polkadot_sdk::frame_support::assert_ok;
-use test_utils::{get_origin, new_test_ext, Test};
+use test_utils::{Test, get_origin, new_test_ext};
 
 #[test]
 fn delegates_voting_power_correctly() {

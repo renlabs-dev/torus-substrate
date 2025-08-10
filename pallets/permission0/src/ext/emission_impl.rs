@@ -1,9 +1,10 @@
 use crate::{
+    AccumulatedStreamAmounts, BalanceOf, Config, DistributionControl, EmissionAllocation,
+    EmissionScope, EnforcementTracking, Error, Event, NegativeImbalanceOf, Pallet,
+    PermissionContract, PermissionDuration, PermissionId, PermissionScope, Permissions,
     generate_permission_id, get_total_allocated_percentage, pallet,
     permission::{emission::*, *},
-    update_permission_indices, AccumulatedStreamAmounts, BalanceOf, Config, DistributionControl,
-    EmissionAllocation, EmissionScope, EnforcementTracking, Error, Event, NegativeImbalanceOf,
-    Pallet, PermissionContract, PermissionDuration, PermissionId, PermissionScope, Permissions,
+    update_permission_indices,
 };
 
 use pallet_permission0_api::{
@@ -13,12 +14,12 @@ use pallet_permission0_api::{
 };
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure, traits::ReservableCurrency},
-    frame_system::{self, ensure_signed, ensure_signed_or_root},
+    frame_system::{ensure_signed, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{Get, TryCollect},
     sp_runtime::{
-        traits::{CheckedAdd, Saturating, Zero},
         BoundedBTreeMap, DispatchError, Percent, Vec,
+        traits::{CheckedAdd, Saturating, Zero},
     },
 };
 
@@ -33,9 +34,9 @@ impl<T: Config>
         NegativeImbalanceOf<T>,
     > for pallet::Pallet<T>
 {
-    fn grant_emission_permission(
-        grantor: T::AccountId,
-        grantee: T::AccountId,
+    fn delegate_emission_permission(
+        delegator: T::AccountId,
+        recipient: T::AccountId,
         allocation: ApiEmissionAllocation<crate::BalanceOf<T>>,
         targets: Vec<(T::AccountId, u16)>,
         distribution: ApiDistributionControl<crate::BalanceOf<T>, BlockNumberFor<T>>,
@@ -70,9 +71,9 @@ impl<T: Config>
             .try_collect()
             .map_err(|_| crate::Error::<T>::TooManyTargets)?;
 
-        grant_emission_permission_impl::<T>(
-            grantor,
-            grantee,
+        delegate_emission_permission_impl::<T>(
+            delegator,
+            recipient,
             internal_allocation,
             targets,
             internal_distribution,
@@ -103,16 +104,16 @@ impl<T: Config>
             return Zero::zero();
         };
 
-        crate::AccumulatedStreamAmounts::<T>::get((contract.grantor, stream, permission_id))
+        crate::AccumulatedStreamAmounts::<T>::get((contract.delegator, stream, permission_id))
             .unwrap_or_default()
     }
 }
 
-/// Grant a permission implementation
+/// Delegate a permission implementation
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn grant_emission_permission_impl<T: Config>(
-    grantor: T::AccountId,
-    grantee: T::AccountId,
+pub(crate) fn delegate_emission_permission_impl<T: Config>(
+    delegator: T::AccountId,
+    recipient: T::AccountId,
     allocation: EmissionAllocation<T>,
     targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
     distribution: DistributionControl<T>,
@@ -124,11 +125,11 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
     use polkadot_sdk::frame_support::ensure;
 
     ensure!(
-        T::Torus::is_agent_registered(&grantor),
+        T::Torus::is_agent_registered(&delegator),
         Error::<T>::NotRegisteredAgent
     );
     ensure!(
-        T::Torus::is_agent_registered(&grantee),
+        T::Torus::is_agent_registered(&recipient),
         Error::<T>::NotRegisteredAgent
     );
 
@@ -136,12 +137,12 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
 
     match &allocation {
         EmissionAllocation::Streams(streams) => {
-            validate_emission_permission_streams::<T>(streams, &grantor)?;
+            validate_emission_permission_streams::<T>(streams, &delegator)?;
         }
         EmissionAllocation::FixedAmount(amount) => {
             ensure!(*amount > BalanceOf::<T>::zero(), Error::<T>::InvalidAmount);
             ensure!(
-                T::Currency::can_reserve(&grantor, *amount),
+                T::Currency::can_reserve(&delegator, *amount),
                 Error::<T>::InsufficientBalance
             );
             ensure!(
@@ -161,8 +162,8 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
             Permissions::<T>::get(parent).ok_or(Error::<T>::ParentPermissionNotFound)?;
 
         ensure!(
-            parent_contract.grantee == grantor,
-            Error::<T>::NotPermissionGrantee
+            parent_contract.recipient == delegator,
+            Error::<T>::NotPermissionRecipient
         );
     }
 
@@ -175,31 +176,28 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
 
     let scope = PermissionScope::Emission(emission_scope);
 
-    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope)?;
+    let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
 
-    let contract = PermissionContract {
-        grantor: grantor.clone(),
-        grantee: grantee.clone(),
+    let contract = PermissionContract::<T>::new(
+        delegator.clone(),
+        recipient.clone(),
         scope,
         duration,
         revocation,
         enforcement,
-        last_execution: None,
-        execution_count: 0,
-        parent: parent_id,
-        created_at: <frame_system::Pallet<T>>::block_number(),
-    };
+        1,
+    );
 
     // Reserve funds if fixed amount allocation. We use the Balances API for this.
     // This means total issuance is always correct.
     match allocation {
         EmissionAllocation::FixedAmount(amount) => {
-            T::Currency::reserve(&grantor, amount)?;
+            T::Currency::reserve(&delegator, amount)?;
         }
         EmissionAllocation::Streams(streams) => {
             for stream in streams.keys() {
                 AccumulatedStreamAmounts::<T>::set(
-                    (&grantor, stream, permission_id),
+                    (&delegator, stream, permission_id),
                     Some(Zero::zero()),
                 )
             }
@@ -208,11 +206,11 @@ pub(crate) fn grant_emission_permission_impl<T: Config>(
 
     Permissions::<T>::insert(permission_id, contract);
 
-    update_permission_indices::<T>(&grantor, &grantee, permission_id)?;
+    update_permission_indices::<T>(&delegator, &recipient, permission_id)?;
 
-    <Pallet<T>>::deposit_event(Event::PermissionGranted {
-        grantor,
-        grantee,
+    <Pallet<T>>::deposit_event(Event::PermissionDelegated {
+        delegator,
+        recipient,
         permission_id,
     });
 
@@ -235,7 +233,7 @@ pub fn execute_permission_impl<T: Config>(
                 EmissionAllocation::Streams(streams) => streams
                     .keys()
                     .filter_map(|id| {
-                        AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))
+                        AccumulatedStreamAmounts::<T>::get((&contract.delegator, id, permission_id))
                     })
                     .fold(BalanceOf::<T>::zero(), |acc, e| acc.saturating_add(e)), // The Balance AST does not enforce the Sum trait
                 EmissionAllocation::FixedAmount(amount) => *amount,
@@ -247,7 +245,7 @@ pub fn execute_permission_impl<T: Config>(
                 *permission_id,
                 contract,
                 DistributionReason::Manual,
-            );
+            )?;
 
             Ok(())
         }
@@ -268,7 +266,7 @@ pub fn toggle_permission_accumulation_impl<T: Config>(
 
     if let Some(who) = &who {
         match &contract.enforcement {
-            _ if who == &contract.grantor => {}
+            _ if who == &contract.delegator => {}
             EnforcementAuthority::None => {
                 return Err(Error::<T>::NotAuthorizedToToggle.into());
             }
@@ -345,11 +343,11 @@ pub(crate) fn update_emission_permission<T: Config>(
         return Err(Error::<T>::PermissionNotFound.into());
     };
 
-    let allowed_grantor = permission.grantor == who && permission.is_updatable();
-    let allowed_grantee =
-        permission.grantee == who && (new_streams.is_none() && new_distribution_control.is_none());
+    let allowed_delegator = permission.delegator == who && permission.is_updatable();
+    let allowed_recipient = permission.recipient == who
+        && (new_streams.is_none() && new_distribution_control.is_none());
 
-    if !allowed_grantor && !allowed_grantee {
+    if !allowed_delegator && !allowed_recipient {
         return Err(Error::<T>::NotAuthorizedToEdit.into());
     }
 
@@ -369,21 +367,21 @@ pub(crate) fn update_emission_permission<T: Config>(
                     permission_id,
                     &permission,
                     DistributionReason::Manual,
-                );
+                )?;
 
                 for stream in streams.keys() {
                     AccumulatedStreamAmounts::<T>::remove((
-                        &permission.grantor,
+                        &permission.delegator,
                         stream,
                         &permission_id,
                     ));
                 }
 
-                validate_emission_permission_streams::<T>(&new_streams, &permission.grantor)?;
+                validate_emission_permission_streams::<T>(&new_streams, &permission.delegator)?;
 
                 for stream in new_streams.keys() {
                     AccumulatedStreamAmounts::<T>::set(
-                        (&permission.grantor, stream, permission_id),
+                        (&permission.delegator, stream, permission_id),
                         Some(Zero::zero()),
                     )
                 }
@@ -423,12 +421,12 @@ fn validate_emission_permission_target_weights<T: Config>(
 }
 fn validate_emission_permission_streams<T: Config>(
     streams: &BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>,
-    grantor: &T::AccountId,
+    delegator: &T::AccountId,
 ) -> DispatchResult {
     for (stream, percentage) in streams {
         ensure!(*percentage <= Percent::one(), Error::<T>::InvalidPercentage);
 
-        let total_allocated = get_total_allocated_percentage::<T>(grantor, stream);
+        let total_allocated = get_total_allocated_percentage::<T>(delegator, stream);
         let new_total_allocated = match total_allocated.checked_add(percentage) {
             Some(new_total_allocated) => new_total_allocated,
             None => return Err(Error::<T>::TotalAllocationExceeded.into()),

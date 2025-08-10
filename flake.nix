@@ -49,6 +49,8 @@
           pkgs.just
           # Python
           pkgs.python310
+          # Subxt CLI for metadata handling
+          pkgs.subxt
           # # Code coverage tool
           # pkgs.cargo-llvm-cov # marked as broken
         ];

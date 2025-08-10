@@ -31,16 +31,16 @@ impl<T: Config> EmissionScope<T> {
         self,
         permission_id: H256,
         last_executed: &Option<BlockNumberFor<T>>,
-        grantor: &T::AccountId,
+        delegator: &T::AccountId,
     ) {
         match self.allocation {
             EmissionAllocation::Streams(streams) => {
                 for stream in streams.keys() {
-                    AccumulatedStreamAmounts::<T>::remove((grantor, stream, &permission_id));
+                    AccumulatedStreamAmounts::<T>::remove((delegator, stream, &permission_id));
                 }
             }
             EmissionAllocation::FixedAmount(amount) if last_executed.is_none() => {
-                T::Currency::unreserve(grantor, amount);
+                T::Currency::unreserve(delegator, amount);
             }
             _ => {}
         }
@@ -60,7 +60,7 @@ pub enum EmissionAllocation<T: Config> {
 #[derive(Encode, Decode, CloneNoBound, PartialEq, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub enum DistributionControl<T: Config> {
-    /// Manual distribution by the grantor
+    /// Manual distribution by the delegator
     Manual,
     /// Automatic distribution after accumulation threshold
     Automatic(BalanceOf<T>),
@@ -73,7 +73,7 @@ pub enum DistributionControl<T: Config> {
 /// Accumulate emissions for a specific agent, distributes if control is met.
 pub(crate) fn do_accumulate_emissions<T: Config>(
     agent: &T::AccountId,
-    stream: &StreamId,
+    stream_id: &StreamId,
     imbalance: &mut NegativeImbalanceOf<T>,
 ) {
     let initial_balance = imbalance.peek();
@@ -83,7 +83,7 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
         return;
     }
 
-    let streams = AccumulatedStreamAmounts::<T>::iter_prefix((agent, stream));
+    let streams = AccumulatedStreamAmounts::<T>::iter_prefix((agent, stream_id));
     for (permission_id, accumulated) in streams {
         let Some(contract) = Permissions::<T>::get(permission_id) else {
             continue;
@@ -104,7 +104,7 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
             continue;
         }
 
-        let Some(percentage) = streams.get(stream) else {
+        let Some(percentage) = streams.get(stream_id) else {
             continue;
         };
 
@@ -118,9 +118,15 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
             .peek();
 
         AccumulatedStreamAmounts::<T>::set(
-            (agent, stream, &permission_id),
+            (agent, stream_id, &permission_id),
             Some(accumulated.saturating_add(delegated_amount)),
         );
+
+        Pallet::<T>::deposit_event(Event::AccumulatedEmission {
+            permission_id,
+            stream_id: *stream_id,
+            amount: delegated_amount,
+        });
     }
 }
 
@@ -129,21 +135,25 @@ pub(crate) fn do_auto_distribution<T: Config>(
     permission_id: H256,
     current_block: BlockNumberFor<T>,
     contract: &PermissionContract<T>,
-) {
+) -> DispatchResult {
     match emission_scope.distribution {
         DistributionControl::Automatic(threshold) => {
             let accumulated = match &emission_scope.allocation {
                 EmissionAllocation::Streams(streams) => streams
                     .keys()
                     .filter_map(|id| {
-                        AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))
+                        AccumulatedStreamAmounts::<T>::get((&contract.delegator, id, permission_id))
                     })
                     .fold(BalanceOf::<T>::zero(), |acc, e| acc.saturating_add(e)), // The Balance AST does not enforce the Sum trait
                 EmissionAllocation::FixedAmount(amount) => *amount,
             };
 
             if accumulated >= threshold {
-                do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
+                do_distribute_emission::<T>(
+                    permission_id,
+                    contract,
+                    DistributionReason::Automatic,
+                )?;
             }
         }
 
@@ -153,31 +163,35 @@ pub(crate) fn do_auto_distribution<T: Config>(
             // we also verify that the last execution occurred before the target block
             // (or haven't occurred at all)
             if contract
-                .last_execution
+                .last_execution()
                 .is_some_and(|last_execution| last_execution >= target_block)
             {
-                return;
+                return Ok(());
             }
 
-            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
+            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic)?;
         }
 
         DistributionControl::Interval(interval) => {
             let last_execution = contract.last_execution.unwrap_or(contract.created_at);
             if current_block.saturating_sub(last_execution) < interval {
-                return;
+                return Ok(());
             }
 
-            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic);
+            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic)?;
         }
 
         // Manual distribution doesn't need auto-processing
         _ => {}
     }
+
+    Ok(())
 }
 
-#[derive(Clone, Copy, Debug)]
-pub(crate) enum DistributionReason {
+#[derive(
+    Encode, Decode, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, TypeInfo, MaxEncodedLen,
+)]
+pub enum DistributionReason {
     Automatic,
     Manual,
 }
@@ -187,29 +201,31 @@ pub(crate) fn do_distribute_emission<T: Config>(
     permission_id: PermissionId,
     contract: &PermissionContract<T>,
     reason: DistributionReason,
-) {
-    #[allow(irrefutable_let_patterns)]
-    let PermissionScope::Emission(emission_scope) = &contract.scope
-    else {
-        return;
+) -> DispatchResult {
+    let PermissionScope::Emission(emission_scope) = &contract.scope else {
+        return Ok(());
     };
 
     let total_weight =
         FixedU128::from_u32(emission_scope.targets.values().map(|w| *w as u32).sum());
     if total_weight.is_zero() {
-        return;
+        trace!("permission {permission_id:?} does not have enough target weight");
+        return Ok(());
     }
 
     match &emission_scope.allocation {
         EmissionAllocation::Streams(streams) => {
-            let streams = streams.keys().filter_map(|id| {
-                let acc =
-                    AccumulatedStreamAmounts::<T>::get((&contract.grantor, id, permission_id))?;
+            let streams = streams.keys().filter_map(|stream_id| {
+                let acc = AccumulatedStreamAmounts::<T>::get((
+                    &contract.delegator,
+                    stream_id,
+                    permission_id,
+                ))?;
 
                 // You cannot remove the stream from the storage as
-                // it's needed in the accumulation code
+                // it's needed in the accumulation code, avoid using `take`
                 AccumulatedStreamAmounts::<T>::set(
-                    (&contract.grantor, id, permission_id),
+                    (&contract.delegator, stream_id, permission_id),
                     Some(Zero::zero()),
                 );
 
@@ -219,7 +235,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
                     // For percentage allocations, mint new tokens
                     // This is safe because we're only distributing a percentage of
                     // tokens that were already allocated to emission rewards
-                    Some((id, T::Currency::issue(acc)))
+                    Some((stream_id, T::Currency::issue(acc)))
                 }
             });
 
@@ -227,7 +243,6 @@ pub(crate) fn do_distribute_emission<T: Config>(
                 do_distribute_to_targets(
                     &mut imbalance,
                     permission_id,
-                    contract,
                     emission_scope,
                     Some(stream),
                     total_weight,
@@ -237,28 +252,22 @@ pub(crate) fn do_distribute_emission<T: Config>(
                 let remainder = imbalance.peek();
                 if !remainder.is_zero() {
                     AccumulatedStreamAmounts::<T>::mutate(
-                        (&contract.grantor, stream, permission_id),
-                        |acc| {
-                            if let Some(acc_value) = acc {
-                                *acc_value = acc_value.saturating_add(remainder);
-                            } else {
-                                *acc = Some(remainder)
-                            }
-                        },
+                        (&contract.delegator, stream, permission_id),
+                        |acc| *acc = Some(acc.unwrap_or_default().saturating_add(remainder)),
                     );
                 }
             }
         }
         EmissionAllocation::FixedAmount(amount) => {
-            if contract.last_execution.is_some() {
+            if contract.last_execution().is_some() {
                 // The fixed amount was already distributed
-                return;
+                return Ok(());
             }
 
             // For fixed amount allocations, transfer from reserved funds
-            let _ = T::Currency::unreserve(&contract.grantor, *amount);
+            let _ = T::Currency::unreserve(&contract.delegator, *amount);
             let mut imbalance = T::Currency::withdraw(
-                &contract.grantor,
+                &contract.delegator,
                 *amount,
                 WithdrawReasons::TRANSFER,
                 ExistenceRequirement::KeepAlive,
@@ -268,7 +277,6 @@ pub(crate) fn do_distribute_emission<T: Config>(
             do_distribute_to_targets(
                 &mut imbalance,
                 permission_id,
-                contract,
                 emission_scope,
                 None,
                 total_weight,
@@ -277,18 +285,17 @@ pub(crate) fn do_distribute_emission<T: Config>(
         }
     }
 
-    Permissions::<T>::mutate(permission_id, |maybe_contract| {
-        if let Some(c) = maybe_contract {
-            c.last_execution = Some(<frame_system::Pallet<T>>::block_number());
-            c.execution_count = c.execution_count.saturating_add(1);
-        }
-    });
+    if let Some(mut contract) = Permissions::<T>::get(permission_id) {
+        contract.tick_execution(<frame_system::Pallet<T>>::block_number())?;
+        Permissions::<T>::set(permission_id, Some(contract));
+    }
+
+    Ok(())
 }
 
 fn do_distribute_to_targets<T: Config>(
     imbalance: &mut NegativeImbalanceOf<T>,
     permission_id: PermissionId,
-    contract: &PermissionContract<T>,
     emission_scope: &EmissionScope<T>,
     stream: Option<&StreamId>,
     total_weight: FixedU128,
@@ -298,6 +305,7 @@ fn do_distribute_to_targets<T: Config>(
     let total_initial_amount =
         FixedU128::from_inner(initial_balance.try_into().unwrap_or_default());
     if total_initial_amount.is_zero() {
+        trace!("no amount to distribute for permission {permission_id:?} and stream {stream:?}");
         return;
     }
 
@@ -322,25 +330,13 @@ fn do_distribute_to_targets<T: Config>(
         }
 
         T::Currency::resolve_creating(target, imbalance);
-    }
 
-    let amount = initial_balance.saturating_sub(imbalance.peek());
-    if !amount.is_zero() {
-        <Pallet<T>>::deposit_event(match reason {
-            DistributionReason::Automatic => Event::AutoDistributionExecuted {
-                grantor: contract.grantor.clone(),
-                grantee: contract.grantee.clone(),
-                permission_id,
-                stream_id: None,
-                amount,
-            },
-            DistributionReason::Manual => Event::PermissionExecuted {
-                grantor: contract.grantor.clone(),
-                grantee: contract.grantee.clone(),
-                permission_id,
-                stream_id: None,
-                amount,
-            },
+        Pallet::<T>::deposit_event(Event::EmissionDistribution {
+            permission_id,
+            stream_id: stream.cloned(),
+            target: target.clone(),
+            amount: target_amount,
+            reason,
         });
     }
 }

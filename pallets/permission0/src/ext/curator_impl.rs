@@ -1,16 +1,15 @@
 use crate::{
-    generate_permission_id, pallet, update_permission_indices, Config, CuratorPermissions,
-    CuratorScope, Error, Event, Pallet, PermissionContract, PermissionDuration, PermissionScope,
-    Permissions, PermissionsByGrantee, RevocationTerms,
+    Config, CuratorPermissions, CuratorScope, Error, Event, Pallet, PermissionContract,
+    PermissionDuration, PermissionScope, Permissions, PermissionsByRecipient, RevocationTerms,
+    generate_permission_id, pallet, update_permission_indices,
 };
 
 use pallet_permission0_api::{
-    CuratorPermissions as ApiCuratorPermissions, Permission0CuratorApi,
-    PermissionDuration as ApiPermissionDuration, PermissionId,
-    RevocationTerms as ApiRevocationTerms,
+    CuratorPermissions as ApiCuratorPermissions, Permission0CuratorApi, PermissionId,
 };
-use polkadot_sdk::frame_system::{ensure_root, ensure_signed_or_root};
+use polkadot_sdk::frame_system::ensure_signed_or_root;
 use polkadot_sdk::sp_core::Get;
+use polkadot_sdk::sp_runtime::BoundedBTreeMap;
 use polkadot_sdk::sp_runtime::traits::{AccountIdConversion, Saturating};
 use polkadot_sdk::{
     frame_support::ensure,
@@ -22,67 +21,56 @@ use polkadot_sdk::{
 impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor<T>>
     for pallet::Pallet<T>
 {
-    fn grant_curator_permission(
-        grantor: OriginFor<T>,
-        grantee: T::AccountId,
-        flags: ApiCuratorPermissions,
-        cooldown: Option<BlockNumberFor<T>>,
-        duration: ApiPermissionDuration<BlockNumberFor<T>>,
-        revocation: ApiRevocationTerms<T::AccountId, BlockNumberFor<T>>,
-    ) -> Result<PermissionId, DispatchError> {
-        let duration = super::translate_duration::<T>(duration)?;
-        let revocation = super::translate_revocation_terms::<T>(revocation)?;
-
-        let flags = CuratorPermissions::from_bits_truncate(flags.bits());
-        grant_curator_permission_impl(grantor, grantee, flags, cooldown, duration, revocation)
-    }
-
     fn ensure_curator_permission(
-        grantee: OriginFor<T>,
+        recipient: OriginFor<T>,
         flags: ApiCuratorPermissions,
     ) -> Result<T::AccountId, DispatchError> {
-        let Some(grantee) = ensure_signed_or_root(grantee)? else {
+        let Some(recipient) = ensure_signed_or_root(recipient)? else {
             return Ok(T::PalletId::get().into_account_truncating());
         };
 
-        let permissions = PermissionsByGrantee::<T>::get(&grantee);
-        let Some((_, contract)) = permissions.into_iter().find_map(|permission_id| {
-            let contract = Permissions::<T>::get(permission_id)?;
-
-            if matches!(&contract.scope, PermissionScope::Curator(_)) {
-                Some((permission_id, contract))
-            } else {
-                None
-            }
-        }) else {
-            return Err(Error::<T>::PermissionNotFound.into());
-        };
-
-        let PermissionScope::Curator(scope) = &contract.scope else {
-            return Err(Error::<T>::PermissionNotFound.into());
-        };
-
         let flags = CuratorPermissions::from_bits_truncate(flags.bits());
-        if !scope.has_permission(flags) {
-            return Err(Error::<T>::PermissionNotFound.into());
-        }
+        let permissions = PermissionsByRecipient::<T>::get(&recipient);
+        let now = <frame_system::Pallet<T>>::block_number();
 
-        if let Some(cooldown) = scope.cooldown {
-            let now = <frame_system::Pallet<T>>::block_number();
+        let mut cur_error = Error::<T>::PermissionNotFound;
+        for permission_id in permissions {
+            let Some(contract) = Permissions::<T>::get(permission_id) else {
+                continue;
+            };
 
-            if contract
-                .last_execution
-                .is_some_and(|last_execution| last_execution.saturating_add(cooldown) > now)
-            {
-                return Err(Error::<T>::PermissionInCooldown.into());
+            let PermissionScope::Curator(scope) = &contract.scope else {
+                continue;
+            };
+
+            if !scope.has_permission(flags) {
+                continue;
             }
+
+            if contract.available_instances() < 1 {
+                if !matches!(cur_error, Error::<T>::PermissionInCooldown) {
+                    cur_error = Error::<T>::NotEnoughInstances;
+                }
+
+                continue;
+            }
+
+            if let Some(cooldown) = scope.cooldown
+                && let Some(last_execution) = contract.last_execution()
+                && last_execution.saturating_add(cooldown) > now
+            {
+                cur_error = Error::<T>::PermissionInCooldown;
+                continue;
+            }
+
+            return Ok(contract.recipient);
         }
 
-        Ok(grantee)
+        Err(cur_error.into())
     }
 
-    fn get_curator_permission(grantee: &T::AccountId) -> Option<PermissionId> {
-        PermissionsByGrantee::<T>::get(grantee)
+    fn get_curator_permission(recipient: &T::AccountId) -> Option<PermissionId> {
+        PermissionsByRecipient::<T>::get(recipient)
             .into_iter()
             .find_map(|permission_id| {
                 let contract = Permissions::<T>::get(permission_id)?;
@@ -96,61 +84,99 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
     }
 }
 
-pub fn grant_curator_permission_impl<T: Config>(
-    grantor: OriginFor<T>,
-    grantee: T::AccountId,
-    mut flags: CuratorPermissions,
+pub fn delegate_curator_permission_impl<T: Config>(
+    delegator: OriginFor<T>,
+    recipient: T::AccountId,
+    mut flags: BoundedBTreeMap<
+        Option<PermissionId>,
+        CuratorPermissions,
+        T::MaxCuratorSubpermissionsPerPermission,
+    >,
     cooldown: Option<BlockNumberFor<T>>,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
+    instances: u32,
 ) -> Result<PermissionId, DispatchError> {
-    ensure_root(grantor)?;
+    let signer = ensure_signed_or_root(delegator)?;
 
-    // Root permission is not grantable
-    flags.remove(CuratorPermissions::ROOT);
+    let is_root = signer.is_none();
+    let delegator =
+        signer.unwrap_or_else(|| <T as Config>::PalletId::get().into_account_truncating());
 
-    ensure!(!flags.is_empty(), Error::<T>::InvalidCuratorPermissions);
+    let mut parents = polkadot_sdk::sp_std::vec::Vec::with_capacity(flags.len());
 
-    let grantor = <T as Config>::PalletId::get().into_account_truncating();
+    for (parent_pid, flags) in &mut flags {
+        // Root permission is not delegateable
+        flags.remove(CuratorPermissions::ROOT);
 
-    // We do not check for the ROOT curator permission at the moment.
-    // This is mainly due to our use of a SUDO key at the moment.
-    // Once we move away from centralized chain management, a ROOT curator
-    // will be appointed by the system.
+        ensure!(!flags.is_empty(), Error::<T>::InvalidCuratorPermissions);
 
-    for perm in PermissionsByGrantee::<T>::get(&grantee) {
-        let Some(contract) = Permissions::<T>::get(perm) else {
-            continue;
-        };
+        if let Some(parent_pid) = parent_pid {
+            let Some(parent) = Permissions::<T>::get(parent_pid) else {
+                return Err(Error::<T>::ParentPermissionNotFound.into());
+            };
 
-        if matches!(&contract.scope, PermissionScope::Curator(_)) {
-            return Err(Error::<T>::DuplicatePermission.into());
+            ensure!(
+                parent.recipient == delegator,
+                Error::<T>::NotPermissionRecipient
+            );
+
+            let PermissionScope::Curator(scope) = &parent.scope else {
+                return Err(Error::<T>::UnsupportedPermissionType.into());
+            };
+
+            ensure!(
+                scope.has_permission(*flags),
+                Error::<T>::InvalidCuratorPermissions
+            );
+
+            ensure!(
+                instances <= parent.available_instances(),
+                Error::<T>::NotEnoughInstances
+            );
+
+            ensure!(
+                RevocationTerms::<T>::is_weaker(&parent.revocation, &revocation),
+                Error::<T>::RevocationTermsTooStrong
+            );
+
+            parents.push(*parent_pid);
+        } else {
+            // We do not check for the ROOT curator permission at the moment.
+            // This is mainly due to our use of a SUDO key at the moment.
+            // Once we move away from centralized chain management, a ROOT curator
+            // will be appointed by the system.
+
+            ensure!(is_root, Error::<T>::NotPermissionRecipient);
         }
     }
 
     let scope = PermissionScope::Curator(CuratorScope { flags, cooldown });
-    let permission_id = generate_permission_id::<T>(&grantor, &grantee, &scope)?;
+    let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
 
-    let contract = PermissionContract {
-        grantor,
-        grantee,
+    for parent in parents {
+        Permissions::<T>::mutate_extant(parent, |parent| {
+            parent.children.try_insert(permission_id).ok()
+        })
+        .ok_or(Error::<T>::TooManyChildren)?;
+    }
+
+    let contract = PermissionContract::<T>::new(
+        delegator,
+        recipient,
         scope,
         duration,
         revocation,
-        enforcement: crate::EnforcementAuthority::None,
-        last_execution: None,
-        execution_count: 0,
-        // Will change once we have a ROOT curator.
-        parent: None,
-        created_at: <frame_system::Pallet<T>>::block_number(),
-    };
+        crate::EnforcementAuthority::None,
+        1,
+    );
 
     Permissions::<T>::insert(permission_id, &contract);
-    update_permission_indices::<T>(&contract.grantor, &contract.grantee, permission_id)?;
+    update_permission_indices::<T>(&contract.delegator, &contract.recipient, permission_id)?;
 
-    <Pallet<T>>::deposit_event(Event::PermissionGranted {
-        grantor: contract.grantor,
-        grantee: contract.grantee,
+    <Pallet<T>>::deposit_event(Event::PermissionDelegated {
+        delegator: contract.delegator,
+        recipient: contract.recipient,
         permission_id,
     });
 
@@ -158,12 +184,10 @@ pub fn grant_curator_permission_impl<T: Config>(
 }
 
 pub fn execute_permission_impl<T: Config>(permission_id: &PermissionId) -> DispatchResult {
-    Permissions::<T>::mutate(permission_id, |maybe_contract| {
-        if let Some(c) = maybe_contract {
-            c.last_execution = Some(<frame_system::Pallet<T>>::block_number());
-            c.execution_count = c.execution_count.saturating_add(1);
-        }
-    });
+    if let Some(mut contract) = Permissions::<T>::get(permission_id) {
+        contract.tick_execution(<frame_system::Pallet<T>>::block_number())?;
+        Permissions::<T>::insert(permission_id, &contract);
+    }
 
     Ok(())
 }

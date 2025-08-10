@@ -7,7 +7,7 @@ pub(crate) use ext::*;
 pub use pallet::*;
 use pallet_emission0_api::Emission0Api;
 use polkadot_sdk::{
-    frame_support::{dispatch::DispatchResult, pallet_prelude::*, DefaultNoBound},
+    frame_support::{DefaultNoBound, dispatch::DispatchResult, pallet_prelude::*},
     frame_system,
     frame_system::pallet_prelude::OriginFor,
     polkadot_sdk_frame::{self as frame, traits::Currency},
@@ -40,7 +40,7 @@ pub mod pallet {
 
     /// Map of consensus members indexed by their keys. A consensus member is
     /// any agent eligible for emissions in the next epoch. This means
-    /// unregistered agents will also receive emissions.
+    /// deregistered agents will also receive emissions.
     #[pallet::storage]
     pub type ConsensusMembers<T: Config> =
         StorageMap<_, Identity, AccountIdOf<T>, ConsensusMember<T>>;

@@ -3,10 +3,13 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
     frame_support::{CloneNoBound, DebugNoBound, EqNoBound, PartialEqNoBound},
     polkadot_sdk_frame::prelude::BlockNumberFor,
+    sp_runtime::BoundedBTreeMap,
 };
 use scale_info::TypeInfo;
 
 use crate::Config;
+
+use super::PermissionId;
 
 #[derive(
     CloneNoBound,
@@ -42,28 +45,17 @@ bitflags! {
 #[derive(Encode, Decode, CloneNoBound, PartialEq, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub struct CuratorScope<T: Config> {
-    pub flags: CuratorPermissions,
+    pub flags: BoundedBTreeMap<
+        Option<PermissionId>,
+        CuratorPermissions,
+        T::MaxCuratorSubpermissionsPerPermission,
+    >,
     pub cooldown: Option<BlockNumberFor<T>>,
 }
 
 impl<T: Config> CuratorScope<T> {
     pub fn has_permission(&self, permission: CuratorPermissions) -> bool {
-        self.flags.contains(permission)
-    }
-
-    /// Checks for [`CuratorPermissions::APPLICATION_REVIEW`]
-    pub fn can_review_applications(&self) -> bool {
-        self.has_permission(CuratorPermissions::APPLICATION_REVIEW)
-    }
-
-    /// Checks for [`CuratorPermissions::WHITELIST_MANAGE`]
-    pub fn can_manage_whitelist(&self) -> bool {
-        self.has_permission(CuratorPermissions::WHITELIST_MANAGE)
-    }
-
-    /// Checks for [`CuratorPermissions::PENALTY_CONTROL`]
-    pub fn can_control_penalties(&self) -> bool {
-        self.has_permission(CuratorPermissions::PENALTY_CONTROL)
+        self.flags.iter().any(|(_, p)| p.contains(permission))
     }
 }
 
@@ -73,7 +65,7 @@ impl<T: Config> CuratorScope<T> {
         &self,
         _permission_id: polkadot_sdk::sp_core::H256,
         _last_execution: &Option<crate::BlockNumberFor<T>>,
-        _grantor: &T::AccountId,
+        _delegator: &T::AccountId,
     ) {
         // No special cleanup needed for curator permissions
     }

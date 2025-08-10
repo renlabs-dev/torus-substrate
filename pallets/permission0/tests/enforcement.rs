@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 
 use pallet_permission0::permission::emission::StreamId;
 use pallet_permission0::{EnforcementAuthority, EnforcementReferendum};
-use pallet_permission0_api::{generate_root_stream_id, Permission0EmissionApi};
+use pallet_permission0_api::{Permission0EmissionApi, generate_root_stream_id};
 use polkadot_sdk::frame_support::{assert_err, traits::Currency};
 use polkadot_sdk::sp_core::bounded_vec;
 use polkadot_sdk::sp_runtime::Percent;
@@ -24,24 +24,24 @@ fn distribute_emission(agent: AccountId, amount: Balance) {
 }
 
 #[test]
-fn set_enforcement_authority_by_grantor() {
+fn set_enforcement_authority_by_delegator() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let grantor = 0;
-        let grantee = 1;
+        let delegator = 0;
+        let recipient = 1;
         let controller = 2;
 
-        register_empty_agent(grantor);
-        register_empty_agent(grantee);
+        register_empty_agent(delegator);
+        register_empty_agent(recipient);
         register_empty_agent(controller);
 
-        add_balance(grantor, as_tors(10) + 1);
+        add_balance(delegator, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
-            grantor,
-            grantee,
+        let permission_id = assert_ok!(delegate_emission_permission(
+            delegator,
+            recipient,
             pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
-            vec![(grantee, u16::MAX)],
+            vec![(recipient, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -50,14 +50,14 @@ fn set_enforcement_authority_by_grantor() {
 
         assert_err!(
             pallet_permission0::Pallet::<Test>::set_enforcement_authority(
-                get_origin(grantee),
+                get_origin(recipient),
                 permission_id,
                 EnforcementAuthority::ControlledBy {
                     controllers: bounded_vec![controller],
                     required_votes: 1
                 }
             ),
-            pallet_permission0::Error::<Test>::NotPermissionGrantor
+            pallet_permission0::Error::<Test>::NotPermissionDelegator
         );
 
         assert_err!(
@@ -69,12 +69,12 @@ fn set_enforcement_authority_by_grantor() {
                     required_votes: 1
                 }
             ),
-            pallet_permission0::Error::<Test>::NotPermissionGrantor
+            pallet_permission0::Error::<Test>::NotPermissionDelegator
         );
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::set_enforcement_authority(
-                get_origin(grantor),
+                get_origin(delegator),
                 permission_id,
                 EnforcementAuthority::ControlledBy {
                     controllers: bounded_vec![controller],
@@ -103,21 +103,21 @@ fn set_enforcement_authority_by_grantor() {
 fn toggle_accumulation_by_controller() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let grantor = 0;
-        let grantee = 1;
+        let delegator = 0;
+        let recipient = 1;
         let controller = 2;
 
-        register_empty_agent(grantor);
-        register_empty_agent(grantee);
+        register_empty_agent(delegator);
+        register_empty_agent(recipient);
         register_empty_agent(controller);
 
-        add_balance(grantor, as_tors(100) + 1);
+        add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
-            grantor,
-            grantee,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),
-            vec![(grantee, u16::MAX)],
+        let permission_id = assert_ok!(delegate_emission_permission(
+            delegator,
+            recipient,
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            vec![(recipient, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -127,7 +127,7 @@ fn toggle_accumulation_by_controller() {
             },
         ));
 
-        distribute_emission(grantor, as_tors(10));
+        distribute_emission(delegator, as_tors(10));
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::toggle_permission_accumulation(
@@ -142,10 +142,10 @@ fn toggle_accumulation_by_controller() {
             assert!(!emission_scope.accumulating);
         }
 
-        let balance_before = get_balance(grantee);
-        distribute_emission(grantor, as_tors(10));
+        let balance_before = get_balance(recipient);
+        distribute_emission(delegator, as_tors(10));
 
-        assert_eq!(get_balance(grantee), balance_before);
+        assert_eq!(get_balance(recipient), balance_before);
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::toggle_permission_accumulation(
@@ -155,14 +155,14 @@ fn toggle_accumulation_by_controller() {
             )
         );
 
-        distribute_emission(grantor, as_tors(10));
+        distribute_emission(delegator, as_tors(10));
 
         assert_ok!(pallet_permission0::Pallet::<Test>::execute_permission(
-            get_origin(grantor),
+            get_origin(delegator),
             permission_id,
         ));
 
-        assert!(get_balance(grantee) > balance_before);
+        assert!(get_balance(recipient) > balance_before);
     });
 }
 
@@ -170,23 +170,23 @@ fn toggle_accumulation_by_controller() {
 fn unauthorized_account_cannot_toggle() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let grantor = 0;
-        let grantee = 1;
+        let delegator = 0;
+        let recipient = 1;
         let controller = 2;
         let unauthorized = 3;
 
-        register_empty_agent(grantor);
-        register_empty_agent(grantee);
+        register_empty_agent(delegator);
+        register_empty_agent(recipient);
         register_empty_agent(controller);
         register_empty_agent(unauthorized);
 
-        add_balance(grantor, as_tors(10) + 1);
+        add_balance(delegator, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
-            grantor,
-            grantee,
+        let permission_id = assert_ok!(delegate_emission_permission(
+            delegator,
+            recipient,
             pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
-            vec![(grantee, u16::MAX)],
+            vec![(recipient, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -207,7 +207,7 @@ fn unauthorized_account_cannot_toggle() {
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::toggle_permission_accumulation(
-                get_origin(grantor),
+                get_origin(delegator),
                 permission_id,
                 false,
             ),
@@ -219,21 +219,21 @@ fn unauthorized_account_cannot_toggle() {
 fn enforcement_execute_permission() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let grantor = 0;
-        let grantee = 1;
+        let delegator = 0;
+        let recipient = 1;
         let controller = 2;
 
-        register_empty_agent(grantor);
-        register_empty_agent(grantee);
+        register_empty_agent(delegator);
+        register_empty_agent(recipient);
         register_empty_agent(controller);
 
-        add_balance(grantor, as_tors(100) + 1);
+        add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
-            grantor,
-            grantee,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),
-            vec![(grantee, u16::MAX)],
+        let permission_id = assert_ok!(delegate_emission_permission(
+            delegator,
+            recipient,
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            vec![(recipient, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -243,9 +243,9 @@ fn enforcement_execute_permission() {
             },
         ));
 
-        distribute_emission(grantor, as_tors(10));
+        distribute_emission(delegator, as_tors(10));
 
-        let balance_before = get_balance(grantee);
+        let balance_before = get_balance(recipient);
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(
@@ -254,7 +254,7 @@ fn enforcement_execute_permission() {
             )
         );
 
-        assert!(get_balance(grantee) > balance_before);
+        assert!(get_balance(recipient) > balance_before);
     });
 }
 
@@ -262,23 +262,23 @@ fn enforcement_execute_permission() {
 fn unauthorized_cannot_enforcement_execute() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let grantor = 0;
-        let grantee = 1;
+        let delegator = 0;
+        let recipient = 1;
         let controller = 2;
         let unauthorized = 3;
 
-        register_empty_agent(grantor);
-        register_empty_agent(grantee);
+        register_empty_agent(delegator);
+        register_empty_agent(recipient);
         register_empty_agent(controller);
         register_empty_agent(unauthorized);
 
-        add_balance(grantor, as_tors(100) + 1);
+        add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
-            grantor,
-            grantee,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),
-            vec![(grantee, u16::MAX)],
+        let permission_id = assert_ok!(delegate_emission_permission(
+            delegator,
+            recipient,
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            vec![(recipient, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -288,7 +288,7 @@ fn unauthorized_cannot_enforcement_execute() {
             },
         ));
 
-        distribute_emission(grantor, as_tors(10));
+        distribute_emission(delegator, as_tors(10));
 
         assert_err!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(
@@ -304,25 +304,25 @@ fn unauthorized_cannot_enforcement_execute() {
 fn multi_controller_voting() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let grantor = 0;
-        let grantee = 1;
+        let delegator = 0;
+        let recipient = 1;
         let controller1 = 2;
         let controller2 = 3;
         let controller3 = 4;
 
-        register_empty_agent(grantor);
-        register_empty_agent(grantee);
+        register_empty_agent(delegator);
+        register_empty_agent(recipient);
         register_empty_agent(controller1);
         register_empty_agent(controller2);
         register_empty_agent(controller3);
 
-        add_balance(grantor, as_tors(100) + 1);
+        add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
-            grantor,
-            grantee,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),
-            vec![(grantee, u16::MAX)],
+        let permission_id = assert_ok!(delegate_emission_permission(
+            delegator,
+            recipient,
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            vec![(recipient, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -332,7 +332,7 @@ fn multi_controller_voting() {
             },
         ));
 
-        distribute_emission(grantor, as_tors(10));
+        distribute_emission(delegator, as_tors(10));
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::toggle_permission_accumulation(
@@ -360,7 +360,7 @@ fn multi_controller_voting() {
             assert!(!emission_scope.accumulating);
         }
 
-        distribute_emission(grantor, as_tors(10));
+        distribute_emission(delegator, as_tors(10));
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(
@@ -375,7 +375,7 @@ fn multi_controller_voting() {
         );
         assert_eq!(votes.len(), 1);
 
-        let balance_before = get_balance(grantee);
+        let balance_before = get_balance(recipient);
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::toggle_permission_accumulation(
@@ -392,7 +392,7 @@ fn multi_controller_voting() {
             )
         );
 
-        distribute_emission(grantor, as_tors(10));
+        distribute_emission(delegator, as_tors(10));
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(
@@ -401,7 +401,7 @@ fn multi_controller_voting() {
             )
         );
 
-        assert!(get_balance(grantee) == balance_before);
+        assert!(get_balance(recipient) == balance_before);
 
         assert_ok!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(
@@ -410,7 +410,7 @@ fn multi_controller_voting() {
             )
         );
 
-        assert!(get_balance(grantee) > balance_before);
+        assert!(get_balance(recipient) > balance_before);
     });
 }
 
@@ -418,21 +418,21 @@ fn multi_controller_voting() {
 fn enforcement_cannot_execute_non_manual_distribution() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let grantor = 0;
-        let grantee = 1;
+        let delegator = 0;
+        let recipient = 1;
         let controller = 2;
 
-        register_empty_agent(grantor);
-        register_empty_agent(grantee);
+        register_empty_agent(delegator);
+        register_empty_agent(recipient);
         register_empty_agent(controller);
 
-        add_balance(grantor, as_tors(100) + 1);
+        add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(grant_emission_permission(
-            grantor,
-            grantee,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(grantor, 100)),
-            vec![(grantee, u16::MAX)],
+        let permission_id = assert_ok!(delegate_emission_permission(
+            delegator,
+            recipient,
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            vec![(recipient, u16::MAX)],
             pallet_permission0_api::DistributionControl::Automatic(
                 MinAutoDistributionThreshold::get()
             ),
@@ -444,7 +444,7 @@ fn enforcement_cannot_execute_non_manual_distribution() {
             },
         ));
 
-        distribute_emission(grantor, as_tors(10));
+        distribute_emission(delegator, as_tors(10));
 
         assert_err!(
             pallet_permission0::Pallet::<Test>::enforcement_execute_permission(

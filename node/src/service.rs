@@ -24,7 +24,7 @@ use polkadot_sdk::{
     sc_client_api::{Backend, BlockBackend},
     sc_executor::WasmExecutor,
     sc_network_sync::strategy::warp::WarpSyncProvider,
-    sc_service::{error::Error as ServiceError, Configuration, TaskManager, WarpSyncConfig},
+    sc_service::{Configuration, TaskManager, WarpSyncConfig, error::Error as ServiceError},
     sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker},
     sc_transaction_pool_api::OffchainTransactionPoolFactory,
     sp_consensus_aura::sr25519::AuthorityPair,
@@ -34,11 +34,11 @@ use polkadot_sdk::{
 use torus_runtime::{apis::RuntimeApi, configs::eth::TransactionConverter, opaque::Block};
 
 use crate::cli::{
-    eth::{
-        db_config_dir, new_frontier_partial, spawn_frontier_tasks, EthConfiguration,
-        FrontierPartialComponents,
-    },
     Consensus,
+    eth::{
+        EthConfiguration, FrontierPartialComponents, db_config_dir, new_frontier_partial,
+        spawn_frontier_tasks,
+    },
 };
 
 type HostFunctions = sp_io::SubstrateHostFunctions;
@@ -165,9 +165,8 @@ type AuraData = Pin<
 
 fn aura_data_provider(
     slot_duration: sp_consensus_aura::SlotDuration,
-    eth_config: &EthConfiguration,
+    target_gas_price: u64,
 ) -> impl Fn(sp_core::H256, ()) -> AuraData {
-    let target_gas_price = eth_config.target_gas_price;
     move |_, ()| {
         Box::pin(async move {
             let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
@@ -198,7 +197,10 @@ fn build_aura_grandpa_import_queue(
             block_import: grandpa_block_import.clone(),
             justification_import: Some(Box::new(grandpa_block_import.clone())),
             client,
-            create_inherent_data_providers: aura_data_provider(slot_duration, eth_config),
+            create_inherent_data_providers: aura_data_provider(
+                slot_duration,
+                eth_config.target_gas_price,
+            ),
             spawner: &task_manager.spawn_essential_handle(),
             registry: config.prometheus_registry(),
             check_for_equivocation: Default::default(),
@@ -350,7 +352,10 @@ pub async fn new_full<Network: sc_network::NetworkBackend<Block, <Block as Block
                     proposer_factory: proposer,
                     sync_oracle: sync_service.clone(),
                     justification_sync_link: sync_service.clone(),
-                    create_inherent_data_providers: aura_data_provider(slot_duration, &eth_config),
+                    create_inherent_data_providers: aura_data_provider(
+                        slot_duration,
+                        eth_config.target_gas_price,
+                    ),
                     force_authoring: config.force_authoring,
                     backoff_authoring_blocks: Option::<()>::None,
                     keystore: keystore_container.keystore(),
@@ -550,7 +555,7 @@ pub async fn new_full<Network: sc_network::NetworkBackend<Block, <Block as Block
                 forced_parent_hashes: None,
                 pending_create_inherent_data_providers: aura_data_provider(
                     slot_duration,
-                    &eth_config,
+                    eth_config.target_gas_price,
                 ),
             };
 
@@ -578,7 +583,7 @@ pub async fn new_full<Network: sc_network::NetworkBackend<Block, <Block as Block
         tx_handler_controller,
         sync_service: sync_service.clone(),
         config,
-        telemetry: telemetry.as_mut(),
+        telemetry: Option::as_mut(&mut telemetry),
     })?;
 
     spawn_frontier_tasks(

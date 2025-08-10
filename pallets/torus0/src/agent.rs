@@ -1,20 +1,20 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use pallet_emission0_api::Emission0Api;
 use pallet_governance_api::GovernanceApi;
-use pallet_torus0_api::NamespacePath;
+use pallet_torus0_api::{NamespacePath, Torus0Api};
 use polkadot_sdk::{
     frame_election_provider_support::Get,
     frame_support::{
+        DebugNoBound,
         dispatch::DispatchResult,
         ensure,
         traits::{Currency, ExistenceRequirement},
-        DebugNoBound,
     },
     polkadot_sdk_frame::prelude::BlockNumberFor,
-    sp_runtime::{traits::Saturating, BoundedVec, DispatchError, Percent},
+    sp_runtime::{BoundedVec, DispatchError, Percent, traits::Saturating},
     sp_tracing::{debug_span, warn},
 };
-use scale_info::{prelude::vec::Vec, TypeInfo};
+use scale_info::{TypeInfo, prelude::vec::Vec};
 
 use crate::AccountIdOf;
 
@@ -48,7 +48,6 @@ pub struct Agent<T: crate::Config> {
 ///
 /// Registration fee is stored as [`crate::Burn`].
 pub fn register<T: crate::Config>(
-    payer: AccountIdOf<T>,
     agent_key: AccountIdOf<T>,
     name: Vec<u8>,
     url: Vec<u8>,
@@ -58,12 +57,12 @@ pub fn register<T: crate::Config>(
     let _guard = span.enter();
 
     ensure!(
-        <T as crate::pallet::Config>::Governance::can_register_agent(&payer),
+        <T as crate::pallet::Config>::Governance::can_register_agent(&agent_key),
         crate::pallet::Error::<T>::AgentsFrozen
     );
 
     ensure!(
-        !exists::<T>(&agent_key),
+        !exists::<T>(&agent_key) && crate::Pallet::<T>::find_agent_by_name(&name).is_none(),
         crate::Error::<T>::AgentAlreadyRegistered
     );
 
@@ -90,7 +89,7 @@ pub fn register<T: crate::Config>(
 
     // Registration cost is sent to treasury
     <T as crate::Config>::Currency::transfer(
-        &payer,
+        &agent_key,
         &<T as crate::Config>::Governance::dao_treasury_address(),
         burn,
         ExistenceRequirement::AllowDeath,
@@ -133,8 +132,8 @@ pub fn register<T: crate::Config>(
 
 /// Unregister an agent key from the network, erasing all its data and removing
 /// stakers.
-pub fn unregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult {
-    let span = debug_span!("unregister", agent.key = ?agent_key);
+pub fn deregister<T: crate::Config>(agent_key: AccountIdOf<T>) -> DispatchResult {
+    let span = debug_span!("deregister", agent.key = ?agent_key);
     let _guard = span.enter();
 
     let agent = crate::Agents::<T>::get(&agent_key).ok_or(crate::Error::<T>::AgentDoesNotExist)?;

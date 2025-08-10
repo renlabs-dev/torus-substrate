@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
+use benchmarking::{RemarkBuilder, TransferKeepAliveBuilder, inherent_benchmark_data};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::TryFutureExt;
 use polkadot_sdk::{sc_cli::SubstrateCli, sc_service::PartialComponents, *};
@@ -56,10 +56,13 @@ impl SubstrateCli for Cli {
 
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
         Ok(match id {
-            "dev" => Box::new(chain_spec::development_config()?),
             "main" => Box::new(chain_spec::ChainSpec::from_json_bytes(
-                include_bytes!("../specs/main.json").as_ref(),
+                include_bytes!("../../data/mainnet/spec.json").as_ref(),
             )?),
+            "test" => Box::new(chain_spec::ChainSpec::from_json_bytes(
+                include_bytes!("../../data/testnet/spec.json").as_ref(),
+            )?),
+            "dev" => Box::new(chain_spec::development_config()?),
             path => Box::new(chain_spec::ChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
             )?),

@@ -10,6 +10,7 @@ use core::{
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
+    frame_support::dispatch::DispatchResult,
     sp_core::ConstU32,
     sp_runtime::{BoundedVec, Percent},
     sp_std::vec::Vec,
@@ -33,9 +34,10 @@ pub trait Torus0Api<AccountId, Balance> {
     fn sum_staking_to(staker: &AccountId) -> Balance;
 
     fn staked_by(staked: &AccountId) -> alloc::vec::Vec<(AccountId, Balance)>;
-    fn stake_to(staker: &AccountId, staked: &AccountId, amount: Balance) -> Result<(), Balance>;
+    fn stake_to(staker: &AccountId, staked: &AccountId, amount: Balance) -> DispatchResult;
 
     fn agent_ids() -> impl Iterator<Item = AccountId>;
+    fn find_agent_by_name(name: &[u8]) -> Option<AccountId>;
     fn is_agent_registered(agent: &AccountId) -> bool;
 
     fn namespace_exists(agent: &AccountId, path: &NamespacePath) -> bool;
@@ -47,7 +49,7 @@ pub trait Torus0Api<AccountId, Balance> {
         name: alloc::vec::Vec<u8>,
         url: alloc::vec::Vec<u8>,
         metadata: alloc::vec::Vec<u8>,
-    ) -> polkadot_sdk::frame_support::dispatch::DispatchResult;
+    ) -> DispatchResult;
 
     #[doc(hidden)]
     #[cfg(feature = "runtime-benchmarks")]
@@ -209,6 +211,17 @@ impl NamespacePath {
             root == b"agent"
         } else {
             false
+        }
+    }
+
+    /// Get the agent name from the agent root path: "agent.<name>".
+    pub fn agent_name(&self) -> Option<&[u8]> {
+        let mut segments = self.segments();
+
+        if self.segments().next().is_some_and(|f| f == b"agent") {
+            segments.nth(1)
+        } else {
+            None
         }
     }
 }

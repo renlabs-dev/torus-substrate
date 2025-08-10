@@ -4,9 +4,9 @@ use polkadot_sdk::{
     frame_support::{
         traits::VariantCountOf,
         weights::{
-            constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
             ConstantMultiplier, WeightToFeeCoefficient, WeightToFeeCoefficients,
             WeightToFeePolynomial,
+            constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
         },
     },
     pallet_aura::MinimumPeriodTimesTwo,
@@ -105,7 +105,7 @@ impl pallet_balances::Config for Runtime {
     /// 0.1 Unit
     type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
     /// The identifier for reserved tokens
-    type ReserveIdentifier = ();
+    type ReserveIdentifier = [u8; 8];
     /// The identifier for frozen tokens
     type FreezeIdentifier = Self::RuntimeFreezeReason;
     /// Handler for the unspent dust that gets burned
@@ -366,6 +366,7 @@ impl pallet_torus0::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
     type Currency = Balances;
+    type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
 
     type Governance = Governance;
 
@@ -413,11 +414,24 @@ impl pallet_governance::Config for Runtime {
 }
 
 parameter_types! {
+    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::one();
+    pub const DefaultIncentivesRatio: Percent = Percent::from_parts(50);
+}
+
+#[cfg(not(feature = "testnet"))]
+parameter_types! {
     // SAFETY: `NonZeroU128::new` only fails if the passed value is 0, which is not the case here.
     pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
     pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000)).unwrap();
-    pub const DefaultEmissionRecyclingPercentage: Percent = Percent::one();
-    pub const DefaultIncentivesRatio: Percent = Percent::from_parts(50);
+}
+
+#[cfg(feature = "testnet")]
+parameter_types! {
+    // SAFETY: `NonZeroU128::new` only fails if the passed value is 0, which is not the case here.
+    pub HalvingInterval: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000_000)).unwrap();
+    // Fun story: some funny little thing set itself a lot of torus in testnet, so we set a higher
+    // max supply to keep it emitting tokens.
+    pub MaxSupply: NonZeroU128 = NonZeroU128::new(as_tors(144_000_000_000)).unwrap();
 }
 
 impl pallet_emission0::Config for Runtime {
@@ -455,6 +469,8 @@ parameter_types! {
     pub const MinAutoDistributionThreshold: u128 = as_tors(100);
 
     pub const MaxNamespacesPerPermission: u32 = 16;
+    pub const MaxChildrenPerPermission: u32 = 16;
+    pub const MaxCuratorSubpermissionsPerPermission: u32 = 16;
 }
 
 impl pallet_permission0::Config for Runtime {
@@ -476,6 +492,8 @@ impl pallet_permission0::Config for Runtime {
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 
     type MaxNamespacesPerPermission = MaxNamespacesPerPermission;
+    type MaxChildrenPerPermission = MaxChildrenPerPermission;
+    type MaxCuratorSubpermissionsPerPermission = MaxCuratorSubpermissionsPerPermission;
 }
 
 impl pallet_faucet::Config for Runtime {

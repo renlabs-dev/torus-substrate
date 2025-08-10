@@ -5,29 +5,25 @@ use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{
     frame_support::{assert_err, assert_ok, traits::Currency},
     pallet_balances,
-    sp_runtime::{BoundedVec, Percent},
+    sp_runtime::{BoundedBTreeMap, BoundedBTreeSet, BoundedVec, Percent},
 };
-use test_utils::{as_tors, get_origin, new_test_ext, pallet_governance, Balances, Test};
+use test_utils::{
+    Balances, Test, Torus0, as_tors, get_origin, new_test_ext, pallet_governance,
+    pallet_permission0::Permissions,
+};
 
 /// Helper function to register an agent with a specific name and balance
 fn register_agent_with(account_id: u32, name: &str, balance: u128) {
-    // Register the agent with the specified name
-    pallet_torus0::Agents::<Test>::set(
-        account_id,
-        Some(pallet_torus0::agent::Agent {
-            key: account_id,
-            name: name.as_bytes().to_vec().try_into().unwrap(),
-            url: Default::default(),
-            metadata: Default::default(),
-            weight_penalty_factor: Default::default(),
-            registration_block: <polkadot_sdk::frame_system::Pallet<Test>>::block_number(),
-            fees: Default::default(),
-            last_update_block: Default::default(),
-        }),
-    );
-
     // Set the balance for the account
     let _ = Balances::deposit_creating(&account_id, balance);
+    let name = name.as_bytes().to_vec();
+    Torus0::register_agent(
+        get_origin(account_id),
+        name.clone(),
+        name.clone(),
+        name.clone(),
+    )
+    .unwrap();
 }
 
 fn set_namespace_config() {
@@ -152,7 +148,7 @@ fn namespace_fee_zero_steepness() {
 
         // steepness is 0, so always expect midpoint
         let expected = 1000 + 1000;
-        assert_eq!(fee_0, expected);
+        assert_eq!(fee_0, 0);
         assert_eq!(fee_10, expected);
         assert_eq!(fee_20, expected);
     });
@@ -236,9 +232,9 @@ fn namespace_deposit_basic() {
             max_fee_multiplier: 100,
         };
 
-        // The simple agent path
+        // The root agent path has no deposit requirement
         let path_agent = "agent.alice".parse().unwrap();
-        assert_eq!(config.namespace_deposit(&path_agent), 1100);
+        assert_eq!(config.namespace_deposit(&path_agent), 0);
 
         // Single character
         let path_a = "agent.alice.a".parse().unwrap();
@@ -337,7 +333,7 @@ fn namespace_fee_precision_handling() {
         let fee_1 = config.namespace_fee(1).unwrap();
         let fee_2 = config.namespace_fee(2).unwrap();
 
-        assert!(fee_0 > as_tors(1));
+        assert_eq!(fee_0, 0);
         assert!(fee_1 > fee_0);
         assert!(fee_2 > fee_1);
     });
@@ -531,6 +527,7 @@ fn calculate_cost_no_existing_namespaces() {
         test_utils::register_empty_agent(owner);
 
         let paths: &[NamespacePath] = &[
+            "agent.alice".parse().unwrap(),
             "agent.alice.v1".parse().unwrap(),
             "agent.alice.v1.compute".parse().unwrap(),
             "agent.alice.v1.compute.gpu".parse().unwrap(),
@@ -760,7 +757,7 @@ fn namespace_must_start_with_agent_prefix() {
         // Verify that a valid namespace starting with "agent." works
         assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
             get_origin(0),
-            BoundedVec::truncate_from(b"agent.alice".to_vec())
+            BoundedVec::truncate_from(b"agent.alice.bla".to_vec())
         ));
     });
 }
@@ -773,13 +770,13 @@ fn create_namespace_simple() {
 
         assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
             get_origin(0),
-            BoundedVec::truncate_from(b"agent.alice".to_vec())
+            BoundedVec::truncate_from(b"agent.alice.a".to_vec())
         ));
 
         // Verify namespace was created
         assert!(pallet_torus0::Namespaces::<Test>::contains_key(
             pallet_torus0::namespace::NamespaceOwnership::Account(0),
-            pallet_torus0_api::NamespacePath::new_agent(b"agent.alice").unwrap()
+            pallet_torus0_api::NamespacePath::new_agent(b"agent.alice.a").unwrap()
         ));
     });
 }
@@ -827,11 +824,11 @@ fn create_namespace_already_exists() {
         };
 
         // Create namespace first time
-        assert_ok!(create_namespace(b"agent.alice"));
+        assert_ok!(create_namespace(b"agent.alice.a"));
 
         // Try to create same namespace again
         assert_err!(
-            create_namespace(b"agent.alice"),
+            create_namespace(b"agent.alice.a"),
             pallet_torus0::Error::<Test>::NamespaceAlreadyExists
         );
     });
@@ -879,7 +876,7 @@ fn create_namespace_insufficient_balance() {
         assert_err!(
             pallet_torus0::Pallet::<Test>::create_namespace(
                 get_origin(0),
-                BoundedVec::truncate_from(b"agent.alice".to_vec())
+                BoundedVec::truncate_from(b"agent.alice.b".to_vec())
             ),
             pallet_balances::Error::<Test>::InsufficientBalance
         );
@@ -933,32 +930,64 @@ fn delete_namespace_being_delegated() {
     new_test_ext().execute_with(|| {
         set_namespace_config();
         register_agent_with(0, "alice", as_tors(1000));
+        register_agent_with(1, "bob", as_tors(1000));
 
-        assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
-            get_origin(0),
-            BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
-        ));
+        for path in ["agent.alice.compute.cpu.2vcpu", "agent.alice.storage.block"] {
+            assert_ok!(pallet_torus0::Pallet::<Test>::create_namespace(
+                get_origin(0),
+                BoundedVec::truncate_from(path.as_bytes().to_vec())
+            ));
+        }
 
-        let mut paths = polkadot_sdk::sp_runtime::BoundedBTreeSet::new();
-        paths
-            .try_insert(b"agent.alice.compute".to_vec().try_into().unwrap())
+        let mut namespace_set = BoundedBTreeSet::new();
+        namespace_set
+            .try_insert(b"agent.alice.compute.cpu".to_vec().try_into().unwrap())
             .unwrap();
+        let mut paths = BoundedBTreeMap::new();
+        paths.try_insert(None, namespace_set).unwrap();
 
-        assert_ok!(test_utils::Permission0::grant_namespace_permission(
+        assert_ok!(test_utils::Permission0::delegate_namespace_permission(
             get_origin(0),
             1,
             paths,
             test_utils::pallet_permission0::PermissionDuration::Indefinite,
-            test_utils::pallet_permission0::RevocationTerms::RevocableByGrantor,
+            test_utils::pallet_permission0::RevocationTerms::RevocableByDelegator,
+            1
         ));
 
-        assert_err!(
-            pallet_torus0::Pallet::<Test>::delete_namespace(
+        let delegated = [
+            "agent.alice.compute",
+            "agent.alice.compute.cpu",
+            "agent.alice.compute.cpu.2vcpu",
+        ];
+
+        for to_fail in delegated {
+            assert_err!(
+                pallet_torus0::Pallet::<Test>::delete_namespace(
+                    get_origin(0),
+                    BoundedVec::truncate_from(to_fail.as_bytes().to_vec())
+                ),
+                pallet_torus0::Error::<Test>::NamespaceBeingDelegated
+            );
+        }
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::delete_namespace(
+            get_origin(0),
+            BoundedVec::truncate_from(b"agent.alice.storage".to_vec())
+        ));
+
+        let permission_id = Permissions::<Test>::iter().next().unwrap().0;
+        assert_ok!(test_utils::Permission0::revoke_permission(
+            get_origin(0),
+            permission_id
+        ));
+
+        for to_fail in delegated.iter().rev() {
+            assert_ok!(pallet_torus0::Pallet::<Test>::delete_namespace(
                 get_origin(0),
-                BoundedVec::truncate_from(b"agent.alice.compute".to_vec())
-            ),
-            pallet_torus0::Error::<Test>::NamespaceBeingDelegated
-        );
+                BoundedVec::truncate_from(to_fail.as_bytes().to_vec())
+            ));
+        }
     });
 }
 

@@ -6,7 +6,7 @@ use polkadot_sdk::{
     sp_runtime::{DispatchError, Percent},
 };
 
-use crate::{ensure, AccountIdOf, Allocators, Config, Error, Event};
+use crate::{AccountIdOf, Allocators, Config, Error, Event, ensure};
 
 /// Adds a new allocator to the network, checking wether it's already registered.
 #[doc(hidden)]

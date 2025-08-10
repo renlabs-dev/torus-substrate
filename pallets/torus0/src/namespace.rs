@@ -3,13 +3,13 @@ use pallet_governance_api::GovernanceApi;
 use pallet_permission0_api::Permission0NamespacesApi;
 use polkadot_sdk::{
     frame_support::{
-        traits::{ExistenceRequirement, ReservableCurrency},
         CloneNoBound, DebugNoBound, EqNoBound, PartialEqNoBound,
+        traits::{ExistenceRequirement, ReservableCurrency},
     },
     frame_system::{self, pallet_prelude::BlockNumberFor},
     sp_runtime::{
-        traits::{One, Saturating, Zero},
         DispatchResult, FixedPointNumber, FixedU128,
+        traits::{One, Saturating, Zero},
     },
 };
 use scale_info::TypeInfo;
@@ -17,8 +17,8 @@ use scale_info::TypeInfo;
 use crate::*;
 
 pub use pallet_torus0_api::{
-    NamespacePath, MAX_NAMESPACE_PATH_LENGTH, MAX_NAMESPACE_SEGMENTS, MAX_SEGMENT_LENGTH,
-    NAMESPACE_SEPARATOR,
+    MAX_NAMESPACE_PATH_LENGTH, MAX_NAMESPACE_SEGMENTS, MAX_SEGMENT_LENGTH, NAMESPACE_SEPARATOR,
+    NamespacePath,
 };
 
 /// Describes the ownership of the namespace.
@@ -60,6 +60,10 @@ impl<T: Config> NamespacePricingConfig<T> {
         &self,
         account_namespace_count: u32,
     ) -> Result<BalanceOf<T>, polkadot_sdk::sp_runtime::DispatchError> {
+        if account_namespace_count == 0 {
+            return Ok(Zero::zero());
+        }
+
         let Self {
             base_fee,
             count_midpoint,
@@ -95,6 +99,10 @@ impl<T: Config> NamespacePricingConfig<T> {
     /// is provided and contains more segments, the prefix (agent literal and agent name)
     /// will be dropped.
     pub fn namespace_deposit(&self, path: &NamespacePath) -> BalanceOf<T> {
+        if path.is_agent_root() {
+            return Zero::zero();
+        }
+
         self.deposit_per_byte
             .saturating_mul((path.as_bytes().len() as u32).into())
     }
@@ -243,13 +251,16 @@ pub(crate) fn create_namespace0<T: Config>(
         };
 
         Namespaces::<T>::insert(&owner, path, metadata);
+
+        Pallet::<T>::deposit_event(Event::NamespaceCreated {
+            owner: owner.clone(),
+            path: path.clone(),
+        });
     }
 
     NamespaceCount::<T>::mutate(&owner, |count| {
         *count = count.saturating_add(missing_paths.len() as u32)
     });
-
-    Pallet::<T>::deposit_event(Event::NamespaceCreated { owner, path });
 
     Ok(())
 }
@@ -286,6 +297,10 @@ pub fn delete_namespace<T: Config>(
     for (path_to_delete, deposit) in namespaces_to_delete {
         total_deposit = total_deposit.saturating_add(deposit);
         Namespaces::<T>::remove(&owner, &path_to_delete);
+        Pallet::<T>::deposit_event(Event::NamespaceDeleted {
+            owner: owner.clone(),
+            path: path_to_delete.clone(),
+        });
     }
 
     NamespaceCount::<T>::mutate(&owner, |count| *count = count.saturating_sub(deleted_count));
@@ -293,8 +308,6 @@ pub fn delete_namespace<T: Config>(
     if let NamespaceOwnership::Account(owner) = &owner {
         T::Currency::unreserve(owner, total_deposit);
     }
-
-    Pallet::<T>::deposit_event(Event::NamespaceDeleted { owner, path });
 
     Ok(())
 }
