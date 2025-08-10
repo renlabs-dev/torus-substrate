@@ -324,6 +324,8 @@ pub mod pallet {
         RevocationTermsTooStrong,
         /// Too many curator permissions being delegated in a single permission.
         TooManyCuratorPermissions,
+        /// Namespace delegation depth exceeded the maximum allowed limit.
+        DelegationDepthExceeded,
     }
 
     #[pallet::hooks]

@@ -105,7 +105,7 @@ pub fn delegate_namespace_permission_impl<T: Config>(
 
                 parents.push(pid);
 
-                resolve_paths::<T>(&delegator, Some(namespace), paths)
+                resolve_paths::<T>(&delegator, Some((*pid, namespace)), paths)
             } else {
                 resolve_paths::<T>(&delegator, None, paths)
             }?;
@@ -150,21 +150,69 @@ pub fn delegate_namespace_permission_impl<T: Config>(
     Ok(permission_id)
 }
 
+/// Maximum allowed delegation depth for namespaces
+const MAX_DELEGATION_DEPTH: u32 = 5;
+
+/// Check the delegation depth of a namespace by traversing up the permission chain
+fn check_namespace_delegation_depth<T: Config>(
+    namespace_path: &NamespacePath,
+    parent_permission_id: Option<PermissionId>,
+    current_depth: u32,
+) -> Result<(), DispatchError> {
+    if current_depth > MAX_DELEGATION_DEPTH {
+        return Err(Error::<T>::DelegationDepthExceeded.into());
+    }
+
+    let Some(parent_id) = parent_permission_id else {
+        return Ok(());
+    };
+
+    let Some(parent_permission) = Permissions::<T>::get(parent_id) else {
+        return Err(Error::<T>::ParentPermissionNotFound.into());
+    };
+
+    let PermissionScope::Namespace(parent_scope) = &parent_permission.scope else {
+        return Err(Error::<T>::UnsupportedPermissionType.into());
+    };
+
+    for (grandparent_id, namespace_set) in parent_scope.paths.iter() {
+        if namespace_set.contains(namespace_path) {
+            return check_namespace_delegation_depth::<T>(
+                namespace_path,
+                *grandparent_id,
+                current_depth.saturating_add(1),
+            );
+        }
+
+        for parent_namespace in namespace_set.iter() {
+            if parent_namespace.is_parent_of(namespace_path) {
+                return check_namespace_delegation_depth::<T>(
+                    parent_namespace,
+                    *grandparent_id,
+                    current_depth.saturating_add(1),
+                );
+            }
+        }
+    }
+
+    Ok(())
+}
+
 fn resolve_paths<T: Config>(
     delegator: &T::AccountId,
-    parent: Option<&NamespaceScope<T>>,
+    parent: Option<(PermissionId, &NamespaceScope<T>)>,
     paths: &BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
 ) -> Result<BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>, DispatchError> {
     let children = paths.iter().map(|path| {
         NamespacePath::new_agent(path).map_err(|_| Error::<T>::NamespacePathIsInvalid.into())
     });
 
-    let paths = if let Some(parent) = &parent {
+    let paths = if let Some((parent_pid, parent)) = parent {
         let children = children.collect::<Result<BTreeSet<_>, DispatchError>>()?;
-        let matched_count = parent
+        let matched_paths = parent
             .paths
             .values()
-            .flat_map(|parent| parent.iter())
+            .flat_map(|p_path| p_path.iter())
             .filter_map(|parent_path| {
                 if children.contains(parent_path) {
                     Some(())
@@ -185,9 +233,13 @@ fn resolve_paths<T: Config>(
             .count();
 
         ensure!(
-            matched_count == children.len(),
+            matched_paths == children.len(),
             Error::<T>::ParentPermissionNotFound
         );
+
+        for child_path in &children {
+            check_namespace_delegation_depth::<T>(child_path, Some(parent_pid), 1)?;
+        }
 
         children
     } else {

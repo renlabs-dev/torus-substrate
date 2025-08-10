@@ -1,4 +1,4 @@
-#![allow(clippy::indexing_slicing)]
+#![allow(clippy::indexing_slicing, clippy::arithmetic_side_effects)]
 
 use pallet_permission0::{
     CuratorPermissions, Error, Pallet, PermissionDuration, PermissionScope, Permissions,
@@ -15,13 +15,15 @@ use test_utils::*;
 
 fn register_agent(id: AccountId) {
     let name = match id {
-        0 => &b"alice"[..],
-        1 => &b"bob"[..],
-        2 => &b"charlie"[..],
-        3 => &b"dave"[..],
-        4 => &b"eve"[..],
-        _ => &b"foo"[..],
+        0 => "alice".to_string(),
+        1 => "bob".to_string(),
+        2 => "charlie".to_string(),
+        3 => "dave".to_string(),
+        4 => "eve".to_string(),
+        5 => "ferdie".to_string(),
+        _ => format!("agent-{id}"),
     };
+    let name = name.as_bytes();
 
     Balances::force_set_balance(RawOrigin::Root.into(), id, u128::MAX).unwrap();
     Torus0::register_agent(get_origin(id), name.to_vec(), name.to_vec(), name.to_vec()).unwrap();
@@ -1570,5 +1572,71 @@ fn delegate_namespace_permission_irrevocable_parent_allows_revocable_after() {
         // Verify both permissions exist
         assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 1);
         assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 1);
+    });
+}
+
+#[test]
+fn delegate_namespace_permission_fails_when_exceeding_depth_limit() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+
+        for i in 0..7 {
+            register_agent(i);
+        }
+
+        let level1 = register_namespace(0, b"agent.alice.compute");
+        let level2 = register_namespace(0, b"agent.alice.compute.gpu");
+        let level3 = register_namespace(0, b"agent.alice.compute.gpu.h100");
+        let level4 = register_namespace(0, b"agent.alice.compute.gpu.h100.cluster");
+        let level5 = register_namespace(0, b"agent.alice.compute.gpu.h100.cluster.node01");
+        let level6 = register_namespace(0, b"agent.alice.compute.gpu.h100.cluster.node01.core01");
+
+        let mut parent_permission_id = None;
+        let namespaces = [level1, level2, level3, level4, level5.clone()];
+
+        for (i, namespace) in namespaces.iter().enumerate() {
+            let delegator = i as u64 as u32;
+            let recipient = (i + 1) as u64 as u32;
+
+            let mut paths = BoundedBTreeMap::new();
+            let mut namespace_set = BoundedBTreeSet::new();
+            namespace_set.try_insert(namespace.clone()).unwrap();
+            paths
+                .try_insert(parent_permission_id, namespace_set)
+                .unwrap();
+
+            dbg!(recipient);
+            assert_ok!(Permission0::delegate_namespace_permission(
+                get_origin(delegator),
+                recipient,
+                paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::RevocableByDelegator,
+                10
+            ));
+
+            parent_permission_id = Some(PermissionsByDelegator::<Test>::get(delegator)[0]);
+        }
+
+        for to_fail in [level5, level6] {
+            let mut paths = BoundedBTreeMap::new();
+            let mut namespace_set = BoundedBTreeSet::new();
+            namespace_set.try_insert(to_fail).unwrap();
+            paths
+                .try_insert(parent_permission_id, namespace_set)
+                .unwrap();
+
+            assert_err!(
+                Permission0::delegate_namespace_permission(
+                    get_origin(5),
+                    6,
+                    paths,
+                    PermissionDuration::Indefinite,
+                    RevocationTerms::RevocableByDelegator,
+                    10
+                ),
+                Error::<Test>::DelegationDepthExceeded
+            );
+        }
     });
 }
