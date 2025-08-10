@@ -84,7 +84,6 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
 type Migrations = (
-    pallet_permission0::migrations::v4::Migration<Runtime, RocksDbWeight>,
     pallet_permission0::migrations::v5::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v4::Migration<Runtime, RocksDbWeight>,
     pallet_torus0::migrations::v5::Migration<Runtime, RocksDbWeight>,

@@ -1,5 +1,132 @@
 # Changelog
 
+## Spec 23
+
+This release builds upon the permission delegation system with enhanced re-delegation capabilities, enabling more sophisticated hierarchical permission structures for curators and namespace management.
+
+### Major Features
+
+#### Curator Re-delegation
+
+Curators can now re-delegate their permissions to other agents, creating a hierarchical permission structure:
+
+- The implementation tracks parent-child relationships between permissions and enforces inheritance rules where child permissions cannot exceed parent permission scopes.
+- Enables more flexible governance structures where curators can delegate specific subsets of their permissions to trusted agents, creating delegation chains.
+- Particularly useful for scaling curator operations and distributing workload while maintaining accountability through the permission hierarchy.
+- Existing curator permissions are automatically migrated to the new structure with their flags mapped to a single entry with no parent permission ID.
+
+#### Namespace Re-delegation
+
+Added support for namespace permission re-delegation with depth limiting:
+
+- Agents can now delegate namespace permissions they've received to other agents, creating delegation chains up to 5 levels deep.
+- The system validates that child namespace paths exist and are properly owned before allowing delegation.
+- Allows namespace owners to create more complex delegation structures for namespace management.
+- Organizations can delegate namespace control to team leads who can further delegate to team members, enabling hierarchical namespace administration.
+- No migration needed for existing namespace permissions as they remain compatible with the new system.
+
+#### Permission Instance Tracking
+
+All permission types now support instance tracking through the instances parameter:
+
+- Allows delegators to specify how many times a permission can be used concurrently, providing better control over permission usage.
+- Prevents permission abuse by limiting concurrent usage and provides better resource management for delegated operations.
+- Particularly important for curator and namespace permissions where parallel operations could cause conflicts.
+- Existing permissions are migrated with a default instance count of 1, maintaining current behavior.
+
+### Infrastructure Changes
+
+#### Storage Migration v5
+
+Migrated the CuratorScope structure to support the new hierarchical permission model:
+
+- The migration transforms the flat CuratorPermissions flags into a BoundedBTreeMap structure where existing permissions are mapped with no parent permission ID.
+- Ensures backward compatibility while enabling the new curator re-delegation features.
+- All existing curator permissions continue to work as before while gaining the ability to be re-delegated.
+- The migration runs automatically during runtime upgrade and is transparent to other pallets.
+
+### Configuration Updates
+
+- Added MaxCuratorSubpermissionsPerPermission parameter to limit the number of curator sub-permissions that can be delegated in a single permission contract (set to 16).
+- Added new error types to handle curator permission limits and namespace delegation depth restrictions.
+
+This release enhances the permission system's flexibility while maintaining security through proper validation and depth limiting, enabling more sophisticated governance and namespace management structures.
+
+## Spec 22
+
+This release introduces a major redesign of the permission system from a grant-based to a delegation-based model, along with significant improvements to staking, agent registration, and emission distribution.
+
+### Major Features
+
+#### Permission Delegation System Redesign
+
+The entire permission system has been redesigned around delegation rather than granting:
+
+- All functions, events, and storage items renamed from "grant/grantor/grantee" to "delegate/delegator/recipient" terminology.
+- Better reflects the actual relationship between participants - one party delegates authority to another rather than simply granting permissions.
+- Improves the mental model for developers and users interacting with the permission system.
+- All client applications must update their calls to use the new extrinsic names and parameter names.
+
+#### Hierarchical Namespace Permissions
+
+Namespace permissions now support hierarchical delegation through a parent-child relationship system:
+
+- The NamespaceScope structure changed from a simple set of paths to a map of parent permission IDs to path sets.
+- Permission contracts now track children and have instance limits.
+- Enables sophisticated permission delegation chains where a recipient of namespace permissions can re-delegate subsets of those permissions to other parties.
+- The instance system prevents over-delegation by limiting how many active delegations can exist from a single permission.
+
+#### Staking System Overhaul
+
+The staking system now uses named reserves instead of withdrawing and issuing tokens:
+
+- Stakes are tracked using the Balances pallet's named reserve functionality with identifier "torstake".
+- Improves the economic model by ensuring staked tokens remain as part of the staker's balance but are properly reserved and cannot be spent.
+- Ensures the total issuance remains consistent and stakes are properly tracked by the underlying currency system.
+- The v6 migration automatically handles the conversion of existing stakes to the new reserve-based system.
+
+#### Agent Registration Simplification
+
+The register_agent extrinsic no longer takes a separate agent_key parameter:
+
+- The agent key is now always the transaction signer.
+- The registration process also now checks for duplicate agent names in addition to duplicate keys.
+- Simplifies the registration process and ensures stronger consistency between the transaction signer and the registered agent.
+- Name uniqueness prevents confusion and impersonation attempts.
+
+#### Enhanced Emission Distribution Tracking
+
+The emission distribution system now emits more granular events:
+
+- Individual EmissionDistribution events for each target and AccumulatedEmission events when tokens are accumulated for permissions.
+- Distribution functions now return DispatchResult and handle errors gracefully.
+- Provides better observability into the emission system, allowing external systems to track exactly how tokens flow through the network.
+- Error handling prevents the emission system from silently failing.
+
+#### Whitelist-Based Consensus Participation
+
+The emission system now considers agents to be eligible for consensus only if they are both registered and whitelisted:
+
+- The registered field in ConsensusMemberInput was renamed to whitelisted to reflect this dual requirement.
+- Provides finer-grained control over network participation.
+- Allows the governance system to temporarily restrict agents from consensus without full deregistration.
+
+#### Namespace Creation Event Granularity
+
+Namespace creation and deletion now emit individual events for each namespace path rather than batch events:
+
+- Provides more detailed tracking of namespace operations.
+- Better supports indexing and monitoring systems that need to track individual namespace state changes.
+- Applications listening to namespace events should expect multiple events per operation when multiple paths are involved.
+
+### API Changes
+
+- The Torus0Api stake_to method now returns DispatchResult instead of Result<(), Balance> for consistent error handling.
+- Added find_agent_by_name method to the Torus0Api to support name-based agent lookups.
+- Added agent_name method to NamespacePath to extract agent names from namespace paths.
+
+This release represents a fundamental shift in how permissions are conceptualized and managed within the Torus Network, providing clearer semantics and more powerful delegation capabilities.
+
 ## Spec 21
 
 This release introduces major architectural changes to enable decentralized economic relationships, improved governance flexibility, and preparation for off-chain service integration. The changes span several months of development focused on creating a more sophisticated and scalable network.

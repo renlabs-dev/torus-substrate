@@ -1,4 +1,4 @@
-pub mod v4 {
+pub mod v5 {
     use num_traits::Zero;
     use polkadot_sdk::{
         frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
@@ -9,10 +9,10 @@ pub mod v4 {
 
     use crate::{
         Config, EmissionAllocation, Pallet, PermissionId, PermissionScope,
-        permission::NamespaceScope,
+        permission::CuratorScope, permission::NamespaceScope,
     };
 
-    pub type Migration<T, W> = VersionedMigration<3, 4, MigrateToV4<T>, Pallet<T>, W>;
+    pub type Migration<T, W> = VersionedMigration<3, 5, MigrateToV4<T>, Pallet<T>, W>;
     pub struct MigrateToV4<T>(core::marker::PhantomData<T>);
 
     mod old_storage {
@@ -27,7 +27,7 @@ pub mod v4 {
         use scale_info::TypeInfo;
 
         use crate::{
-            AccountIdOf, Config, CuratorScope, EmissionScope, Pallet, PermissionId,
+            AccountIdOf, Config, CuratorPermissions, EmissionScope, Pallet, PermissionId,
             permission::{EnforcementAuthority, PermissionDuration},
         };
 
@@ -89,6 +89,13 @@ pub mod v4 {
 
         #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
         #[scale_info(skip_type_params(T))]
+        pub struct CuratorScope<T: Config> {
+            pub flags: CuratorPermissions,
+            pub cooldown: Option<BlockNumberFor<T>>,
+        }
+
+        #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+        #[scale_info(skip_type_params(T))]
         pub enum RevocationTerms<T: Config> {
             /// Cannot be revoked
             Irrevocable,
@@ -142,7 +149,14 @@ pub mod v4 {
                     old_storage::PermissionScope::Emission(scope) => {
                         PermissionScope::Emission(scope)
                     }
-                    old_storage::PermissionScope::Curator(scope) => PermissionScope::Curator(scope),
+                    old_storage::PermissionScope::Curator(scope) => PermissionScope::Curator({
+                        let mut flags = BoundedBTreeMap::new();
+                        let _ = flags.try_insert(Option::<PermissionId>::None, scope.flags);
+                        CuratorScope {
+                            flags,
+                            cooldown: scope.cooldown,
+                        }
+                    }),
                     old_storage::PermissionScope::Namespace(scope) => PermissionScope::Namespace({
                         let mut paths = BoundedBTreeMap::new();
                         let _ = paths.try_insert(Option::<PermissionId>::None, scope.paths);
@@ -175,115 +189,6 @@ pub mod v4 {
                     scope,
                     contract.duration,
                     revocation,
-                    contract.enforcement,
-                    1,
-                );
-
-                new.created_at = contract.created_at;
-                #[allow(deprecated)]
-                new.set_execution_info(contract.last_execution, contract.execution_count);
-
-                crate::Permissions::<T>::set(pid, Some(new));
-            }
-
-            Weight::zero()
-        }
-    }
-}
-
-pub mod v5 {
-    use polkadot_sdk::{
-        frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
-        sp_runtime::BoundedBTreeMap,
-        sp_weights::Weight,
-    };
-
-    use crate::{Config, CuratorScope, Pallet, PermissionId, PermissionScope};
-
-    pub type Migration<T, W> = VersionedMigration<4, 5, MigrateToV5<T>, Pallet<T>, W>;
-    pub struct MigrateToV5<T>(core::marker::PhantomData<T>);
-
-    mod old_storage {
-        use codec::{Decode, Encode, MaxEncodedLen};
-        use polkadot_sdk::{
-            frame_support::Identity, frame_support_procedural::storage_alias,
-            polkadot_sdk_frame::prelude::BlockNumberFor, sp_runtime::BoundedBTreeSet,
-        };
-        use scale_info::TypeInfo;
-
-        use crate::{
-            Config, CuratorPermissions, EmissionScope, Pallet, PermissionId, RevocationTerms,
-            permission::{EnforcementAuthority, NamespaceScope, PermissionDuration},
-        };
-
-        #[storage_alias]
-        pub type Permissions<T: Config> =
-            StorageMap<Pallet<T>, Identity, PermissionId, PermissionContract<T>>;
-
-        #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
-        #[scale_info(skip_type_params(T))]
-        pub struct PermissionContract<T: Config> {
-            pub delegator: T::AccountId,
-            pub recipient: T::AccountId,
-            pub scope: PermissionScope<T>,
-            pub duration: PermissionDuration<T>,
-            pub revocation: RevocationTerms<T>,
-            /// Enforcement authority that can toggle the permission
-            pub enforcement: EnforcementAuthority<T>,
-            /// Last execution block
-            pub last_execution: Option<BlockNumberFor<T>>,
-            /// Number of times the permission was executed
-            pub execution_count: u32,
-            /// Maximum number of instances of this permission
-            pub max_instances: u32,
-            /// Children permissions
-            pub children: BoundedBTreeSet<PermissionId, T::MaxChildrenPerPermission>,
-            pub created_at: BlockNumberFor<T>,
-        }
-
-        /// Defines what the permission applies to
-        #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
-        #[scale_info(skip_type_params(T))]
-        pub enum PermissionScope<T: Config> {
-            Emission(EmissionScope<T>),
-            Curator(CuratorScope<T>),
-            Namespace(NamespaceScope<T>),
-        }
-
-        #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
-        #[scale_info(skip_type_params(T))]
-        pub struct CuratorScope<T: Config> {
-            pub flags: CuratorPermissions,
-            pub cooldown: Option<BlockNumberFor<T>>,
-        }
-    }
-
-    impl<T: Config> UncheckedOnRuntimeUpgrade for MigrateToV5<T> {
-        fn on_runtime_upgrade() -> Weight {
-            for (pid, contract) in old_storage::Permissions::<T>::iter() {
-                let scope = match contract.scope {
-                    old_storage::PermissionScope::Emission(scope) => {
-                        PermissionScope::Emission(scope)
-                    }
-                    old_storage::PermissionScope::Namespace(scope) => {
-                        PermissionScope::Namespace(scope)
-                    }
-                    old_storage::PermissionScope::Curator(scope) => PermissionScope::Curator({
-                        let mut flags = BoundedBTreeMap::new();
-                        let _ = flags.try_insert(Option::<PermissionId>::None, scope.flags);
-                        CuratorScope {
-                            flags,
-                            cooldown: scope.cooldown,
-                        }
-                    }),
-                };
-
-                let mut new = crate::PermissionContract::<T>::new(
-                    contract.delegator,
-                    contract.recipient,
-                    scope,
-                    contract.duration,
-                    contract.revocation,
                     contract.enforcement,
                     1,
                 );

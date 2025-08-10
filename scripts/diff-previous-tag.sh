@@ -4,7 +4,7 @@ set -euo pipefail
 # Path to runtime lib
 RUNTIME_LIB="runtime/src/lib.rs"
 
-spec_version=$(grep -Eo "spec_version:\s\d+" "$RUNTIME_LIB" | cut -f2 -d' ')
+spec_version=$(grep -Eo "spec_version:[[:space:]]+[0-9]+" "$RUNTIME_LIB" | cut -f2 -d' ')
 prev=$((spec_version - 1))
 
 echo "Current spec_version: $spec_version"
