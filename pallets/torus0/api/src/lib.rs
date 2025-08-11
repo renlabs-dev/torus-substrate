@@ -53,6 +53,10 @@ pub trait Torus0Api<AccountId, Balance> {
 
     #[doc(hidden)]
     #[cfg(feature = "runtime-benchmarks")]
+    fn force_register_namespace(id: &AccountId, name: alloc::vec::Vec<u8>) -> DispatchResult;
+
+    #[doc(hidden)]
+    #[cfg(feature = "runtime-benchmarks")]
     fn force_set_stake(
         staker: &AccountId,
         staked: &AccountId,

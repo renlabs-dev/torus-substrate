@@ -14,7 +14,7 @@ pub async fn main() {
     if let Err(err) = client
         .torus0()
         .calls()
-        .register_agent_wait(agent_key, name, url, metadata, signer)
+        .register_agent_wait(name, url, metadata, signer)
         .await
     {
         print!("could not register agent: {err}");

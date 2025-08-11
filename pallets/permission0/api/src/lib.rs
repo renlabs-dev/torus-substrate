@@ -151,6 +151,9 @@ pub trait Permission0CuratorApi<AccountId, Origin, BlockNumber> {
 
     /// Finds the curator permission delegated to [`recipient`].
     fn get_curator_permission(recipient: &AccountId) -> Option<PermissionId>;
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_curator(recipient: &AccountId, flags: CuratorPermissions);
 }
 
 pub trait Permission0NamespacesApi<AccountId, NamespacePath> {

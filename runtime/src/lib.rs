@@ -18,7 +18,6 @@ use polkadot_sdk::{
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use weights::constants::RocksDbWeight;
 
 pub mod apis;
 pub mod benchmarks;
@@ -83,12 +82,7 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 /// All migrations of the runtime, aside from the ones declared in the pallets.
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
-type Migrations = (
-    pallet_permission0::migrations::v5::Migration<Runtime, RocksDbWeight>,
-    pallet_torus0::migrations::v4::Migration<Runtime, RocksDbWeight>,
-    pallet_torus0::migrations::v5::Migration<Runtime, RocksDbWeight>,
-    pallet_torus0::migrations::v6::Migration<Runtime, RocksDbWeight>,
-);
+type Migrations = ();
 
 /// Executive: handles dispatch to the various modules.
 pub type RuntimeExecutive = frame_executive::Executive<

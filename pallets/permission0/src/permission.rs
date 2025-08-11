@@ -100,16 +100,6 @@ impl<T: Config> PermissionContract<T> {
             created_at: frame_system::Pallet::<T>::block_number(),
         }
     }
-
-    #[deprecated]
-    pub(crate) fn set_execution_info(
-        &mut self,
-        block: Option<BlockNumberFor<T>>,
-        execution_count: u32,
-    ) {
-        self.last_execution = block;
-        self.execution_count = execution_count;
-    }
 }
 
 impl<T: Config> PermissionContract<T> {

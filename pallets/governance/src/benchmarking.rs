@@ -1,8 +1,6 @@
 #![cfg(feature = "runtime-benchmarks")]
 
-use pallet_permission0_api::{
-    CuratorPermissions, Permission0CuratorApi, PermissionDuration, RevocationTerms,
-};
+use pallet_permission0_api::{CuratorPermissions, Permission0CuratorApi};
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_benchmarking::{account, v2::*},
@@ -30,15 +28,7 @@ fn curator<T: Config>() -> T::AccountId {
         T::AccountId,
         OriginFor<T>,
         BlockNumberFor<T>,
-    >>::delegate_curator_permission(
-        RawOrigin::Root.into(),
-        curator_id.clone(),
-        CuratorPermissions::all(),
-        None,
-        PermissionDuration::Indefinite,
-        RevocationTerms::Irrevocable,
-    )
-    .unwrap();
+    >>::force_curator(&curator_id, CuratorPermissions::all());
     curator_id
 }
 
@@ -48,7 +38,7 @@ mod benchmarks {
 
     #[benchmark]
     fn add_allocator() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
 
         #[extrinsic_call]
         add_allocator(RawOrigin::Root, module_key)
@@ -56,7 +46,7 @@ mod benchmarks {
 
     #[benchmark]
     fn remove_allocator() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
         roles::add_allocator::<T>(module_key.clone()).expect("failed to add allocator");
 
         #[extrinsic_call]
@@ -65,7 +55,7 @@ mod benchmarks {
 
     #[benchmark]
     fn add_to_whitelist() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
         roles::add_allocator::<T>(module_key.clone()).expect("failed to add allocator");
 
         #[extrinsic_call]
@@ -74,7 +64,7 @@ mod benchmarks {
 
     #[benchmark]
     fn remove_from_whitelist() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
         whitelist::add_to_whitelist::<T>(module_key.clone()).expect("failed to add to whitelist");
 
         #[extrinsic_call]
@@ -83,7 +73,7 @@ mod benchmarks {
 
     #[benchmark]
     fn submit_application() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
 
         let config = crate::GlobalGovernanceConfig::<T>::get();
         let cost = config.agent_application_cost;
@@ -103,7 +93,7 @@ mod benchmarks {
 
     #[benchmark]
     fn accept_application() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
         create_application::<T>(&module_key);
 
         #[extrinsic_call]
@@ -112,7 +102,7 @@ mod benchmarks {
 
     #[benchmark]
     fn deny_application() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
         create_application::<T>(&module_key);
 
         #[extrinsic_call]
@@ -121,11 +111,11 @@ mod benchmarks {
 
     #[benchmark]
     fn penalize_agent() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
 
         <pallet_torus0::Pallet<T> as Torus0Api<T::AccountId, BalanceOf<T>>>::force_register_agent(
             &module_key,
-            vec![],
+            b"agent".to_vec(),
             vec![],
             vec![],
         )
@@ -174,7 +164,7 @@ mod benchmarks {
 
     #[benchmark]
     fn add_dao_treasury_transfer_proposal() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
         let data = vec![0];
 
         let config = crate::GlobalGovernanceConfig::<T>::get();
@@ -192,7 +182,7 @@ mod benchmarks {
 
     #[benchmark]
     fn vote_proposal() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
         let data = vec![0];
 
         let config = crate::GlobalGovernanceConfig::<T>::get();
@@ -212,7 +202,7 @@ mod benchmarks {
 
     #[benchmark]
     fn remove_vote_proposal() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
         let data = vec![0];
 
         let config = crate::GlobalGovernanceConfig::<T>::get();
@@ -234,7 +224,7 @@ mod benchmarks {
 
     #[benchmark]
     fn enable_vote_delegation() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
 
         #[extrinsic_call]
         enable_vote_delegation(RawOrigin::Signed(module_key.clone()))
@@ -242,7 +232,7 @@ mod benchmarks {
 
     #[benchmark]
     fn disable_vote_delegation() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
 
         #[extrinsic_call]
         disable_vote_delegation(RawOrigin::Signed(module_key.clone()))
@@ -250,7 +240,7 @@ mod benchmarks {
 
     #[benchmark]
     fn add_emission_proposal() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
+        let module_key: T::AccountId = account("agent", 0, 2);
         let data = vec![0];
 
         let config = crate::GlobalGovernanceConfig::<T>::get();

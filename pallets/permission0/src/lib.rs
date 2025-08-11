@@ -468,7 +468,7 @@ pub mod pallet {
 
         /// Delegate a permission over namespaces
         #[pallet::call_index(7)]
-        #[pallet::weight(T::WeightInfo::delegate_curator_permission())]
+        #[pallet::weight(T::WeightInfo::delegate_namespace_permission())]
         pub fn delegate_namespace_permission(
             origin: OriginFor<T>,
             recipient: T::AccountId,

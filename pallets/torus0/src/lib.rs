@@ -608,11 +608,14 @@ impl<T: Config>
         url: Vec<u8>,
         metadata: Vec<u8>,
     ) -> DispatchResult {
+        use pallet_torus0_api::NAMESPACE_AGENT_PREFIX;
+
         crate::Agents::<T>::set(
             id,
             Some(Agent {
                 key: id.clone(),
                 name: name
+                    .clone()
                     .try_into()
                     .map_err(|_| DispatchError::Other("failed to trim fields"))?,
                 url: url
@@ -627,8 +630,16 @@ impl<T: Config>
                 last_update_block: Default::default(),
             }),
         );
+        Self::force_register_namespace(id, [NAMESPACE_AGENT_PREFIX, &name].concat()).unwrap();
 
         Ok(())
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_register_namespace(id: &T::AccountId, name: Vec<u8>) -> DispatchResult {
+        let name = NamespacePath::new_agent(&name).map_err(|_| Error::<T>::InvalidNamespacePath)?;
+        #[allow(deprecated)]
+        namespace::create_namespace0(NamespaceOwnership::<T>::Account(id.clone()), name, false)
     }
 
     #[cfg(feature = "runtime-benchmarks")]

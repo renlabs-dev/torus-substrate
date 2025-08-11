@@ -82,6 +82,30 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
                 }
             })
     }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_curator(recipient: &T::AccountId, flags: ApiCuratorPermissions) {
+        use polkadot_sdk::frame_system::RawOrigin;
+
+        let mut map: BoundedBTreeMap<
+            Option<PermissionId>,
+            CuratorPermissions,
+            T::MaxCuratorSubpermissionsPerPermission,
+        > = BoundedBTreeMap::new();
+        map.try_insert(None, CuratorPermissions::from_bits_truncate(flags.bits()))
+            .unwrap();
+
+        delegate_curator_permission_impl(
+            RawOrigin::Root.into(),
+            recipient.clone(),
+            map,
+            None,
+            PermissionDuration::<T>::Indefinite,
+            RevocationTerms::<T>::Irrevocable,
+            1,
+        )
+        .unwrap();
+    }
 }
 
 pub fn delegate_curator_permission_impl<T: Config>(

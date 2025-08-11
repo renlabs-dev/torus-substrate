@@ -6,18 +6,14 @@ use polkadot_sdk::{
     frame_benchmarking::{account, v2::*},
     frame_system::RawOrigin,
     sp_runtime::Percent,
-    sp_std::vec,
 };
 
 use crate::*;
 
-fn register_test_agent<T: Config>(
-    id: &T::AccountId,
-    name: Vec<u8>,
-    url: Vec<u8>,
-    metadata: Vec<u8>,
-) {
-    Pallet::<T>::force_register_agent(id, name, url, metadata).expect("failed to register agent");
+fn register_test_agent<T: Config>(id: &T::AccountId, name: &str) {
+    let name = name.as_bytes().to_vec();
+    Pallet::<T>::force_register_agent(id, name.clone(), name.clone(), name.clone())
+        .expect("failed to register agent");
 }
 
 #[benchmarks]
@@ -27,11 +23,11 @@ mod benchmarks {
 
     #[benchmark]
     fn add_stake() {
-        let agent: T::AccountId = account("Agent", 0, 1);
-        let staker: T::AccountId = account("Staker", 1, 1);
+        let agent: T::AccountId = account("agent", 0, 1);
+        let staker: T::AccountId = account("staker", 1, 1);
         let amount = MinAllowedStake::<T>::get();
 
-        register_test_agent::<T>(&agent, vec![1, 2, 3], vec![1, 2, 3], vec![1, 2, 3]);
+        register_test_agent::<T>(&agent, "agent");
 
         let _ = <T::Currency>::deposit_creating(&staker, amount.saturating_mul(2));
 
@@ -41,10 +37,10 @@ mod benchmarks {
 
     #[benchmark]
     fn remove_stake() {
-        let agent: T::AccountId = account("Agent", 0, 1);
-        let staker: T::AccountId = account("Staker", 1, 1);
+        let agent: T::AccountId = account("agent", 0, 1);
+        let staker: T::AccountId = account("staker", 1, 1);
 
-        register_test_agent::<T>(&agent, vec![1, 2, 3], vec![1, 2, 3], vec![1, 2, 3]);
+        register_test_agent::<T>(&agent, "agent");
 
         let amount = MinAllowedStake::<T>::get();
         let _ = <T::Currency>::deposit_creating(&staker, amount.saturating_mul(2));
@@ -56,12 +52,12 @@ mod benchmarks {
 
     #[benchmark]
     fn transfer_stake() {
-        let agent_a: T::AccountId = account("AgentA", 0, 1);
-        let agent_b: T::AccountId = account("AgentB", 1, 1);
-        let staker: T::AccountId = account("Staker", 2, 1);
+        let agent_a: T::AccountId = account("agent-a", 0, 1);
+        let agent_b: T::AccountId = account("agent-b", 1, 1);
+        let staker: T::AccountId = account("staker", 2, 1);
 
-        register_test_agent::<T>(&agent_a, vec![1, 2, 3], vec![1, 2, 3], vec![1, 2, 3]);
-        register_test_agent::<T>(&agent_b, vec![4, 5, 6], vec![4, 5, 6], vec![4, 5, 6]);
+        register_test_agent::<T>(&agent_a, "agent-a");
+        register_test_agent::<T>(&agent_b, "agent-b");
 
         let amount = MinAllowedStake::<T>::get();
         let _ = <T::Currency>::deposit_creating(&staker, amount.saturating_mul(2));
@@ -73,15 +69,15 @@ mod benchmarks {
 
     #[benchmark]
     fn register_agent() {
-        let agent: T::AccountId = account("Agent", 0, 1);
+        let agent: T::AccountId = account("agent", 0, 1);
         <T::Governance>::force_set_whitelisted(&agent);
 
         let burn = crate::Burn::<T>::get();
         let _ = <T::Currency>::deposit_creating(&agent, burn.saturating_mul(2));
 
-        let name = vec![1, 2, 3];
-        let url = vec![1, 2, 3];
-        let metadata = vec![1, 2, 3];
+        let name = b"agent".to_vec();
+        let url = b"agent".to_vec();
+        let metadata = b"agent".to_vec();
 
         #[extrinsic_call]
         register_agent(RawOrigin::Signed(agent.clone()), name, url, metadata)
@@ -89,8 +85,8 @@ mod benchmarks {
 
     #[benchmark]
     fn deregister_agent() {
-        let agent: T::AccountId = account("Agent", 0, 1);
-        register_test_agent::<T>(&agent, vec![1, 2, 3], vec![1, 2, 3], vec![1, 2, 3]);
+        let agent: T::AccountId = account("agent", 0, 1);
+        register_test_agent::<T>(&agent, "agent");
 
         #[extrinsic_call]
         deregister_agent(RawOrigin::Signed(agent))
@@ -98,13 +94,13 @@ mod benchmarks {
 
     #[benchmark]
     fn update_agent() {
-        let agent: T::AccountId = account("Agent", 0, 1);
-        register_test_agent::<T>(&agent, vec![1, 2, 3], vec![1, 2, 3], vec![1, 2, 3]);
+        let agent: T::AccountId = account("agent", 0, 1);
+        register_test_agent::<T>(&agent, "agent");
 
         AgentUpdateCooldown::<T>::set(Default::default());
 
-        let url = vec![4, 5, 6];
-        let metadata = Some(vec![4, 5, 6]);
+        let url = b"agent".to_vec();
+        let metadata = Some(b"agent".to_vec());
         let staking_fee = Some(Percent::from_percent(10));
         let weight_control_fee = Some(Percent::from_percent(10));
 
