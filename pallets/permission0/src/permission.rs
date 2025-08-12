@@ -120,15 +120,20 @@ impl<T: Config> PermissionContract<T> {
         self.execution_count
     }
 
-    /// Returns the number of available instances of this permission.
-    pub fn available_instances(&self) -> u32 {
-        let mut available = self.max_instances;
+    /// Returns the number of used instances of this permission.
+    pub fn used_instances(&self) -> u32 {
+        let mut used = 0;
         for child in &self.children {
-            available = available.saturating_sub(
+            used = used.saturating_add(
                 Permissions::<T>::get(child).map_or(0, |child| child.max_instances),
             );
         }
-        available
+        used
+    }
+
+    /// Returns the number of available instances of this permission.
+    pub fn available_instances(&self) -> u32 {
+        self.max_instances.saturating_sub(self.used_instances())
     }
 
     pub fn tick_execution(&mut self, block: BlockNumberFor<T>) -> DispatchResult {

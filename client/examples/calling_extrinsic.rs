@@ -1,13 +1,12 @@
-use subxt_signer::ecdsa::dev::{alice, bob};
+use subxt_signer::ecdsa::dev::alice;
 use torus_client::client::TorusClient;
 
 #[tokio::main]
 pub async fn main() {
-    let agent_key = alice().public_key().to_account_id(); //change it to your agent's account id
+    let signer = alice(); // change it to your signer
     let name = "alice agent".as_bytes().to_vec();
     let url = "url".as_bytes().to_vec();
     let metadata = "metadata".as_bytes().to_vec();
-    let signer = bob(); // change it to your signer
 
     let client = TorusClient::for_mainnet().await.unwrap();
 

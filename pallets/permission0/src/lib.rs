@@ -508,6 +508,23 @@ pub mod pallet {
 
             Ok(())
         }
+
+        /// Allows a delegator to update the number of instances of a permission
+        #[pallet::call_index(9)]
+        #[pallet::weight(T::WeightInfo::update_namespace_permission())]
+        pub fn update_namespace_permission(
+            origin: OriginFor<T>,
+            permission_id: PermissionId,
+            max_instances: u32,
+        ) -> DispatchResult {
+            ext::namespace_impl::update_namespace_permission::<T>(
+                origin,
+                permission_id,
+                max_instances,
+            )?;
+
+            Ok(())
+        }
     }
 }
 

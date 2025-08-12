@@ -6,7 +6,7 @@ use crate::{
 use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner, Torus0Api};
 use polkadot_sdk::{
-    frame_support::ensure,
+    frame_support::{dispatch::DispatchResult, ensure},
     frame_system::ensure_signed,
     polkadot_sdk_frame::prelude::OriginFor,
     sp_core::Get,
@@ -259,4 +259,52 @@ fn resolve_paths<T: Config>(
     paths
         .try_into()
         .map_err(|_| Error::<T>::TooManyNamespaces.into())
+}
+
+pub(crate) fn update_namespace_permission<T: Config>(
+    origin: OriginFor<T>,
+    permission_id: PermissionId,
+    max_instances: u32,
+) -> DispatchResult {
+    let who = ensure_signed(origin)?;
+
+    let permission = Permissions::<T>::get(permission_id);
+
+    let Some(mut permission) = permission else {
+        return Err(Error::<T>::PermissionNotFound.into());
+    };
+
+    ensure!(permission.delegator == who, Error::<T>::NotAuthorizedToEdit);
+
+    let scope = permission.scope.clone();
+    match &scope {
+        PermissionScope::Namespace(namespace) => {
+            if max_instances == permission.max_instances {
+                return Ok(());
+            } else if max_instances > permission.max_instances {
+                for parent in namespace.paths.keys().copied().flatten() {
+                    let Some(parent) = Permissions::<T>::get(parent) else {
+                        continue;
+                    };
+
+                    ensure!(
+                        max_instances <= parent.available_instances(),
+                        Error::<T>::NotEnoughInstances
+                    );
+                }
+            } else {
+                ensure!(permission.is_updatable(), Error::<T>::NotAuthorizedToEdit);
+                ensure!(
+                    max_instances >= permission.used_instances(),
+                    Error::<T>::NotEnoughInstances
+                );
+            }
+        }
+        _ => return Err(Error::<T>::NotEditable.into()),
+    }
+
+    permission.max_instances = max_instances;
+    Permissions::<T>::set(permission_id, Some(permission));
+
+    Ok(())
 }
