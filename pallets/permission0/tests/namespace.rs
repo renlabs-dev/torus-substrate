@@ -1,12 +1,12 @@
 #![allow(clippy::indexing_slicing, clippy::arithmetic_side_effects)]
 
 use pallet_permission0::{
-    CuratorPermissions, Error, Pallet, PermissionDuration, PermissionScope, Permissions,
-    PermissionsByDelegator, PermissionsByRecipient, RevocationTerms,
+    CuratorPermissions, Error, Pallet, PermissionDuration, PermissionId, PermissionScope,
+    Permissions, PermissionsByDelegator, PermissionsByRecipient, RevocationTerms,
 };
 use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner};
-use polkadot_sdk::sp_core::H256;
+use polkadot_sdk::sp_core::{H256, TryCollect};
 use polkadot_sdk::{
     frame_support::{BoundedBTreeMap, BoundedBTreeSet, assert_err, assert_ok},
     frame_system::RawOrigin,
@@ -27,6 +27,22 @@ fn register_agent(id: AccountId) {
 
     Balances::force_set_balance(RawOrigin::Root.into(), id, u128::MAX).unwrap();
     Torus0::register_agent(get_origin(id), name.to_vec(), name.to_vec(), name.to_vec()).unwrap();
+}
+
+macro_rules! paths_map {
+    ($ ( $key:expr => [$($value:expr),+] ),* $(,)?) => {
+        {
+            TryCollect::<$crate::BoundedBTreeMap<_, _, _>>::try_collect(
+                vec![$((
+                    $key,
+                    TryCollect::<$crate::BoundedBTreeSet<_, _>>::try_collect(
+                        vec![$($value),*].into_iter()
+                    ).unwrap()
+                    )),*
+                ].into_iter()
+            ).unwrap()
+        }
+    };
 }
 
 fn register_namespace(id: AccountId, name: &[u8]) -> NamespacePathInner {
@@ -1429,95 +1445,58 @@ fn delegate_namespace_permission_requires_weaker_revocation_terms() {
         let compute_namespace = register_namespace(alice, b"agent.alice.compute");
         let gpu_namespace = register_namespace(alice, b"agent.alice.compute.gpu");
 
-        // Alice creates a permission with RevocableAfter(200) terms
-        let mut alice_paths = BoundedBTreeMap::new();
-        let mut alice_set = BoundedBTreeSet::new();
-        alice_set.try_insert(compute_namespace).unwrap();
-        alice_paths.try_insert(None, alice_set).unwrap();
-
+        let alice_paths = paths_map!(None => [compute_namespace]);
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(alice),
             bob,
             alice_paths,
             PermissionDuration::Indefinite,
-            RevocationTerms::RevocableAfter(200), // Parent has RevocableAfter(200)
+            RevocationTerms::RevocableAfter(200),
             5
         ));
         let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
 
-        // Bob tries to re-delegate with STRONGER terms (RevocableAfter(300)) - should fail
-        let mut bob_paths_stronger = BoundedBTreeMap::new();
-        let mut bob_set_stronger = BoundedBTreeSet::new();
-        bob_set_stronger.try_insert(gpu_namespace.clone()).unwrap();
-        bob_paths_stronger
-            .try_insert(Some(alice_permission_id), bob_set_stronger)
-            .unwrap();
+        let bob_paths = paths_map!(Some(alice_permission_id) => [gpu_namespace.clone()]);
 
         assert_err!(
             Permission0::delegate_namespace_permission(
                 get_origin(bob),
                 charlie,
-                bob_paths_stronger,
+                bob_paths.clone(),
                 PermissionDuration::Indefinite,
-                RevocationTerms::RevocableAfter(300), // Stronger than parent (300 > 200)
+                RevocationTerms::RevocableAfter(300),
                 2
             ),
             Error::<Test>::RevocationTermsTooStrong
         );
-
-        // Bob tries to re-delegate with Irrevocable terms - should fail
-        let mut bob_paths_irrevocable = BoundedBTreeMap::new();
-        let mut bob_set_irrevocable = BoundedBTreeSet::new();
-        bob_set_irrevocable
-            .try_insert(gpu_namespace.clone())
-            .unwrap();
-        bob_paths_irrevocable
-            .try_insert(Some(alice_permission_id), bob_set_irrevocable)
-            .unwrap();
 
         assert_err!(
             Permission0::delegate_namespace_permission(
                 get_origin(bob),
-                dave, // Different recipient to avoid DuplicatePermissionInBlock
-                bob_paths_irrevocable,
+                dave,
+                bob_paths.clone(),
                 PermissionDuration::Indefinite,
-                RevocationTerms::Irrevocable, // Stronger than parent
+                RevocationTerms::Irrevocable,
                 2
             ),
             Error::<Test>::RevocationTermsTooStrong
         );
 
-        // Bob re-delegates with WEAKER terms (RevocableAfter(100)) - should succeed
-        let mut bob_paths_weaker = BoundedBTreeMap::new();
-        let mut bob_set_weaker = BoundedBTreeSet::new();
-        bob_set_weaker.try_insert(gpu_namespace.clone()).unwrap();
-        bob_paths_weaker
-            .try_insert(Some(alice_permission_id), bob_set_weaker)
-            .unwrap();
-
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(bob),
             charlie,
-            bob_paths_weaker,
+            bob_paths.clone(),
             PermissionDuration::Indefinite,
-            RevocationTerms::RevocableAfter(100), // Weaker than parent (100 < 200)
+            RevocationTerms::RevocableAfter(100),
             2
         ));
 
-        // Bob re-delegates with RevocableByDelegator (always weaker) - should succeed
-        let mut bob_paths_delegator = BoundedBTreeMap::new();
-        let mut bob_set_delegator = BoundedBTreeSet::new();
-        bob_set_delegator.try_insert(gpu_namespace).unwrap();
-        bob_paths_delegator
-            .try_insert(Some(alice_permission_id), bob_set_delegator)
-            .unwrap();
-
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(bob),
-            eve, // Different recipient to avoid DuplicatePermissionInBlock
-            bob_paths_delegator,
+            eve,
+            bob_paths.clone(),
             PermissionDuration::Indefinite,
-            RevocationTerms::RevocableByDelegator, // Always weaker
+            RevocationTerms::RevocableByDelegator,
             1
         ));
     });
@@ -1533,43 +1512,27 @@ fn delegate_namespace_permission_irrevocable_parent_allows_revocable_after() {
         register_agent(alice);
         register_agent(bob);
 
-        let compute_namespace = register_namespace(alice, b"agent.alice.compute");
-        let gpu_namespace = register_namespace(alice, b"agent.alice.compute.gpu");
-
-        // Alice creates an Irrevocable permission
-        let mut alice_paths = BoundedBTreeMap::new();
-        let mut alice_set = BoundedBTreeSet::new();
-        alice_set.try_insert(compute_namespace).unwrap();
-        alice_paths.try_insert(None, alice_set).unwrap();
-
+        let alice_paths = paths_map!(None => [register_namespace(alice, b"agent.alice.compute")]);
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(alice),
             bob,
             alice_paths,
             PermissionDuration::Indefinite,
-            RevocationTerms::Irrevocable, // Parent is Irrevocable
+            RevocationTerms::Irrevocable,
             3
         ));
         let alice_permission_id = PermissionsByDelegator::<Test>::get(alice)[0];
 
-        // Bob can re-delegate with RevocableAfter terms (weaker than Irrevocable)
-        let mut bob_paths = BoundedBTreeMap::new();
-        let mut bob_set = BoundedBTreeSet::new();
-        bob_set.try_insert(gpu_namespace).unwrap();
-        bob_paths
-            .try_insert(Some(alice_permission_id), bob_set)
-            .unwrap();
-
+        let bob_paths = paths_map!(Some(alice_permission_id) => [register_namespace(alice, b"agent.alice.compute.gpu")]);
         assert_ok!(Permission0::delegate_namespace_permission(
             get_origin(bob),
-            alice, // Back to Alice
+            alice,
             bob_paths,
             PermissionDuration::Indefinite,
-            RevocationTerms::RevocableAfter(100), // Weaker than Irrevocable
+            RevocationTerms::RevocableAfter(100),
             1
         ));
 
-        // Verify both permissions exist
         assert_eq!(PermissionsByDelegator::<Test>::get(alice).len(), 1);
         assert_eq!(PermissionsByDelegator::<Test>::get(bob).len(), 1);
     });
@@ -1598,14 +1561,8 @@ fn delegate_namespace_permission_fails_when_exceeding_depth_limit() {
             let delegator = i as u64 as u32;
             let recipient = (i + 1) as u64 as u32;
 
-            let mut paths = BoundedBTreeMap::new();
-            let mut namespace_set = BoundedBTreeSet::new();
-            namespace_set.try_insert(namespace.clone()).unwrap();
-            paths
-                .try_insert(parent_permission_id, namespace_set)
-                .unwrap();
+            let paths = paths_map!(parent_permission_id => [namespace.clone()]);
 
-            dbg!(recipient);
             assert_ok!(Permission0::delegate_namespace_permission(
                 get_origin(delegator),
                 recipient,
@@ -1619,12 +1576,7 @@ fn delegate_namespace_permission_fails_when_exceeding_depth_limit() {
         }
 
         for to_fail in [level5, level6] {
-            let mut paths = BoundedBTreeMap::new();
-            let mut namespace_set = BoundedBTreeSet::new();
-            namespace_set.try_insert(to_fail).unwrap();
-            paths
-                .try_insert(parent_permission_id, namespace_set)
-                .unwrap();
+            let paths = paths_map!(parent_permission_id => [to_fail]);
 
             assert_err!(
                 Permission0::delegate_namespace_permission(
@@ -1638,5 +1590,246 @@ fn delegate_namespace_permission_fails_when_exceeding_depth_limit() {
                 Error::<Test>::DelegationDepthExceeded
             );
         }
+    });
+}
+
+#[test]
+fn update_namespace_permission_basic_validations() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let delegator = 0;
+        let recipient = 1;
+        let not_delegator = 2;
+        register_agent(delegator);
+        register_agent(recipient);
+        register_agent(not_delegator);
+
+        let non_existent_id = PermissionId::from([0xFF; 32]);
+        assert_err!(
+            Permission0::update_namespace_permission(get_origin(delegator), non_existent_id, 10),
+            Error::<Test>::PermissionNotFound
+        );
+
+        let paths = paths_map!(None => [register_namespace(delegator, b"agent.alice.compute")]);
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(delegator),
+            recipient,
+            paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            5
+        ));
+        let permission_id = PermissionsByDelegator::<Test>::get(delegator)[0];
+
+        assert_err!(
+            Permission0::update_namespace_permission(get_origin(not_delegator), permission_id, 10),
+            Error::<Test>::NotAuthorizedToEdit
+        );
+
+        // if new instance count is the same as the old one, we succeed with no changes
+        assert_ok!(Permission0::update_namespace_permission(
+            get_origin(delegator),
+            permission_id,
+            5
+        ));
+
+        let permission = Permissions::<Test>::get(permission_id).unwrap();
+        assert_eq!(permission.max_instances, 5);
+    });
+}
+
+#[test]
+fn update_namespace_permission_larger_instances() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let delegator = 0;
+        let recipient_1 = 1;
+        let recipient_2 = 2;
+        register_agent(delegator);
+        register_agent(recipient_1);
+        register_agent(recipient_2);
+
+        let paths_1 = paths_map!(None => [register_namespace(delegator, b"agent.alice.compute")]);
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(delegator),
+            recipient_1,
+            paths_1,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            5
+        ));
+        let no_parent_permission_id = PermissionsByDelegator::<Test>::get(delegator)[0];
+
+        // can increase without limit when no parent
+        assert_ok!(Permission0::update_namespace_permission(
+            get_origin(delegator),
+            no_parent_permission_id,
+            100
+        ));
+
+        let permission = Permissions::<Test>::get(no_parent_permission_id).unwrap();
+        assert_eq!(permission.max_instances, 100);
+
+        let paths_2 = paths_map!(None => [register_namespace(delegator, b"agent.alice.storage")]);
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(delegator),
+            recipient_2,
+            paths_2,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            20
+        ));
+        let parent_permission_id = PermissionsByDelegator::<Test>::get(delegator)[1];
+
+        let child_paths = paths_map!(Some(parent_permission_id) => [register_namespace(delegator, b"agent.alice.storage.ssd")]);
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(recipient_2),
+            delegator,
+            child_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            5
+        ));
+        let child_permission_id = PermissionsByDelegator::<Test>::get(recipient_2)[0];
+
+        let parent = Permissions::<Test>::get(parent_permission_id).unwrap();
+        assert_eq!(parent.available_instances(), 15);
+
+        // try to increase child instances beyond parent's available
+        assert_err!(
+            Permission0::update_namespace_permission(
+                get_origin(recipient_2),
+                child_permission_id,
+                16
+            ),
+            Error::<Test>::NotEnoughInstances
+        );
+
+        // should succeed with exactly parent's available instances
+        assert_ok!(Permission0::update_namespace_permission(
+            get_origin(recipient_2),
+            child_permission_id,
+            15
+        ));
+
+        let updated_child = Permissions::<Test>::get(child_permission_id).unwrap();
+        assert_eq!(updated_child.max_instances, 15);
+
+        let parent = Permissions::<Test>::get(parent_permission_id).unwrap();
+        assert_eq!(parent.available_instances(), 5);
+    });
+}
+
+#[test]
+fn update_namespace_permission_smaller_instances() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let delegator = 0;
+        let recipient = 1;
+        let child_recipient = 2;
+        register_agent(delegator);
+        register_agent(recipient);
+        register_agent(child_recipient);
+
+        let revocable_after_block = 100;
+        let paths = paths_map!(None => [register_namespace(delegator, b"agent.alice.compute")]);
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(delegator),
+            recipient,
+            paths.clone(),
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableAfter(revocable_after_block),
+            10
+        ));
+        let parent_permission_id = PermissionsByDelegator::<Test>::get(delegator)[0];
+
+        let child_paths = paths_map!(Some(parent_permission_id) => [register_namespace(delegator, b"agent.alice.compute.gpu")]);
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(recipient),
+            child_recipient,
+            child_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator,
+            4
+        ));
+
+        let parent = Permissions::<Test>::get(parent_permission_id).unwrap();
+        assert_eq!(parent.available_instances(), 6);
+
+        // reducing before revocable period should fail
+        assert_err!(
+            Permission0::update_namespace_permission(
+                get_origin(delegator),
+                parent_permission_id,
+                5
+            ),
+            Error::<Test>::NotAuthorizedToEdit
+        );
+
+        System::set_block_number(revocable_after_block + 1);
+
+        // reducing to lowest than used instances should fail
+        assert_err!(
+            Permission0::update_namespace_permission(
+                get_origin(delegator),
+                parent_permission_id,
+                3
+            ),
+            Error::<Test>::NotEnoughInstances
+        );
+
+        assert_ok!(Permission0::update_namespace_permission(
+            get_origin(delegator),
+            parent_permission_id,
+            4
+        ));
+
+        let updated = Permissions::<Test>::get(parent_permission_id).unwrap();
+        assert_eq!(updated.max_instances, 4);
+        assert_eq!(updated.available_instances(), 0);
+
+        let storage_paths = paths_map!(None => [register_namespace(delegator, b"agent.alice.storage")]);
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(delegator),
+            recipient,
+            storage_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            20
+        ));
+        let irrevocable_permission_id = PermissionsByDelegator::<Test>::get(delegator)[1];
+
+        // cannot reduce irrevocable permission
+        assert_err!(
+            Permission0::update_namespace_permission(
+                get_origin(delegator),
+                irrevocable_permission_id,
+                10
+            ),
+            Error::<Test>::NotAuthorizedToEdit
+        );
+
+        let network_paths = paths_map!(None => [register_namespace(delegator, b"agent.alice.network")]);
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(delegator),
+            recipient,
+            network_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator,
+            15
+        ));
+        let revocable_permission_id = PermissionsByDelegator::<Test>::get(delegator)[2];
+
+        assert_ok!(Permission0::update_namespace_permission(
+            get_origin(delegator),
+            revocable_permission_id,
+            5
+        ));
+
+        let updated = Permissions::<Test>::get(revocable_permission_id).unwrap();
+        assert_eq!(updated.max_instances, 5);
     });
 }
