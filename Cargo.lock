@@ -19048,6 +19048,7 @@ dependencies = [
 name = "torus-mcp"
 version = "0.1.0"
 dependencies = [
+ "lazy_static",
  "rmcp",
  "schemars",
  "serde",

@@ -2,7 +2,10 @@ use rmcp::{
     ErrorData,
     model::{CallToolResult, Content},
 };
-use torus_client::{subxt::utils::to_hex, subxt_signer::sr25519::Keypair};
+use torus_client::{
+    subxt::utils::to_hex,
+    subxt_signer::{sr25519::Keypair, sr25519::dev},
+};
 
 use crate::{Client, utils::keypair_from_name};
 
@@ -27,6 +30,16 @@ pub struct AgentRegisterRequest {
 
 #[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
 pub struct AgentDeregisterRequest {
+    account_name: String,
+}
+
+#[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub struct AgentWhitelistAddRequest {
+    account_name: String,
+}
+
+#[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub struct AgentWhitelistRemoveRequest {
     account_name: String,
 }
 
@@ -92,6 +105,48 @@ pub async fn deregister_agent(
             "agent deregistered in block {}",
             to_hex(res)
         ))])),
+        Err(err) => {
+            dbg!(&err);
+            Err(ErrorData::invalid_request(err.to_string(), None))
+        }
+    }
+}
+
+pub async fn whitelist_agent(
+    torus_client: &Client,
+    request: AgentWhitelistAddRequest,
+) -> Result<CallToolResult, ErrorData> {
+    let key = keypair_from_name(request.account_name)?;
+    match torus_client
+        .governance()
+        .calls()
+        .add_to_whitelist_wait(key.public_key().to_account_id(), dev::alice())
+        .await
+    {
+        Ok(_) => Ok(CallToolResult::success(vec![Content::text(
+            "successfully added to whitelist",
+        )])),
+        Err(err) => {
+            dbg!(&err);
+            Err(ErrorData::invalid_request(err.to_string(), None))
+        }
+    }
+}
+
+pub async fn dewhitelist_agent(
+    torus_client: &Client,
+    request: AgentWhitelistAddRequest,
+) -> Result<CallToolResult, ErrorData> {
+    let key = keypair_from_name(request.account_name)?;
+    match torus_client
+        .governance()
+        .calls()
+        .remove_from_whitelist_wait(key.public_key().to_account_id(), dev::alice())
+        .await
+    {
+        Ok(_) => Ok(CallToolResult::success(vec![Content::text(
+            "successfully removed from whitelist",
+        )])),
         Err(err) => {
             dbg!(&err);
             Err(ErrorData::invalid_request(err.to_string(), None))
