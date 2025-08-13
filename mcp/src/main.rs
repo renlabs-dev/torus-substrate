@@ -7,7 +7,6 @@ use rmcp::model::{
 };
 use rmcp::transport::stdio;
 use rmcp::{ErrorData, ServerHandler, ServiceExt, tool, tool_handler, tool_router};
-use std::cell::LazyCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 use torus_client::chain::TestNet;
@@ -16,20 +15,25 @@ use torus_client::subxt_signer::sr25519::Keypair;
 use torus_client::subxt_signer::sr25519::dev::{alice, bob, charlie, dave, ferdie, one, two};
 use tracing_subscriber::EnvFilter;
 
-use crate::agent::{AgentDeregisterRequest, AgentInfoRequest, AgentRegisterRequest};
+use crate::agent::{
+    AgentDeregisterRequest, AgentInfoRequest, AgentRegisterRequest, AgentWhitelistAddRequest,
+};
 use crate::balance::BalanceCheckRequest;
 use crate::namespace::{
     NamespaceCreationRequest, NamespaceDelegationRequest, NamespaceDeletionRequest,
     NamespaceSummaryRequest,
 };
+use crate::weights::SetWeightsRequest;
 
 mod agent;
 mod balance;
+mod consensus;
 mod namespace;
 mod utils;
+mod weights;
 
-pub const ACCOUNTS: LazyCell<HashMap<String, Keypair>> = LazyCell::new(|| {
-    HashMap::from([
+lazy_static::lazy_static! {
+    static ref ACCOUNTS: HashMap<String, Keypair> = HashMap::from([
         ("alice".to_string(), alice()),
         ("bob".to_string(), bob()),
         ("charlie".to_string(), charlie()),
@@ -37,8 +41,8 @@ pub const ACCOUNTS: LazyCell<HashMap<String, Keypair>> = LazyCell::new(|| {
         ("ferdie".to_string(), ferdie()),
         ("one".to_string(), one()),
         ("two".to_string(), two()),
-    ])
-});
+    ]);
+}
 
 #[cfg(feature = "testnet")]
 pub type Client = TorusClient<TestNet>;
@@ -91,6 +95,22 @@ impl TorusMcp {
         agent::get_agent_info(&self.torus_client, request).await
     }
 
+    #[tool(description = "Adds an agent to the whitelist (uses alice as the signer).")]
+    async fn whitelist_agent(
+        &self,
+        Parameters(request): Parameters<AgentWhitelistAddRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        agent::whitelist_agent(&self.torus_client, request).await
+    }
+
+    #[tool(description = "Removes an agent from the whitelist (uses alice as the signer).")]
+    async fn dewhitelist_agent(
+        &self,
+        Parameters(request): Parameters<AgentWhitelistAddRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        agent::dewhitelist_agent(&self.torus_client, request).await
+    }
+
     #[tool(description = "Creates a namespace on the designated preconfigured account agent.")]
     async fn create_namespace_for_agent(
         &self,
@@ -131,6 +151,19 @@ impl TorusMcp {
         Parameters(request): Parameters<BalanceCheckRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         balance::check_account_balance(&self.torus_client, request).await
+    }
+
+    #[tool(description = "Sets the weights of an agent account.")]
+    async fn set_weights(
+        &self,
+        Parameters(request): Parameters<SetWeightsRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        weights::set_weights(&self.torus_client, request).await
+    }
+
+    #[tool(description = "List all consensus members.")]
+    async fn list_consensus_members(&self) -> Result<CallToolResult, ErrorData> {
+        consensus::list_consensus_members(&self.torus_client).await
     }
 }
 
