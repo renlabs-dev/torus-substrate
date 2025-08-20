@@ -80,7 +80,7 @@ pub fn generate_wrappers_for_network(
         #[cfg(feature = "devnet")]
         pub mod devnet {
             use super::*;
-            use crate::interfaces::testnet::api::runtime_types;
+            use crate::interfaces::devnet::api::runtime_types;
 
             #(#devnet_pallets)*
         }

@@ -83,7 +83,14 @@ run-workflows:
 # Mcp
 
 build-devnet-mcp:
+  cargo clean -p torus-client
+  cargo clean -p torus-mcp
   cargo b -p torus-mcp -r --no-default-features --features devnet
 
 build-testnet-mcp:
+  cargo clean -p torus-client
+  cargo clean -p torus-mcp
   cargo b -p torus-mcp -r
+
+install-claude-mcp: build-devnet-mcp
+  claude mcp add torus-mcp target-mcp/release/torus-mcp

@@ -64,12 +64,12 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
                 Ok(self.client.tx().sign_and_submit_default(&call, &signer).await?)
             }
 
-            pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)* signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
+            pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)* signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>) -> crate::Result<()> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
 
                 self.client.tx().sign_and_submit_then_watch_default(&call, &signer).await?.wait_for_finalized_success().await?;
 
-                Ok(H256::zero())
+                Ok(())
             }
         }
     } else {
@@ -79,12 +79,12 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
                 Ok(self.client.tx().create_unsigned(&call)?.submit().await?)
             }
 
-            pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)*) -> crate::Result<<subxt::PolkadotConfig as subxt::Config>::Hash> {
+            pub async fn #wait_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)*) -> crate::Result<()> {
                 let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
 
                 self.client.tx().create_unsigned(&call)?.submit_and_watch().await?.wait_for_finalized_success().await?;
 
-                Ok(H256::zero())
+                Ok(())
             }
         }
     }

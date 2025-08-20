@@ -2,12 +2,19 @@ use rmcp::{
     ErrorData,
     model::{CallToolResult, Content},
 };
-use torus_client::{
-    subxt::utils::to_hex,
-    subxt_signer::{sr25519::Keypair, sr25519::dev},
+use torus_client::subxt_signer::sr25519::{
+    Keypair,
+    dev::{self, alice},
 };
 
-use crate::{Client, utils::keypair_from_name};
+use crate::{
+    Client,
+    interfaces::{
+        permission0::calls::types::delegate_curator_permission::{Duration, Revocation},
+        runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap,
+    },
+    utils::keypair_from_name,
+};
 
 #[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
 pub struct AgentInfoRequest {
@@ -43,6 +50,11 @@ pub struct AgentWhitelistRemoveRequest {
     account_name: String,
 }
 
+#[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub struct DelegateCuratorPermisionRequest {
+    account_name: String,
+}
+
 pub async fn register_agent(
     torus_client: &Client,
     request: AgentRegisterRequest,
@@ -72,10 +84,9 @@ pub async fn register_agent(
         )
         .await
     {
-        Ok(res) => Ok(CallToolResult::success(vec![Content::text(format!(
-            "agent registered in block {}",
-            to_hex(res)
-        ))])),
+        Ok(_) => Ok(CallToolResult::success(vec![Content::text(
+            "agent registered",
+        )])),
         Err(err) => {
             dbg!(&err);
             Err(ErrorData::invalid_request(format!("{err:?}"), None))
@@ -101,10 +112,9 @@ pub async fn deregister_agent(
         .deregister_agent_wait(keypair)
         .await
     {
-        Ok(res) => Ok(CallToolResult::success(vec![Content::text(format!(
-            "agent deregistered in block {}",
-            to_hex(res)
-        ))])),
+        Ok(_) => Ok(CallToolResult::success(vec![Content::text(
+            "agent deregistered",
+        )])),
         Err(err) => {
             dbg!(&err);
             Err(ErrorData::invalid_request(err.to_string(), None))
@@ -186,6 +196,37 @@ pub async fn get_agent_info(
             url: String::from_utf8_lossy(&agent.url.0).to_string(),
         },
     )?]))
+}
+
+pub async fn delegate_curator_permission(
+    torus_client: &Client,
+    request: DelegateCuratorPermisionRequest,
+) -> Result<CallToolResult, ErrorData> {
+    let keypair = keypair_from_name(&request.account_name)?;
+
+    match torus_client
+        .permission0()
+        .calls()
+        .delegate_curator_permission_wait(
+            keypair.public_key().to_account_id(),
+            BoundedBTreeMap(vec![(None, u32::MAX)]),
+            None,
+            Duration::Indefinite,
+            Revocation::RevocableByDelegator,
+            u32::MAX,
+            alice(),
+        )
+        .await
+    {
+        Ok(_) => Ok(CallToolResult::success(vec![Content::text(format!(
+            "agent {} is now a curator",
+            &request.account_name
+        ))])),
+        Err(err) => {
+            dbg!(&err);
+            Err(ErrorData::invalid_request(err.to_string(), None))
+        }
+    }
 }
 
 async fn is_agent(torus_client: &Client, keypair: &Keypair) -> Result<bool, ErrorData> {

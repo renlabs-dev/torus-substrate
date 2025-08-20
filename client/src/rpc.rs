@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use subxt::backend::rpc::RpcClient;
 use subxt::ext::subxt_rpcs::client::RpcParams;
-use subxt::utils::AccountId32;
+use subxt::utils::{AccountId32, H256};
 use subxt::{OnlineClient, PolkadotConfig};
 
 use crate::client::TorusClient;
@@ -24,6 +24,18 @@ pub struct Rpc<C> {
 }
 
 impl<C> Rpc<C> {
+    pub async fn root_namespace_for_account(&self, account_id: AccountId32) -> crate::Result<H256> {
+        let mut rpc_params = RpcParams::new();
+        rpc_params.push(account_id)?;
+
+        let res = self
+            .rpc_client
+            .request("permission0_rootStreamIdForAccount", rpc_params)
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn namespace_path_creation_cost(
         &self,
         account_id: AccountId32,

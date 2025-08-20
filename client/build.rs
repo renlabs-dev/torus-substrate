@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     ));
 
     let devnet_url = if std::env::var("CARGO_FEATURE_DEVNET").is_ok() {
-        Some(std::env::var("DEVNET_URL").unwrap_or("wss://localhost:9944".to_string()))
+        Some(std::env::var("DEVNET_URL").unwrap_or("ws://127.0.0.1:9944".to_string()))
     } else {
         None
     };

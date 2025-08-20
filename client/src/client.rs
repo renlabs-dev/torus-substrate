@@ -15,7 +15,7 @@ pub struct TorusClient<C> {
 impl TorusClient<()> {
     const MAINNET_URL: &'static str = "wss://api.torus.network";
     const TESTNET_URL: &'static str = "wss://api.testnet.torus.network";
-    const DEVNET_URL: &'static str = "wss://localhost:9944";
+    const DEVNET_URL: &'static str = "ws://127.0.0.1:9944";
 
     #[cfg(feature = "mainnet")]
     pub async fn for_mainnet() -> crate::Result<TorusClient<crate::chain::MainNet>> {

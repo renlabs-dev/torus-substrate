@@ -1,17 +1,23 @@
-use rmcp::{
-    ErrorData,
-    model::{CallToolResult, Content},
-};
-use torus_client::{
-    interfaces::testnet::api::runtime_types::{
+use std::collections::HashMap;
+
+use crate::{
+    emission::Distribution,
+    interfaces::runtime_types::{
         bounded_collections::{
             bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet,
             bounded_vec::BoundedVec,
         },
-        pallet_permission0::permission::{PermissionDuration, PermissionScope, RevocationTerms},
+        pallet_permission0::permission::{
+            PermissionDuration, PermissionScope, RevocationTerms,
+            emission::{DistributionControl, EmissionAllocation},
+        },
     },
-    subxt::{ext::futures::StreamExt, utils::to_hex},
 };
+use rmcp::{
+    ErrorData,
+    model::{CallToolResult, Content},
+};
+use torus_client::subxt::ext::futures::StreamExt;
 
 use crate::{
     Client,
@@ -38,27 +44,49 @@ pub struct NamespaceDelegationRequest {
 }
 
 #[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
-pub struct NamespaceSummaryRequest {
+pub struct PermissionSummaryRequest {
     account_name: String,
 }
 
 #[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
-pub struct NamespaceSummaryResponse {
-    namespaces: Vec<Namespace>,
+pub struct PermissionSummaryResponse {
+    permissions: Vec<Permission>,
 }
 
 #[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
-pub enum Namespace {
-    Delegating {
-        to: String,
-        path: String,
-        parent: Option<String>,
-    },
-    Delegated {
-        by: String,
-        path: String,
-        parent: Option<String>,
-    },
+pub enum Permission {
+    Namespace((NamespacePermission, Direction)),
+    Curator((CuratorPermission, Direction)),
+    Emission((EmissionPermission, Direction)),
+}
+
+#[derive(Clone, schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub enum Direction {
+    DelegatingTo(Vec<String>),
+    DelegatedFrom(String),
+}
+
+#[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub struct NamespacePermission {
+    path: String,
+    parent: Option<String>,
+}
+
+#[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub struct CuratorPermission {}
+
+#[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub struct EmissionPermission {
+    allocation: Allocation,
+    distribution: Distribution,
+    targets: HashMap<String, u16>,
+    accumulating: bool,
+}
+
+#[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub enum Allocation {
+    Streams(HashMap<String, u8>),
+    FixedAmount(u128),
 }
 
 pub async fn create_namespace_for_agent(
@@ -76,10 +104,9 @@ pub async fn create_namespace_for_agent(
         )
         .await
     {
-        Ok(res) => Ok(CallToolResult::success(vec![Content::text(format!(
-            "namespace created in block {}",
-            to_hex(res)
-        ))])),
+        Ok(_) => Ok(CallToolResult::success(vec![Content::text(
+            "namespace created",
+        )])),
         Err(err) => {
             dbg!(&err);
             Err(ErrorData::invalid_request(err.to_string(), None))
@@ -102,10 +129,9 @@ pub async fn delete_namespace_for_agent(
         )
         .await
     {
-        Ok(res) => Ok(CallToolResult::success(vec![Content::text(format!(
-            "namespace deleted in block {}",
-            to_hex(res)
-        ))])),
+        Ok(_) => Ok(CallToolResult::success(vec![Content::text(
+            "namespace deleted",
+        )])),
         Err(err) => {
             dbg!(&err);
             Err(ErrorData::invalid_request(err.to_string(), None))
@@ -138,10 +164,9 @@ pub async fn delegate_namespace_permission_for_agent(
         )
         .await
     {
-        Ok(res) => Ok(CallToolResult::success(vec![Content::text(format!(
-            "namespace deleted in block {}",
-            to_hex(res)
-        ))])),
+        Ok(_) => Ok(CallToolResult::success(vec![Content::text(
+            "namespace deleted",
+        )])),
         Err(err) => {
             dbg!(&err);
             Err(ErrorData::invalid_request(err.to_string(), None))
@@ -149,11 +174,12 @@ pub async fn delegate_namespace_permission_for_agent(
     }
 }
 
-pub async fn get_namespace_summary_for_agent(
+pub async fn get_permission_summary_for_agent(
     torus_client: &Client,
-    request: NamespaceSummaryRequest,
+    request: PermissionSummaryRequest,
 ) -> Result<CallToolResult, ErrorData> {
     let keypair = keypair_from_name(request.account_name)?;
+    let account_id = keypair.public_key().to_account_id();
 
     let mut iter = match torus_client
         .permission0()
@@ -168,7 +194,7 @@ pub async fn get_namespace_summary_for_agent(
         }
     };
 
-    let mut namespaces = vec![];
+    let mut permissions = vec![];
 
     while let Some(ele) = iter.next().await {
         let (_hash, contract) = match ele {
@@ -179,34 +205,86 @@ pub async fn get_namespace_summary_for_agent(
             }
         };
 
-        let PermissionScope::Namespace(namespace) = contract.scope else {
-            continue;
-        };
+        match contract.scope {
+            PermissionScope::Emission(emission) => {
+                let direction = if contract.delegator == account_id {
+                    let mut recipients = vec![name_or_key(&contract.recipient)];
+                    recipients.append(
+                        &mut emission
+                            .targets
+                            .0
+                            .iter()
+                            .map(|(target, _)| name_or_key(target))
+                            .collect::<Vec<String>>(),
+                    );
+                    Direction::DelegatingTo(recipients)
+                } else {
+                    Direction::DelegatedFrom(name_or_key(&contract.delegator))
+                };
 
-        if contract.delegator == keypair.public_key().to_account_id() {
-            for (parent, path) in namespace.paths.0 {
-                for path in path.0 {
-                    namespaces.push(Namespace::Delegating {
-                        to: name_or_key(&contract.recipient),
-                        path: String::from_utf8_lossy(&path.0.0[..]).to_string(),
-                        parent: parent.map(|hash| hash.to_string()),
-                    });
-                }
+                let allocation = match emission.allocation {
+                    EmissionAllocation::Streams(bounded_btree_map) => Allocation::Streams(
+                        bounded_btree_map
+                            .0
+                            .iter()
+                            .map(|(stream, percent)| (stream.to_string(), percent.0))
+                            .collect::<HashMap<_, _>>(),
+                    ),
+                    EmissionAllocation::FixedAmount(amount) => Allocation::FixedAmount(amount),
+                };
+
+                let distribution = match emission.distribution {
+                    DistributionControl::Manual => Distribution::Manual,
+                    DistributionControl::Automatic(value) => Distribution::Automatic(value),
+                    DistributionControl::AtBlock(value) => Distribution::AtBlock(value),
+                    DistributionControl::Interval(value) => Distribution::Interval(value),
+                };
+
+                let permission = EmissionPermission {
+                    allocation,
+                    distribution,
+                    targets: emission
+                        .targets
+                        .0
+                        .iter()
+                        .map(|(account, amount)| (name_or_key(account), *amount))
+                        .collect(),
+                    accumulating: emission.accumulating,
+                };
+
+                permissions.push(Permission::Emission((permission, direction)));
             }
-        } else {
-            for (parent, path) in namespace.paths.0 {
-                for path in path.0 {
-                    namespaces.push(Namespace::Delegated {
-                        by: name_or_key(&contract.delegator),
-                        path: String::from_utf8_lossy(&path.0.0[..]).to_string(),
-                        parent: parent.map(|hash| hash.to_string()),
-                    });
+            PermissionScope::Curator(_) => {
+                let direction = if contract.delegator == account_id {
+                    Direction::DelegatingTo(vec![name_or_key(&contract.recipient)])
+                } else {
+                    Direction::DelegatedFrom(name_or_key(&contract.delegator))
+                };
+
+                permissions.push(Permission::Curator((CuratorPermission {}, direction)));
+            }
+            PermissionScope::Namespace(namespace) => {
+                let direction = if contract.delegator == account_id {
+                    Direction::DelegatingTo(vec![name_or_key(&contract.recipient)])
+                } else {
+                    Direction::DelegatedFrom(name_or_key(&contract.delegator))
+                };
+
+                for (parent, path) in namespace.paths.0 {
+                    for path in path.0 {
+                        let permission = NamespacePermission {
+                            path: String::from_utf8_lossy(&path.0.0[..]).to_string(),
+                            parent: parent.map(|hash| hash.to_string()),
+                        };
+
+                        permissions.push(Permission::Namespace((permission, direction.clone())));
+                    }
                 }
             }
         }
     }
 
     Ok(CallToolResult::success(vec![
-        Content::json(NamespaceSummaryResponse { namespaces }).unwrap(),
+        Content::json(PermissionSummaryResponse { permissions }).unwrap(),
     ]))
 }

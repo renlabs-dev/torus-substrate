@@ -87,6 +87,10 @@ xflags::xflags! {
         cmd coverage {
             optional --html
         }
+
+        cmd workbench {
+            optional -c, --chain-spec chain_spec: PathBuf
+        }
     }
 }
 
@@ -103,6 +107,7 @@ pub enum XtaskCmd {
     Run(Run),
     GenerateSpec(GenerateSpec),
     Coverage(Coverage),
+    Workbench(Workbench),
 }
 
 #[derive(Debug)]
@@ -169,6 +174,11 @@ pub struct GenNew {
 #[derive(Debug)]
 pub struct Coverage {
     pub html: bool,
+}
+
+#[derive(Debug)]
+pub struct Workbench {
+    pub chain_spec: Option<PathBuf>,
 }
 
 impl Xtask {

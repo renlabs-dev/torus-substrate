@@ -9,25 +9,35 @@ use rmcp::transport::stdio;
 use rmcp::{ErrorData, ServerHandler, ServiceExt, tool, tool_handler, tool_router};
 use std::collections::HashMap;
 use std::sync::Arc;
-use torus_client::chain::TestNet;
 use torus_client::client::TorusClient;
 use torus_client::subxt_signer::sr25519::Keypair;
-use torus_client::subxt_signer::sr25519::dev::{alice, bob, charlie, dave, ferdie, one, two};
+use torus_client::subxt_signer::sr25519::dev::{alice, bob, charlie, dave, eve, ferdie, one, two};
 use tracing_subscriber::EnvFilter;
 
 use crate::agent::{
     AgentDeregisterRequest, AgentInfoRequest, AgentRegisterRequest, AgentWhitelistAddRequest,
+    DelegateCuratorPermisionRequest,
 };
 use crate::balance::BalanceCheckRequest;
+use crate::emission::DelegateEmissionRequest;
 use crate::namespace::{
     NamespaceCreationRequest, NamespaceDelegationRequest, NamespaceDeletionRequest,
-    NamespaceSummaryRequest,
+    PermissionSummaryRequest,
 };
 use crate::weights::SetWeightsRequest;
+
+pub mod interfaces {
+    #[cfg(feature = "testnet")]
+    pub use torus_client::interfaces::testnet::api::*;
+
+    #[cfg(feature = "devnet")]
+    pub use torus_client::interfaces::devnet::api::*;
+}
 
 mod agent;
 mod balance;
 mod consensus;
+mod emission;
 mod namespace;
 mod utils;
 mod weights;
@@ -38,6 +48,7 @@ lazy_static::lazy_static! {
         ("bob".to_string(), bob()),
         ("charlie".to_string(), charlie()),
         ("dave".to_string(), dave()),
+        ("eve".to_string(), eve()),
         ("ferdie".to_string(), ferdie()),
         ("one".to_string(), one()),
         ("two".to_string(), two()),
@@ -45,10 +56,10 @@ lazy_static::lazy_static! {
 }
 
 #[cfg(feature = "testnet")]
-pub type Client = TorusClient<TestNet>;
+pub type Client = TorusClient<torus_client::chain::TestNet>;
 
 #[cfg(feature = "devnet")]
-pub type Client = TorusClient<DevNet>;
+pub type Client = TorusClient<torus_client::chain::DevNet>;
 
 #[derive(Clone)]
 pub struct TorusMcp {
@@ -136,13 +147,13 @@ impl TorusMcp {
     }
 
     #[tool(
-        description = "Gets the summary of all namespaces delegated by or delegated to the supplied account name."
+        description = "Gets the summary of all permissions that affect the supplied account name. (emission, namespace and curator permissions)"
     )]
-    async fn get_namespace_summary_for_agent(
+    async fn get_permission_summary_for_agent(
         &self,
-        Parameters(request): Parameters<NamespaceSummaryRequest>,
+        Parameters(request): Parameters<PermissionSummaryRequest>,
     ) -> Result<CallToolResult, ErrorData> {
-        namespace::get_namespace_summary_for_agent(&self.torus_client, request).await
+        namespace::get_permission_summary_for_agent(&self.torus_client, request).await
     }
 
     #[tool(description = "Checks the balance for the supplied account name.")]
@@ -164,6 +175,24 @@ impl TorusMcp {
     #[tool(description = "List all consensus members.")]
     async fn list_consensus_members(&self) -> Result<CallToolResult, ErrorData> {
         consensus::list_consensus_members(&self.torus_client).await
+    }
+
+    #[tool(
+        description = "Delegates or re-delegates an emission stream to the named agent. Delegating does not require the stream to be supplied, redelegating does."
+    )]
+    async fn delegate_emission(
+        &self,
+        Parameters(request): Parameters<DelegateEmissionRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        emission::delegate_emission(&self.torus_client, request).await
+    }
+
+    #[tool(description = "Makes the given agent account a curator.")]
+    async fn delegate_curator_permission(
+        &self,
+        Parameters(request): Parameters<DelegateCuratorPermisionRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        agent::delegate_curator_permission(&self.torus_client, request).await
     }
 }
 

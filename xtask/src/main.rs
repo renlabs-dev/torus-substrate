@@ -5,6 +5,7 @@ use polkadot_sdk::sp_keyring;
 mod flags;
 mod generate_spec;
 mod run;
+mod workbench;
 
 fn main() {
     let cmd = flags::Xtask::from_env_or_exit();
@@ -44,6 +45,7 @@ fn main() {
             cmd.args(args);
             let _ = cmd.exec();
         }
+        flags::XtaskCmd::Workbench(workbench) => workbench::run(workbench),
     }
 }
 
