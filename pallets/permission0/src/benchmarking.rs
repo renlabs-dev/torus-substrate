@@ -306,6 +306,61 @@ mod benchmarks {
     }
 
     #[benchmark]
+    fn update_namespace_permission() {
+        use pallet_torus0_api::NamespacePathInner;
+        use polkadot_sdk::sp_std::collections::btree_set::BTreeSet;
+
+        let alice: T::AccountId = account("alice", 0, 0);
+        let bob: T::AccountId = account("bob", 1, 0);
+
+        T::Torus::force_register_agent(&alice, b"alice".to_vec(), vec![], vec![])
+            .expect("failed to register alice");
+        T::Torus::force_register_agent(&bob, b"bob".to_vec(), vec![], vec![])
+            .expect("failed to register bob");
+
+        for namespace_bytes in [
+            b"agent.alice.network".to_vec(),
+            b"agent.alice.compute".to_vec(),
+            b"agent.alice.storage".to_vec(),
+        ] {
+            T::Torus::force_register_namespace(&alice, namespace_bytes.clone())
+                .expect("failed to register namespace");
+        }
+
+        let mut alice_paths_set: BTreeSet<NamespacePathInner> = BTreeSet::new();
+        alice_paths_set.insert(b"agent.alice.network".to_vec().try_into().unwrap());
+        alice_paths_set.insert(b"agent.alice.compute".to_vec().try_into().unwrap());
+        let alice_paths_bounded: BoundedBTreeSet<
+            NamespacePathInner,
+            T::MaxNamespacesPerPermission,
+        > = alice_paths_set
+            .try_into()
+            .expect("failed to create bounded set");
+
+        let mut alice_paths: BoundedBTreeMap<
+            Option<PermissionId>,
+            BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
+            T::MaxNamespacesPerPermission,
+        > = BoundedBTreeMap::new();
+        alice_paths
+            .try_insert(None, alice_paths_bounded)
+            .expect("failed to insert alice paths");
+
+        let permission_id = ext::namespace_impl::delegate_namespace_permission_impl::<T>(
+            RawOrigin::Signed(alice.clone()).into(),
+            bob.clone(),
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::RevocableByDelegator,
+            20,
+        )
+        .expect("failed to create alice->bob permission");
+
+        #[extrinsic_call]
+        update_namespace_permission(RawOrigin::Signed(alice), permission_id, 10)
+    }
+
+    #[benchmark]
     fn delegate_namespace_permission() {
         use pallet_torus0_api::NamespacePathInner;
         use polkadot_sdk::sp_std::collections::btree_set::BTreeSet;
@@ -390,7 +445,7 @@ mod benchmarks {
             alice_paths,
             PermissionDuration::Indefinite,
             RevocationTerms::RevocableByDelegator,
-            20, // High instance count for re-delegation
+            20,
         )
         .expect("failed to create alice->bob permission");
 
@@ -417,7 +472,7 @@ mod benchmarks {
             bob_paths,
             PermissionDuration::Indefinite,
             RevocationTerms::RevocableByDelegator,
-            15, // Reduced instances
+            15,
         )
         .expect("failed to create bob->charlie permission");
 
