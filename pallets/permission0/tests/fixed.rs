@@ -14,9 +14,8 @@ fn fixed_fails_without_balance() {
         assert_err!(
             delegate_emission_permission(
                 agent_0,
-                agent_1,
+                vec![(agent_1, u16::MAX)],
                 pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
-                vec![(agent_0, u16::MAX)],
                 pallet_permission0_api::DistributionControl::Manual,
                 pallet_permission0_api::PermissionDuration::Indefinite,
                 pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -41,9 +40,8 @@ fn fixed_creates() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
-            agent_1,
+            vec![(agent_1, u16::MAX)],
             pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
-            vec![(agent_0, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -70,9 +68,8 @@ fn fixed_reserves() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
-            agent_1,
+            vec![(agent_1, u16::MAX)],
             pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
-            vec![(agent_0, u16::MAX)],
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -104,9 +101,8 @@ fn fixed_manual_executes() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -150,9 +146,8 @@ fn fixed_manual_executes_only_once() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -200,9 +195,8 @@ fn fixed_at_block_executes() {
 
         let _ = assert_ok!(delegate_emission_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::AtBlock(20),
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,

@@ -1,7 +1,7 @@
 use crate::{
     Config, CuratorPermissions, CuratorScope, Error, Event, Pallet, PermissionContract,
     PermissionDuration, PermissionScope, Permissions, PermissionsByRecipient, RevocationTerms,
-    generate_permission_id, pallet, update_permission_indices,
+    generate_permission_id, pallet, permission::add_permission_indices,
 };
 
 use pallet_permission0_api::{
@@ -63,7 +63,7 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
                 continue;
             }
 
-            return Ok(contract.recipient);
+            return Ok(recipient);
         }
 
         Err(cur_error.into())
@@ -140,14 +140,14 @@ pub fn delegate_curator_permission_impl<T: Config>(
                 return Err(Error::<T>::ParentPermissionNotFound.into());
             };
 
-            ensure!(
-                parent.recipient == delegator,
-                Error::<T>::NotPermissionRecipient
-            );
-
             let PermissionScope::Curator(scope) = &parent.scope else {
                 return Err(Error::<T>::UnsupportedPermissionType.into());
             };
+
+            ensure!(
+                scope.recipient == delegator,
+                Error::<T>::NotPermissionRecipient
+            );
 
             ensure!(
                 scope.has_permission(*flags),
@@ -175,8 +175,12 @@ pub fn delegate_curator_permission_impl<T: Config>(
         }
     }
 
-    let scope = PermissionScope::Curator(CuratorScope { flags, cooldown });
-    let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
+    let scope = PermissionScope::Curator(CuratorScope {
+        recipient: recipient.clone(),
+        flags,
+        cooldown,
+    });
+    let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
 
     for parent in parents {
         Permissions::<T>::mutate_extant(parent, |parent| {
@@ -187,7 +191,6 @@ pub fn delegate_curator_permission_impl<T: Config>(
 
     let contract = PermissionContract::<T>::new(
         delegator,
-        recipient,
         scope,
         duration,
         revocation,
@@ -196,11 +199,15 @@ pub fn delegate_curator_permission_impl<T: Config>(
     );
 
     Permissions::<T>::insert(permission_id, &contract);
-    update_permission_indices::<T>(&contract.delegator, &contract.recipient, permission_id)?;
+
+    add_permission_indices::<T>(
+        &contract.delegator,
+        core::iter::once(&recipient),
+        permission_id,
+    )?;
 
     <Pallet<T>>::deposit_event(Event::PermissionDelegated {
         delegator: contract.delegator,
-        recipient: contract.recipient,
         permission_id,
     });
 

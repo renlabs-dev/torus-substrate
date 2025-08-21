@@ -37,7 +37,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("torus-runtime"),
     impl_name: create_runtime_str!("torus-runtime"),
     authoring_version: 1,
-    spec_version: 23,
+    spec_version: 24,
     impl_version: 1,
     apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -82,7 +82,8 @@ pub type SignedPayload = sp_runtime::generic::SignedPayload<RuntimeCall, SignedE
 /// All migrations of the runtime, aside from the ones declared in the pallets.
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
-type Migrations = ();
+type Migrations =
+    (pallet_permission0::migrations::v6::Migration<Runtime, weights::constants::RocksDbWeight>,);
 
 /// Executive: handles dispatch to the various modules.
 pub type RuntimeExecutive = frame_executive::Executive<

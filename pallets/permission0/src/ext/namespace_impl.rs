@@ -1,7 +1,7 @@
 use crate::{
     Config, Error, Event, Pallet, PermissionContract, PermissionDuration, PermissionId,
     PermissionScope, Permissions, PermissionsByDelegator, RevocationTerms, generate_permission_id,
-    permission::NamespaceScope, update_permission_indices,
+    permission::NamespaceScope, permission::add_permission_indices,
 };
 use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner, Torus0Api};
@@ -84,14 +84,14 @@ pub fn delegate_namespace_permission_impl<T: Config>(
                     return Err(Error::<T>::ParentPermissionNotFound.into());
                 };
 
-                ensure!(
-                    parent.recipient == delegator,
-                    Error::<T>::NotPermissionRecipient
-                );
-
                 let PermissionScope::Namespace(namespace) = &parent.scope else {
                     return Err(Error::<T>::UnsupportedPermissionType.into());
                 };
+
+                ensure!(
+                    namespace.recipient == delegator,
+                    Error::<T>::NotPermissionRecipient
+                );
 
                 ensure!(
                     instances <= parent.available_instances(),
@@ -118,8 +118,11 @@ pub fn delegate_namespace_permission_impl<T: Config>(
         .try_into()
         .map_err(|_| Error::<T>::TooManyNamespaces)?;
 
-    let scope = PermissionScope::Namespace(NamespaceScope { paths });
-    let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
+    let scope = PermissionScope::Namespace(NamespaceScope {
+        recipient: recipient.clone(),
+        paths,
+    });
+    let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
 
     for parent in parents {
         Permissions::<T>::mutate_extant(parent, |parent| {
@@ -130,7 +133,6 @@ pub fn delegate_namespace_permission_impl<T: Config>(
 
     let contract = PermissionContract::<T>::new(
         delegator,
-        recipient,
         scope,
         duration,
         revocation,
@@ -139,11 +141,14 @@ pub fn delegate_namespace_permission_impl<T: Config>(
     );
 
     Permissions::<T>::insert(permission_id, &contract);
-    update_permission_indices::<T>(&contract.delegator, &contract.recipient, permission_id)?;
+    add_permission_indices::<T>(
+        &contract.delegator,
+        core::iter::once(&recipient),
+        permission_id,
+    )?;
 
     <Pallet<T>>::deposit_event(Event::PermissionDelegated {
         delegator: contract.delegator,
-        recipient: contract.recipient,
         permission_id,
     });
 

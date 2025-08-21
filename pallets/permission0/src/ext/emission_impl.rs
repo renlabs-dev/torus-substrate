@@ -4,7 +4,6 @@ use crate::{
     PermissionContract, PermissionDuration, PermissionId, PermissionScope, Permissions,
     generate_permission_id, get_total_allocated_percentage, pallet,
     permission::{emission::*, *},
-    update_permission_indices,
 };
 
 use pallet_permission0_api::{
@@ -36,13 +35,14 @@ impl<T: Config>
 {
     fn delegate_emission_permission(
         delegator: T::AccountId,
-        recipient: T::AccountId,
+        recipients: Vec<(T::AccountId, u16)>,
         allocation: ApiEmissionAllocation<crate::BalanceOf<T>>,
-        targets: Vec<(T::AccountId, u16)>,
         distribution: ApiDistributionControl<crate::BalanceOf<T>, BlockNumberFor<T>>,
         duration: ApiPermissionDuration<BlockNumberFor<T>>,
         revocation: ApiRevocationTerms<T::AccountId, BlockNumberFor<T>>,
         enforcement: ApiEnforcementAuthority<T::AccountId>,
+        recipient_manager: Option<T::AccountId>,
+        weight_setter: Option<T::AccountId>,
     ) -> Result<PermissionId, DispatchError> {
         let internal_allocation = match allocation {
             ApiEmissionAllocation::Streams(streams) => EmissionAllocation::Streams(
@@ -66,21 +66,21 @@ impl<T: Config>
         let revocation = super::translate_revocation_terms(revocation)?;
         let enforcement = super::translate_enforcement_authority(enforcement)?;
 
-        let targets = targets
+        let recipients = recipients
             .into_iter()
             .try_collect()
             .map_err(|_| crate::Error::<T>::TooManyTargets)?;
 
         delegate_emission_permission_impl::<T>(
             delegator,
-            recipient,
+            recipients,
             internal_allocation,
-            targets,
             internal_distribution,
             duration,
             revocation,
             enforcement,
-            None, // No parent by default
+            recipient_manager,
+            weight_setter,
         )
     }
 
@@ -113,14 +113,14 @@ impl<T: Config>
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn delegate_emission_permission_impl<T: Config>(
     delegator: T::AccountId,
-    recipient: T::AccountId,
+    recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
     allocation: EmissionAllocation<T>,
-    targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
     distribution: DistributionControl<T>,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
     enforcement: EnforcementAuthority<T>,
-    parent_id: Option<PermissionId>,
+    recipient_manager: Option<T::AccountId>,
+    weight_setter: Option<T::AccountId>,
 ) -> Result<PermissionId, DispatchError> {
     use polkadot_sdk::frame_support::ensure;
 
@@ -128,12 +128,8 @@ pub(crate) fn delegate_emission_permission_impl<T: Config>(
         T::Torus::is_agent_registered(&delegator),
         Error::<T>::NotRegisteredAgent
     );
-    ensure!(
-        T::Torus::is_agent_registered(&recipient),
-        Error::<T>::NotRegisteredAgent
-    );
 
-    validate_emission_permission_target_weights::<T>(&targets)?;
+    validate_emission_permission_recipients::<T>(&delegator, &recipients)?;
 
     match &allocation {
         EmissionAllocation::Streams(streams) => {
@@ -157,36 +153,36 @@ pub(crate) fn delegate_emission_permission_impl<T: Config>(
 
     validate_emission_permission_distribution::<T>(&distribution)?;
 
-    if let Some(parent) = parent_id {
-        let parent_contract =
-            Permissions::<T>::get(parent).ok_or(Error::<T>::ParentPermissionNotFound)?;
+    let recipients_ids: Vec<_> = recipients.keys().cloned().collect();
 
-        ensure!(
-            parent_contract.recipient == delegator,
-            Error::<T>::NotPermissionRecipient
-        );
-    }
-
-    let emission_scope = EmissionScope {
+    let scope = PermissionScope::Emission(EmissionScope {
+        recipients,
         allocation: allocation.clone(),
         distribution,
-        targets,
         accumulating: true, // Start with accumulation enabled by default
-    };
+        recipient_manager,
+        weight_setter,
+    });
 
-    let scope = PermissionScope::Emission(emission_scope);
-
-    let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
+    let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
 
     let contract = PermissionContract::<T>::new(
         delegator.clone(),
-        recipient.clone(),
         scope,
         duration,
         revocation,
         enforcement,
         1,
     );
+
+    Permissions::<T>::insert(permission_id, contract);
+
+    add_permission_indices::<T>(&delegator, recipients_ids.iter(), permission_id)?;
+
+    <Pallet<T>>::deposit_event(Event::PermissionDelegated {
+        delegator: delegator.clone(),
+        permission_id,
+    });
 
     // Reserve funds if fixed amount allocation. We use the Balances API for this.
     // This means total issuance is always correct.
@@ -203,16 +199,6 @@ pub(crate) fn delegate_emission_permission_impl<T: Config>(
             }
         }
     }
-
-    Permissions::<T>::insert(permission_id, contract);
-
-    update_permission_indices::<T>(&delegator, &recipient, permission_id)?;
-
-    <Pallet<T>>::deposit_event(Event::PermissionDelegated {
-        delegator,
-        recipient,
-        permission_id,
-    });
 
     Ok(permission_id)
 }
@@ -331,11 +317,13 @@ pub fn toggle_permission_accumulation_impl<T: Config>(
 pub(crate) fn update_emission_permission<T: Config>(
     origin: OriginFor<T>,
     permission_id: PermissionId,
-    new_targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+    new_recipients: Option<BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>>,
     new_streams: Option<BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>>,
     new_distribution_control: Option<DistributionControl<T>>,
+    new_recipient_manager: Option<Option<T::AccountId>>,
+    new_weight_setter: Option<Option<T::AccountId>>,
 ) -> DispatchResult {
-    let who = ensure_signed(origin)?;
+    let caller = ensure_signed(origin)?;
 
     let permission = Permissions::<T>::get(permission_id);
 
@@ -343,76 +331,121 @@ pub(crate) fn update_emission_permission<T: Config>(
         return Err(Error::<T>::PermissionNotFound.into());
     };
 
-    let allowed_delegator = permission.delegator == who && permission.is_updatable();
-    let allowed_recipient = permission.recipient == who
-        && (new_streams.is_none() && new_distribution_control.is_none());
+    ensure!(permission.is_updatable(), Error::<T>::NotAuthorizedToEdit);
 
-    if !allowed_delegator && !allowed_recipient {
+    let PermissionScope::Emission(mut scope) = permission.scope.clone() else {
+        return Err(Error::<T>::NotEditable.into());
+    };
+
+    let allowed_delegator = permission.delegator == caller;
+    let allowed_weights = allowed_delegator
+        || scope
+            .weight_setter
+            .as_ref()
+            .is_some_and(|weight_setter| weight_setter == &caller);
+    let allowed_recipients = allowed_delegator
+        || scope
+            .recipient_manager
+            .as_ref()
+            .is_some_and(|recipient_manager| recipient_manager == &caller);
+
+    if !allowed_delegator && !allowed_weights && !allowed_recipients {
         return Err(Error::<T>::NotAuthorizedToEdit.into());
     }
 
-    let mut scope = permission.scope.clone();
-    match &mut scope {
-        PermissionScope::Emission(emission_scope) => {
-            validate_emission_permission_target_weights::<T>(&new_targets)?;
-
-            emission_scope.targets = new_targets;
-
-            let EmissionAllocation::Streams(streams) = &mut emission_scope.allocation else {
-                return Err(Error::<T>::NotEditable.into());
-            };
-
-            if let Some(new_streams) = new_streams {
-                crate::permission::emission::do_distribute_emission::<T>(
-                    permission_id,
-                    &permission,
-                    DistributionReason::Manual,
-                )?;
-
-                for stream in streams.keys() {
-                    AccumulatedStreamAmounts::<T>::remove((
-                        &permission.delegator,
-                        stream,
-                        &permission_id,
-                    ));
-                }
-
-                validate_emission_permission_streams::<T>(&new_streams, &permission.delegator)?;
-
-                for stream in new_streams.keys() {
-                    AccumulatedStreamAmounts::<T>::set(
-                        (&permission.delegator, stream, permission_id),
-                        Some(Zero::zero()),
-                    )
-                }
-
-                *streams = new_streams;
-            }
-
-            if let Some(new_distribution_control) = new_distribution_control {
-                validate_emission_permission_distribution::<T>(&new_distribution_control)?;
-
-                emission_scope.distribution = new_distribution_control;
-            }
+    if let Some(new_recipients) = new_recipients {
+        if !allowed_recipients
+            && (new_recipients.len() != scope.recipients.len()
+                || new_recipients
+                    .keys()
+                    .any(|k| !scope.recipients.contains_key(k)))
+        {
+            return Err(Error::<T>::NotAuthorizedToEdit.into());
         }
-        _ => return Err(Error::<T>::NotEditable.into()),
+
+        validate_emission_permission_recipients::<T>(&permission.delegator, &new_recipients)?;
+
+        // Remove old indices for current recipients
+        crate::permission::remove_permission_from_indices::<T>(
+            &permission.delegator,
+            scope.recipients.keys(),
+            permission_id,
+        );
+
+        // Update recipients
+        scope.recipients = new_recipients;
+
+        // Add new indices for updated recipients
+        crate::permission::add_permission_indices::<T>(
+            &permission.delegator,
+            scope.recipients.keys(),
+            permission_id,
+        )?;
     }
 
-    permission.scope = scope;
+    if let Some(new_streams) = new_streams {
+        ensure!(allowed_delegator, Error::<T>::NotAuthorizedToEdit);
+
+        let EmissionAllocation::Streams(streams) = &mut scope.allocation else {
+            return Err(Error::<T>::NotEditable.into());
+        };
+
+        crate::permission::emission::do_distribute_emission::<T>(
+            permission_id,
+            &permission,
+            DistributionReason::Manual,
+        )?;
+
+        for stream in streams.keys() {
+            AccumulatedStreamAmounts::<T>::remove((&permission.delegator, stream, &permission_id));
+        }
+
+        validate_emission_permission_streams::<T>(&new_streams, &permission.delegator)?;
+
+        for stream in new_streams.keys() {
+            AccumulatedStreamAmounts::<T>::set(
+                (&permission.delegator, stream, permission_id),
+                Some(Zero::zero()),
+            )
+        }
+
+        *streams = new_streams;
+    }
+
+    if let Some(new_distribution_control) = new_distribution_control {
+        ensure!(allowed_delegator, Error::<T>::NotAuthorizedToEdit);
+
+        validate_emission_permission_distribution::<T>(&new_distribution_control)?;
+        scope.distribution = new_distribution_control;
+    }
+
+    if let Some(new_recipient_manager) = new_recipient_manager {
+        ensure!(allowed_delegator, Error::<T>::NotAuthorizedToEdit);
+        scope.recipient_manager = new_recipient_manager;
+    }
+
+    if let Some(new_weight_setter) = new_weight_setter {
+        ensure!(allowed_delegator, Error::<T>::NotAuthorizedToEdit);
+        scope.weight_setter = new_weight_setter;
+    }
+
+    permission.scope = PermissionScope::Emission(scope);
     Permissions::<T>::set(permission_id, Some(permission));
 
     Ok(())
 }
 
-fn validate_emission_permission_target_weights<T: Config>(
-    targets: &BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+fn validate_emission_permission_recipients<T: Config>(
+    delegator: &T::AccountId,
+    recipients: &BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
 ) -> DispatchResult {
-    ensure!(!targets.is_empty(), Error::<T>::NoTargetsSpecified);
+    ensure!(!recipients.is_empty(), Error::<T>::NoTargetsSpecified);
 
-    for (target, weight) in targets {
+    for (recipient, weight) in recipients {
+        ensure!(delegator != recipient, Error::<T>::InvalidTargetWeight);
         ensure!(*weight > 0, Error::<T>::InvalidTargetWeight);
         ensure!(
-            T::Torus::is_agent_registered(target),
+            T::Torus::is_agent_registered(recipient),
             Error::<T>::NotRegisteredAgent
         );
     }

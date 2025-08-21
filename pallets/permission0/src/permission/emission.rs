@@ -16,14 +16,20 @@ pub type StreamId = H256;
 #[derive(Encode, Decode, CloneNoBound, PartialEq, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub struct EmissionScope<T: Config> {
+    /// Recipients of the emissions and its weights
+    pub recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
     /// What portion of emissions this permission applies to
     pub allocation: EmissionAllocation<T>,
     /// Distribution control parameters
     pub distribution: DistributionControl<T>,
-    /// Targets to receive the emissions with weights
-    pub targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
     /// Whether emissions should accumulate (can be toggled by enforcement authority)
     pub accumulating: bool,
+    /// An account responsible for managing the recipients to this permission's streams.
+    /// If left empty, the delegator will be
+    pub recipient_manager: Option<T::AccountId>,
+    /// An account responsible for updating the weights of existing recipients. Useful
+    /// for third-party agents to manage how the streams will be distributed.
+    pub weight_setter: Option<T::AccountId>,
 }
 
 impl<T: Config> EmissionScope<T> {
@@ -207,7 +213,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
     };
 
     let total_weight =
-        FixedU128::from_u32(emission_scope.targets.values().map(|w| *w as u32).sum());
+        FixedU128::from_u32(emission_scope.recipients.values().map(|w| *w as u32).sum());
     if total_weight.is_zero() {
         trace!("permission {permission_id:?} does not have enough target weight");
         return Ok(());
@@ -309,7 +315,7 @@ fn do_distribute_to_targets<T: Config>(
         return;
     }
 
-    for (target, weight) in emission_scope.targets.iter() {
+    for (target, weight) in emission_scope.recipients.iter() {
         let target_weight = FixedU128::from_u32(*weight as u32);
         let target_amount = total_initial_amount
             .saturating_mul(target_weight)

@@ -39,9 +39,8 @@ fn set_enforcement_authority_by_delegator() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             delegator,
-            recipient,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(recipient, u16::MAX)],
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -115,9 +114,8 @@ fn toggle_accumulation_by_controller() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             delegator,
-            recipient,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             vec![(recipient, u16::MAX)],
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -184,9 +182,8 @@ fn unauthorized_account_cannot_toggle() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             delegator,
-            recipient,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(recipient, u16::MAX)],
+            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -231,9 +228,8 @@ fn enforcement_execute_permission() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             delegator,
-            recipient,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             vec![(recipient, u16::MAX)],
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -276,9 +272,8 @@ fn unauthorized_cannot_enforcement_execute() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             delegator,
-            recipient,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             vec![(recipient, u16::MAX)],
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -320,9 +315,8 @@ fn multi_controller_voting() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             delegator,
-            recipient,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             vec![(recipient, u16::MAX)],
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -430,9 +424,8 @@ fn enforcement_cannot_execute_non_manual_distribution() {
 
         let permission_id = assert_ok!(delegate_emission_permission(
             delegator,
-            recipient,
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             vec![(recipient, u16::MAX)],
+            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Automatic(
                 MinAutoDistributionThreshold::get()
             ),
