@@ -7,7 +7,7 @@ use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner, Torus0Api};
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure},
-    frame_system::ensure_signed,
+    frame_system::{self, ensure_signed},
     polkadot_sdk_frame::prelude::OriginFor,
     sp_core::Get,
     sp_runtime::{BoundedBTreeMap, BoundedBTreeSet, DispatchError},
@@ -309,6 +309,7 @@ pub(crate) fn update_namespace_permission<T: Config>(
     }
 
     permission.max_instances = max_instances;
+    permission.last_update = frame_system::Pallet::<T>::block_number();
     Permissions::<T>::set(permission_id, Some(permission));
 
     Ok(())

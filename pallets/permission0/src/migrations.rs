@@ -7,8 +7,8 @@ pub mod v6 {
     };
 
     use crate::{
-        Config, EmissionScope, Pallet, PermissionContract, PermissionScope, Permissions,
-        PermissionsByDelegator, PermissionsByParticipants, PermissionsByRecipient,
+        Config, Pallet, PermissionContract, PermissionScope, Permissions, PermissionsByDelegator,
+        PermissionsByParticipants, PermissionsByRecipient, StreamScope,
         permission::{CuratorScope, NamespaceScope},
         permission::{add_permission_indices, remove_permission_from_indices},
     };
@@ -26,7 +26,7 @@ pub mod v6 {
         };
         use scale_info::TypeInfo;
 
-        use crate::{Config, DistributionControl, EmissionAllocation, Pallet, PermissionId};
+        use crate::{Config, DistributionControl, Pallet, PermissionId, StreamAllocation};
 
         #[storage_alias]
         pub type Permissions<T: Config> =
@@ -35,7 +35,7 @@ pub mod v6 {
         #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
         #[scale_info(skip_type_params(T))]
         pub struct OldEmissionScope<T: Config> {
-            pub allocation: EmissionAllocation<T>,
+            pub allocation: StreamAllocation<T>,
             pub distribution: DistributionControl<T>,
             pub targets: BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
             pub accumulating: bool,
@@ -117,7 +117,7 @@ pub mod v6 {
                         let mut managers = BoundedBTreeSet::new();
                         let _ = managers.try_insert(old_contract.delegator.clone());
 
-                        let new_emission = EmissionScope::<T> {
+                        let new_emission = StreamScope::<T> {
                             recipients: old_emission.targets, // Field renamed from targets to recipients
                             allocation: old_emission.allocation,
                             distribution: old_emission.distribution,
@@ -138,7 +138,7 @@ pub mod v6 {
                             );
                         }
 
-                        PermissionScope::Emission(new_emission)
+                        PermissionScope::Stream(new_emission)
                     }
                     old_storage::OldPermissionScope::Curator(old_curator) => {
                         curator_permissions_updated = curator_permissions_updated.saturating_add(1);
@@ -169,6 +169,7 @@ pub mod v6 {
                     duration: old_contract.duration,
                     revocation: old_contract.revocation,
                     enforcement: old_contract.enforcement,
+                    last_update: old_contract.created_at,
                     last_execution: old_contract.last_execution,
                     execution_count: old_contract.execution_count,
                     children: old_contract.children,
@@ -254,7 +255,7 @@ pub mod v6 {
             for permission_id in permission_ids.iter() {
                 if let Some(contract) = Permissions::<T>::get(permission_id) {
                     let is_valid_recipient = match &contract.scope {
-                        PermissionScope::Emission(EmissionScope { recipients, .. }) => {
+                        PermissionScope::Stream(StreamScope { recipients, .. }) => {
                             recipients.contains_key(&recipient)
                         }
                         PermissionScope::Curator(CuratorScope {
@@ -311,7 +312,7 @@ pub mod v6 {
                     }
 
                     let is_valid_recipient = match &contract.scope {
-                        PermissionScope::Emission(EmissionScope { recipients, .. }) => {
+                        PermissionScope::Stream(StreamScope { recipients, .. }) => {
                             recipients.contains_key(&recipient)
                         }
                         PermissionScope::Curator(CuratorScope {
