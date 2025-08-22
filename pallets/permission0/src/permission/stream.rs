@@ -12,17 +12,17 @@ use super::*;
 /// Type for stream ID
 pub type StreamId = H256;
 
-/// Emission-specific permission scope
+/// Stream-specific permission scope
 #[derive(Encode, Decode, CloneNoBound, PartialEq, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
-pub struct EmissionScope<T: Config> {
-    /// Recipients of the emissions and its weights
+pub struct StreamScope<T: Config> {
+    /// Recipients of the strams and its weights
     pub recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
-    /// What portion of emissions this permission applies to
-    pub allocation: EmissionAllocation<T>,
+    /// What portion of streams this permission applies to
+    pub allocation: StreamAllocation<T>,
     /// Distribution control parameters
     pub distribution: DistributionControl<T>,
-    /// Whether emissions should accumulate (can be toggled by enforcement authority)
+    /// Whether strams should accumulate (can be toggled by enforcement authority)
     pub accumulating: bool,
     /// An account responsible for managing the recipients to this permission's streams.
     /// If left empty, the delegator will be
@@ -32,7 +32,7 @@ pub struct EmissionScope<T: Config> {
     pub weight_setters: BoundedBTreeSet<T::AccountId, T::MaxControllersPerPermission>,
 }
 
-impl<T: Config> EmissionScope<T> {
+impl<T: Config> StreamScope<T> {
     pub(super) fn cleanup(
         self,
         permission_id: H256,
@@ -40,12 +40,12 @@ impl<T: Config> EmissionScope<T> {
         delegator: &T::AccountId,
     ) {
         match self.allocation {
-            EmissionAllocation::Streams(streams) => {
+            StreamAllocation::Streams(streams) => {
                 for stream in streams.keys() {
                     AccumulatedStreamAmounts::<T>::remove((delegator, stream, &permission_id));
                 }
             }
-            EmissionAllocation::FixedAmount(amount) if last_executed.is_none() => {
+            StreamAllocation::FixedAmount(amount) if last_executed.is_none() => {
                 T::Currency::unreserve(delegator, amount);
             }
             _ => {}
@@ -53,10 +53,10 @@ impl<T: Config> EmissionScope<T> {
     }
 }
 
-/// Defines what portion of emissions the permission applies to
+/// Defines what portion of streams the permission applies to
 #[derive(Encode, Decode, CloneNoBound, PartialEqNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
-pub enum EmissionAllocation<T: Config> {
+pub enum StreamAllocation<T: Config> {
     /// Permission applies to a percentage of each stream
     Streams(BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>),
     /// Permission applies to a specific fixed amount
@@ -77,7 +77,7 @@ pub enum DistributionControl<T: Config> {
 }
 
 /// Accumulate emissions for a specific agent, distributes if control is met.
-pub(crate) fn do_accumulate_emissions<T: Config>(
+pub(crate) fn do_accumulate_streams<T: Config>(
     agent: &T::AccountId,
     stream_id: &StreamId,
     imbalance: &mut NegativeImbalanceOf<T>,
@@ -95,10 +95,10 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
             continue;
         };
 
-        // Only process emission permissions with percentage allocations,
+        // Only process stream permissions with percentage allocations,
         // fixed-amount emission reserves balance upfront on permission creation
-        let PermissionScope::Emission(EmissionScope {
-            allocation: EmissionAllocation::Streams(streams),
+        let PermissionScope::Stream(StreamScope {
+            allocation: StreamAllocation::Streams(streams),
             accumulating,
             ..
         }) = contract.scope
@@ -137,29 +137,25 @@ pub(crate) fn do_accumulate_emissions<T: Config>(
 }
 
 pub(crate) fn do_auto_distribution<T: Config>(
-    emission_scope: &EmissionScope<T>,
+    stream_scope: &StreamScope<T>,
     permission_id: H256,
     current_block: BlockNumberFor<T>,
     contract: &PermissionContract<T>,
 ) -> DispatchResult {
-    match emission_scope.distribution {
+    match stream_scope.distribution {
         DistributionControl::Automatic(threshold) => {
-            let accumulated = match &emission_scope.allocation {
-                EmissionAllocation::Streams(streams) => streams
+            let accumulated = match &stream_scope.allocation {
+                StreamAllocation::Streams(streams) => streams
                     .keys()
                     .filter_map(|id| {
                         AccumulatedStreamAmounts::<T>::get((&contract.delegator, id, permission_id))
                     })
                     .fold(BalanceOf::<T>::zero(), |acc, e| acc.saturating_add(e)), // The Balance AST does not enforce the Sum trait
-                EmissionAllocation::FixedAmount(amount) => *amount,
+                StreamAllocation::FixedAmount(amount) => *amount,
             };
 
             if accumulated >= threshold {
-                do_distribute_emission::<T>(
-                    permission_id,
-                    contract,
-                    DistributionReason::Automatic,
-                )?;
+                do_distribute_stream::<T>(permission_id, contract, DistributionReason::Automatic)?;
             }
         }
 
@@ -175,7 +171,7 @@ pub(crate) fn do_auto_distribution<T: Config>(
                 return Ok(());
             }
 
-            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic)?;
+            do_distribute_stream::<T>(permission_id, contract, DistributionReason::Automatic)?;
         }
 
         DistributionControl::Interval(interval) => {
@@ -184,7 +180,7 @@ pub(crate) fn do_auto_distribution<T: Config>(
                 return Ok(());
             }
 
-            do_distribute_emission::<T>(permission_id, contract, DistributionReason::Automatic)?;
+            do_distribute_stream::<T>(permission_id, contract, DistributionReason::Automatic)?;
         }
 
         // Manual distribution doesn't need auto-processing
@@ -203,24 +199,24 @@ pub enum DistributionReason {
 }
 
 /// Distribute accumulated emissions for a permission
-pub(crate) fn do_distribute_emission<T: Config>(
+pub(crate) fn do_distribute_stream<T: Config>(
     permission_id: PermissionId,
     contract: &PermissionContract<T>,
     reason: DistributionReason,
 ) -> DispatchResult {
-    let PermissionScope::Emission(emission_scope) = &contract.scope else {
+    let PermissionScope::Stream(stream_scope) = &contract.scope else {
         return Ok(());
     };
 
     let total_weight =
-        FixedU128::from_u32(emission_scope.recipients.values().map(|w| *w as u32).sum());
+        FixedU128::from_u32(stream_scope.recipients.values().map(|w| *w as u32).sum());
     if total_weight.is_zero() {
         trace!("permission {permission_id:?} does not have enough target weight");
         return Ok(());
     }
 
-    match &emission_scope.allocation {
-        EmissionAllocation::Streams(streams) => {
+    match &stream_scope.allocation {
+        StreamAllocation::Streams(streams) => {
             let streams = streams.keys().filter_map(|stream_id| {
                 let acc = AccumulatedStreamAmounts::<T>::get((
                     &contract.delegator,
@@ -249,7 +245,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
                 do_distribute_to_targets(
                     &mut imbalance,
                     permission_id,
-                    emission_scope,
+                    stream_scope,
                     Some(stream),
                     total_weight,
                     reason,
@@ -264,7 +260,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
                 }
             }
         }
-        EmissionAllocation::FixedAmount(amount) => {
+        StreamAllocation::FixedAmount(amount) => {
             if contract.last_execution().is_some() {
                 // The fixed amount was already distributed
                 return Ok(());
@@ -283,7 +279,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
             do_distribute_to_targets(
                 &mut imbalance,
                 permission_id,
-                emission_scope,
+                stream_scope,
                 None,
                 total_weight,
                 reason,
@@ -302,7 +298,7 @@ pub(crate) fn do_distribute_emission<T: Config>(
 fn do_distribute_to_targets<T: Config>(
     imbalance: &mut NegativeImbalanceOf<T>,
     permission_id: PermissionId,
-    emission_scope: &EmissionScope<T>,
+    stream_scope: &StreamScope<T>,
     stream: Option<&StreamId>,
     total_weight: FixedU128,
     reason: DistributionReason,
@@ -315,7 +311,7 @@ fn do_distribute_to_targets<T: Config>(
         return;
     }
 
-    for (target, weight) in emission_scope.recipients.iter() {
+    for (target, weight) in stream_scope.recipients.iter() {
         let target_weight = FixedU128::from_u32(*weight as u32);
         let target_amount = total_initial_amount
             .saturating_mul(target_weight)
@@ -332,15 +328,15 @@ fn do_distribute_to_targets<T: Config>(
 
         if let Some(stream) = stream {
             // Process recursive accumulation here, only deposit what remains
-            do_accumulate_emissions::<T>(target, stream, &mut imbalance);
+            do_accumulate_streams::<T>(target, stream, &mut imbalance);
         }
 
         T::Currency::resolve_creating(target, imbalance);
 
-        Pallet::<T>::deposit_event(Event::EmissionDistribution {
+        Pallet::<T>::deposit_event(Event::StreamDistribution {
             permission_id,
             stream_id: stream.cloned(),
-            target: target.clone(),
+            recipient: target.clone(),
             amount: target_amount,
             reason,
         });

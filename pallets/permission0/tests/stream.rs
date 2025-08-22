@@ -60,10 +60,10 @@ fn stream_fails_if_overflow() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(98));
 
-        assert_ok!(delegate_emission_permission(
+        assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -76,10 +76,10 @@ fn stream_fails_if_overflow() {
         streams.insert(stream_id, Percent::from_percent(3));
 
         assert_err!(
-            delegate_emission_permission(
+            delegate_stream_permission(
                 agent_0,
                 vec![(agent_1, u16::MAX)],
-                pallet_permission0_api::EmissionAllocation::Streams(streams),
+                pallet_permission0_api::StreamAllocation::Streams(streams),
                 pallet_permission0_api::DistributionControl::Manual,
                 pallet_permission0_api::PermissionDuration::Indefinite,
                 pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -107,10 +107,10 @@ fn stream_creates() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -153,10 +153,10 @@ fn stream_manual_executes() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -209,10 +209,10 @@ fn stream_accumulates_and_executes_at_threshold() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             miner,
             vec![(val, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Automatic(total_incentives),
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -277,10 +277,10 @@ fn random_cannot_change_permission() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -298,7 +298,7 @@ fn random_cannot_change_permission() {
         )));
 
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_2),
                 permission_id,
                 Some(BoundedBTreeMap::new()),
@@ -329,10 +329,10 @@ fn delegator_cannot_change_irrevocable_permission() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -353,7 +353,7 @@ fn delegator_cannot_change_irrevocable_permission() {
         new_recipients.try_insert(agent_1, u16::MAX).unwrap();
 
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_0),
                 permission_id,
                 Some(new_recipients),
@@ -390,10 +390,10 @@ fn delegator_cannot_change_arbiter_permission() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableByArbiters {
@@ -417,7 +417,7 @@ fn delegator_cannot_change_arbiter_permission() {
         new_recipients.try_insert(agent_1, u16::MAX).unwrap();
 
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_0),
                 permission_id,
                 Some(new_recipients),
@@ -454,10 +454,10 @@ fn delegator_cannot_change_permission_before_block() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableAfter(5),
@@ -478,7 +478,7 @@ fn delegator_cannot_change_permission_before_block() {
         new_recipients.try_insert(agent_2, u16::MAX).unwrap();
 
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_0),
                 permission_id,
                 Some(new_recipients),
@@ -496,7 +496,7 @@ fn delegator_cannot_change_permission_before_block() {
         new_recipients.try_insert(agent_2, u16::MAX).unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_0),
                 permission_id,
                 Some(new_recipients),
@@ -532,10 +532,10 @@ fn recipient_can_only_change_recipients() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableAfter(5),
@@ -556,7 +556,7 @@ fn recipient_can_only_change_recipients() {
         new_recipients.try_insert(agent_2, u16::MAX).unwrap();
 
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_1),
                 permission_id,
                 Some(new_recipients),
@@ -574,7 +574,7 @@ fn recipient_can_only_change_recipients() {
         new_recipients.try_insert(agent_2, u16::MAX).unwrap();
 
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_1),
                 permission_id,
                 Some(new_recipients),
@@ -610,10 +610,10 @@ fn updating_works() {
         let mut streams = BTreeMap::new();
         streams.insert(stream, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams.clone()),
+            pallet_permission0_api::StreamAllocation::Streams(streams.clone()),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableByDelegator,
@@ -638,7 +638,7 @@ fn updating_works() {
         new_streams.insert(new_stream, Percent::from_percent(100));
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_0),
                 permission_id,
                 Some(new_recipients.clone()),
@@ -649,7 +649,7 @@ fn updating_works() {
             )
         );
 
-        let PermissionScope::Emission(emission_scope) =
+        let PermissionScope::Stream(emission_scope) =
             pallet_permission0::Permissions::<Test>::get(permission_id)
                 .unwrap()
                 .scope
@@ -659,7 +659,7 @@ fn updating_works() {
 
         assert_eq!(
             emission_scope.allocation,
-            pallet_permission0::EmissionAllocation::Streams(new_streams.try_into().unwrap())
+            pallet_permission0::StreamAllocation::Streams(new_streams.try_into().unwrap())
         );
 
         assert!(!AccumulatedStreamAmounts::<Test>::contains_key((
@@ -705,10 +705,10 @@ fn recipient_revocation_removes_single_recipient_from_multiple() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -716,7 +716,7 @@ fn recipient_revocation_removes_single_recipient_from_multiple() {
         ));
 
         let permission = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
+        let pallet_permission0::PermissionScope::Stream(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
         assert_eq!(scope.recipients.len(), 2);
@@ -738,7 +738,7 @@ fn recipient_revocation_removes_single_recipient_from_multiple() {
         ));
 
         let permission = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
+        let pallet_permission0::PermissionScope::Stream(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
         assert_eq!(scope.recipients.len(), 1);
@@ -788,10 +788,10 @@ fn recipient_revocation_deletes_permission_when_single_recipient() {
         let mut streams = BTreeMap::new();
         streams.insert(stream_id, Percent::from_percent(100));
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(streams),
+            pallet_permission0_api::StreamAllocation::Streams(streams),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -850,10 +850,10 @@ fn weight_setter_can_only_modify_weights_not_keys() {
         recipients.try_insert(agent_2, u16::MAX / 2).unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::delegate_emission_permission(
+            pallet_permission0::Pallet::<Test>::delegate_stream_permission(
                 get_origin(agent_0),
                 recipients,
-                pallet_permission0::EmissionAllocation::Streams(streams.try_into().unwrap()),
+                pallet_permission0::StreamAllocation::Streams(streams.try_into().unwrap()),
                 pallet_permission0::DistributionControl::Manual,
                 pallet_permission0::PermissionDuration::Indefinite,
                 pallet_permission0::RevocationTerms::RevocableByDelegator,
@@ -875,7 +875,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
             .unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(weight_setter),
                 permission_id,
                 Some(updated_recipients),
@@ -888,7 +888,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
 
         // Verify weights were updated
         let permission = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
+        let pallet_permission0::PermissionScope::Stream(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
         assert_eq!(*scope.recipients.get(&agent_1).unwrap(), u16::MAX / 4);
@@ -902,7 +902,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
         new_recipients.try_insert(agent_3, u16::MAX / 3).unwrap(); // New key
 
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(weight_setter),
                 permission_id,
                 Some(new_recipients),
@@ -920,7 +920,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
         // Missing agent_2
 
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(weight_setter),
                 permission_id,
                 Some(reduced_recipients),
@@ -934,7 +934,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
 
         // Weight setter CANNOT modify other parameters
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(weight_setter),
                 permission_id,
                 None,
@@ -974,10 +974,10 @@ fn recipient_manager_can_modify_keys_and_weights() {
         recipients.try_insert(agent_1, u16::MAX).unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::delegate_emission_permission(
+            pallet_permission0::Pallet::<Test>::delegate_stream_permission(
                 get_origin(agent_0),
                 recipients,
-                pallet_permission0::EmissionAllocation::Streams(streams.try_into().unwrap()),
+                pallet_permission0::StreamAllocation::Streams(streams.try_into().unwrap()),
                 pallet_permission0::DistributionControl::Manual,
                 pallet_permission0::PermissionDuration::Indefinite,
                 pallet_permission0::RevocationTerms::RevocableByDelegator,
@@ -995,7 +995,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
         new_recipients.try_insert(agent_2, u16::MAX / 2).unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(recipient_manager),
                 permission_id,
                 Some(new_recipients.clone()),
@@ -1008,7 +1008,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
 
         // Verify recipients were updated and indices are consistent
         let permission = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
+        let pallet_permission0::PermissionScope::Stream(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
         assert_eq!(scope.recipients, new_recipients);
@@ -1022,7 +1022,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
         reduced_recipients.try_insert(agent_2, u16::MAX).unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(recipient_manager),
                 permission_id,
                 Some(reduced_recipients.clone()),
@@ -1035,7 +1035,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
 
         // Verify recipient was removed and indices updated
         let permission = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
+        let pallet_permission0::PermissionScope::Stream(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
         assert_eq!(scope.recipients, reduced_recipients);
@@ -1050,7 +1050,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
 
         // Recipient manager CANNOT modify other parameters
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(recipient_manager),
                 permission_id,
                 None,
@@ -1090,10 +1090,10 @@ fn manager_modifications_only_allowed_after_revocable_period() {
         recipients.try_insert(agent_1, u16::MAX).unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::delegate_emission_permission(
+            pallet_permission0::Pallet::<Test>::delegate_stream_permission(
                 get_origin(agent_0),
                 recipients,
-                pallet_permission0::EmissionAllocation::Streams(streams.try_into().unwrap()),
+                pallet_permission0::StreamAllocation::Streams(streams.try_into().unwrap()),
                 pallet_permission0::DistributionControl::Manual,
                 pallet_permission0::PermissionDuration::Indefinite,
                 pallet_permission0::RevocationTerms::RevocableAfter(5),
@@ -1111,7 +1111,7 @@ fn manager_modifications_only_allowed_after_revocable_period() {
         new_recipients.try_insert(agent_2, u16::MAX / 2).unwrap();
 
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(recipient_manager),
                 permission_id,
                 Some(new_recipients.clone()),
@@ -1128,7 +1128,7 @@ fn manager_modifications_only_allowed_after_revocable_period() {
 
         // Now manager can modify
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(recipient_manager),
                 permission_id,
                 Some(new_recipients.clone()),
@@ -1141,7 +1141,7 @@ fn manager_modifications_only_allowed_after_revocable_period() {
 
         // Verify changes were applied
         let permission = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
+        let pallet_permission0::PermissionScope::Stream(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
         assert_eq!(scope.recipients, new_recipients);
@@ -1174,10 +1174,10 @@ fn delegator_can_assign_and_remove_managers() {
         recipients.try_insert(agent_1, u16::MAX).unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::delegate_emission_permission(
+            pallet_permission0::Pallet::<Test>::delegate_stream_permission(
                 get_origin(agent_0),
                 recipients,
-                pallet_permission0::EmissionAllocation::Streams(streams.try_into().unwrap()),
+                pallet_permission0::StreamAllocation::Streams(streams.try_into().unwrap()),
                 pallet_permission0::DistributionControl::Manual,
                 pallet_permission0::PermissionDuration::Indefinite,
                 pallet_permission0::RevocationTerms::RevocableByDelegator,
@@ -1191,7 +1191,7 @@ fn delegator_can_assign_and_remove_managers() {
 
         // Delegator can assign managers
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_0),
                 permission_id,
                 None,
@@ -1204,7 +1204,7 @@ fn delegator_can_assign_and_remove_managers() {
 
         // Verify managers were assigned
         let permission = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
+        let pallet_permission0::PermissionScope::Stream(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
         assert!(scope.weight_setters.contains(&weight_setter));
@@ -1215,7 +1215,7 @@ fn delegator_can_assign_and_remove_managers() {
         new_recipients.try_insert(agent_1, u16::MAX / 2).unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(weight_setter),
                 permission_id,
                 Some(new_recipients.clone()),
@@ -1228,7 +1228,7 @@ fn delegator_can_assign_and_remove_managers() {
 
         // Delegator can remove managers using Some(None)
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_0),
                 permission_id,
                 None,
@@ -1241,7 +1241,7 @@ fn delegator_can_assign_and_remove_managers() {
 
         // Verify managers were removed
         let permission = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
+        let pallet_permission0::PermissionScope::Stream(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
         assert!(scope.weight_setters.len() == 1 && scope.weight_setters.contains(&agent_0));
@@ -1249,7 +1249,7 @@ fn delegator_can_assign_and_remove_managers() {
 
         // Former managers should no longer have access
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(weight_setter),
                 permission_id,
                 Some(new_recipients),
@@ -1294,10 +1294,10 @@ fn index_consistency_during_complex_recipient_updates() {
         recipients.try_insert(agent_3, u16::MAX / 3).unwrap();
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::delegate_emission_permission(
+            pallet_permission0::Pallet::<Test>::delegate_stream_permission(
                 get_origin(agent_0),
                 recipients,
-                pallet_permission0::EmissionAllocation::Streams(streams.try_into().unwrap()),
+                pallet_permission0::StreamAllocation::Streams(streams.try_into().unwrap()),
                 pallet_permission0::DistributionControl::Manual,
                 pallet_permission0::PermissionDuration::Indefinite,
                 pallet_permission0::RevocationTerms::RevocableByDelegator,
@@ -1340,7 +1340,7 @@ fn index_consistency_during_complex_recipient_updates() {
             .unwrap(); // Add new
 
         assert_ok!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_0),
                 permission_id,
                 Some(updated_recipients.clone()),
@@ -1353,7 +1353,7 @@ fn index_consistency_during_complex_recipient_updates() {
 
         // Verify permission state is correct
         let permission = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
+        let pallet_permission0::PermissionScope::Stream(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
         assert_eq!(scope.recipients, updated_recipients);
@@ -1401,7 +1401,7 @@ fn index_consistency_during_complex_recipient_updates() {
 
         // This should fail as permissions need at least one recipient
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_emission_permission(
+            pallet_permission0::Pallet::<Test>::update_stream_permission(
                 get_origin(agent_0),
                 permission_id,
                 Some(empty_recipients),
@@ -1410,7 +1410,7 @@ fn index_consistency_during_complex_recipient_updates() {
                 None,
                 None
             ),
-            pallet_permission0::Error::<Test>::NoTargetsSpecified
+            pallet_permission0::Error::<Test>::NoRecipientsSpecified
         );
     });
 }

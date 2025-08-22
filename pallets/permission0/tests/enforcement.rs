@@ -2,9 +2,9 @@
 
 use std::collections::BTreeMap;
 
-use pallet_permission0::permission::emission::StreamId;
+use pallet_permission0::permission::stream::StreamId;
 use pallet_permission0::{EnforcementAuthority, EnforcementReferendum};
-use pallet_permission0_api::{Permission0EmissionApi, generate_root_stream_id};
+use pallet_permission0_api::{Permission0StreamApi, generate_root_stream_id};
 use polkadot_sdk::frame_support::{assert_err, traits::Currency};
 use polkadot_sdk::sp_core::bounded_vec;
 use polkadot_sdk::sp_runtime::Percent;
@@ -20,7 +20,7 @@ fn stream_percentages(agent: AccountId, percentage: u8) -> BTreeMap<StreamId, Pe
 fn distribute_emission(agent: AccountId, amount: Balance) {
     let stream_id = generate_root_stream_id(&agent);
     let mut imbalance = Balances::issue(amount);
-    Permission0::accumulate_emissions(&agent, &stream_id, &mut imbalance);
+    Permission0::accumulate_streams(&agent, &stream_id, &mut imbalance);
 }
 
 #[test]
@@ -37,10 +37,10 @@ fn set_enforcement_authority_by_delegator() {
 
         add_balance(delegator, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             delegator,
             vec![(recipient, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -112,10 +112,10 @@ fn toggle_accumulation_by_controller() {
 
         add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             delegator,
             vec![(recipient, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            pallet_permission0_api::StreamAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -136,7 +136,7 @@ fn toggle_accumulation_by_controller() {
         );
 
         let contract = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        if let pallet_permission0::PermissionScope::Emission(emission_scope) = contract.scope {
+        if let pallet_permission0::PermissionScope::Stream(emission_scope) = contract.scope {
             assert!(!emission_scope.accumulating);
         }
 
@@ -180,10 +180,10 @@ fn unauthorized_account_cannot_toggle() {
 
         add_balance(delegator, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             delegator,
             vec![(recipient, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -226,10 +226,10 @@ fn enforcement_execute_permission() {
 
         add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             delegator,
             vec![(recipient, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            pallet_permission0_api::StreamAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -270,10 +270,10 @@ fn unauthorized_cannot_enforcement_execute() {
 
         add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             delegator,
             vec![(recipient, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            pallet_permission0_api::StreamAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -313,10 +313,10 @@ fn multi_controller_voting() {
 
         add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             delegator,
             vec![(recipient, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            pallet_permission0_api::StreamAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -337,7 +337,7 @@ fn multi_controller_voting() {
         );
 
         let contract = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        if let pallet_permission0::PermissionScope::Emission(emission_scope) = contract.scope {
+        if let pallet_permission0::PermissionScope::Stream(emission_scope) = contract.scope {
             assert!(emission_scope.accumulating);
         }
 
@@ -350,7 +350,7 @@ fn multi_controller_voting() {
         );
 
         let contract = pallet_permission0::Permissions::<Test>::get(permission_id).unwrap();
-        if let pallet_permission0::PermissionScope::Emission(emission_scope) = contract.scope {
+        if let pallet_permission0::PermissionScope::Stream(emission_scope) = contract.scope {
             assert!(!emission_scope.accumulating);
         }
 
@@ -422,10 +422,10 @@ fn enforcement_cannot_execute_non_manual_distribution() {
 
         add_balance(delegator, as_tors(100) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             delegator,
             vec![(recipient, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::Streams(stream_percentages(delegator, 100)),
+            pallet_permission0_api::StreamAllocation::Streams(stream_percentages(delegator, 100)),
             pallet_permission0_api::DistributionControl::Automatic(
                 MinAutoDistributionThreshold::get()
             ),

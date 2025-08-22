@@ -28,7 +28,7 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn delegate_emission_permission() {
+    fn delegate_stream_permission() {
         let delegator: T::AccountId = account("delegator", 0, 0);
         let recipient: T::AccountId = account("recipient", 1, 0);
 
@@ -42,7 +42,7 @@ mod benchmarks {
 
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
-        let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
+        let allocation = StreamAllocation::Streams(streams.try_into().unwrap());
         let recipients = bounded_btree_map![recipient => 100];
         let distribution = DistributionControl::Manual;
         let duration = PermissionDuration::Indefinite;
@@ -50,7 +50,7 @@ mod benchmarks {
         let enforcement = EnforcementAuthority::None;
 
         #[extrinsic_call]
-        delegate_emission_permission(
+        delegate_stream_permission(
             RawOrigin::Signed(delegator),
             recipients,
             allocation,
@@ -78,9 +78,9 @@ mod benchmarks {
 
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
-        let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
+        let allocation = StreamAllocation::Streams(streams.try_into().unwrap());
         let recipients = bounded_btree_map![recipient => 100];
-        let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
+        let permission_id = ext::stream_impl::delegate_stream_permission_impl::<T>(
             delegator.clone(),
             recipients,
             allocation,
@@ -114,10 +114,10 @@ mod benchmarks {
         // Create permission with fixed amount allocation
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
-        let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
+        let allocation = StreamAllocation::Streams(streams.try_into().unwrap());
         let recipients = bounded_btree_map![recipient => 100];
 
-        let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
+        let permission_id = ext::stream_impl::delegate_stream_permission_impl::<T>(
             delegator.clone(),
             recipients,
             allocation,
@@ -153,10 +153,10 @@ mod benchmarks {
         // Create permission with stream allocation
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
-        let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
+        let allocation = StreamAllocation::Streams(streams.try_into().unwrap());
         let recipients = bounded_btree_map![recipient => 100];
 
-        let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
+        let permission_id = ext::stream_impl::delegate_stream_permission_impl::<T>(
             delegator.clone(),
             recipients,
             allocation,
@@ -192,7 +192,7 @@ mod benchmarks {
         // Create permission with fixed amount allocation and enforcement authority
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
-        let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
+        let allocation = StreamAllocation::Streams(streams.try_into().unwrap());
         let recipients = bounded_btree_map![recipient => 100];
         let controllers = vec![controller.clone()].try_into().unwrap();
 
@@ -201,7 +201,7 @@ mod benchmarks {
             required_votes: 1,
         };
 
-        let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
+        let permission_id = ext::stream_impl::delegate_stream_permission_impl::<T>(
             delegator.clone(),
             recipients,
             allocation,
@@ -237,10 +237,10 @@ mod benchmarks {
 
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
-        let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
+        let allocation = StreamAllocation::Streams(streams.try_into().unwrap());
         let recipients = bounded_btree_map![recipient => 100];
 
-        let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
+        let permission_id = ext::stream_impl::delegate_stream_permission_impl::<T>(
             delegator.clone(),
             recipients,
             allocation,

@@ -17,10 +17,10 @@ fn manual_cant_execute_when_expires() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::UntilBlock(2),
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -51,10 +51,10 @@ fn irrevocable() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -99,10 +99,10 @@ fn revocable_by_delegator() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableByDelegator,
@@ -120,7 +120,7 @@ fn revocable_by_delegator() {
         ));
 
         let permission = Permissions::<Test>::get(permission_id).unwrap();
-        let PermissionScope::Emission(scope) = permission.scope else {
+        let PermissionScope::Stream(scope) = permission.scope else {
             panic!()
         };
 
@@ -154,10 +154,10 @@ fn revocable_after_block() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableAfter(2),
@@ -193,10 +193,10 @@ fn revocable_by_arbiters() {
         add_balance(agent_0, as_tors(10) + 1);
 
         let delegate_invalid = |accounts: &[AccountId], required_votes| {
-            delegate_emission_permission(
+            delegate_stream_permission(
                 agent_0,
                 vec![(agent_1, u16::MAX / 2)],
-                pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
+                pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
                 pallet_permission0_api::DistributionControl::Manual,
                 pallet_permission0_api::PermissionDuration::Indefinite,
                 pallet_permission0_api::RevocationTerms::RevocableByArbiters {
@@ -223,10 +223,10 @@ fn revocable_by_arbiters() {
         let arbiters = [2, 3, 4, 5];
         let not_arbiter = 6;
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX)],
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableByArbiters {

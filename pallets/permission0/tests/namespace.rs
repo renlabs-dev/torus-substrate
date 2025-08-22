@@ -74,7 +74,7 @@ fn get_permission_id_for_recipient(recipient: AccountId) -> PermissionId {
             PermissionScope::Namespace(scope) if scope.recipient == recipient => {
                 return permission_id;
             }
-            PermissionScope::Emission(scope) if scope.recipients.contains_key(&recipient) => {
+            PermissionScope::Stream(scope) if scope.recipients.contains_key(&recipient) => {
                 return permission_id;
             }
             _ => continue,

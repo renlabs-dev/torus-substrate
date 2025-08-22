@@ -429,23 +429,23 @@ pub type NegativeImbalanceOf = <pallet_balances::Pallet<Test> as Currency<
 >>::NegativeImbalance;
 
 #[allow(clippy::too_many_arguments)]
-pub fn delegate_emission_permission(
+pub fn delegate_stream_permission(
     delegator: AccountId,
     recipients: Vec<(AccountId, u16)>,
-    allocation: pallet_permission0_api::EmissionAllocation<Balance>,
+    allocation: pallet_permission0_api::StreamAllocation<Balance>,
     distribution: pallet_permission0_api::DistributionControl<Balance, BlockNumber>,
     duration: pallet_permission0_api::PermissionDuration<BlockNumber>,
     revocation: pallet_permission0_api::RevocationTerms<AccountId, BlockNumber>,
     enforcement: pallet_permission0_api::EnforcementAuthority<AccountId>,
 ) -> Result<PermissionId, polkadot_sdk::sp_runtime::DispatchError> {
-    use pallet_permission0_api::Permission0EmissionApi;
-    <Permission0 as Permission0EmissionApi<
+    use pallet_permission0_api::Permission0StreamApi;
+    <Permission0 as Permission0StreamApi<
         AccountId,
         RuntimeOrigin,
         BlockNumber,
         Balance,
         NegativeImbalanceOf,
-    >>::delegate_emission_permission(
+    >>::delegate_stream_permission(
         delegator,
         recipients,
         allocation,

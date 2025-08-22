@@ -31,7 +31,7 @@ pub mod pallet {
     use frame::prelude::BlockNumberFor;
     use frame_system::ensure_signed;
     use pallet_governance_api::GovernanceApi;
-    use pallet_permission0_api::{Permission0Api, Permission0EmissionApi};
+    use pallet_permission0_api::{Permission0Api, Permission0StreamApi};
     use pallet_torus0_api::Torus0Api;
     use polkadot_sdk::sp_std;
     use weights::WeightInfo;
@@ -99,7 +99,7 @@ pub mod pallet {
         type Governance: GovernanceApi<Self::AccountId>;
 
         type Permission0: Permission0Api<OriginFor<Self>>
-            + Permission0EmissionApi<
+            + Permission0StreamApi<
                 Self::AccountId,
                 OriginFor<Self>,
                 BlockNumberFor<Self>,

@@ -20,10 +20,10 @@ use scale_info::TypeInfo;
 use crate::*;
 
 pub use curator::{CuratorPermissions, CuratorScope};
-pub use emission::{DistributionControl, EmissionAllocation, EmissionScope};
+pub use stream::{DistributionControl, StreamAllocation, StreamScope};
 
 pub mod curator;
-pub mod emission;
+pub mod stream;
 
 /// Type for permission ID
 pub type PermissionId = H256;
@@ -212,7 +212,7 @@ impl<T: Config> PermissionContract<T> {
             | PermissionScope::Namespace(NamespaceScope { recipient, .. }) => {
                 vec![recipient.clone()]
             }
-            PermissionScope::Emission(EmissionScope { recipients, .. }) => {
+            PermissionScope::Stream(StreamScope { recipients, .. }) => {
                 recipients.keys().cloned().collect()
             }
         };
@@ -262,9 +262,7 @@ impl<T: Config> PermissionContract<T> {
                             if let Some(permission) = permission {
                                 #[allow(clippy::single_match)]
                                 match &mut permission.scope {
-                                    PermissionScope::Emission(EmissionScope {
-                                        recipients, ..
-                                    }) => {
+                                    PermissionScope::Stream(StreamScope { recipients, .. }) => {
                                         recipients.remove(caller);
                                     }
                                     _ => {}
@@ -319,7 +317,7 @@ impl<T: Config> PermissionContract<T> {
                     permission_id,
                 );
             }
-            PermissionScope::Emission(EmissionScope { recipients, .. }) => {
+            PermissionScope::Stream(StreamScope { recipients, .. }) => {
                 remove_permission_from_indices::<T>(
                     &self.delegator,
                     recipients.keys(),
@@ -333,8 +331,8 @@ impl<T: Config> PermissionContract<T> {
         let _ = EnforcementTracking::<T>::clear_prefix(permission_id, u32::MAX, None);
 
         match self.scope {
-            PermissionScope::Emission(emission) => {
-                emission.cleanup(permission_id, &self.last_execution, &self.delegator);
+            PermissionScope::Stream(stream) => {
+                stream.cleanup(permission_id, &self.last_execution, &self.delegator);
             }
             PermissionScope::Curator(curator) => {
                 curator.cleanup(permission_id, &self.last_execution, &self.delegator);
@@ -362,7 +360,7 @@ impl<T: Config> PermissionContract<T> {
 #[derive(Encode, Decode, CloneNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub enum PermissionScope<T: Config> {
-    Emission(EmissionScope<T>),
+    Stream(StreamScope<T>),
     Curator(CuratorScope<T>),
     Namespace(NamespaceScope<T>),
 }
@@ -503,16 +501,16 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
     for (permission_id, contract) in Permissions::<T>::iter() {
         #[allow(clippy::single_match)]
         match &contract.scope {
-            PermissionScope::Emission(emission_scope) => {
+            PermissionScope::Stream(stream_scope) => {
                 trace!(target: "auto_permission_execution", "executing auto permission execution for permission {permission_id:?}");
-                if let Err(err) = emission::do_auto_distribution(
-                    emission_scope,
+                if let Err(err) = stream::do_auto_distribution(
+                    stream_scope,
                     permission_id,
                     current_block,
                     &contract,
                 ) {
                     error!(
-                        "failed to auto distribute emissions for permission {permission_id:?}: {err:?}"
+                        "failed to auto distribute streams for permission {permission_id:?}: {err:?}"
                     );
                 }
             }
@@ -551,7 +549,7 @@ pub(crate) fn add_permission_indices<'a, T: Config>(
             |permissions| -> Result<(), DispatchError> {
                 permissions
                     .try_insert(permission_id)
-                    .map_err(|_| Error::<T>::TooManyTargets)?;
+                    .map_err(|_| Error::<T>::TooManyRecipients)?;
                 Ok(())
             },
         )?;
@@ -562,7 +560,7 @@ pub(crate) fn add_permission_indices<'a, T: Config>(
             |permissions| -> Result<(), DispatchError> {
                 permissions
                     .try_insert(permission_id)
-                    .map_err(|_| Error::<T>::TooManyTargets)?;
+                    .map_err(|_| Error::<T>::TooManyRecipients)?;
                 Ok(())
             },
         )?;
@@ -574,7 +572,7 @@ pub(crate) fn add_permission_indices<'a, T: Config>(
         |permissions| -> Result<(), DispatchError> {
             permissions
                 .try_insert(permission_id)
-                .map_err(|_| Error::<T>::TooManyTargets)?;
+                .map_err(|_| Error::<T>::TooManyRecipients)?;
             Ok(())
         },
     )?;
