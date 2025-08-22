@@ -1,6 +1,7 @@
 pub mod v6 {
     use polkadot_sdk::{
         frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
+        sp_runtime::BoundedBTreeSet,
         sp_tracing::{error, info, warn},
         sp_weights::Weight,
     };
@@ -36,7 +37,7 @@ pub mod v6 {
         pub struct OldEmissionScope<T: Config> {
             pub allocation: EmissionAllocation<T>,
             pub distribution: DistributionControl<T>,
-            pub targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+            pub targets: BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
             pub accumulating: bool,
         }
 
@@ -113,14 +114,17 @@ pub mod v6 {
                             permission_id,
                         );
 
+                        let mut managers = BoundedBTreeSet::new();
+                        let _ = managers.try_insert(old_contract.delegator.clone());
+
                         let new_emission = EmissionScope::<T> {
                             recipients: old_emission.targets, // Field renamed from targets to recipients
                             allocation: old_emission.allocation,
                             distribution: old_emission.distribution,
                             accumulating: old_emission.accumulating,
                             // New manager fields introduced in v6
-                            recipient_manager: None,
-                            weight_setter: None,
+                            recipient_managers: managers.clone(),
+                            weight_setters: managers,
                         };
 
                         // Add new indices for all emission targets

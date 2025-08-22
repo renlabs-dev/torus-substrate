@@ -36,7 +36,7 @@ fn get_last_delegated_permission_id(delegator: AccountId) -> PermissionId {
                 None
             }
         })
-        .last() // Get most recent
+        .next_back() // Get most recent
         .expect("No PermissionDelegated event found")
 }
 
@@ -80,7 +80,7 @@ fn get_permission_id_for_recipient(recipient: AccountId) -> PermissionId {
             _ => continue,
         }
     }
-    panic!("No permission found for recipient: {:?}", recipient);
+    panic!("No permission found for recipient: {recipient:?}");
 }
 
 fn register_agent(id: AccountId) {

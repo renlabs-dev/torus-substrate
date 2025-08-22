@@ -10,11 +10,11 @@ build-testnet:
 
 # Development
 
-check:
+check: fmt
   cargo clippy --tests
 
-test:
-  cargo test
+test: check
+  cargo nextest run
 
 fmt:
   cargo fmt

@@ -66,7 +66,7 @@ pub mod pallet {
 
         /// Maximum number of targets per permission.
         #[pallet::constant]
-        type MaxTargetsPerPermission: Get<u32>;
+        type MaxRecipientsPerPermission: Get<u32>;
 
         /// Maximum number of delegated streams per permission.
         #[pallet::constant]
@@ -112,7 +112,7 @@ pub mod pallet {
         _,
         Identity,
         (T::AccountId, T::AccountId),
-        BoundedBTreeSet<PermissionId, T::MaxTargetsPerPermission>,
+        BoundedBTreeSet<PermissionId, T::MaxRecipientsPerPermission>,
         ValueQuery,
     >;
 
@@ -122,7 +122,7 @@ pub mod pallet {
         _,
         Identity,
         T::AccountId,
-        BoundedBTreeSet<PermissionId, T::MaxTargetsPerPermission>,
+        BoundedBTreeSet<PermissionId, T::MaxRecipientsPerPermission>,
         ValueQuery,
     >;
 
@@ -132,7 +132,7 @@ pub mod pallet {
         _,
         Identity,
         T::AccountId,
-        BoundedBTreeSet<PermissionId, T::MaxTargetsPerPermission>,
+        BoundedBTreeSet<PermissionId, T::MaxRecipientsPerPermission>,
         ValueQuery,
     >;
 
@@ -316,6 +316,8 @@ pub mod pallet {
         NotEnoughInstances,
         /// Too many children for a permission.
         TooManyChildren,
+        /// Emission managers must have up to two entries and always contain the delegator,
+        InvalidEmissionManagers,
         /// Revocation terms are too strong for a permission re-delegation.
         RevocationTermsTooStrong,
         /// Too many curator permissions being delegated in a single permission.
@@ -338,7 +340,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::delegate_emission_permission())]
         pub fn delegate_emission_permission(
             origin: OriginFor<T>,
-            recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+            recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
             allocation: EmissionAllocation<T>,
             distribution: DistributionControl<T>,
             duration: PermissionDuration<T>,
@@ -491,7 +493,9 @@ pub mod pallet {
         pub fn update_emission_permission(
             origin: OriginFor<T>,
             permission_id: PermissionId,
-            new_recipients: Option<BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>>,
+            new_recipients: Option<
+                BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
+            >,
             new_streams: Option<BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>>,
             new_distribution_control: Option<DistributionControl<T>>,
             new_recipient_manager: Option<Option<T::AccountId>>,

@@ -17,7 +17,7 @@ pub type StreamId = H256;
 #[scale_info(skip_type_params(T))]
 pub struct EmissionScope<T: Config> {
     /// Recipients of the emissions and its weights
-    pub recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+    pub recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
     /// What portion of emissions this permission applies to
     pub allocation: EmissionAllocation<T>,
     /// Distribution control parameters
@@ -26,10 +26,10 @@ pub struct EmissionScope<T: Config> {
     pub accumulating: bool,
     /// An account responsible for managing the recipients to this permission's streams.
     /// If left empty, the delegator will be
-    pub recipient_manager: Option<T::AccountId>,
+    pub recipient_managers: BoundedBTreeSet<T::AccountId, T::MaxControllersPerPermission>,
     /// An account responsible for updating the weights of existing recipients. Useful
     /// for third-party agents to manage how the streams will be distributed.
-    pub weight_setter: Option<T::AccountId>,
+    pub weight_setters: BoundedBTreeSet<T::AccountId, T::MaxControllersPerPermission>,
 }
 
 impl<T: Config> EmissionScope<T> {

@@ -17,7 +17,7 @@ use polkadot_sdk::{
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{Get, TryCollect},
     sp_runtime::{
-        BoundedBTreeMap, DispatchError, Percent, Vec,
+        BoundedBTreeMap, BoundedBTreeSet, DispatchError, Percent, Vec,
         traits::{CheckedAdd, Saturating, Zero},
     },
 };
@@ -113,7 +113,7 @@ impl<T: Config>
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn delegate_emission_permission_impl<T: Config>(
     delegator: T::AccountId,
-    recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+    recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
     allocation: EmissionAllocation<T>,
     distribution: DistributionControl<T>,
     duration: PermissionDuration<T>,
@@ -160,8 +160,8 @@ pub(crate) fn delegate_emission_permission_impl<T: Config>(
         allocation: allocation.clone(),
         distribution,
         accumulating: true, // Start with accumulation enabled by default
-        recipient_manager,
-        weight_setter,
+        recipient_managers: validate_emission_managers::<T>(&delegator, recipient_manager)?,
+        weight_setters: validate_emission_managers::<T>(&delegator, weight_setter)?,
     });
 
     let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
@@ -317,7 +317,7 @@ pub fn toggle_permission_accumulation_impl<T: Config>(
 pub(crate) fn update_emission_permission<T: Config>(
     origin: OriginFor<T>,
     permission_id: PermissionId,
-    new_recipients: Option<BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>>,
+    new_recipients: Option<BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>>,
     new_streams: Option<BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>>,
     new_distribution_control: Option<DistributionControl<T>>,
     new_recipient_manager: Option<Option<T::AccountId>>,
@@ -338,16 +338,8 @@ pub(crate) fn update_emission_permission<T: Config>(
     };
 
     let allowed_delegator = permission.delegator == caller;
-    let allowed_weights = allowed_delegator
-        || scope
-            .weight_setter
-            .as_ref()
-            .is_some_and(|weight_setter| weight_setter == &caller);
-    let allowed_recipients = allowed_delegator
-        || scope
-            .recipient_manager
-            .as_ref()
-            .is_some_and(|recipient_manager| recipient_manager == &caller);
+    let allowed_weights = allowed_delegator || scope.weight_setters.contains(&caller);
+    let allowed_recipients = allowed_delegator || scope.recipient_managers.contains(&caller);
 
     if !allowed_delegator && !allowed_weights && !allowed_recipients {
         return Err(Error::<T>::NotAuthorizedToEdit.into());
@@ -421,12 +413,14 @@ pub(crate) fn update_emission_permission<T: Config>(
 
     if let Some(new_recipient_manager) = new_recipient_manager {
         ensure!(allowed_delegator, Error::<T>::NotAuthorizedToEdit);
-        scope.recipient_manager = new_recipient_manager;
+        scope.recipient_managers =
+            validate_emission_managers::<T>(&permission.delegator, new_recipient_manager)?;
     }
 
     if let Some(new_weight_setter) = new_weight_setter {
         ensure!(allowed_delegator, Error::<T>::NotAuthorizedToEdit);
-        scope.weight_setter = new_weight_setter;
+        scope.weight_setters =
+            validate_emission_managers::<T>(&permission.delegator, new_weight_setter)?;
     }
 
     permission.scope = PermissionScope::Emission(scope);
@@ -435,9 +429,21 @@ pub(crate) fn update_emission_permission<T: Config>(
     Ok(())
 }
 
+fn validate_emission_managers<T: Config>(
+    delegator: &T::AccountId,
+    entry: Option<T::AccountId>,
+) -> Result<BoundedBTreeSet<T::AccountId, T::MaxControllersPerPermission>, DispatchError> {
+    let mut set = BoundedBTreeSet::new();
+    let _ = set.try_insert(delegator.clone());
+    if let Some(entry) = entry {
+        let _ = set.try_insert(entry);
+    }
+    Ok(set)
+}
+
 fn validate_emission_permission_recipients<T: Config>(
     delegator: &T::AccountId,
-    recipients: &BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+    recipients: &BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
 ) -> DispatchResult {
     ensure!(!recipients.is_empty(), Error::<T>::NoTargetsSpecified);
 
@@ -452,6 +458,7 @@ fn validate_emission_permission_recipients<T: Config>(
 
     Ok(())
 }
+
 fn validate_emission_permission_streams<T: Config>(
     streams: &BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>,
     delegator: &T::AccountId,

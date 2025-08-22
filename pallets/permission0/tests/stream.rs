@@ -39,7 +39,7 @@ fn get_last_delegated_permission_id(delegator: AccountId) -> pallet_permission0:
                 None
             }
         })
-        .last() // Get most recent
+        .next_back() // Get most recent
         .expect("No PermissionDelegated event found")
 }
 
@@ -724,11 +724,11 @@ fn recipient_revocation_removes_single_recipient_from_multiple() {
         assert!(scope.recipients.contains_key(&agent_2));
 
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_1)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_1)
                 .contains(&permission_id)
         );
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_2)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_2)
                 .contains(&permission_id)
         );
 
@@ -747,11 +747,11 @@ fn recipient_revocation_removes_single_recipient_from_multiple() {
 
         // Verify indices updated correctly
         assert!(
-            !pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_1)
+            !pallet_permission0::PermissionsByRecipient::<Test>::get(agent_1)
                 .contains(&permission_id)
         );
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_2)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_2)
                 .contains(&permission_id)
         );
 
@@ -766,7 +766,7 @@ fn recipient_revocation_removes_single_recipient_from_multiple() {
             permission_id
         ));
         assert!(
-            !pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_2)
+            !pallet_permission0::PermissionsByRecipient::<Test>::get(agent_2)
                 .contains(&permission_id)
         );
     });
@@ -802,7 +802,7 @@ fn recipient_revocation_deletes_permission_when_single_recipient() {
             permission_id
         ));
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_1)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_1)
                 .contains(&permission_id)
         );
 
@@ -817,7 +817,7 @@ fn recipient_revocation_deletes_permission_when_single_recipient() {
             permission_id
         ));
         assert!(
-            !pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_1)
+            !pallet_permission0::PermissionsByRecipient::<Test>::get(agent_1)
                 .contains(&permission_id)
         );
     });
@@ -1013,7 +1013,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
         };
         assert_eq!(scope.recipients, new_recipients);
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_2)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_2)
                 .contains(&permission_id)
         );
 
@@ -1040,11 +1040,11 @@ fn recipient_manager_can_modify_keys_and_weights() {
         };
         assert_eq!(scope.recipients, reduced_recipients);
         assert!(
-            !pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_1)
+            !pallet_permission0::PermissionsByRecipient::<Test>::get(agent_1)
                 .contains(&permission_id)
         );
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_2)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_2)
                 .contains(&permission_id)
         );
 
@@ -1207,8 +1207,8 @@ fn delegator_can_assign_and_remove_managers() {
         let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
-        assert_eq!(scope.weight_setter, Some(weight_setter));
-        assert_eq!(scope.recipient_manager, Some(recipient_manager));
+        assert!(scope.weight_setters.contains(&weight_setter));
+        assert!(scope.recipient_managers.contains(&recipient_manager));
 
         // Now managers can operate within their permissions
         let mut new_recipients = BoundedBTreeMap::new();
@@ -1244,8 +1244,8 @@ fn delegator_can_assign_and_remove_managers() {
         let pallet_permission0::PermissionScope::Emission(scope) = permission.scope else {
             panic!("Expected emission scope");
         };
-        assert_eq!(scope.weight_setter, None);
-        assert_eq!(scope.recipient_manager, None);
+        assert!(scope.weight_setters.len() == 1 && scope.weight_setters.contains(&agent_0));
+        assert!(scope.recipient_managers.len() == 1 && scope.recipient_managers.contains(&agent_0));
 
         // Former managers should no longer have access
         assert_err!(
@@ -1311,19 +1311,19 @@ fn index_consistency_during_complex_recipient_updates() {
 
         // Verify initial indices
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_1)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_1)
                 .contains(&permission_id)
         );
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_2)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_2)
                 .contains(&permission_id)
         );
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_3)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_3)
                 .contains(&permission_id)
         );
         assert!(
-            !pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_4)
+            !pallet_permission0::PermissionsByRecipient::<Test>::get(agent_4)
                 .contains(&permission_id)
         );
 
@@ -1360,25 +1360,25 @@ fn index_consistency_during_complex_recipient_updates() {
 
         // Verify ALL indices are consistent
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_1)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_1)
                 .contains(&permission_id)
         ); // Still there
         assert!(
-            !pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_2)
+            !pallet_permission0::PermissionsByRecipient::<Test>::get(agent_2)
                 .contains(&permission_id)
         ); // Removed
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_3)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_3)
                 .contains(&permission_id)
         ); // Still there
         assert!(
-            pallet_permission0::PermissionsByRecipient::<Test>::get(&agent_4)
+            pallet_permission0::PermissionsByRecipient::<Test>::get(agent_4)
                 .contains(&permission_id)
         ); // Added
 
         // Verify delegator indices are also consistent
         let delegator_permissions =
-            pallet_permission0::PermissionsByDelegator::<Test>::get(&agent_0);
+            pallet_permission0::PermissionsByDelegator::<Test>::get(agent_0);
         assert!(delegator_permissions.contains(&permission_id));
 
         // Verify participants indices include all current participants
