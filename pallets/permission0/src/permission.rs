@@ -61,6 +61,8 @@ pub struct PermissionContract<T: Config> {
     pub revocation: RevocationTerms<T>,
     /// Enforcement authority that can toggle the permission
     pub enforcement: EnforcementAuthority<T>,
+    /// Last update block
+    pub last_update: BlockNumberFor<T>,
     /// Last execution block
     #[doc(hidden)]
     pub last_execution: Option<BlockNumberFor<T>>,
@@ -83,6 +85,7 @@ impl<T: Config> PermissionContract<T> {
         enforcement: EnforcementAuthority<T>,
         max_instances: u32,
     ) -> Self {
+        let now = frame_system::Pallet::<T>::block_number();
         Self {
             delegator,
             scope,
@@ -91,10 +94,11 @@ impl<T: Config> PermissionContract<T> {
             enforcement,
             max_instances,
 
+            last_update: now,
             last_execution: None,
             execution_count: 0,
             children: BoundedBTreeSet::new(),
-            created_at: frame_system::Pallet::<T>::block_number(),
+            created_at: now,
         }
     }
 }

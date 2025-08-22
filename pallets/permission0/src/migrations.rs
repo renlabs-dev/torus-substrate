@@ -169,6 +169,7 @@ pub mod v6 {
                     duration: old_contract.duration,
                     revocation: old_contract.revocation,
                     enforcement: old_contract.enforcement,
+                    last_update: old_contract.created_at,
                     last_execution: old_contract.last_execution,
                     execution_count: old_contract.execution_count,
                     children: old_contract.children,

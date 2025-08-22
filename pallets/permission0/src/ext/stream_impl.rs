@@ -13,7 +13,7 @@ use pallet_permission0_api::{
 };
 use polkadot_sdk::{
     frame_support::{dispatch::DispatchResult, ensure, traits::ReservableCurrency},
-    frame_system::{ensure_signed, ensure_signed_or_root},
+    frame_system::{self, ensure_signed, ensure_signed_or_root},
     polkadot_sdk_frame::prelude::{BlockNumberFor, OriginFor},
     sp_core::{Get, TryCollect},
     sp_runtime::{
@@ -424,6 +424,7 @@ pub(crate) fn update_stream_permission<T: Config>(
     }
 
     permission.scope = PermissionScope::Stream(scope);
+    permission.last_update = frame_system::Pallet::<T>::block_number();
     Permissions::<T>::set(permission_id, Some(permission));
 
     Ok(())
