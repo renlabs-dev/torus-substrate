@@ -16,6 +16,7 @@ mod storage;
 pub fn generate_wrappers_for_network(
     mainnet_pallets: &[PalletPattern],
     testnet_pallets: &[PalletPattern],
+    devnet_pallets: &[PalletPattern],
 ) -> TokenStream {
     let mut chained_pallet_names = mainnet_pallets
         .iter()
@@ -36,6 +37,11 @@ pub fn generate_wrappers_for_network(
     let testnet_pallets: Vec<TokenStream> = testnet_pallets
         .iter()
         .map(|pattern| generate_pallet_mod(&InterfaceSource::Testnet, pattern))
+        .collect();
+
+    let devnet_pallets: Vec<TokenStream> = devnet_pallets
+        .iter()
+        .map(|pattern| generate_pallet_mod(&InterfaceSource::Devnet, pattern))
         .collect();
 
     quote! {
@@ -69,6 +75,14 @@ pub fn generate_wrappers_for_network(
             use crate::interfaces::testnet::api::runtime_types;
 
             #(#testnet_pallets)*
+        }
+
+        #[cfg(feature = "devnet")]
+        pub mod devnet {
+            use super::*;
+            use crate::interfaces::devnet::api::runtime_types;
+
+            #(#devnet_pallets)*
         }
     }
 }

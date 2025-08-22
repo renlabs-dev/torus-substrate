@@ -37,7 +37,7 @@ pub type Balance = u64;
 pub type Nonce = u32;
 pub type RefCount = u32;
 
-fn generate_replica_spec(
+pub fn generate_replica_spec(
     gen_replica: flags::GenReplica,
     out: Option<PathBuf>,
     sudo: Option<String>,

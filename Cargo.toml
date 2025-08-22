@@ -10,6 +10,7 @@ members = [
     "test-utils",
     "xtask",
     "project-selector",
+    "mcp",
 ]
 resolver = "2"
 
@@ -58,7 +59,10 @@ num-traits = { version = "0.2.19", default-features = false, features = [
 ] }
 bitflags = { version = "2.9.1", default-features = false }
 rand = { version = "0.9.1", default-features = false }
+lazy_static = { version = "1.5.0" }
 libm = { version = "0.2.15", default-features = false }
+tracing-subscriber = "0.3.19"
+tracing = "0.1.41"
 
 # Frontier / EVM
 fc-api = { git = "https://github.com/paritytech/frontier.git", rev = "105bc38ac417de999721d09c8427fdb80eb78553" }
@@ -87,6 +91,7 @@ keccak-hash = { git = "https://github.com/paritytech/parity-common", rev = "f0da
 
 # CLI
 clap = { version = "4.5.22", features = ["derive"] }
+serde = "1.0.219"
 serde_json = { version = "1.0", default-features = false }
 
 # RPC
@@ -95,7 +100,12 @@ jsonrpsee = { version = "0.24", features = ["full"] }
 # Async
 futures = "0.3"
 futures-timer = "3"
+tokio = "1.47.1"
 
 anyhow = "1.0.98"
 
 paste = "1.0.15"
+
+# Mcp
+rmcp = "0.4.1"
+schemars = "1.0.4"
