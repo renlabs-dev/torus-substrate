@@ -6,8 +6,7 @@ use polkadot_sdk::{
     frame_support::dispatch::DispatchResult,
     sp_core::{H256, blake2_256},
     sp_runtime::{DispatchError, Percent},
-    sp_std::collections::btree_map::BTreeMap,
-    sp_std::vec::Vec,
+    sp_std::{collections::btree_map::BTreeMap, vec::Vec},
 };
 use scale_info::TypeInfo;
 
@@ -106,13 +105,14 @@ pub trait Permission0EmissionApi<AccountId, Origin, BlockNumber, Balance, Negati
     #[allow(clippy::too_many_arguments)]
     fn delegate_emission_permission(
         delegator: AccountId,
-        recipient: AccountId,
+        recipients: Vec<(AccountId, u16)>,
         allocation: EmissionAllocation<Balance>,
-        targets: Vec<(AccountId, u16)>,
         distribution: DistributionControl<Balance, BlockNumber>,
         duration: PermissionDuration<BlockNumber>,
         revocation: RevocationTerms<AccountId, BlockNumber>,
         enforcement: EnforcementAuthority<AccountId>,
+        recipient_manager: Option<AccountId>,
+        weight_setter: Option<AccountId>,
     ) -> Result<PermissionId, DispatchError>;
 
     /// Accumulate emissions for an agent with permissions

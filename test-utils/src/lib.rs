@@ -239,7 +239,7 @@ impl pallet_governance::Config for Test {
 
 parameter_types! {
     pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
-    pub const MaxTargetsPerPermission: u32 = 100;
+    pub const MaxRecipientsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MaxRevokersPerPermission: u32 = 10;
     pub const MaxControllersPerPermission: u32 = 10;
@@ -257,7 +257,7 @@ impl pallet_permission0::Config for Test {
 
     type PalletId = PermissionPalletId;
 
-    type MaxTargetsPerPermission = MaxTargetsPerPermission;
+    type MaxRecipientsPerPermission = MaxRecipientsPerPermission;
 
     type MaxStreamsPerPermission = MaxStreamsPerPermission;
 
@@ -431,9 +431,8 @@ pub type NegativeImbalanceOf = <pallet_balances::Pallet<Test> as Currency<
 #[allow(clippy::too_many_arguments)]
 pub fn delegate_emission_permission(
     delegator: AccountId,
-    recipient: AccountId,
+    recipients: Vec<(AccountId, u16)>,
     allocation: pallet_permission0_api::EmissionAllocation<Balance>,
-    targets: Vec<(AccountId, u16)>,
     distribution: pallet_permission0_api::DistributionControl<Balance, BlockNumber>,
     duration: pallet_permission0_api::PermissionDuration<BlockNumber>,
     revocation: pallet_permission0_api::RevocationTerms<AccountId, BlockNumber>,
@@ -448,13 +447,14 @@ pub fn delegate_emission_permission(
         NegativeImbalanceOf,
     >>::delegate_emission_permission(
         delegator,
-        recipient,
+        recipients,
         allocation,
-        targets,
         distribution,
         duration,
         revocation,
         enforcement,
+        None,
+        None,
     )
 }
 

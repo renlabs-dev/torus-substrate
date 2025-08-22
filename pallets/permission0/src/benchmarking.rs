@@ -31,14 +31,11 @@ mod benchmarks {
     fn delegate_emission_permission() {
         let delegator: T::AccountId = account("delegator", 0, 0);
         let recipient: T::AccountId = account("recipient", 1, 0);
-        let target: T::AccountId = account("Target", 2, 0);
 
         T::Torus::force_register_agent(&delegator, b"delegator".to_vec(), vec![], vec![])
             .expect("failed to register delegator");
         T::Torus::force_register_agent(&recipient, b"recipient".to_vec(), vec![], vec![])
             .expect("failed to register recipient");
-        T::Torus::force_register_agent(&target, b"target".to_vec(), vec![], vec![])
-            .expect("failed to register target");
 
         let amount = 10_000_000u32.into();
         let _ = <T::Currency>::deposit_creating(&delegator, amount);
@@ -46,7 +43,7 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = bounded_btree_map![target => 100];
+        let recipients = bounded_btree_map![recipient => 100];
         let distribution = DistributionControl::Manual;
         let duration = PermissionDuration::Indefinite;
         let revocation = RevocationTerms::RevocableByDelegator;
@@ -55,13 +52,14 @@ mod benchmarks {
         #[extrinsic_call]
         delegate_emission_permission(
             RawOrigin::Signed(delegator),
-            recipient,
+            recipients,
             allocation,
-            targets,
             distribution,
             duration,
             revocation,
             enforcement,
+            None,
+            None,
         )
     }
 
@@ -69,14 +67,11 @@ mod benchmarks {
     fn revoke_permission() {
         let delegator: T::AccountId = account("delegator", 0, 0);
         let recipient: T::AccountId = account("recipient", 1, 0);
-        let target: T::AccountId = account("Target", 2, 0);
 
         T::Torus::force_register_agent(&delegator, b"delegator".to_vec(), vec![], vec![])
             .expect("failed to register delegator");
         T::Torus::force_register_agent(&recipient, b"recipient".to_vec(), vec![], vec![])
             .expect("failed to register recipient");
-        T::Torus::force_register_agent(&target, b"target".to_vec(), vec![], vec![])
-            .expect("failed to register target");
 
         let amount = 10_000_000u32.into();
         let _ = <T::Currency>::deposit_creating(&delegator, amount);
@@ -84,16 +79,16 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = bounded_btree_map![target => 100];
+        let recipients = bounded_btree_map![recipient => 100];
         let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
             delegator.clone(),
-            recipient,
+            recipients,
             allocation,
-            targets,
             DistributionControl::Manual,
             PermissionDuration::Indefinite,
             RevocationTerms::RevocableByDelegator,
             EnforcementAuthority::None,
+            None,
             None,
         )
         .expect("failed to delegate permission");
@@ -106,14 +101,11 @@ mod benchmarks {
     fn execute_permission() {
         let delegator: T::AccountId = account("delegator", 0, 0);
         let recipient: T::AccountId = account("recipient", 1, 0);
-        let target: T::AccountId = account("Target", 2, 0);
 
         T::Torus::force_register_agent(&delegator, b"delegator".to_vec(), vec![], vec![])
             .expect("failed to register delegator");
         T::Torus::force_register_agent(&recipient, b"recipient".to_vec(), vec![], vec![])
             .expect("failed to register recipient");
-        T::Torus::force_register_agent(&target, b"target".to_vec(), vec![], vec![])
-            .expect("failed to register target");
 
         // Fund delegator
         let amount = 10_000_000u32.into();
@@ -123,17 +115,17 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = bounded_btree_map![target => 100];
+        let recipients = bounded_btree_map![recipient => 100];
 
         let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
             delegator.clone(),
-            recipient,
+            recipients,
             allocation,
-            targets,
             DistributionControl::Manual,
             PermissionDuration::Indefinite,
             RevocationTerms::RevocableByDelegator,
             EnforcementAuthority::None,
+            None,
             None,
         )
         .expect("failed to delegate permission");
@@ -148,14 +140,11 @@ mod benchmarks {
     fn toggle_permission_accumulation() {
         let delegator: T::AccountId = account("delegator", 0, 0);
         let recipient: T::AccountId = account("recipient", 1, 0);
-        let target: T::AccountId = account("Target", 2, 0);
 
         T::Torus::force_register_agent(&delegator, b"delegator".to_vec(), vec![], vec![])
             .expect("failed to register delegator");
         T::Torus::force_register_agent(&recipient, b"recipient".to_vec(), vec![], vec![])
             .expect("failed to register recipient");
-        T::Torus::force_register_agent(&target, b"target".to_vec(), vec![], vec![])
-            .expect("failed to register target");
 
         // Fund delegator
         let amount = 10_000_000u32.into();
@@ -165,17 +154,17 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = bounded_btree_map![target => 100];
+        let recipients = bounded_btree_map![recipient => 100];
 
         let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
             delegator.clone(),
-            recipient,
+            recipients,
             allocation,
-            targets,
             DistributionControl::Manual,
             PermissionDuration::Indefinite,
             RevocationTerms::RevocableByDelegator,
             EnforcementAuthority::None,
+            None,
             None,
         )
         .expect("failed to delegate permission");
@@ -188,7 +177,6 @@ mod benchmarks {
     fn enforcement_execute_permission() {
         let delegator: T::AccountId = account("delegator", 0, 0);
         let recipient: T::AccountId = account("recipient", 1, 0);
-        let target: T::AccountId = account("Target", 2, 0);
         let controller: T::AccountId = account("Controller", 3, 0);
 
         // Register agents
@@ -196,8 +184,6 @@ mod benchmarks {
             .expect("failed to register delegator");
         T::Torus::force_register_agent(&recipient, b"recipient".to_vec(), vec![], vec![])
             .expect("failed to register recipient");
-        T::Torus::force_register_agent(&target, b"target".to_vec(), vec![], vec![])
-            .expect("failed to register target");
 
         // Fund delegator
         let amount = 10_000_000u32.into();
@@ -207,7 +193,7 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = bounded_btree_map![target => 100];
+        let recipients = bounded_btree_map![recipient => 100];
         let controllers = vec![controller.clone()].try_into().unwrap();
 
         let enforcement = EnforcementAuthority::ControlledBy {
@@ -217,13 +203,13 @@ mod benchmarks {
 
         let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
             delegator.clone(),
-            recipient,
+            recipients,
             allocation,
-            targets,
             DistributionControl::Manual,
             PermissionDuration::Indefinite,
             RevocationTerms::RevocableByDelegator,
             enforcement,
+            None,
             None,
         )
         .expect("failed to delegate permission");
@@ -238,7 +224,6 @@ mod benchmarks {
     fn set_enforcement_authority() {
         let delegator: T::AccountId = account("delegator", 0, 0);
         let recipient: T::AccountId = account("recipient", 1, 0);
-        let target: T::AccountId = account("Target", 2, 0);
         let controller1: T::AccountId = account("Controller1", 3, 0);
         let controller2: T::AccountId = account("Controller2", 4, 0);
 
@@ -246,8 +231,6 @@ mod benchmarks {
             .expect("failed to register delegator");
         T::Torus::force_register_agent(&recipient, b"recipient".to_vec(), vec![], vec![])
             .expect("failed to register recipient");
-        T::Torus::force_register_agent(&target, b"target".to_vec(), vec![], vec![])
-            .expect("failed to register target");
 
         let amount = 10_000_000u32.into();
         let _ = <T::Currency>::deposit_creating(&delegator, amount);
@@ -255,17 +238,17 @@ mod benchmarks {
         let stream_id: StreamId = [0; 32].into();
         let streams = BTreeMap::from([(stream_id, Percent::from_percent(30))]);
         let allocation = EmissionAllocation::Streams(streams.try_into().unwrap());
-        let targets = bounded_btree_map![target => 100];
+        let recipients = bounded_btree_map![recipient => 100];
 
         let permission_id = ext::emission_impl::delegate_emission_permission_impl::<T>(
             delegator.clone(),
-            recipient,
+            recipients,
             allocation,
-            targets,
             DistributionControl::Manual,
             PermissionDuration::Indefinite,
             RevocationTerms::RevocableByDelegator,
             EnforcementAuthority::None,
+            None,
             None,
         )
         .expect("failed to delegate permission");

@@ -51,6 +51,7 @@
           pkgs.python310
           # Subxt CLI for metadata handling
           pkgs.subxt
+          pkgs.cargo-nextest
           # # Code coverage tool
           # pkgs.cargo-llvm-cov # marked as broken
         ];
@@ -59,7 +60,17 @@
         checks = pkgs.mkShell {
           pre-commit-check = pre-commit-hooks.lib.${system}.run {
             src = ./.;
-            hooks = { rustfmt.enable = true; };
+            hooks = {
+               rustfmt.enable = true;
+
+               push = {
+                 enable = true;
+                 name = "Tests & Stuff";
+                 entry = "just test";
+                 pass_filenames = false;
+                 stages = ["pre-push"];
+               };
+            };
           };
         };
 

@@ -32,11 +32,9 @@ pub type PermissionId = H256;
 /// `recipient | scope | block number`
 pub fn generate_permission_id<T: Config>(
     delegator: &T::AccountId,
-    recipient: &T::AccountId,
     scope: &PermissionScope<T>,
 ) -> Result<PermissionId, DispatchError> {
     let mut data = delegator.encode();
-    data.extend(recipient.encode());
     data.extend(scope.encode());
 
     data.extend(<frame_system::Pallet<T>>::block_number().encode());
@@ -58,16 +56,17 @@ pub fn generate_permission_id<T: Config>(
 #[scale_info(skip_type_params(T))]
 pub struct PermissionContract<T: Config> {
     pub delegator: T::AccountId,
-    pub recipient: T::AccountId,
     pub scope: PermissionScope<T>,
     pub duration: PermissionDuration<T>,
     pub revocation: RevocationTerms<T>,
     /// Enforcement authority that can toggle the permission
     pub enforcement: EnforcementAuthority<T>,
     /// Last execution block
-    last_execution: Option<BlockNumberFor<T>>,
+    #[doc(hidden)]
+    pub last_execution: Option<BlockNumberFor<T>>,
     /// Number of times the permission was executed
-    execution_count: u32,
+    #[doc(hidden)]
+    pub execution_count: u32,
     /// Maximum number of instances of this permission
     pub max_instances: u32,
     /// Children permissions
@@ -78,7 +77,6 @@ pub struct PermissionContract<T: Config> {
 impl<T: Config> PermissionContract<T> {
     pub(crate) fn new(
         delegator: T::AccountId,
-        recipient: T::AccountId,
         scope: PermissionScope<T>,
         duration: PermissionDuration<T>,
         revocation: RevocationTerms<T>,
@@ -87,7 +85,6 @@ impl<T: Config> PermissionContract<T> {
     ) -> Self {
         Self {
             delegator,
-            recipient,
             scope,
             duration,
             revocation,
@@ -143,79 +140,6 @@ impl<T: Config> PermissionContract<T> {
 
         self.last_execution = Some(block);
         self.execution_count = self.execution_count.saturating_add(1);
-
-        Ok(())
-    }
-
-    pub fn revoke(self, origin: OriginFor<T>, permission_id: H256) -> DispatchResult {
-        // The recipient is also always allowed to revoke the permission.
-        let who = ensure_signed_or_root(origin)?.filter(|who| who != &self.recipient);
-
-        let delegator = self.delegator.clone();
-        let recipient = self.recipient.clone();
-
-        // `who` will not be present if the origin is a root key
-        if let Some(who) = &who {
-            match &self.revocation {
-                RevocationTerms::RevocableByDelegator => {
-                    ensure!(who == &delegator, Error::<T>::NotAuthorizedToRevoke)
-                }
-                RevocationTerms::RevocableByArbiters {
-                    accounts,
-                    required_votes,
-                } if accounts.contains(who) => {
-                    let votes = RevocationTracking::<T>::get(permission_id)
-                        .into_iter()
-                        .filter(|id| id != who)
-                        .filter(|id| accounts.contains(id))
-                        .count();
-                    if votes.saturating_add(1) < *required_votes as usize {
-                        return RevocationTracking::<T>::mutate(permission_id, |votes| {
-                            votes
-                                .try_insert(who.clone())
-                                .map_err(|_| Error::<T>::TooManyRevokers)?;
-                            Ok(())
-                        });
-                    }
-                }
-                RevocationTerms::RevocableByArbiters { .. } => {
-                    return Err(Error::<T>::NotAuthorizedToRevoke.into());
-                }
-                RevocationTerms::RevocableAfter(block) if who == &delegator => ensure!(
-                    <frame_system::Pallet<T>>::block_number() >= *block,
-                    Error::<T>::NotAuthorizedToRevoke
-                ),
-                RevocationTerms::RevocableAfter(_) => {
-                    return Err(Error::<T>::NotAuthorizedToRevoke.into());
-                }
-                RevocationTerms::Irrevocable => {
-                    return Err(Error::<T>::NotAuthorizedToRevoke.into());
-                }
-            };
-        }
-
-        for child_id in &self.children {
-            let Some(child) = Permissions::<T>::get(child_id) else {
-                continue;
-            };
-
-            let revoker = if who.is_none() {
-                RawOrigin::Root
-            } else {
-                RawOrigin::Signed(self.recipient.clone())
-            };
-
-            child.revoke(revoker.into(), *child_id)?;
-        }
-
-        self.cleanup(permission_id)?;
-
-        <Pallet<T>>::deposit_event(Event::PermissionRevoked {
-            delegator,
-            recipient,
-            revoked_by: who,
-            permission_id,
-        });
 
         Ok(())
     }
@@ -279,8 +203,130 @@ impl<T: Config> PermissionContract<T> {
         Ok(())
     }
 
+    pub fn revoke(self, origin: OriginFor<T>, permission_id: H256) -> DispatchResult {
+        let caller = ensure_signed_or_root(origin)?;
+
+        let delegator = self.delegator.clone();
+        let recipients = match &self.scope {
+            PermissionScope::Curator(CuratorScope { recipient, .. })
+            | PermissionScope::Namespace(NamespaceScope { recipient, .. }) => {
+                vec![recipient.clone()]
+            }
+            PermissionScope::Emission(EmissionScope { recipients, .. }) => {
+                recipients.keys().cloned().collect()
+            }
+        };
+
+        // `who` will not be present if the origin is a root key
+        if let Some(caller) = &caller {
+            match &self.revocation {
+                RevocationTerms::RevocableByDelegator if caller == &delegator => {
+                    // Allowed to revoke
+                }
+                RevocationTerms::RevocableByArbiters {
+                    accounts,
+                    required_votes,
+                } if accounts.contains(caller) => {
+                    let votes = RevocationTracking::<T>::get(permission_id)
+                        .into_iter()
+                        .filter(|id| id != caller)
+                        .filter(|id| accounts.contains(id))
+                        .count();
+                    if votes.saturating_add(1) < *required_votes as usize {
+                        return RevocationTracking::<T>::mutate(permission_id, |votes| {
+                            votes
+                                .try_insert(caller.clone())
+                                .map_err(|_| Error::<T>::TooManyRevokers)?;
+                            Ok(())
+                        });
+                    }
+
+                    // Allowed to revoke
+                }
+                RevocationTerms::RevocableAfter(block)
+                    if caller == &delegator
+                        && <frame_system::Pallet<T>>::block_number() >= *block =>
+                {
+                    // Allowed to revoke
+                }
+                _ => {
+                    ensure!(
+                        recipients.contains(caller),
+                        Error::<T>::NotAuthorizedToRevoke
+                    );
+
+                    if recipients.len() > 1 {
+                        remove_recipient_from_indices::<T>(&delegator, caller, permission_id);
+
+                        Permissions::<T>::mutate(permission_id, |permission| {
+                            if let Some(permission) = permission {
+                                #[allow(clippy::single_match)]
+                                match &mut permission.scope {
+                                    PermissionScope::Emission(EmissionScope {
+                                        recipients, ..
+                                    }) => {
+                                        recipients.remove(caller);
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        });
+
+                        <Pallet<T>>::deposit_event(Event::PermissionRevoked {
+                            delegator,
+                            revoked_by: Some(caller.clone()),
+                            permission_id,
+                        });
+
+                        return Ok(());
+                    }
+                }
+            };
+        }
+
+        for child_id in &self.children {
+            let Some(child) = Permissions::<T>::get(child_id) else {
+                continue;
+            };
+
+            let revoker = if caller.is_none() {
+                RawOrigin::Root
+            } else {
+                RawOrigin::Signed(child.delegator.clone())
+            };
+
+            child.revoke(revoker.into(), *child_id)?;
+        }
+
+        self.cleanup(permission_id)?;
+
+        <Pallet<T>>::deposit_event(Event::PermissionRevoked {
+            delegator,
+            revoked_by: caller,
+            permission_id,
+        });
+
+        Ok(())
+    }
+
     fn cleanup(self, permission_id: H256) -> DispatchResult {
-        crate::remove_permission_from_indices::<T>(&self.delegator, &self.recipient, permission_id);
+        match &self.scope {
+            PermissionScope::Curator(CuratorScope { recipient, .. })
+            | PermissionScope::Namespace(NamespaceScope { recipient, .. }) => {
+                remove_permission_from_indices::<T>(
+                    &self.delegator,
+                    core::iter::once(recipient),
+                    permission_id,
+                );
+            }
+            PermissionScope::Emission(EmissionScope { recipients, .. }) => {
+                remove_permission_from_indices::<T>(
+                    &self.delegator,
+                    recipients.keys(),
+                    permission_id,
+                );
+            }
+        };
 
         Permissions::<T>::remove(permission_id);
         RevocationTracking::<T>::remove(permission_id);
@@ -325,6 +371,7 @@ pub enum PermissionScope<T: Config> {
 #[derive(Encode, Decode, CloneNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub struct NamespaceScope<T: Config> {
+    pub recipient: T::AccountId,
     /// Set of namespace paths this permission delegates access to
     pub paths: BoundedBTreeMap<
         Option<PermissionId>,
@@ -479,7 +526,6 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
 
     for (permission_id, contract) in expired {
         let delegator = contract.delegator.clone();
-        let recipient = contract.recipient.clone();
 
         if let Err(err) = contract.cleanup(permission_id) {
             error!("failed to cleanup expired permission {permission_id:?}: {err:?}");
@@ -487,8 +533,118 @@ pub(crate) fn do_auto_permission_execution<T: Config>(current_block: BlockNumber
 
         <Pallet<T>>::deposit_event(Event::PermissionExpired {
             delegator,
-            recipient,
             permission_id,
         });
     }
+}
+
+/// Update storage indices when creating a new permission
+pub(crate) fn add_permission_indices<'a, T: Config>(
+    delegator: &T::AccountId,
+    recipients: impl Iterator<Item = &'a T::AccountId>,
+    permission_id: PermissionId,
+) -> Result<(), DispatchError> {
+    for recipient in recipients {
+        // Update (delegator, recipient) -> [permission_id] mapping
+        PermissionsByParticipants::<T>::try_mutate(
+            (delegator.clone(), recipient.clone()),
+            |permissions| -> Result<(), DispatchError> {
+                permissions
+                    .try_insert(permission_id)
+                    .map_err(|_| Error::<T>::TooManyTargets)?;
+                Ok(())
+            },
+        )?;
+
+        // Update recipient -> [permission_id] mapping
+        PermissionsByRecipient::<T>::try_mutate(
+            recipient.clone(),
+            |permissions| -> Result<(), DispatchError> {
+                permissions
+                    .try_insert(permission_id)
+                    .map_err(|_| Error::<T>::TooManyTargets)?;
+                Ok(())
+            },
+        )?;
+    }
+
+    // Update delegator -> [permission_id] mapping
+    PermissionsByDelegator::<T>::try_mutate(
+        delegator.clone(),
+        |permissions| -> Result<(), DispatchError> {
+            permissions
+                .try_insert(permission_id)
+                .map_err(|_| Error::<T>::TooManyTargets)?;
+            Ok(())
+        },
+    )?;
+
+    Ok(())
+}
+
+/// Remove a permission recipient from storage indices
+fn remove_recipient_from_indices<T: Config>(
+    delegator: &T::AccountId,
+    recipient: &T::AccountId,
+    permission_id: PermissionId,
+) {
+    PermissionsByParticipants::<T>::mutate_exists(
+        (delegator.clone(), recipient.clone()),
+        |permissions| {
+            if let Some(p) = permissions {
+                p.remove(&permission_id);
+                if p.is_empty() {
+                    *permissions = None;
+                }
+            }
+        },
+    );
+
+    PermissionsByRecipient::<T>::mutate_exists(recipient, |permissions| {
+        if let Some(p) = permissions {
+            p.remove(&permission_id);
+            if p.is_empty() {
+                *permissions = None;
+            }
+        }
+    });
+}
+
+/// Remove a permission from storage indices
+pub(crate) fn remove_permission_from_indices<'a, T: Config>(
+    delegator: &T::AccountId,
+    recipients: impl Iterator<Item = &'a T::AccountId>,
+    permission_id: PermissionId,
+) {
+    for recipient in recipients {
+        PermissionsByParticipants::<T>::mutate_exists(
+            (delegator.clone(), recipient.clone()),
+            |permissions| {
+                if let Some(p) = permissions {
+                    p.remove(&permission_id);
+                    if p.is_empty() {
+                        *permissions = None;
+                    }
+                }
+            },
+        );
+
+        PermissionsByRecipient::<T>::mutate_exists(recipient, |permissions| {
+            if let Some(p) = permissions {
+                p.remove(&permission_id);
+                if p.is_empty() {
+                    *permissions = None;
+                }
+            }
+        });
+    }
+
+    PermissionsByDelegator::<T>::mutate_exists(delegator, |permissions| {
+        if let Some(p) = permissions {
+            p.remove(&permission_id);
+            if p.is_empty() {
+                *permissions = None;
+            }
+        }
+    });
 }

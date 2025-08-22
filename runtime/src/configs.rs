@@ -464,7 +464,7 @@ parameter_types! {
     pub const MaxControllersPerPermission: u32 = 10;
     pub const MaxRevokersPerPermission: u32 = 10;
 
-    pub const MaxTargetsPerPermission: u32 = 100;
+    pub const MaxRecipientsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MinAutoDistributionThreshold: u128 = as_tors(100);
 
@@ -487,7 +487,7 @@ impl pallet_permission0::Config for Runtime {
     type MaxControllersPerPermission = MaxControllersPerPermission;
     type MaxRevokersPerPermission = MaxRevokersPerPermission;
 
-    type MaxTargetsPerPermission = MaxTargetsPerPermission;
+    type MaxRecipientsPerPermission = MaxRecipientsPerPermission;
     type MaxStreamsPerPermission = MaxStreamsPerPermission;
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 
