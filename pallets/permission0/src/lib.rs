@@ -87,6 +87,10 @@ pub mod pallet {
         /// Maximum number of children a single permission can have.
         #[pallet::constant]
         type MaxChildrenPerPermission: Get<u32>;
+
+        /// Max operations a bulk extrinsic can perform per extrinsic call.
+        #[pallet::constant]
+        type MaxBulkOperationsPerCall: Get<u32>;
     }
 
     pub type BalanceOf<T> =
@@ -483,6 +487,40 @@ pub mod pallet {
             ext::namespace_impl::delegate_namespace_permission_impl::<T>(
                 origin, recipient, paths, duration, revocation, instances,
             )?;
+
+            Ok(())
+        }
+
+        /// Delegate a permission over namespaces to multiple recipients.
+        /// Note: this extrinsic creates _multiple_ permissions with the same
+        /// properties.
+        #[pallet::call_index(10)]
+        #[pallet::weight({
+            T::WeightInfo::delegate_namespace_permission()
+                .saturating_mul(recipients.len() as u64)
+        })]
+        pub fn bulk_delegate_namespace_permission(
+            origin: OriginFor<T>,
+            recipients: BoundedBTreeSet<T::AccountId, T::MaxBulkOperationsPerCall>,
+            paths: BoundedBTreeMap<
+                Option<PermissionId>,
+                BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
+                T::MaxNamespacesPerPermission,
+            >,
+            duration: PermissionDuration<T>,
+            revocation: RevocationTerms<T>,
+            instances: u32,
+        ) -> DispatchResult {
+            for recipient in recipients {
+                ext::namespace_impl::delegate_namespace_permission_impl::<T>(
+                    origin.clone(),
+                    recipient,
+                    paths.clone(),
+                    duration.clone(),
+                    revocation.clone(),
+                    instances,
+                )?;
+            }
 
             Ok(())
         }
