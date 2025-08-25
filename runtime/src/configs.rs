@@ -471,6 +471,7 @@ parameter_types! {
     pub const MaxNamespacesPerPermission: u32 = 16;
     pub const MaxChildrenPerPermission: u32 = 16;
     pub const MaxCuratorSubpermissionsPerPermission: u32 = 16;
+    pub const MaxBulkOperationsPerCall: u32 = 20;
 }
 
 impl pallet_permission0::Config for Runtime {
@@ -494,6 +495,7 @@ impl pallet_permission0::Config for Runtime {
     type MaxNamespacesPerPermission = MaxNamespacesPerPermission;
     type MaxChildrenPerPermission = MaxChildrenPerPermission;
     type MaxCuratorSubpermissionsPerPermission = MaxCuratorSubpermissionsPerPermission;
+    type MaxBulkOperationsPerCall = MaxBulkOperationsPerCall;
 }
 
 impl pallet_faucet::Config for Runtime {

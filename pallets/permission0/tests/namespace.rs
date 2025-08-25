@@ -1903,3 +1903,151 @@ fn update_namespace_permission_smaller_instances() {
         assert_eq!(updated.max_instances, 5);
     });
 }
+
+#[test]
+fn bulk_delegate_namespace_permission_fails_when_redelegation_exceeds_parent_instances() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+        let charlie = 2;
+        let dave = 3;
+
+        register_agent(alice);
+        register_agent(bob);
+        register_agent(charlie);
+        register_agent(dave);
+
+        // Alice creates a namespace and delegates to Bob with 3 instances
+        let namespace = register_namespace(alice, b"agent.alice.compute");
+        let alice_paths = paths_map!(None => [namespace.clone()]);
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            3 // Bob gets 3 instances
+        ));
+
+        let bob_permission_id = get_last_delegated_permission_id(alice);
+
+        // Bob tries to redelegate to Charlie and Dave with 2 instances each (total 4)
+        // This should fail because Bob only has 3 instances available
+        let bob_paths = paths_map!(Some(bob_permission_id) => [namespace]);
+
+        let mut recipients = BoundedBTreeSet::new();
+        recipients.try_insert(charlie).unwrap();
+        recipients.try_insert(dave).unwrap();
+
+        // This should fail because 2 recipients × 2 instances = 4 instances needed,
+        // but Bob only has 3 instances available
+        assert_err!(
+            Permission0::bulk_delegate_namespace_permission(
+                get_origin(bob),
+                recipients,
+                bob_paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::Irrevocable,
+                2 // 2 instances per recipient
+            ),
+            Error::<Test>::NotEnoughInstances
+        );
+
+        // Verify no permissions were created
+        assert_eq!(
+            PermissionsByRecipient::<Test>::get(charlie).len(),
+            0,
+            "Charlie should have no permissions"
+        );
+        assert_eq!(
+            PermissionsByRecipient::<Test>::get(dave).len(),
+            0,
+            "Dave should have no permissions"
+        );
+
+        // Verify Bob's permission still has all instances available
+        let bob_permission = Permissions::<Test>::get(bob_permission_id).unwrap();
+        assert_eq!(bob_permission.available_instances(), 3);
+        assert_eq!(bob_permission.children.len(), 0);
+    });
+}
+
+#[test]
+fn bulk_delegate_namespace_permission_succeeds_within_parent_instance_limit() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let alice = 0;
+        let bob = 1;
+        let charlie = 2;
+        let dave = 3;
+
+        register_agent(alice);
+        register_agent(bob);
+        register_agent(charlie);
+        register_agent(dave);
+
+        // Alice creates a namespace and delegates to Bob with 4 instances
+        let namespace = register_namespace(alice, b"agent.alice.compute");
+        let alice_paths = paths_map!(None => [namespace.clone()]);
+
+        assert_ok!(Permission0::delegate_namespace_permission(
+            get_origin(alice),
+            bob,
+            alice_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            4 // Bob gets 4 instances
+        ));
+
+        let bob_permission_id = get_last_delegated_permission_id(alice);
+
+        // Bob redelegates to Charlie and Dave with 2 instances each (total 4)
+        // This should succeed because Bob has exactly 4 instances available
+        let bob_paths = paths_map!(Some(bob_permission_id) => [namespace]);
+
+        let mut recipients = BoundedBTreeSet::new();
+        recipients.try_insert(charlie).unwrap();
+        recipients.try_insert(dave).unwrap();
+
+        assert_ok!(Permission0::bulk_delegate_namespace_permission(
+            get_origin(bob),
+            recipients,
+            bob_paths,
+            PermissionDuration::Indefinite,
+            RevocationTerms::Irrevocable,
+            2 // 2 instances per recipient
+        ));
+
+        // Verify permissions were created
+        assert_eq!(
+            PermissionsByRecipient::<Test>::get(charlie).len(),
+            1,
+            "Charlie should have 1 permission"
+        );
+        assert_eq!(
+            PermissionsByRecipient::<Test>::get(dave).len(),
+            1,
+            "Dave should have 1 permission"
+        );
+
+        // Get the created permission IDs using helper function
+        let charlie_permission_id = get_permission_id_for_recipient(charlie);
+        let dave_permission_id = get_permission_id_for_recipient(dave);
+
+        // Verify each permission has 2 instances
+        let charlie_permission = Permissions::<Test>::get(charlie_permission_id).unwrap();
+        assert_eq!(charlie_permission.max_instances, 2);
+
+        let dave_permission = Permissions::<Test>::get(dave_permission_id).unwrap();
+        assert_eq!(dave_permission.max_instances, 2);
+
+        // Verify Bob's permission has no instances left available
+        let bob_permission = Permissions::<Test>::get(bob_permission_id).unwrap();
+        assert_eq!(bob_permission.available_instances(), 0); // 4 - (2+2) = 0
+        assert_eq!(bob_permission.children.len(), 2);
+        assert!(bob_permission.children.contains(&charlie_permission_id));
+        assert!(bob_permission.children.contains(&dave_permission_id));
+    });
+}
