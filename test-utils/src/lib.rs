@@ -270,6 +270,7 @@ impl pallet_permission0::Config for Test {
     type MaxNamespacesPerPermission = ConstU32<10>;
     type MaxChildrenPerPermission = ConstU32<10>;
     type MaxCuratorSubpermissionsPerPermission = ConstU32<10>;
+    type MaxBulkOperationsPerCall = ConstU32<20>;
 }
 
 impl pallet_balances::Config for Test {
