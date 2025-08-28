@@ -129,7 +129,7 @@ pub(crate) fn delegate_stream_permission_impl<T: Config>(
         Error::<T>::NotRegisteredAgent
     );
 
-    validate_stream_permission_recipients::<T>(&delegator, &recipients)?;
+    validate_stream_permission_recipients::<T>(&delegator, &revocation, &recipients)?;
 
     match &allocation {
         StreamAllocation::Streams(streams) => {
@@ -355,7 +355,11 @@ pub(crate) fn update_stream_permission<T: Config>(
             return Err(Error::<T>::NotAuthorizedToEdit.into());
         }
 
-        validate_stream_permission_recipients::<T>(&permission.delegator, &new_recipients)?;
+        validate_stream_permission_recipients::<T>(
+            &permission.delegator,
+            &permission.revocation,
+            &new_recipients,
+        )?;
 
         // Remove old indices for current recipients
         crate::permission::remove_permission_from_indices::<T>(
@@ -444,9 +448,12 @@ fn validate_stream_managers<T: Config>(
 
 fn validate_stream_permission_recipients<T: Config>(
     delegator: &T::AccountId,
+    revocation: &RevocationTerms<T>,
     recipients: &BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
 ) -> DispatchResult {
-    ensure!(!recipients.is_empty(), Error::<T>::NoRecipientsSpecified);
+    if !revocation.is_revokable() {
+        ensure!(!recipients.is_empty(), Error::<T>::NoRecipientsSpecified);
+    }
 
     for (recipient, weight) in recipients {
         ensure!(delegator != recipient, Error::<T>::InvalidRecipientWeight);
