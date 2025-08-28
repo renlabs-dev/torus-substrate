@@ -1395,22 +1395,64 @@ fn index_consistency_during_complex_recipient_updates() {
         assert!(!participants_2.contains(&permission_id)); // Removed
         assert!(participants_3.contains(&permission_id)); // Still there
         assert!(participants_4.contains(&permission_id)); // Added
+    });
+}
 
-        // Test complete removal of all recipients should delete permission
-        let empty_recipients = BoundedBTreeMap::new();
+#[test]
+fn cannot_create_empty_recipients_for_irrevocable_permissions() {
+    new_test_ext().execute_with(|| {
+        zero_min_burn();
+        let agent_0 = 0;
+        register_empty_agent(agent_0);
 
-        // This should fail as permissions need at least one recipient
+        add_balance(agent_0, as_tors(10) + 1);
+
+        let stream_id = generate_root_stream_id(&agent_0);
+        let mut streams = BTreeMap::new();
+        streams.insert(stream_id, Percent::from_percent(50));
+
         assert_err!(
-            pallet_permission0::Pallet::<Test>::update_stream_permission(
+            pallet_permission0::Pallet::<Test>::delegate_stream_permission(
                 get_origin(agent_0),
-                permission_id,
-                Some(empty_recipients),
+                Default::default(),
+                pallet_permission0::StreamAllocation::Streams(streams.clone().try_into().unwrap()),
+                pallet_permission0::DistributionControl::Manual,
+                pallet_permission0::PermissionDuration::Indefinite,
+                pallet_permission0::RevocationTerms::Irrevocable,
+                pallet_permission0::EnforcementAuthority::None,
                 None,
                 None,
-                None,
-                None
             ),
             pallet_permission0::Error::<Test>::NoRecipientsSpecified
+        );
+
+        assert_err!(
+            pallet_permission0::Pallet::<Test>::delegate_stream_permission(
+                get_origin(agent_0),
+                Default::default(),
+                pallet_permission0::StreamAllocation::Streams(streams.clone().try_into().unwrap()),
+                pallet_permission0::DistributionControl::Manual,
+                pallet_permission0::PermissionDuration::Indefinite,
+                pallet_permission0::RevocationTerms::RevocableAfter(10),
+                pallet_permission0::EnforcementAuthority::None,
+                None,
+                None,
+            ),
+            pallet_permission0::Error::<Test>::NoRecipientsSpecified
+        );
+
+        assert_ok!(
+            pallet_permission0::Pallet::<Test>::delegate_stream_permission(
+                get_origin(agent_0),
+                Default::default(),
+                pallet_permission0::StreamAllocation::Streams(streams.try_into().unwrap()),
+                pallet_permission0::DistributionControl::Manual,
+                pallet_permission0::PermissionDuration::Indefinite,
+                pallet_permission0::RevocationTerms::RevocableByDelegator,
+                pallet_permission0::EnforcementAuthority::None,
+                None,
+                None,
+            )
         );
     });
 }

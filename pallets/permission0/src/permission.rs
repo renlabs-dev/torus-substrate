@@ -350,13 +350,7 @@ impl<T: Config> PermissionContract<T> {
     }
 
     pub fn is_updatable(&self) -> bool {
-        let current_block = frame_system::Pallet::<T>::block_number();
-
-        match &self.revocation {
-            RevocationTerms::RevocableByDelegator => true,
-            RevocationTerms::RevocableAfter(block) => &current_block > block,
-            _ => false,
-        }
+        self.revocation.is_revokable()
     }
 }
 
@@ -428,6 +422,18 @@ pub enum RevocationTerms<T: Config> {
 }
 
 impl<T: Config> RevocationTerms<T> {
+    /// Returns true if this revocation term is revocable by the delegator
+    /// or the current block is past the one defined.
+    pub fn is_revokable(&self) -> bool {
+        let current_block = frame_system::Pallet::<T>::block_number();
+
+        match &self {
+            RevocationTerms::RevocableByDelegator => true,
+            RevocationTerms::RevocableAfter(block) => &current_block > block,
+            _ => false,
+        }
+    }
+
     /// Checks if the child revocation terms are weaker than the parent.
     pub fn is_weaker(parent: &Self, child: &Self) -> bool {
         match (parent, child) {
