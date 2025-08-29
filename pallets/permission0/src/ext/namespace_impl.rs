@@ -49,7 +49,7 @@ pub fn delegate_namespace_permission_impl<T: Config>(
     >,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
-    instances: u32,
+    max_instances: u32,
 ) -> Result<PermissionId, DispatchError> {
     let delegator = ensure_signed(delegator)?;
 
@@ -62,7 +62,7 @@ pub fn delegate_namespace_permission_impl<T: Config>(
         Error::<T>::NotRegisteredAgent
     );
 
-    ensure!(instances > 0, Error::<T>::NotEnoughInstances);
+    ensure!(max_instances > 0, Error::<T>::NotEnoughInstances);
 
     let total_multi_parent = paths.keys().filter(|p| p.is_some()).count();
     ensure!(total_multi_parent <= 1, Error::<T>::MultiParentForbidden);
@@ -94,7 +94,7 @@ pub fn delegate_namespace_permission_impl<T: Config>(
                 );
 
                 ensure!(
-                    instances <= parent.available_instances(),
+                    max_instances <= parent.available_instances().unwrap_or_default(),
                     Error::<T>::NotEnoughInstances
                 );
 
@@ -121,12 +121,18 @@ pub fn delegate_namespace_permission_impl<T: Config>(
     let scope = PermissionScope::Namespace(NamespaceScope {
         recipient: recipient.clone(),
         paths,
+        children: Default::default(),
+        max_instances,
     });
     let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
 
     for parent in parents {
         Permissions::<T>::mutate_extant(parent, |parent| {
-            parent.children.try_insert(permission_id).ok()
+            if let Some(children) = parent.children_mut() {
+                children.try_insert(permission_id).ok()
+            } else {
+                Some(false)
+            }
         })
         .ok_or(Error::<T>::TooManyChildren)?;
     }
@@ -137,7 +143,6 @@ pub fn delegate_namespace_permission_impl<T: Config>(
         duration,
         revocation,
         crate::EnforcementAuthority::None,
-        instances,
     );
 
     Permissions::<T>::insert(permission_id, &contract);
@@ -281,35 +286,36 @@ pub(crate) fn update_namespace_permission<T: Config>(
 
     ensure!(permission.delegator == who, Error::<T>::NotAuthorizedToEdit);
 
-    let scope = permission.scope.clone();
-    match &scope {
-        PermissionScope::Namespace(namespace) => {
-            if max_instances == permission.max_instances {
-                return Ok(());
-            } else if max_instances > permission.max_instances {
-                for parent in namespace.paths.keys().copied().flatten() {
-                    let Some(parent) = Permissions::<T>::get(parent) else {
-                        continue;
-                    };
+    let PermissionScope::Namespace(mut namespace) = permission.scope.clone() else {
+        return Err(Error::<T>::NotEditable.into());
+    };
 
-                    ensure!(
-                        max_instances <= parent.available_instances(),
-                        Error::<T>::NotEnoughInstances
-                    );
-                }
-            } else {
-                ensure!(permission.is_updatable(), Error::<T>::NotAuthorizedToEdit);
-                ensure!(
-                    max_instances >= permission.used_instances(),
-                    Error::<T>::NotEnoughInstances
-                );
-            }
+    if max_instances == namespace.max_instances {
+        return Ok(());
+    } else if max_instances > namespace.max_instances {
+        for parent in namespace.paths.keys().copied().flatten() {
+            let Some(parent) = Permissions::<T>::get(parent) else {
+                continue;
+            };
+
+            ensure!(
+                max_instances <= parent.available_instances().unwrap_or_default(),
+                Error::<T>::NotEnoughInstances
+            );
         }
-        _ => return Err(Error::<T>::NotEditable.into()),
+    } else {
+        ensure!(permission.is_updatable(), Error::<T>::NotAuthorizedToEdit);
+        ensure!(
+            max_instances >= permission.used_instances(),
+            Error::<T>::NotEnoughInstances
+        );
     }
 
-    permission.max_instances = max_instances;
+    namespace.max_instances = max_instances;
+
+    permission.scope = PermissionScope::Namespace(namespace);
     permission.last_update = frame_system::Pallet::<T>::block_number();
+
     Permissions::<T>::set(permission_id, Some(permission));
 
     Ok(())

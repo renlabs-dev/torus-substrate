@@ -166,14 +166,8 @@ pub(crate) fn delegate_stream_permission_impl<T: Config>(
 
     let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
 
-    let contract = PermissionContract::<T>::new(
-        delegator.clone(),
-        scope,
-        duration,
-        revocation,
-        enforcement,
-        1,
-    );
+    let contract =
+        PermissionContract::<T>::new(delegator.clone(), scope, duration, revocation, enforcement);
 
     Permissions::<T>::insert(permission_id, contract);
 

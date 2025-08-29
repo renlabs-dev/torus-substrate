@@ -38,7 +38,7 @@ pub mod pallet {
 
     use super::*;
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(6);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]

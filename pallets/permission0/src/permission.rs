@@ -1,5 +1,4 @@
 use codec::{Decode, Encode, MaxEncodedLen};
-use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{
     frame_support::{
         CloneNoBound, DebugNoBound, DefaultNoBound, EqNoBound, PartialEqNoBound,
@@ -20,9 +19,11 @@ use scale_info::TypeInfo;
 use crate::*;
 
 pub use curator::{CuratorPermissions, CuratorScope};
+pub use namespace::NamespaceScope;
 pub use stream::{DistributionControl, StreamAllocation, StreamScope};
 
 pub mod curator;
+pub mod namespace;
 pub mod stream;
 
 /// Type for permission ID
@@ -69,10 +70,6 @@ pub struct PermissionContract<T: Config> {
     /// Number of times the permission was executed
     #[doc(hidden)]
     pub execution_count: u32,
-    /// Maximum number of instances of this permission
-    pub max_instances: u32,
-    /// Children permissions
-    pub children: BoundedBTreeSet<H256, T::MaxChildrenPerPermission>,
     pub created_at: BlockNumberFor<T>,
 }
 
@@ -83,7 +80,6 @@ impl<T: Config> PermissionContract<T> {
         duration: PermissionDuration<T>,
         revocation: RevocationTerms<T>,
         enforcement: EnforcementAuthority<T>,
-        max_instances: u32,
     ) -> Self {
         let now = frame_system::Pallet::<T>::block_number();
         Self {
@@ -92,12 +88,10 @@ impl<T: Config> PermissionContract<T> {
             duration,
             revocation,
             enforcement,
-            max_instances,
 
             last_update: now,
             last_execution: None,
             execution_count: 0,
-            children: BoundedBTreeSet::new(),
             created_at: now,
         }
     }
@@ -123,22 +117,61 @@ impl<T: Config> PermissionContract<T> {
 
     /// Returns the number of used instances of this permission.
     pub fn used_instances(&self) -> u32 {
-        let mut used = 0;
-        for child in &self.children {
-            used = used.saturating_add(
-                Permissions::<T>::get(child).map_or(0, |child| child.max_instances),
-            );
+        match &self.scope {
+            PermissionScope::Curator(CuratorScope { children, .. })
+            | PermissionScope::Namespace(NamespaceScope { children, .. }) => {
+                let mut used = 0;
+                for child in children {
+                    used = used.saturating_add(
+                        Permissions::<T>::get(child)
+                            .map_or(0, |child| child.max_instances().unwrap_or_default()),
+                    );
+                }
+                used
+            }
+            _ => 0,
         }
-        used
+    }
+
+    /// Returns the number of max instances attached to this permission, if present.
+    pub fn max_instances(&self) -> Option<u32> {
+        match &self.scope {
+            PermissionScope::Curator(CuratorScope { max_instances, .. })
+            | PermissionScope::Namespace(NamespaceScope { max_instances, .. }) => {
+                Some(*max_instances)
+            }
+            _ => None,
+        }
     }
 
     /// Returns the number of available instances of this permission.
-    pub fn available_instances(&self) -> u32 {
-        self.max_instances.saturating_sub(self.used_instances())
+    pub fn available_instances(&self) -> Option<u32> {
+        Some(self.max_instances()?.saturating_sub(self.used_instances()))
+    }
+
+    /// Returns a mutable reference to the permission children, if the scope allows for it.
+    pub fn children_mut(
+        &mut self,
+    ) -> Option<&mut BoundedBTreeSet<PermissionId, T::MaxChildrenPerPermission>> {
+        match &mut self.scope {
+            PermissionScope::Curator(CuratorScope { children, .. })
+            | PermissionScope::Namespace(NamespaceScope { children, .. }) => Some(children),
+            _ => None,
+        }
+    }
+
+    pub fn children(&self) -> Option<&BoundedBTreeSet<PermissionId, T::MaxChildrenPerPermission>> {
+        match &self.scope {
+            PermissionScope::Curator(CuratorScope { children, .. })
+            | PermissionScope::Namespace(NamespaceScope { children, .. }) => Some(children),
+            _ => None,
+        }
     }
 
     pub fn tick_execution(&mut self, block: BlockNumberFor<T>) -> DispatchResult {
-        if self.available_instances() == 0 {
+        if let Some(available_instances) = self.available_instances()
+            && available_instances == 0
+        {
             return Err(Error::<T>::NotEnoughInstances.into());
         }
 
@@ -286,7 +319,7 @@ impl<T: Config> PermissionContract<T> {
             };
         }
 
-        for child_id in &self.children {
+        for child_id in self.children().into_iter().flat_map(|c| c.iter()) {
             let Some(child) = Permissions::<T>::get(child_id) else {
                 continue;
             };
@@ -361,35 +394,6 @@ pub enum PermissionScope<T: Config> {
     Stream(StreamScope<T>),
     Curator(CuratorScope<T>),
     Namespace(NamespaceScope<T>),
-}
-
-/// Scope for namespace permissions
-#[derive(Encode, Decode, CloneNoBound, TypeInfo, MaxEncodedLen, DebugNoBound)]
-#[scale_info(skip_type_params(T))]
-pub struct NamespaceScope<T: Config> {
-    pub recipient: T::AccountId,
-    /// Set of namespace paths this permission delegates access to
-    pub paths: BoundedBTreeMap<
-        Option<PermissionId>,
-        BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
-        T::MaxNamespacesPerPermission,
-    >,
-}
-
-impl<T: Config> NamespaceScope<T> {
-    /// Cleanup operations when permission is revoked or expired
-    fn cleanup(
-        &self,
-        permission_id: polkadot_sdk::sp_core::H256,
-        _last_execution: &Option<crate::BlockNumberFor<T>>,
-        _delegator: &T::AccountId,
-    ) {
-        for pid in self.paths.keys().cloned().flatten() {
-            Permissions::<T>::mutate_extant(pid, |parent| {
-                parent.children.remove(&permission_id);
-            });
-        }
-    }
 }
 
 #[derive(

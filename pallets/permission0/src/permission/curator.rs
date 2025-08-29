@@ -3,7 +3,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
     frame_support::{CloneNoBound, DebugNoBound, EqNoBound, PartialEqNoBound},
     polkadot_sdk_frame::prelude::BlockNumberFor,
-    sp_runtime::BoundedBTreeMap,
+    sp_runtime::{BoundedBTreeMap, BoundedBTreeSet},
 };
 use scale_info::TypeInfo;
 
@@ -52,6 +52,10 @@ pub struct CuratorScope<T: Config> {
         T::MaxCuratorSubpermissionsPerPermission,
     >,
     pub cooldown: Option<BlockNumberFor<T>>,
+    /// Maximum number of instances of this permission
+    pub max_instances: u32,
+    /// Children permissions
+    pub children: BoundedBTreeSet<PermissionId, T::MaxChildrenPerPermission>,
 }
 
 impl<T: Config> CuratorScope<T> {
@@ -70,7 +74,9 @@ impl<T: Config> CuratorScope<T> {
     ) {
         for pid in self.flags.keys().cloned().flatten() {
             Permissions::<T>::mutate_extant(pid, |parent| {
-                parent.children.remove(&permission_id);
+                if let Some(children) = parent.children_mut() {
+                    children.remove(&permission_id);
+                }
             });
         }
     }
