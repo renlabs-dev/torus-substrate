@@ -866,7 +866,7 @@ fn permission_contract_available_instances_reduces_with_children() {
 
         // Verify initial available instances
         let parent_permission = Permissions::<Test>::get(parent_permission_id).unwrap();
-        assert_eq!(parent_permission.available_instances(), 5);
+        assert_eq!(parent_permission.available_instances().unwrap(), 5);
 
         // Create child permission with 2 instances
         let bounded_gpu = register_namespace(delegator, b"agent.alice.compute.gpu");
@@ -888,7 +888,7 @@ fn permission_contract_available_instances_reduces_with_children() {
 
         // Verify available instances reduced to 3 (5 - 2)
         let parent_permission = Permissions::<Test>::get(parent_permission_id).unwrap();
-        assert_eq!(parent_permission.available_instances(), 3);
+        assert_eq!(parent_permission.available_instances().unwrap(), 3);
     });
 }
 
@@ -1233,20 +1233,35 @@ fn revoke_namespace_permission_cascades_through_multiple_levels() {
 
         // Verify parent-child relationships
         let alice_permission = Permissions::<Test>::get(alice_permission_id).unwrap();
-        assert!(alice_permission.children.contains(&bob_permission_id));
-        assert_eq!(alice_permission.available_instances(), 2); // 10 - 8 = 2
+        assert!(
+            alice_permission
+                .children()
+                .unwrap()
+                .contains(&bob_permission_id)
+        );
+        assert_eq!(alice_permission.available_instances().unwrap(), 2); // 10 - 8 = 2
 
         let bob_permission = Permissions::<Test>::get(bob_permission_id).unwrap();
-        assert!(bob_permission.children.contains(&charlie_permission_id));
-        assert_eq!(bob_permission.available_instances(), 3); // 8 - 5 = 3
+        assert!(
+            bob_permission
+                .children()
+                .unwrap()
+                .contains(&charlie_permission_id)
+        );
+        assert_eq!(bob_permission.available_instances().unwrap(), 3); // 8 - 5 = 3
 
         let charlie_permission = Permissions::<Test>::get(charlie_permission_id).unwrap();
-        assert!(charlie_permission.children.contains(&dave_permission_id));
-        assert_eq!(charlie_permission.available_instances(), 3); // 5 - 2 = 3
+        assert!(
+            charlie_permission
+                .children()
+                .unwrap()
+                .contains(&dave_permission_id)
+        );
+        assert_eq!(charlie_permission.available_instances().unwrap(), 3); // 5 - 2 = 3
 
         let dave_permission = Permissions::<Test>::get(dave_permission_id).unwrap();
-        assert_eq!(dave_permission.children.len(), 0); // No children
-        assert_eq!(dave_permission.available_instances(), 2); // Full instances available
+        assert_eq!(dave_permission.children().unwrap().len(), 0); // No children
+        assert_eq!(dave_permission.available_instances().unwrap(), 2); // Full instances available
 
         // FIRST REVOCATION: Revoke the last permission (Dave's to Eve)
         // This should only affect Dave's permission, removing it from Charlie's children
@@ -1264,11 +1279,14 @@ fn revoke_namespace_permission_cascades_through_multiple_levels() {
             Permissions::<Test>::get(charlie_permission_id).unwrap();
         assert!(
             !charlie_permission_after_dave_revoke
-                .children
+                .children()
+                .unwrap()
                 .contains(&dave_permission_id)
         );
         assert_eq!(
-            charlie_permission_after_dave_revoke.available_instances(),
+            charlie_permission_after_dave_revoke
+                .available_instances()
+                .unwrap(),
             5
         ); // Back to full 5 instances
 
@@ -1389,8 +1407,13 @@ fn revoke_middle_permission_cascades_to_children_only() {
         // Verify Alice's permission still exists but Bob's children are gone
         assert!(Permissions::<Test>::contains_key(alice_permission_id));
         let alice_permission = Permissions::<Test>::get(alice_permission_id).unwrap();
-        assert!(!alice_permission.children.contains(&bob_permission_id));
-        assert_eq!(alice_permission.available_instances(), 10); // Back to full instances
+        assert!(
+            !alice_permission
+                .children()
+                .unwrap()
+                .contains(&bob_permission_id)
+        );
+        assert_eq!(alice_permission.available_instances().unwrap(), 10); // Back to full instances
 
         // Verify Bob, Charlie, and Dave permissions are all gone (cascaded)
         assert!(!Permissions::<Test>::contains_key(bob_permission_id));
@@ -1704,7 +1727,7 @@ fn update_namespace_permission_basic_validations() {
         ));
 
         let permission = Permissions::<Test>::get(permission_id).unwrap();
-        assert_eq!(permission.max_instances, 5);
+        assert_eq!(permission.max_instances().unwrap_or_default(), 5);
     });
 }
 
@@ -1739,7 +1762,7 @@ fn update_namespace_permission_larger_instances() {
         ));
 
         let permission = Permissions::<Test>::get(no_parent_permission_id).unwrap();
-        assert_eq!(permission.max_instances, 100);
+        assert_eq!(permission.max_instances().unwrap_or_default(), 100);
 
         let paths_2 = paths_map!(None => [register_namespace(delegator, b"agent.alice.storage")]);
 
@@ -1766,7 +1789,7 @@ fn update_namespace_permission_larger_instances() {
         let child_permission_id = get_last_delegated_permission_id(recipient_2);
 
         let parent = Permissions::<Test>::get(parent_permission_id).unwrap();
-        assert_eq!(parent.available_instances(), 15);
+        assert_eq!(parent.available_instances().unwrap(), 15);
 
         // try to increase child instances beyond parent's available
         assert_err!(
@@ -1786,10 +1809,10 @@ fn update_namespace_permission_larger_instances() {
         ));
 
         let updated_child = Permissions::<Test>::get(child_permission_id).unwrap();
-        assert_eq!(updated_child.max_instances, 15);
+        assert_eq!(updated_child.max_instances().unwrap_or_default(), 15);
 
         let parent = Permissions::<Test>::get(parent_permission_id).unwrap();
-        assert_eq!(parent.available_instances(), 5);
+        assert_eq!(parent.available_instances().unwrap(), 5);
     });
 }
 
@@ -1827,7 +1850,7 @@ fn update_namespace_permission_smaller_instances() {
         ));
 
         let parent = Permissions::<Test>::get(parent_permission_id).unwrap();
-        assert_eq!(parent.available_instances(), 6);
+        assert_eq!(parent.available_instances().unwrap(), 6);
 
         // reducing before revocable period should fail
         assert_err!(
@@ -1858,8 +1881,8 @@ fn update_namespace_permission_smaller_instances() {
         ));
 
         let updated = Permissions::<Test>::get(parent_permission_id).unwrap();
-        assert_eq!(updated.max_instances, 4);
-        assert_eq!(updated.available_instances(), 0);
+        assert_eq!(updated.max_instances().unwrap_or_default(), 4);
+        assert_eq!(updated.available_instances().unwrap(), 0);
 
         let storage_paths = paths_map!(None => [register_namespace(delegator, b"agent.alice.storage")]);
         assert_ok!(Permission0::delegate_namespace_permission(
@@ -1900,7 +1923,7 @@ fn update_namespace_permission_smaller_instances() {
         ));
 
         let updated = Permissions::<Test>::get(revocable_permission_id).unwrap();
-        assert_eq!(updated.max_instances, 5);
+        assert_eq!(updated.max_instances().unwrap_or_default(), 5);
     });
 }
 
@@ -1969,8 +1992,8 @@ fn bulk_delegate_namespace_permission_fails_when_redelegation_exceeds_parent_ins
 
         // Verify Bob's permission still has all instances available
         let bob_permission = Permissions::<Test>::get(bob_permission_id).unwrap();
-        assert_eq!(bob_permission.available_instances(), 3);
-        assert_eq!(bob_permission.children.len(), 0);
+        assert_eq!(bob_permission.available_instances().unwrap(), 3);
+        assert_eq!(bob_permission.children().unwrap().len(), 0);
     });
 }
 
@@ -2038,16 +2061,26 @@ fn bulk_delegate_namespace_permission_succeeds_within_parent_instance_limit() {
 
         // Verify each permission has 2 instances
         let charlie_permission = Permissions::<Test>::get(charlie_permission_id).unwrap();
-        assert_eq!(charlie_permission.max_instances, 2);
+        assert_eq!(charlie_permission.max_instances().unwrap_or_default(), 2);
 
         let dave_permission = Permissions::<Test>::get(dave_permission_id).unwrap();
-        assert_eq!(dave_permission.max_instances, 2);
+        assert_eq!(dave_permission.max_instances().unwrap_or_default(), 2);
 
         // Verify Bob's permission has no instances left available
         let bob_permission = Permissions::<Test>::get(bob_permission_id).unwrap();
-        assert_eq!(bob_permission.available_instances(), 0); // 4 - (2+2) = 0
-        assert_eq!(bob_permission.children.len(), 2);
-        assert!(bob_permission.children.contains(&charlie_permission_id));
-        assert!(bob_permission.children.contains(&dave_permission_id));
+        assert_eq!(bob_permission.available_instances().unwrap(), 0); // 4 - (2+2) = 0
+        assert_eq!(bob_permission.children().unwrap().len(), 2);
+        assert!(
+            bob_permission
+                .children()
+                .unwrap()
+                .contains(&charlie_permission_id)
+        );
+        assert!(
+            bob_permission
+                .children()
+                .unwrap()
+                .contains(&dave_permission_id)
+        );
     });
 }

@@ -47,7 +47,7 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
                 continue;
             }
 
-            if contract.available_instances() < 1 {
+            if contract.available_instances().unwrap_or_default() < 1 {
                 if !matches!(cur_error, Error::<T>::PermissionInCooldown) {
                     cur_error = Error::<T>::NotEnoughInstances;
                 }
@@ -155,7 +155,7 @@ pub fn delegate_curator_permission_impl<T: Config>(
             );
 
             ensure!(
-                instances <= parent.available_instances(),
+                instances <= parent.available_instances().unwrap_or_default(),
                 Error::<T>::NotEnoughInstances
             );
 
@@ -179,12 +179,18 @@ pub fn delegate_curator_permission_impl<T: Config>(
         recipient: recipient.clone(),
         flags,
         cooldown,
+        children: Default::default(),
+        max_instances: 1,
     });
     let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
 
     for parent in parents {
         Permissions::<T>::mutate_extant(parent, |parent| {
-            parent.children.try_insert(permission_id).ok()
+            if let Some(children) = parent.children_mut() {
+                children.try_insert(permission_id).ok()
+            } else {
+                Some(false)
+            }
         })
         .ok_or(Error::<T>::TooManyChildren)?;
     }
@@ -195,7 +201,6 @@ pub fn delegate_curator_permission_impl<T: Config>(
         duration,
         revocation,
         crate::EnforcementAuthority::None,
-        1,
     );
 
     Permissions::<T>::insert(permission_id, &contract);

@@ -14,7 +14,7 @@ check: fmt
   cargo clippy --tests
 
 test: check
-  cargo nextest run
+  SKIP_WASM_BUILD=1 cargo nextest run
 
 fmt:
   cargo fmt
