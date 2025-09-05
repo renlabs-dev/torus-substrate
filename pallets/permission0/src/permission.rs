@@ -11,10 +11,11 @@ use polkadot_sdk::{
         BoundedBTreeMap, BoundedVec, DispatchError, Percent,
         traits::{BlakeTwo256, Hash},
     },
-    sp_std::vec::Vec,
+    sp_std::{vec, vec::Vec},
     sp_tracing::{error, info, trace},
 };
 use scale_info::TypeInfo;
+use wallet::WalletScope;
 
 use crate::*;
 
@@ -25,6 +26,7 @@ pub use stream::{DistributionControl, StreamAllocation, StreamScope};
 pub mod curator;
 pub mod namespace;
 pub mod stream;
+pub mod wallet;
 
 /// Type for permission ID
 pub type PermissionId = H256;
@@ -246,7 +248,8 @@ impl<T: Config> PermissionContract<T> {
         let delegator = self.delegator.clone();
         let recipients = match &self.scope {
             PermissionScope::Curator(CuratorScope { recipient, .. })
-            | PermissionScope::Namespace(NamespaceScope { recipient, .. }) => {
+            | PermissionScope::Namespace(NamespaceScope { recipient, .. })
+            | PermissionScope::Wallet(WalletScope { recipient, .. }) => {
                 vec![recipient.clone()]
             }
             PermissionScope::Stream(StreamScope { recipients, .. }) => {
@@ -292,7 +295,7 @@ impl<T: Config> PermissionContract<T> {
                         Error::<T>::NotAuthorizedToRevoke
                     );
 
-                    if recipients.len() > 1 {
+                    if recipients.len() > 1usize {
                         remove_recipient_from_indices::<T>(&delegator, caller, permission_id);
 
                         Permissions::<T>::mutate(permission_id, |permission| {
@@ -347,7 +350,8 @@ impl<T: Config> PermissionContract<T> {
     fn cleanup(self, permission_id: H256) -> DispatchResult {
         match &self.scope {
             PermissionScope::Curator(CuratorScope { recipient, .. })
-            | PermissionScope::Namespace(NamespaceScope { recipient, .. }) => {
+            | PermissionScope::Namespace(NamespaceScope { recipient, .. })
+            | PermissionScope::Wallet(WalletScope { recipient, .. }) => {
                 remove_permission_from_indices::<T>(
                     &self.delegator,
                     core::iter::once(recipient),
@@ -377,6 +381,9 @@ impl<T: Config> PermissionContract<T> {
             PermissionScope::Namespace(namespace) => {
                 namespace.cleanup(permission_id, &self.last_execution, &self.delegator);
             }
+            PermissionScope::Wallet(wallet) => {
+                wallet.cleanup(permission_id, &self.last_execution, &self.delegator);
+            }
         }
 
         Ok(())
@@ -394,6 +401,7 @@ pub enum PermissionScope<T: Config> {
     Stream(StreamScope<T>),
     Curator(CuratorScope<T>),
     Namespace(NamespaceScope<T>),
+    Wallet(WalletScope<T>),
 }
 
 #[derive(
