@@ -1,0 +1,103 @@
+{
+  "name": "Torus",
+  "id": "torus-devnet",
+  "chainType": "Development",
+  "bootNodes":
+    [
+      "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWKZJVZpBLefps2CU7FKeJbxSvFDxhddwVC1DR7Lzg8wUW",
+    ],
+  "telemetryEndpoints": null,
+  "protocolId": "torus",
+  "properties": { "tokenDecimals": 18, "tokenSymbol": "TORUS" },
+  "codeSubstitutes": {},
+  "genesis":
+    {
+      "runtimeGenesis":
+        {
+          "code": "...codigo gigante aq...",
+          "patch":
+            {
+              "aura":
+                {
+                  "authorities":
+                    [
+                      "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+                      "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+                    ],
+                },
+              "balances":
+                {
+                  "balances":
+                    [
+                      [
+                        "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5GNJqTPyNqANBkUVMN1LPPrxXnFouWXoe2wNSmmEoLctxiZY",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5HpG9w8EBLe5XCrbczpwq5TSXvedjrBGCwqxK1iQ7qUsSWFc",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5Ck5SLSHYac6WFt5UZRSsdJjwmpSZq85fd5TRNAdZQVzEAPT",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5HKPmK9GYtE1PSLsS1qiYU9xQ9Si1NcEhdeCq9sw5bqu4ns8",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5FCfAonRZgTFrTd9HREEyeJjDpT397KMzizE6T3DvebLFE7n",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5CRmqmsiNFExV6VbdmPJViVxrWmkaXXvBrSX8oqBT8R9vmWk",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5Fxune7f71ZbpP2FoY3mhYcmM596Erhv1gRue4nsPwkxMR4n",
+                        100000000000000000000,
+                      ],
+                      [
+                        "5CUjxa4wVKMj3FqKdqAUf7zcEMr4MYAjXeWmUf44B41neLmJ",
+                        100000000000000000000,
+                      ],
+                    ],
+                },
+              "grandpa":
+                {
+                  "authorities":
+                    [
+                      ["5FA9nQDVg267DEd8m1ZypXLBnvN7SFxYwV7ndqSYGiN9TTpu", 1],
+                      ["5GoNkf6WdbxCFnPdAnYYQyCjAKPJgLNxXwPjwTh6DGg6gN3E", 1],
+                    ],
+                },
+              "sudo":
+                { "key": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY" },
+            },
+        },
+    },
+}

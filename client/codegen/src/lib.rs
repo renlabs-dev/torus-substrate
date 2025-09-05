@@ -1,6 +1,7 @@
 use clap::Parser;
 use codec::Decode;
 use proc_macro2::TokenStream;
+use quote::quote;
 use std::path::{Path, PathBuf};
 use subxt_codegen::{CodegenBuilder, Metadata};
 use subxt_utils_fetchmetadata::{MetadataVersion, Url};
@@ -28,6 +29,7 @@ struct Args {
 enum InterfaceSource {
     Mainnet,
     Testnet,
+    Devnet,
 }
 
 impl InterfaceSource {
@@ -35,6 +37,7 @@ impl InterfaceSource {
         match self {
             InterfaceSource::Mainnet => "mainnet",
             InterfaceSource::Testnet => "testnet",
+            InterfaceSource::Devnet => "devnet",
         }
     }
 
@@ -42,22 +45,38 @@ impl InterfaceSource {
         match self {
             InterfaceSource::Mainnet => "crate::chain::MainNet",
             InterfaceSource::Testnet => "crate::chain::TestNet",
+            InterfaceSource::Devnet => "crate::chain::DevNet",
         }
     }
 }
 
-pub async fn generate_interfaces(output: &Path) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn generate_interfaces(
+    output: &Path,
+    devnet_url: Option<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mainnet_content_tokens = generate_subxt_code_for_url("wss://api.torus.network").await?;
     let testnet_content_tokens =
         generate_subxt_code_for_url("wss://api.testnet.torus.network").await?;
+    let devnet_content_tokens = if let Some(url) = &devnet_url {
+        generate_subxt_code_for_url(url).await?
+    } else {
+        quote! {}
+    };
 
     let mainnet_content = mainnet_content_tokens.to_string();
     let testnet_content = testnet_content_tokens.to_string();
+    let devnet_content = devnet_content_tokens.to_string();
 
     let mainnet_pallets = parser::parse_api_file(&mainnet_content)?;
     let testnet_pallets = parser::parse_api_file(&testnet_content)?;
+    let devnet_pallets = if devnet_url.is_some() {
+        parser::parse_api_file(&devnet_content)?
+    } else {
+        vec![]
+    };
 
-    let wrappers_tokens = generate_wrappers_for_network(&mainnet_pallets, &testnet_pallets);
+    let wrappers_tokens =
+        generate_wrappers_for_network(&mainnet_pallets, &testnet_pallets, &devnet_pallets);
 
     // Parse the TokenStream into a syn::File and format with prettyplease
     let wrappers_file: syn::File = parse_quote! {
@@ -69,6 +88,11 @@ pub async fn generate_interfaces(output: &Path) -> Result<(), Box<dyn std::error
         #[cfg(feature = "testnet")]
         pub mod testnet {
             #testnet_content_tokens
+        }
+
+        #[cfg(feature = "devnet")]
+        pub mod devnet {
+            #devnet_content_tokens
         }
 
         pub mod wrappers {
