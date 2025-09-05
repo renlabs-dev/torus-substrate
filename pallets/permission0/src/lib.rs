@@ -34,6 +34,7 @@ use polkadot_sdk::{
 #[frame::pallet]
 pub mod pallet {
     use pallet_torus0_api::NamespacePathInner;
+    use permission::wallet::WalletStake;
     use polkadot_sdk::{frame_support::PalletId, sp_core::TryCollect};
 
     use super::*;
@@ -491,6 +492,27 @@ pub mod pallet {
             Ok(())
         }
 
+        /// Delegate a permission over namespaces
+        #[pallet::call_index(11)]
+        #[pallet::weight(T::WeightInfo::delegate_namespace_permission())]
+        pub fn delegate_wallet_stake_permission(
+            origin: OriginFor<T>,
+            recipient: T::AccountId,
+            stake_details: WalletStake,
+            duration: PermissionDuration<T>,
+            revocation: RevocationTerms<T>,
+        ) -> DispatchResult {
+            ext::wallet_impl::delegate_wallet_stake_permission::<T>(
+                origin,
+                recipient,
+                stake_details,
+                duration,
+                revocation,
+            )?;
+
+            Ok(())
+        }
+
         /// Delegate a permission over namespaces to multiple recipients.
         /// Note: this extrinsic creates _multiple_ permissions with the same
         /// properties.
@@ -567,6 +589,16 @@ pub mod pallet {
             )?;
 
             Ok(())
+        }
+
+        #[pallet::call_index(12)]
+        #[pallet::weight(T::WeightInfo::update_namespace_permission())]
+        pub fn execute_wallet_stake_permission(
+            caller: OriginFor<T>,
+            permission_id: PermissionId,
+            op: ext::wallet_impl::WalletStakeOperation<T>,
+        ) -> DispatchResult {
+            ext::wallet_impl::execute_wallet_stake_permission(caller, permission_id, op)
         }
     }
 }

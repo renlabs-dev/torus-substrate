@@ -161,6 +161,29 @@ pub trait Permission0NamespacesApi<AccountId, NamespacePath> {
     fn is_delegating_namespace(delegator: &AccountId, path: &NamespacePath) -> bool;
 }
 
+pub struct WalletPermission<AccountId> {
+    pub recipient: AccountId,
+    pub r#type: WalletScopeType,
+}
+
+pub enum WalletScopeType {
+    Stake {
+        /// If true, allows the recipient to perform transfer of stake between staked accounts.
+        can_transfer_stake: bool,
+        /// If true, this permission holds exclusive access to the delegator stake, meaning that
+        /// the delegator has no right to perform operations over stake (including unstaking)
+        /// while this permission is active.
+        exclusive_stake_access: bool,
+    },
+}
+
+pub trait Permission0WalletApi<AccountId> {
+    /// Lists all active wallet permissions, regardless of the type.
+    fn find_active_wallet_permission(
+        delegator: &AccountId,
+    ) -> impl Iterator<Item = (PermissionId, WalletPermission<AccountId>)>;
+}
+
 polkadot_sdk::sp_api::decl_runtime_apis! {
     /// A set of helper functions for permission and streams
     /// queries.

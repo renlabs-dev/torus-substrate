@@ -17,6 +17,7 @@ use polkadot_sdk::{
 pub mod curator_impl;
 pub mod namespace_impl;
 pub mod stream_impl;
+pub mod wallet_impl;
 
 /// Implementation of the Permission0Api trait to be used externally
 impl<T: Config> Permission0Api<OriginFor<T>> for pallet::Pallet<T> {
@@ -146,6 +147,7 @@ pub(crate) fn execute_permission_impl<T: Config>(
         }
         PermissionScope::Curator(_) => curator_impl::execute_permission_impl::<T>(permission_id),
         PermissionScope::Namespace(_) => Ok(()),
+        PermissionScope::Wallet(_) => Ok(()),
     }
 }
 
@@ -208,6 +210,7 @@ pub fn enforcement_execute_permission_impl<T: Config>(
             return curator_impl::execute_permission_impl::<T>(&permission_id);
         }
         PermissionScope::Namespace(_) => return Ok(()),
+        PermissionScope::Wallet(_) => return Ok(()),
     }
 
     EnforcementTracking::<T>::remove(permission_id, EnforcementReferendum::Execution);

@@ -39,7 +39,7 @@ pub mod pallet {
     use frame::prelude::BlockNumberFor;
     use pallet_emission0_api::Emission0Api;
     use pallet_governance_api::GovernanceApi;
-    use pallet_permission0_api::Permission0NamespacesApi;
+    use pallet_permission0_api::{Permission0NamespacesApi, Permission0WalletApi, WalletScopeType};
     use pallet_torus0_api::NamespacePathInner;
     use polkadot_sdk::frame_support::traits::{NamedReservableCurrency, ReservableCurrency};
     use weights::WeightInfo;
@@ -265,7 +265,8 @@ pub mod pallet {
         type Governance: GovernanceApi<Self::AccountId>;
 
         type Emission: Emission0Api<Self::AccountId>;
-        type Permission0: Permission0NamespacesApi<Self::AccountId, NamespacePath>;
+        type Permission0: Permission0NamespacesApi<Self::AccountId, NamespacePath>
+            + Permission0WalletApi<Self::AccountId>;
 
         type WeightInfo: WeightInfo;
     }
@@ -301,6 +302,20 @@ pub mod pallet {
             amount: BalanceOf<T>,
         ) -> DispatchResult {
             let key = ensure_signed(origin)?;
+
+            ensure!(
+                !<T::Permission0>::find_active_wallet_permission(&key).any(|(_, perm)| {
+                    matches!(
+                        perm.r#type,
+                        WalletScopeType::Stake {
+                            exclusive_stake_access: true,
+                            ..
+                        }
+                    )
+                }),
+                Error::<T>::StakeIsDelegated
+            );
+
             stake::remove_stake::<T>(key, agent_key, amount)
         }
 
@@ -314,6 +329,20 @@ pub mod pallet {
             amount: BalanceOf<T>,
         ) -> DispatchResult {
             let key = ensure_signed(origin)?;
+
+            ensure!(
+                !<T::Permission0>::find_active_wallet_permission(&key).any(|(_, perm)| {
+                    matches!(
+                        perm.r#type,
+                        WalletScopeType::Stake {
+                            exclusive_stake_access: true,
+                            ..
+                        }
+                    )
+                }),
+                Error::<T>::StakeIsDelegated
+            );
+
             stake::transfer_stake::<T>(key, agent_key, new_agent_key, amount)
         }
 
@@ -525,6 +554,8 @@ pub mod pallet {
         AgentsFrozen,
         /// Namespace Creation was disabled by a curator.
         NamespacesFrozen,
+        /// The stake is being delegated exclusively.
+        StakeIsDelegated,
     }
 }
 
@@ -581,6 +612,23 @@ impl<T: Config>
         amount: <T::Currency as Currency<T::AccountId>>::Balance,
     ) -> DispatchResult {
         stake::add_stake::<T>(staker.clone(), staked.clone(), amount)
+    }
+
+    fn remove_stake(
+        staker: &T::AccountId,
+        staked: &T::AccountId,
+        amount: <T::Currency as Currency<T::AccountId>>::Balance,
+    ) -> DispatchResult {
+        stake::remove_stake::<T>(staker.clone(), staked.clone(), amount)
+    }
+
+    fn transfer_stake(
+        staker: &T::AccountId,
+        from: &T::AccountId,
+        to: &T::AccountId,
+        amount: <T::Currency as Currency<T::AccountId>>::Balance,
+    ) -> DispatchResult {
+        stake::transfer_stake::<T>(staker.clone(), from.clone(), to.clone(), amount)
     }
 
     fn agent_ids() -> impl Iterator<Item = T::AccountId> {

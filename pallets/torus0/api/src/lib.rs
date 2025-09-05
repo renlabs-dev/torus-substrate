@@ -35,6 +35,13 @@ pub trait Torus0Api<AccountId, Balance> {
 
     fn staked_by(staked: &AccountId) -> alloc::vec::Vec<(AccountId, Balance)>;
     fn stake_to(staker: &AccountId, staked: &AccountId, amount: Balance) -> DispatchResult;
+    fn remove_stake(staker: &AccountId, staked: &AccountId, amount: Balance) -> DispatchResult;
+    fn transfer_stake(
+        staker: &AccountId,
+        from: &AccountId,
+        to: &AccountId,
+        amount: Balance,
+    ) -> DispatchResult;
 
     fn agent_ids() -> impl Iterator<Item = AccountId>;
     fn find_agent_by_name(name: &[u8]) -> Option<AccountId>;
