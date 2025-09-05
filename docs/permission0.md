@@ -1,8 +1,8 @@
-# Permission0: Recursive Emission Delegation
+# Permission0: Recursive Stream Delegation
 
 ## Overview
 
-Permission0 implements a permission-based delegation system for emission distribution in the Torus network. This pallet enables agents to delegate a portion of their emissions to other agents through a structured permission contract framework. Agents can delegate either a percentage of incoming emissions or a fixed amount of tokens.
+Permission0 implements a permission-based delegation system for stream distribution in the Torus network. This pallet enables agents to delegate a portion of their streams to other agents through a structured permission contract framework. Agents can delegate either a percentage of incoming streams or a fixed amount of tokens.
 
 The concept draws inspiration from multi-level competency networks that self-organize for efficient resource allocation. When an agent delegates emissions to another agent, they create economic pathways for token flow, effectively allowing the network to discover and reinforce valuable contributions across different domains.
 
@@ -10,24 +10,23 @@ The concept draws inspiration from multi-level competency networks that self-org
 
 A permission contract forms the foundation of the delegation relationship. Each contract defines the relationship between a delegator (who delegates emissions) and a recipient (who receives the delegation authority). The contract specifies allocation parameters, distribution controls, duration, and revocation terms.
 
-Permission contracts are identified by a unique `PermissionId` generated deterministically from the delegator, recipient, scope, and creation block. This ensures contracts can be consistently referenced and avoids collision issues when multiple contracts exist between the same parties.
+Permission contracts are identified by a unique `PermissionId` generated deterministically from the delegator, scope, and creation block. This ensures contracts can be consistently referenced and avoids collision issues when multiple contracts exist between the same parties.
 
 ```rust
 pub struct PermissionContract<T: Config> {
     pub delegator: T::AccountId,
-    pub recipient: T::AccountId,
     pub scope: PermissionScope<T>,
     pub duration: PermissionDuration<T>,
     pub revocation: RevocationTerms<T>,
     pub enforcement: EnforcementAuthority<T>,
+    pub last_update: BlockNumberFor<T>,
     pub last_execution: Option<BlockNumberFor<T>>,
     pub execution_count: u32,
-    pub parent: Option<PermissionId>,
     pub created_at: BlockNumberFor<T>,
 }
 ```
 
-The `parent` field enables recursive delegation chains, where a permission can be derived from a higher-level permission. This creates hierarchical delegation trees where permissions can cascade through multiple levels of delegation.
+The contract no longer includes a recipient field at the top level - instead, recipients are defined within each scope type, allowing for more flexible permission structures.
 
 ## Permission Scope
 
@@ -35,38 +34,62 @@ The permission contract's scope defines what type of permission it is and how it
 
 ```rust
 pub enum PermissionScope<T: Config> {
-    Emission(EmissionScope<T>),
+    Stream(StreamScope<T>),
     Curator(CuratorScope<T>),
+    Namespace(NamespaceScope<T>),
 }
 ```
 
-### Emission Scope
+### Stream Scope
 
-The emission scope defines how emissions are allocated and distributed:
+The stream scope defines how streams are allocated and distributed:
 
 ```rust
-pub struct EmissionScope<T: Config> {
-    pub allocation: EmissionAllocation<T>,
+pub struct StreamScope<T: Config> {
+    pub recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
+    pub allocation: StreamAllocation<T>,
     pub distribution: DistributionControl<T>,
-    pub targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
     pub accumulating: bool,
+    pub recipient_managers: BoundedBTreeSet<T::AccountId, T::MaxControllersPerPermission>,
+    pub weight_setters: BoundedBTreeSet<T::AccountId, T::MaxControllersPerPermission>,
 }
 ```
 
 The `allocation` field determines how tokens are allocated:
 
 ```rust
-pub enum EmissionAllocation<T: Config> {
+pub enum StreamAllocation<T: Config> {
     Streams(BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>),
     FixedAmount(BalanceOf<T>),
 }
 ```
 
-With `Streams` allocation, portions of the delegator's incoming emissions from specific streams are diverted according to the percentages specified (0-100%). Each stream ID represents a distinct emission source, allowing for fine-grained control over different emission types. For `FixedAmount` allocation, a specific number of tokens is reserved from the delegator's account at contract creation.
+With `Streams` allocation, portions of the delegator's incoming streams from specific stream sources are diverted according to the percentages specified (0-100%). Each stream ID represents a distinct stream source, allowing for fine-grained control over different stream types. For `FixedAmount` allocation, a specific number of tokens is reserved from the delegator's account at contract creation.
 
-The `targets` field identifies recipients with associated weights, determining how tokens are distributed among multiple targets. For example, with targets A (weight 1) and B (weight 2), target B receives twice the tokens of target A.
+The `recipients` field identifies recipients with associated weights, determining how tokens are distributed among multiple recipients. For example, with recipients A (weight 1) and B (weight 2), recipient B receives twice the tokens of recipient A.
 
-The `accumulating` boolean determines whether emissions should actively accumulate for this permission. This flag can be toggled by the delegator or enforcement authorities to temporarily pause emission accumulation.
+The `recipient_managers` field defines accounts that can manage (add/remove) recipients to this permission's streams. The `weight_setters` field defines accounts that can update the weights of existing recipients.
+
+The `accumulating` boolean determines whether streams should actively accumulate for this permission. This flag can be toggled by the delegator or enforcement authorities to temporarily pause stream accumulation.
+
+### Namespace Scope
+
+The namespace scope defines delegated namespace permissions, allowing for hierarchical delegation of sub-permissions:
+
+```rust
+pub struct NamespaceScope<T: Config> {
+    pub recipient: T::AccountId,
+    pub paths: BoundedBTreeMap<
+        Option<PermissionId>,
+        BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
+        T::MaxNamespacesPerPermission,
+    >,
+    pub max_instances: u32,
+    pub max_children: u32,
+}
+```
+
+Namespace permissions enable hierarchical delegation trees where permissions can cascade through multiple levels. The `paths` field maps parent permission IDs to sets of namespace paths, enabling complex delegation structures. The `max_instances` and `max_children` fields control how many sub-permissions can be created from this permission.
 
 ### Curator Scope
 
@@ -213,7 +236,7 @@ For example, a permission might require KYC verification before distributions ca
 
 Enforcement can be configured in two ways:
 
-1. During permission creation via the `delegate_emission_permission` extrinsic
+1. During permission creation via the `delegate_stream_permission` extrinsic
 2. After creation through the `set_enforcement_authority` extrinsic (only by the delegator or root)
 
 ```rust
@@ -233,22 +256,23 @@ The enforcement authority system transforms the permission framework from a simp
 
 The Permission0 pallet provides several extrinsics to manage the permission lifecycle:
 
-### delegate_emission_permission
+### delegate_stream_permission
 
 ```rust
-pub fn delegate_emission_permission(
+pub fn delegate_stream_permission(
     origin: OriginFor<T>,
-    recipient: T::AccountId,
-    allocation: EmissionAllocation<T>,
-    targets: Vec<(T::AccountId, u16)>,
+    recipients: Vec<(T::AccountId, u16)>,
+    allocation: StreamAllocation<T>,
     distribution: DistributionControl<T>,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
     enforcement: EnforcementAuthority<T>,
+    recipient_manager: Option<T::AccountId>,
+    weight_setter: Option<T::AccountId>,
 ) -> DispatchResult
 ```
 
-Creates a new emission permission from the signed origin to the specified recipient. The caller must be a registered agent, as must the recipient and all targets. Checks for valid allocation percentages, ensuring the total allocated percentage doesn't exceed 100% per stream.
+Creates a new stream permission from the signed origin. The caller must be a registered agent, as must all recipients. Checks for valid allocation percentages, ensuring the total allocated percentage doesn't exceed 100% per stream.
 
 ### delegate_curator_permission
 
@@ -295,7 +319,7 @@ pub fn execute_permission(
 ) -> DispatchResult
 ```
 
-Manually executes a permission with distribution control set to Manual. For emission permissions, this distributes accumulated tokens to the targets according to their weights. Can only be called by the delegator or root.
+Manually executes a permission with distribution control set to Manual. For stream permissions, this distributes accumulated tokens to the recipients according to their weights. Can only be called by the delegator or root.
 
 ### toggle_permission_accumulation
 
@@ -307,7 +331,7 @@ pub fn toggle_permission_accumulation(
 ) -> DispatchResult
 ```
 
-Enables or disables accumulation for an emission permission. Can be called by the delegator, root, or enforcement controllers (with sufficient votes).
+Enables or disables accumulation for a stream permission. Can be called by the delegator, root, or enforcement controllers (with sufficient votes).
 
 ### enforcement_execute_permission
 
@@ -333,12 +357,72 @@ pub fn set_enforcement_authority(
 
 Sets or updates the enforcement authority for a permission. Can only be called by the delegator or root. The controllers and required_votes must form a valid multi-signature configuration (non-empty controllers, required_votes > 0, required_votes <= controllers.len()).
 
+### delegate_namespace_permission
+
+```rust
+pub fn delegate_namespace_permission(
+    origin: OriginFor<T>,
+    recipient: T::AccountId,
+    paths: Vec<(Option<PermissionId>, Vec<NamespacePath>)>,
+    max_instances: u32,
+    max_children: u32,
+    duration: PermissionDuration<T>,
+    revocation: RevocationTerms<T>,
+) -> DispatchResult
+```
+
+Creates a new namespace permission from the signed origin to the specified recipient. Allows delegation of namespace paths with configurable limits on sub-permission creation.
+
+### batch_delegate_namespace_permission
+
+```rust
+pub fn batch_delegate_namespace_permission(
+    origin: OriginFor<T>,
+    recipients: Vec<T::AccountId>,
+    paths: Vec<(Option<PermissionId>, Vec<NamespacePath>)>,
+    max_instances: u32,
+    max_children: u32,
+    duration: PermissionDuration<T>,
+    revocation: RevocationTerms<T>,
+) -> DispatchResult
+```
+
+Batch creates multiple namespace permissions with the same properties but different recipients. This is more efficient than creating permissions individually.
+
+### update_stream_permission
+
+```rust
+pub fn update_stream_permission(
+    origin: OriginFor<T>,
+    permission_id: PermissionId,
+    recipients: Option<Vec<(T::AccountId, u16)>>,
+    accumulating: Option<bool>,
+    recipient_manager: Option<T::AccountId>,
+    weight_setter: Option<T::AccountId>,
+) -> DispatchResult
+```
+
+Allows delegator or authorized accounts to update stream permission properties, including recipients, accumulation state, and management roles.
+
+### update_namespace_permission
+
+```rust
+pub fn update_namespace_permission(
+    origin: OriginFor<T>,
+    permission_id: PermissionId,
+    max_instances: Option<u32>,
+    max_children: Option<u32>,
+) -> DispatchResult
+```
+
+Allows a delegator to update the instance and children limits of a namespace permission.
+
 ## Permission Creation
 
 ```mermaid
 flowchart TD
     A["Agent/Delegator"] -- delegate_permission --> B["Create Permission"]
-    B -- validate --> C["Check agent registration"] --> E["Check targets"] --> P{"Check Allocation Type"}
+    B -- validate --> C["Check agent registration"] --> E["Check recipients"] --> P{"Check Allocation Type"}
     P -- Fixed Amount --> K["Reserve Tokens"]
     P -- Streams --> D["Check stream percentages <= 100%"]
     B -- Generate ID --> F["Permission Contract"]
@@ -350,13 +434,13 @@ flowchart TD
     D -- accumulate --> L["AccumulatedStreamAmounts"]
 ```
 
-## Emission Accumulation and Distribution Process
+## Stream Accumulation and Distribution Process
 
 ```mermaid
 graph TD
-    Root[Root stake emissions / network rewards] -- root stream ID -->A
-    Delegation[Delegated emissions] -- parent stream ID -->A
-    A[Agent Receives Emissions] -->|do_accumulate_emissions| B[Check Active Permissions]
+    Root[Root stake streams / network rewards] -- root stream ID -->A
+    Delegation[Delegated streams] -- parent stream ID -->A
+    A[Agent Receives Streams] -->|do_accumulate_streams| B[Check Active Permissions]
     B -->|For each permission| C{Permission Type?}
     C -->|Streams| D[Check streams map for matching stream]
     C -->|Fixed Amount| E[Already reserved at creation]
@@ -370,18 +454,18 @@ graph TD
     I --> L
     J --> L
     K --> L
-    L -->|Retrieve accumulated amounts for each stream| M[Calculate target amounts]
-    M -->|for each target| N[Recursive Accumulation]
+    L -->|Retrieve accumulated amounts for each stream| M[Calculate recipient amounts]
+    M -->|for each recipient| N[Recursive Accumulation]
     N --> O[Update last execution]
     O --> P[Emit events]
 ```
 
-When an agent receives emissions, the pallet intercepts a portion based on active permission contracts through the `do_accumulate_emissions` function. The accumulated amounts are stored in the `AccumulatedStreamAmounts` storage map until distribution conditions are met.
+When an agent receives streams, the pallet intercepts a portion based on active permission contracts through the `do_accumulate_streams` function. The accumulated amounts are stored in the `AccumulatedStreamAmounts` storage map until distribution conditions are met.
 
 The function is designed to be highly efficient, with a storage structure optimized for quick lookup of all permissions associated with a specific (agent, stream) pair:
 
 ```rust
-fn do_accumulate_emissions<T: Config>(
+fn do_accumulate_streams<T: Config>(
     agent: &T::AccountId,
     stream: &StreamId,
     imbalance: &mut <T::Currency as Currency<T::AccountId>>::NegativeImbalance,
@@ -397,9 +481,9 @@ fn do_accumulate_emissions<T: Config>(
 }
 ```
 
-During distribution (`do_distribute_emission`), the accumulated amount for each stream is divided among targets according to their weights. The distribution uses the `Currency` trait to handle token movement between accounts.
+During distribution (`do_distribute_stream`), the accumulated amount for each stream is divided among recipients according to their weights. The distribution uses the `Currency` trait to handle token movement between accounts.
 
-Importantly, the recursive accumulation does not happen in the same block to prevent unbounded recursion and excessive computation. Instead, when a target receives their portion, it becomes a regular imbalance that will trigger the standard accumulation process in the next applicable block.
+Importantly, the recursive accumulation does not happen in the same block to prevent unbounded recursion and excessive computation. Instead, when a recipient receives their portion, it becomes a regular imbalance that will trigger the standard accumulation process in the next applicable block.
 
 ## Storage Design
 
@@ -407,9 +491,9 @@ The Permission0 pallet uses several storage maps to track permissions and accumu
 
 ```rust
 pub type Permissions<T: Config> = StorageMap<_, Identity, PermissionId, PermissionContract<T>>;
-pub type PermissionsByParticipants<T: Config> = StorageMap<_, Identity, (T::AccountId, T::AccountId), BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
-pub type PermissionsByDelegator<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
-pub type PermissionsByRecipient<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxTargetsPerPermission>>;
+pub type PermissionsByParticipants<T: Config> = StorageMap<_, Identity, (T::AccountId, T::AccountId), BoundedVec<PermissionId, T::MaxRecipientsPerPermission>>;
+pub type PermissionsByDelegator<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxRecipientsPerPermission>>;
+pub type PermissionsByRecipient<T: Config> = StorageMap<_, Identity, T::AccountId, BoundedVec<PermissionId, T::MaxRecipientsPerPermission>>;
 pub type AccumulatedStreamAmounts<T: Config> = StorageNMap<
     _,
     (
@@ -428,27 +512,27 @@ This storage design allows efficient lookups for:
 - Retrieving all permissions received by an account
 - Tracking accumulated tokens for each permission by stream
 
-The `AccumulatedStreamAmounts` uses a StorageNMap with a triple key of (AccountId, StreamId, PermissionId). This structure was chosen for performance reasons, as the `do_accumulate_emissions` function is called frequently and needs to quickly find all permissions associated with a specific account and stream combination. The order of the keys prioritizes searching by account and stream first, which is the most common access pattern.
+The `AccumulatedStreamAmounts` uses a StorageNMap with a triple key of (AccountId, StreamId, PermissionId). This structure was chosen for performance reasons, as the `do_accumulate_streams` function is called frequently and needs to quickly find all permissions associated with a specific account and stream combination. The order of the keys prioritizes searching by account and stream first, which is the most common access pattern.
 
-## Stream-based Emission Model
+## Stream-based Model
 
-The permission system uses a stream-based approach for tracking different sources of emissions:
+The permission system uses a stream-based approach for tracking different sources of streams:
 
 ```rust
 pub type StreamId = H256;
 ```
 
-Each stream is identified by a unique `StreamId`, which represents a specific source of emissions. The system distinguishes between different types of streams, each representing a distinct source of emissions.
+Each stream is identified by a unique `StreamId`, which represents a specific source of streams. The system distinguishes between different types of streams, each representing a distinct source.
 
-When streams are redelegated through the permission system, their IDs are preserved. This crucial design choice allows for tracking the lineage and flow of emissions throughout the network, making it possible to trace the complete path of tokens from their source to final recipients across multiple delegation hops.
+When streams are redelegated through the permission system, their IDs are preserved. This crucial design choice allows for tracking the lineage and flow of streams throughout the network, making it possible to trace the complete path of tokens from their source to final recipients across multiple delegation hops.
 
-This stream-based model allows for much more granular control over emission delegation, enabling agents to specify different delegation percentages for different types of emission streams they receive.
+This stream-based model allows for much more granular control over stream delegation, enabling agents to specify different delegation percentages for different types of streams they receive.
 
-## Integration with Emission Distribution
+## Integration with Stream Distribution
 
-Permission0 integrates with the `Emission0` pallet by intercepting the emission distribution process. When the linear rewards mechanism distributes tokens, the `do_accumulate_emissions` function is called to divert portions according to active permissions.
+Permission0 integrates with the `Emission0` pallet by intercepting the stream distribution process. When the linear rewards mechanism distributes tokens, the `do_accumulate_streams` function is called to divert portions according to active permissions.
 
-This integration preserves the existing emission calculation logic while adding the delegation layer on top. The approach ensures delegations only affect how already-calculated emissions are distributed, rather than altering the emission calculations themselves.
+This integration preserves the existing stream calculation logic while adding the delegation layer on top. The approach ensures delegations only affect how already-calculated streams are distributed, rather than altering the stream calculations themselves.
 
 ## Automatic Processing
 
@@ -474,7 +558,7 @@ This mechanism ensures automatic processes happen regularly without requiring ma
 The pallet is customizable through several configuration parameters:
 
 ```rust
-type MaxTargetsPerPermission: Get<u32>;
+type MaxRecipientsPerPermission: Get<u32>;
 type MaxStreamsPerPermission: Get<u32>;
 type MaxRevokersPerPermission: Get<u32>;
 type MaxControllersPerPermission: Get<u32>;
@@ -489,16 +573,16 @@ Permission0 emerged from the need to create more sophisticated economic relation
 
 _"A distributed multi-level search process for new competencies, methods and organizational forms that can serve the respective higher level competitively, such that it can serve the level above better too, cascading upwards each delegation tree."_
 
-The implementation allows economic signals (in the form of emissions) to flow through the network according to agent decisions, creating a dynamic feedback mechanism that rewards valuable contributions at all levels.
+The implementation allows economic signals (in the form of streams) to flow through the network according to agent decisions, creating a dynamic feedback mechanism that rewards valuable contributions at all levels.
 
-A crucial insight was that rational agents will redelegate emissions when doing so increases their own emissions by more than they delegate. This positive-sum logic creates natural incentives for delegation trees to form and adapt over time.
+A crucial insight was that rational agents will redelegate streams when doing so increases their own streams by more than they delegate. This positive-sum logic creates natural incentives for delegation trees to form and adapt over time.
 
 ## Practical Applications
 
 The permission-based delegation system enables several practical scenarios:
 
-1. Validators can delegate a percentage of emissions to miners who provide specialized services
-2. Module operators can share emissions with agents who contribute to their module
+1. Validators can delegate a percentage of streams to miners who provide specialized services
+2. Module operators can share streams with agents who contribute to their module
 3. Teams can create token distribution trees that align with organizational structures
 4. Specialized agents can emerge to discover and connect valuable contributors
 
@@ -508,10 +592,10 @@ Crucially, the recursive nature of permissions means delegation trees can extend
 
 ## Safety Mechanisms
 
-By using the `Currency` trait, we are able to use reserves for fixed amount emissions, and negative imbalances to avoid emitting duplicate tokens. This is a core part of safety.
+By using the `Currency` trait, we are able to use reserves for fixed amount streams, and negative imbalances to avoid emitting duplicate tokens. This is a core part of safety.
 
 Additionally, recursive accumulation is designed to prevent infinite loops by deferring lower-level accumulation to subsequent blocks.
 
 ## Future Development
 
-While the current implementation focuses on emission delegation, the permission framework could extend to other domains like governance rights, data access, or identity verification. The modular design allows new permission scopes to be added without disrupting existing functionality.
+While the current implementation focuses on stream delegation, the permission framework could extend to other domains like governance rights, data access, or identity verification. The modular design allows new permission scopes to be added without disrupting existing functionality.

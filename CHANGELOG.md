@@ -1,5 +1,81 @@
 # Changelog
 
+## Spec 25
+
+This release refactors the permission system's internal architecture to improve efficiency and maintainability while preserving all external functionality.
+
+### Infrastructure Changes
+
+#### Permission Instance Management Refactoring
+
+Instance management has been restructured for better separation of concerns:
+
+- Instance limits and child tracking moved from the general `PermissionContract` into the specific scopes that need them (`CuratorScope` and `NamespaceScope`).
+- Stream permissions no longer carry unnecessary instance-related overhead, reducing storage costs.
+- The refactoring improves code maintainability by ensuring each permission type only manages the data it requires.
+- All existing permissions are automatically migrated through the v7 migration with no functional changes.
+
+This internal restructuring maintains the same external API while creating a cleaner, more efficient architecture that better reflects the actual usage patterns of different permission types.
+
+## Spec 24
+
+This release introduces multi-recipient permissions, delegated management capabilities, and streamlines the terminology from "emissions" to "streams" throughout the permission system.
+
+### Major Features
+
+#### Multi-Recipient Stream Permissions
+
+Stream permissions now support distributing tokens to multiple recipients in a single permission contract:
+
+- Recipients are managed within the stream scope with individual weight allocations, enabling complex distribution patterns without requiring multiple permissions.
+- Individual recipients can opt-out without affecting others, providing autonomy while maintaining the overall distribution structure.
+- The system automatically handles recipient management through improved indexing with `BoundedBTreeSet` storage for better performance.
+- Existing single-recipient permissions are automatically migrated to the new structure.
+
+#### Delegated Permission Management
+
+Stream permissions can now designate specific accounts to manage operational aspects:
+
+- Permission creators can assign `recipient_manager` and `weight_setter` roles to trusted accounts, enabling separation of concerns between permission ownership and operational management.
+- Recipient managers can add or remove recipients from the distribution list without requiring the delegator's signature.
+- Weight setters can adjust distribution weights for existing recipients, allowing dynamic rebalancing based on performance or contribution.
+- Particularly useful for DAOs, automated systems, and multi-signature operations where different parties handle different aspects of permission management.
+
+#### Dynamic Namespace Instance Management
+
+Namespace permissions now support runtime adjustment of instance limits:
+
+- The new `update_namespace_permission` extrinsic allows delegators to modify maximum instances after creation.
+- Validates that changes don't violate parent permission limits or invalidate existing child permissions.
+- Enables adaptive permission management based on actual usage patterns without requiring revocation and re-creation.
+
+### API Changes
+
+#### Terminology Standardization
+
+All emission-related terminology has been renamed to "stream" for better clarity:
+
+- Functions like `delegate_emission_permission` are now `delegate_stream_permission`.
+- The `EmissionScope` type is now `StreamScope`, and `EmissionAllocation` is now `StreamAllocation`.
+- Events like `EmissionDistribution` are now `StreamDistribution` with `target` fields renamed to `recipient`.
+- Client applications must update to use the new function and type names.
+
+#### Simplified Event Structure
+
+Permission events have been streamlined for the multi-recipient model:
+
+- The `recipient` field has been removed from `PermissionDelegated`, `PermissionRevoked`, and `PermissionExpired` events.
+- Applications should query the permission contract directly to determine current recipients.
+- The `revoked_by` field in `PermissionRevoked` is now optional to handle system-automatic revocations.
+
+### Configuration Updates
+
+- Added `MaxRecipientsPerPermission` to control the number of recipients in a single stream permission.
+- Added `MaxControllersPerPermission` to limit the number of designated managers per permission.
+- Added `MaxBulkOperationsPerCall` to control batch operation sizes.
+
+This release significantly enhances the flexibility and efficiency of the permission system, enabling more sophisticated economic relationships and operational patterns while maintaining backward compatibility through automatic migrations.
+
 ## Spec 23
 
 This release builds upon the permission delegation system with enhanced re-delegation capabilities, enabling more sophisticated hierarchical permission structures for curators and namespace management.

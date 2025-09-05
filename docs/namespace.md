@@ -69,6 +69,17 @@ This approach creates natural incentives. Agents think carefully about namespace
 
 ## Storage Architecture
 
+Namespaces are owned by either the system or an account:
+
+```rust
+pub enum NamespaceOwnership<T: Config> {
+    System,
+    Account(T::AccountId),
+}
+```
+
+The `System` ownership is used for root-level namespaces like `agent`, while `Account` ownership represents agent-owned namespaces.
+
 Each namespace stores minimal metadata:
 
 ```rust
@@ -108,11 +119,24 @@ Namespaces gain their true power through integration with the permission system.
 
 ```rust
 pub struct NamespaceScope<T: Config> {
-    pub paths: BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
+    pub recipient: T::AccountId,
+    pub paths: BoundedBTreeMap<
+        Option<PermissionId>,
+        BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
+        T::MaxNamespacesPerPermission,
+    >,
+    pub max_instances: u32,
+    pub children: BoundedBTreeSet<PermissionId, T::MaxChildrenPerPermission>,
 }
 ```
 
-The namespace permission scope contains a set of paths that the recipient can access. The permission system's existing infrastructure handles the complexity of duration, revocation terms, and enforcement authorities. This means namespace permissions can be temporary, require multi-signature revocation, or include third-party controllers. Read more in [permission0.md](permission0.md).
+The namespace permission scope contains:
+- `recipient`: The account that receives the namespace permission
+- `paths`: A map from parent permission IDs to sets of namespace paths, enabling hierarchical permission structures
+- `max_instances`: Maximum number of instances that can be created from this permission
+- `children`: Set of child permissions created from this permission
+
+The permission system's existing infrastructure handles the complexity of duration, revocation terms, and enforcement authorities. This means namespace permissions can be temporary, require multi-signature revocation, or include third-party controllers. Read more in [permission0.md](permission0.md).
 
 This integration creates composition possibilities. An agent running a data aggregation service could delegate read access to `agent.alice.data.public` while keeping `agent.alice.data.private` restricted, or delegate the entire data scope: `agent.alice.data`. The delegation could be time-limited, revocable by designated arbiters, or controlled by enforcement authorities who verify off-chain conditions.
 
