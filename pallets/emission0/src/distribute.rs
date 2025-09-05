@@ -1,5 +1,5 @@
 use pallet_governance_api::GovernanceApi;
-use pallet_permission0_api::Permission0EmissionApi;
+use pallet_permission0_api::Permission0StreamApi;
 use pallet_torus0_api::Torus0Api;
 use polkadot_sdk::{
     frame_support::{
@@ -336,7 +336,7 @@ fn linear_rewards<T: Config>(mut emission: NegativeImbalanceOf<T>) -> NegativeIm
         } else {
             // This is an impossible case, but if something changes in the future,
             // the code is here.
-            <T::Permission0>::accumulate_emissions(
+            <T::Permission0>::accumulate_streams(
                 delegating_to,
                 &pallet_permission0_api::generate_root_stream_id(delegating_to),
                 &mut stake,
@@ -368,7 +368,7 @@ fn linear_rewards<T: Config>(mut emission: NegativeImbalanceOf<T>) -> NegativeIm
         .zip(upscaled_dividends)
     {
         let add_stake = |staker, mut amount: NegativeImbalanceOf<T>| {
-            <T::Permission0>::accumulate_emissions(
+            <T::Permission0>::accumulate_streams(
                 &staker,
                 &pallet_permission0_api::generate_root_stream_id(&staker),
                 &mut amount,

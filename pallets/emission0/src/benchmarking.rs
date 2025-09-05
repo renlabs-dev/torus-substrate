@@ -16,21 +16,23 @@ mod benchmarks {
 
     #[benchmark]
     fn set_weights() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
-        let module_key2: T::AccountId = account("ModuleKey2", 0, 3);
+        let module_key: T::AccountId = account("agent", 0, 2);
+        let module_key2: T::AccountId = account("agent2", 0, 3);
 
         <T::Governance>::set_allocator(&module_key2);
 
-        <T::Torus>::force_register_agent(&module_key, vec![], vec![], vec![])
+        <T::Torus>::force_register_agent(&module_key, b"agent".to_vec(), vec![], vec![])
             .expect("failed to register agent");
-        <T::Torus>::force_register_agent(&module_key2, vec![], vec![], vec![])
+        <T::Torus>::force_register_agent(&module_key2, b"agent2".to_vec(), vec![], vec![])
             .expect("failed to register agent");
 
         <T::Governance>::force_set_whitelisted(&module_key);
         <T::Governance>::force_set_whitelisted(&module_key2);
 
         <T::Governance>::set_allocator(&module_key2);
-        let _ = <T::Currency>::deposit_creating(&module_key2, <T::Torus>::min_validator_stake());
+        let _ =
+            <T::Currency>::deposit_creating(&module_key2, <T::Torus>::min_validator_stake() * 2);
+
         <T::Torus>::force_set_stake(
             &module_key2,
             &module_key2,
@@ -46,12 +48,12 @@ mod benchmarks {
 
     #[benchmark]
     fn delegate_weight_control() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
-        let module_key2: T::AccountId = account("ModuleKey2", 0, 3);
+        let module_key: T::AccountId = account("agent", 0, 2);
+        let module_key2: T::AccountId = account("agent2", 0, 3);
 
-        <T::Torus>::force_register_agent(&module_key, vec![], vec![], vec![])
+        <T::Torus>::force_register_agent(&module_key, b"agent".to_vec(), vec![], vec![])
             .expect("failed to register agent");
-        <T::Torus>::force_register_agent(&module_key2, vec![], vec![], vec![])
+        <T::Torus>::force_register_agent(&module_key2, b"agent2".to_vec(), vec![], vec![])
             .expect("failed to register agent");
 
         <T::Governance>::force_set_whitelisted(&module_key);
@@ -65,12 +67,12 @@ mod benchmarks {
 
     #[benchmark]
     fn regain_weight_control() {
-        let module_key: T::AccountId = account("ModuleKey", 0, 2);
-        let module_key2: T::AccountId = account("ModuleKey2", 0, 3);
+        let module_key: T::AccountId = account("agent", 0, 2);
+        let module_key2: T::AccountId = account("agent2", 0, 3);
 
-        <T::Torus>::force_register_agent(&module_key, vec![], vec![], vec![])
+        <T::Torus>::force_register_agent(&module_key, b"agent".to_vec(), vec![], vec![])
             .expect("failed to register agent");
-        <T::Torus>::force_register_agent(&module_key2, vec![], vec![], vec![])
+        <T::Torus>::force_register_agent(&module_key2, b"agent2".to_vec(), vec![], vec![])
             .expect("failed to register agent");
 
         <T::Governance>::force_set_whitelisted(&module_key);

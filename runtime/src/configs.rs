@@ -464,13 +464,14 @@ parameter_types! {
     pub const MaxControllersPerPermission: u32 = 10;
     pub const MaxRevokersPerPermission: u32 = 10;
 
-    pub const MaxTargetsPerPermission: u32 = 100;
+    pub const MaxRecipientsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MinAutoDistributionThreshold: u128 = as_tors(100);
 
     pub const MaxNamespacesPerPermission: u32 = 16;
     pub const MaxChildrenPerPermission: u32 = 16;
     pub const MaxCuratorSubpermissionsPerPermission: u32 = 16;
+    pub const MaxBulkOperationsPerCall: u32 = 20;
 }
 
 impl pallet_permission0::Config for Runtime {
@@ -487,13 +488,14 @@ impl pallet_permission0::Config for Runtime {
     type MaxControllersPerPermission = MaxControllersPerPermission;
     type MaxRevokersPerPermission = MaxRevokersPerPermission;
 
-    type MaxTargetsPerPermission = MaxTargetsPerPermission;
+    type MaxRecipientsPerPermission = MaxRecipientsPerPermission;
     type MaxStreamsPerPermission = MaxStreamsPerPermission;
     type MinAutoDistributionThreshold = MinAutoDistributionThreshold;
 
     type MaxNamespacesPerPermission = MaxNamespacesPerPermission;
     type MaxChildrenPerPermission = MaxChildrenPerPermission;
     type MaxCuratorSubpermissionsPerPermission = MaxCuratorSubpermissionsPerPermission;
+    type MaxBulkOperationsPerCall = MaxBulkOperationsPerCall;
 }
 
 impl pallet_faucet::Config for Runtime {

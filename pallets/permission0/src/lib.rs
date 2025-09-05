@@ -12,16 +12,15 @@ pub mod permission;
 pub use pallet::*;
 
 pub use permission::{
-    CuratorPermissions, CuratorScope, DistributionControl, EmissionAllocation, EmissionScope,
-    EnforcementAuthority, EnforcementReferendum, PermissionContract, PermissionDuration,
-    PermissionId, PermissionScope, RevocationTerms, generate_permission_id,
+    CuratorPermissions, CuratorScope, DistributionControl, EnforcementAuthority,
+    EnforcementReferendum, PermissionContract, PermissionDuration, PermissionId, PermissionScope,
+    RevocationTerms, StreamAllocation, StreamScope, generate_permission_id,
 };
 
 pub use pallet_permission0_api::{StreamId, generate_root_stream_id};
 
 use polkadot_sdk::{
     frame_support::{
-        BoundedVec,
         dispatch::DispatchResult,
         pallet_prelude::*,
         traits::{Currency, Get, ReservableCurrency},
@@ -39,7 +38,7 @@ pub mod pallet {
 
     use super::*;
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(5);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -65,9 +64,9 @@ pub mod pallet {
         #[pallet::constant]
         type MaxRevokersPerPermission: Get<u32>;
 
-        /// Maximum number of targets per permission.
+        /// Maximum number of recipients per permission.
         #[pallet::constant]
-        type MaxTargetsPerPermission: Get<u32>;
+        type MaxRecipientsPerPermission: Get<u32>;
 
         /// Maximum number of delegated streams per permission.
         #[pallet::constant]
@@ -88,6 +87,10 @@ pub mod pallet {
         /// Maximum number of children a single permission can have.
         #[pallet::constant]
         type MaxChildrenPerPermission: Get<u32>;
+
+        /// Max operations a bulk extrinsic can perform per extrinsic call.
+        #[pallet::constant]
+        type MaxBulkOperationsPerCall: Get<u32>;
     }
 
     pub type BalanceOf<T> =
@@ -113,7 +116,7 @@ pub mod pallet {
         _,
         Identity,
         (T::AccountId, T::AccountId),
-        BoundedVec<PermissionId, T::MaxTargetsPerPermission>,
+        BoundedBTreeSet<PermissionId, T::MaxRecipientsPerPermission>,
         ValueQuery,
     >;
 
@@ -123,7 +126,7 @@ pub mod pallet {
         _,
         Identity,
         T::AccountId,
-        BoundedVec<PermissionId, T::MaxTargetsPerPermission>,
+        BoundedBTreeSet<PermissionId, T::MaxRecipientsPerPermission>,
         ValueQuery,
     >;
 
@@ -133,7 +136,7 @@ pub mod pallet {
         _,
         Identity,
         T::AccountId,
-        BoundedVec<PermissionId, T::MaxTargetsPerPermission>,
+        BoundedBTreeSet<PermissionId, T::MaxRecipientsPerPermission>,
         ValueQuery,
     >;
 
@@ -177,20 +180,17 @@ pub mod pallet {
         /// Permission delegated from delegator to recipient with ID
         PermissionDelegated {
             delegator: T::AccountId,
-            recipient: T::AccountId,
             permission_id: PermissionId,
         },
         /// Permission revoked with ID
         PermissionRevoked {
             delegator: T::AccountId,
-            recipient: T::AccountId,
             revoked_by: Option<T::AccountId>,
             permission_id: PermissionId,
         },
         /// Permission expired with ID
         PermissionExpired {
             delegator: T::AccountId,
-            recipient: T::AccountId,
             permission_id: PermissionId,
         },
         /// Permission accumulation state toggled
@@ -216,13 +216,13 @@ pub mod pallet {
             controllers_count: u32,
             required_votes: u32,
         },
-        /// An emission distribution happened
-        EmissionDistribution {
+        /// An stream distribution happened
+        StreamDistribution {
             permission_id: PermissionId,
             stream_id: Option<StreamId>,
-            target: T::AccountId,
+            recipient: T::AccountId,
             amount: BalanceOf<T>,
-            reason: permission::emission::DistributionReason,
+            reason: permission::stream::DistributionReason,
         },
         /// Accumulated emission for stream
         AccumulatedEmission {
@@ -247,10 +247,10 @@ pub mod pallet {
         SelfPermissionNotAllowed,
         /// Invalid percentage (out of range)
         InvalidPercentage,
-        /// Invalid emission weight set to target
-        InvalidTargetWeight,
-        /// No targets specified
-        NoTargetsSpecified,
+        /// Invalid stream weight set to recipient
+        InvalidRecipientWeight,
+        /// No recipients specified
+        NoRecipientsSpecified,
         /// Invalid threshold
         InvalidThreshold,
         /// No accumulated amount
@@ -265,8 +265,8 @@ pub mod pallet {
         NotPermissionDelegator,
         /// Too many streams
         TooManyStreams,
-        /// Too many targets
-        TooManyTargets,
+        /// Too many recipients
+        TooManyRecipients,
         /// Too many revokers
         TooManyRevokers,
         /// Failed to insert into storage
@@ -284,7 +284,7 @@ pub mod pallet {
         /// Revokers and required voters must be at least one, and required voters must
         /// be less than the number of revokers
         InvalidNumberOfRevokers,
-        /// Fixed amount emissions can only be triggered once, manually or at a block
+        /// Fixed amount streams can only be triggered once, manually or at a block
         FixedAmountCanOnlyBeTriggeredOnce,
         /// Unsupported permission type
         UnsupportedPermissionType,
@@ -306,9 +306,9 @@ pub mod pallet {
         NamespacePathIsInvalid,
         /// Exceeded amount of total namespaces allowed in a single permission.
         TooManyNamespaces,
-        /// Not authorized to edit a stream emission permission.
+        /// Not authorized to edit a permission.
         NotAuthorizedToEdit,
-        /// Stream emission permission is not editable
+        /// Permission is not editable
         NotEditable,
         /// Namespace creation was disabled by a curator.
         NamespaceCreationDisabled,
@@ -320,6 +320,8 @@ pub mod pallet {
         NotEnoughInstances,
         /// Too many children for a permission.
         TooManyChildren,
+        /// Stream managers must have up to two entries and always contain the delegator,
+        InvalidStreamManagers,
         /// Revocation terms are too strong for a permission re-delegation.
         RevocationTermsTooStrong,
         /// Too many curator permissions being delegated in a single permission.
@@ -337,37 +339,38 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// Delegate a permission for emission delegation
+        /// Delegate a permission for stream delegation
         #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::delegate_emission_permission())]
-        pub fn delegate_emission_permission(
+        #[pallet::weight(T::WeightInfo::delegate_stream_permission())]
+        pub fn delegate_stream_permission(
             origin: OriginFor<T>,
-            recipient: T::AccountId,
-            allocation: EmissionAllocation<T>,
-            targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+            recipients: BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
+            allocation: StreamAllocation<T>,
             distribution: DistributionControl<T>,
             duration: PermissionDuration<T>,
             revocation: RevocationTerms<T>,
             enforcement: EnforcementAuthority<T>,
+            recipient_manager: Option<T::AccountId>,
+            weight_setter: Option<T::AccountId>,
         ) -> DispatchResult {
             let delegator = ensure_signed(origin)?;
 
-            ext::emission_impl::delegate_emission_permission_impl::<T>(
+            ext::stream_impl::delegate_stream_permission_impl::<T>(
                 delegator,
-                recipient,
+                recipients,
                 allocation,
-                targets,
                 distribution,
                 duration,
                 revocation,
                 enforcement,
-                None,
+                recipient_manager,
+                weight_setter,
             )?;
 
             Ok(())
         }
 
-        /// Revoke a permission. The caller must met revocation constraints or be a root key.
+        /// Revoke a permission. The caller must meet revocation constraints or be a root key.
         #[pallet::call_index(1)]
         #[pallet::weight(T::WeightInfo::revoke_permission())]
         pub fn revoke_permission(
@@ -396,7 +399,7 @@ pub mod pallet {
             permission_id: PermissionId,
             accumulating: bool,
         ) -> DispatchResult {
-            ext::emission_impl::toggle_permission_accumulation_impl::<T>(
+            ext::stream_impl::toggle_permission_accumulation_impl::<T>(
                 origin,
                 permission_id,
                 accumulating,
@@ -468,7 +471,7 @@ pub mod pallet {
 
         /// Delegate a permission over namespaces
         #[pallet::call_index(7)]
-        #[pallet::weight(T::WeightInfo::delegate_curator_permission())]
+        #[pallet::weight(T::WeightInfo::delegate_namespace_permission())]
         pub fn delegate_namespace_permission(
             origin: OriginFor<T>,
             recipient: T::AccountId,
@@ -488,22 +491,79 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Allows Delegator/Recipient to edit stream emission permission
+        /// Delegate a permission over namespaces to multiple recipients.
+        /// Note: this extrinsic creates _multiple_ permissions with the same
+        /// properties.
+        #[pallet::call_index(10)]
+        #[pallet::weight({
+            T::WeightInfo::delegate_namespace_permission()
+                .saturating_mul(recipients.len() as u64)
+        })]
+        pub fn bulk_delegate_namespace_permission(
+            origin: OriginFor<T>,
+            recipients: BoundedBTreeSet<T::AccountId, T::MaxBulkOperationsPerCall>,
+            paths: BoundedBTreeMap<
+                Option<PermissionId>,
+                BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
+                T::MaxNamespacesPerPermission,
+            >,
+            duration: PermissionDuration<T>,
+            revocation: RevocationTerms<T>,
+            instances: u32,
+        ) -> DispatchResult {
+            for recipient in recipients {
+                ext::namespace_impl::delegate_namespace_permission_impl::<T>(
+                    origin.clone(),
+                    recipient,
+                    paths.clone(),
+                    duration.clone(),
+                    revocation.clone(),
+                    instances,
+                )?;
+            }
+
+            Ok(())
+        }
+
+        /// Allows Delegator/Recipient to edit stream permission
         #[pallet::call_index(8)]
         #[pallet::weight(T::WeightInfo::delegate_curator_permission())]
-        pub fn update_emission_permission(
+        pub fn update_stream_permission(
             origin: OriginFor<T>,
             permission_id: PermissionId,
-            new_targets: BoundedBTreeMap<T::AccountId, u16, T::MaxTargetsPerPermission>,
+            new_recipients: Option<
+                BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
+            >,
             new_streams: Option<BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>>,
             new_distribution_control: Option<DistributionControl<T>>,
+            new_recipient_manager: Option<Option<T::AccountId>>,
+            new_weight_setter: Option<Option<T::AccountId>>,
         ) -> DispatchResult {
-            ext::emission_impl::update_emission_permission(
+            ext::stream_impl::update_stream_permission(
                 origin,
                 permission_id,
-                new_targets,
+                new_recipients,
                 new_streams,
                 new_distribution_control,
+                new_recipient_manager,
+                new_weight_setter,
+            )?;
+
+            Ok(())
+        }
+
+        /// Allows a delegator to update the number of instances of a permission
+        #[pallet::call_index(9)]
+        #[pallet::weight(T::WeightInfo::update_namespace_permission())]
+        pub fn update_namespace_permission(
+            origin: OriginFor<T>,
+            permission_id: PermissionId,
+            max_instances: u32,
+        ) -> DispatchResult {
+            ext::namespace_impl::update_namespace_permission::<T>(
+                origin,
+                permission_id,
+                max_instances,
             )?;
 
             Ok(())
@@ -519,8 +579,8 @@ fn get_total_allocated_percentage<T: Config>(
     AccumulatedStreamAmounts::<T>::iter_key_prefix((delegator, stream))
         .filter_map(Permissions::<T>::get)
         .map(|contract| match contract.scope {
-            PermissionScope::Emission(EmissionScope {
-                allocation: EmissionAllocation::Streams(streams),
+            PermissionScope::Stream(StreamScope {
+                allocation: StreamAllocation::Streams(streams),
                 ..
             }) => streams.get(stream).copied().unwrap_or_default(),
             _ => Percent::zero(),
@@ -528,65 +588,4 @@ fn get_total_allocated_percentage<T: Config>(
         .fold(Percent::zero(), |acc, percentage| {
             acc.saturating_add(percentage)
         })
-}
-
-/// Update storage indices when creating a new permission
-fn update_permission_indices<T: Config>(
-    delegator: &T::AccountId,
-    recipient: &T::AccountId,
-    permission_id: PermissionId,
-) -> Result<(), DispatchError> {
-    // Update (delegator, recipient) -> [permission_id] mapping
-    PermissionsByParticipants::<T>::try_mutate(
-        (delegator.clone(), recipient.clone()),
-        |permissions| -> Result<(), DispatchError> {
-            permissions
-                .try_push(permission_id)
-                .map_err(|_| Error::<T>::TooManyTargets)?;
-            Ok(())
-        },
-    )?;
-
-    // Update delegator -> [permission_id] mapping
-    PermissionsByDelegator::<T>::try_mutate(
-        delegator.clone(),
-        |permissions| -> Result<(), DispatchError> {
-            permissions
-                .try_push(permission_id)
-                .map_err(|_| Error::<T>::TooManyTargets)?;
-            Ok(())
-        },
-    )?;
-
-    // Update recipient -> [permission_id] mapping
-    PermissionsByRecipient::<T>::try_mutate(
-        recipient.clone(),
-        |permissions| -> Result<(), DispatchError> {
-            permissions
-                .try_push(permission_id)
-                .map_err(|_| Error::<T>::TooManyTargets)?;
-            Ok(())
-        },
-    )?;
-
-    Ok(())
-}
-
-/// Remove a permission from storage indices
-fn remove_permission_from_indices<T: Config>(
-    delegator: &T::AccountId,
-    recipient: &T::AccountId,
-    permission_id: PermissionId,
-) {
-    PermissionsByParticipants::<T>::mutate((delegator.clone(), recipient.clone()), |permissions| {
-        permissions.retain(|id| *id != permission_id);
-    });
-
-    PermissionsByDelegator::<T>::mutate(delegator, |permissions| {
-        permissions.retain(|id| *id != permission_id);
-    });
-
-    PermissionsByRecipient::<T>::mutate(recipient, |permissions| {
-        permissions.retain(|id| *id != permission_id);
-    });
 }

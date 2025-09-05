@@ -10,11 +10,11 @@ build-testnet:
 
 # Development
 
-check:
+check: fmt
   cargo clippy --tests
 
-test:
-  cargo test
+test: check
+  SKIP_WASM_BUILD=1 cargo nextest run
 
 fmt:
   cargo fmt

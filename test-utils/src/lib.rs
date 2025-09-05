@@ -239,7 +239,7 @@ impl pallet_governance::Config for Test {
 
 parameter_types! {
     pub const PermissionPalletId: PalletId = PalletId(*b"torusper");
-    pub const MaxTargetsPerPermission: u32 = 100;
+    pub const MaxRecipientsPerPermission: u32 = 100;
     pub const MaxStreamsPerPermission: u32 = 100;
     pub const MaxRevokersPerPermission: u32 = 10;
     pub const MaxControllersPerPermission: u32 = 10;
@@ -257,7 +257,7 @@ impl pallet_permission0::Config for Test {
 
     type PalletId = PermissionPalletId;
 
-    type MaxTargetsPerPermission = MaxTargetsPerPermission;
+    type MaxRecipientsPerPermission = MaxRecipientsPerPermission;
 
     type MaxStreamsPerPermission = MaxStreamsPerPermission;
 
@@ -270,6 +270,7 @@ impl pallet_permission0::Config for Test {
     type MaxNamespacesPerPermission = ConstU32<10>;
     type MaxChildrenPerPermission = ConstU32<10>;
     type MaxCuratorSubpermissionsPerPermission = ConstU32<10>;
+    type MaxBulkOperationsPerCall = ConstU32<20>;
 }
 
 impl pallet_balances::Config for Test {
@@ -429,32 +430,32 @@ pub type NegativeImbalanceOf = <pallet_balances::Pallet<Test> as Currency<
 >>::NegativeImbalance;
 
 #[allow(clippy::too_many_arguments)]
-pub fn delegate_emission_permission(
+pub fn delegate_stream_permission(
     delegator: AccountId,
-    recipient: AccountId,
-    allocation: pallet_permission0_api::EmissionAllocation<Balance>,
-    targets: Vec<(AccountId, u16)>,
+    recipients: Vec<(AccountId, u16)>,
+    allocation: pallet_permission0_api::StreamAllocation<Balance>,
     distribution: pallet_permission0_api::DistributionControl<Balance, BlockNumber>,
     duration: pallet_permission0_api::PermissionDuration<BlockNumber>,
     revocation: pallet_permission0_api::RevocationTerms<AccountId, BlockNumber>,
     enforcement: pallet_permission0_api::EnforcementAuthority<AccountId>,
 ) -> Result<PermissionId, polkadot_sdk::sp_runtime::DispatchError> {
-    use pallet_permission0_api::Permission0EmissionApi;
-    <Permission0 as Permission0EmissionApi<
+    use pallet_permission0_api::Permission0StreamApi;
+    <Permission0 as Permission0StreamApi<
         AccountId,
         RuntimeOrigin,
         BlockNumber,
         Balance,
         NegativeImbalanceOf,
-    >>::delegate_emission_permission(
+    >>::delegate_stream_permission(
         delegator,
-        recipient,
+        recipients,
         allocation,
-        targets,
         distribution,
         duration,
         revocation,
         enforcement,
+        None,
+        None,
     )
 }
 

@@ -1,13 +1,13 @@
 use crate::{
     Config, Error, Event, Pallet, PermissionContract, PermissionDuration, PermissionId,
     PermissionScope, Permissions, PermissionsByDelegator, RevocationTerms, generate_permission_id,
-    permission::NamespaceScope, update_permission_indices,
+    permission::NamespaceScope, permission::add_permission_indices,
 };
 use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner, Torus0Api};
 use polkadot_sdk::{
-    frame_support::ensure,
-    frame_system::ensure_signed,
+    frame_support::{dispatch::DispatchResult, ensure},
+    frame_system::{self, ensure_signed},
     polkadot_sdk_frame::prelude::OriginFor,
     sp_core::Get,
     sp_runtime::{BoundedBTreeMap, BoundedBTreeSet, DispatchError},
@@ -49,7 +49,7 @@ pub fn delegate_namespace_permission_impl<T: Config>(
     >,
     duration: PermissionDuration<T>,
     revocation: RevocationTerms<T>,
-    instances: u32,
+    max_instances: u32,
 ) -> Result<PermissionId, DispatchError> {
     let delegator = ensure_signed(delegator)?;
 
@@ -62,7 +62,7 @@ pub fn delegate_namespace_permission_impl<T: Config>(
         Error::<T>::NotRegisteredAgent
     );
 
-    ensure!(instances > 0, Error::<T>::NotEnoughInstances);
+    ensure!(max_instances > 0, Error::<T>::NotEnoughInstances);
 
     let total_multi_parent = paths.keys().filter(|p| p.is_some()).count();
     ensure!(total_multi_parent <= 1, Error::<T>::MultiParentForbidden);
@@ -84,17 +84,17 @@ pub fn delegate_namespace_permission_impl<T: Config>(
                     return Err(Error::<T>::ParentPermissionNotFound.into());
                 };
 
-                ensure!(
-                    parent.recipient == delegator,
-                    Error::<T>::NotPermissionRecipient
-                );
-
                 let PermissionScope::Namespace(namespace) = &parent.scope else {
                     return Err(Error::<T>::UnsupportedPermissionType.into());
                 };
 
                 ensure!(
-                    instances <= parent.available_instances(),
+                    namespace.recipient == delegator,
+                    Error::<T>::NotPermissionRecipient
+                );
+
+                ensure!(
+                    max_instances <= parent.available_instances().unwrap_or_default(),
                     Error::<T>::NotEnoughInstances
                 );
 
@@ -118,32 +118,42 @@ pub fn delegate_namespace_permission_impl<T: Config>(
         .try_into()
         .map_err(|_| Error::<T>::TooManyNamespaces)?;
 
-    let scope = PermissionScope::Namespace(NamespaceScope { paths });
-    let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
+    let scope = PermissionScope::Namespace(NamespaceScope {
+        recipient: recipient.clone(),
+        paths,
+        children: Default::default(),
+        max_instances,
+    });
+    let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
 
     for parent in parents {
         Permissions::<T>::mutate_extant(parent, |parent| {
-            parent.children.try_insert(permission_id).ok()
+            if let Some(children) = parent.children_mut() {
+                children.try_insert(permission_id).ok()
+            } else {
+                Some(false)
+            }
         })
         .ok_or(Error::<T>::TooManyChildren)?;
     }
 
     let contract = PermissionContract::<T>::new(
         delegator,
-        recipient,
         scope,
         duration,
         revocation,
         crate::EnforcementAuthority::None,
-        instances,
     );
 
     Permissions::<T>::insert(permission_id, &contract);
-    update_permission_indices::<T>(&contract.delegator, &contract.recipient, permission_id)?;
+    add_permission_indices::<T>(
+        &contract.delegator,
+        core::iter::once(&recipient),
+        permission_id,
+    )?;
 
     <Pallet<T>>::deposit_event(Event::PermissionDelegated {
         delegator: contract.delegator,
-        recipient: contract.recipient,
         permission_id,
     });
 
@@ -259,4 +269,54 @@ fn resolve_paths<T: Config>(
     paths
         .try_into()
         .map_err(|_| Error::<T>::TooManyNamespaces.into())
+}
+
+pub(crate) fn update_namespace_permission<T: Config>(
+    origin: OriginFor<T>,
+    permission_id: PermissionId,
+    max_instances: u32,
+) -> DispatchResult {
+    let who = ensure_signed(origin)?;
+
+    let permission = Permissions::<T>::get(permission_id);
+
+    let Some(mut permission) = permission else {
+        return Err(Error::<T>::PermissionNotFound.into());
+    };
+
+    ensure!(permission.delegator == who, Error::<T>::NotAuthorizedToEdit);
+
+    let PermissionScope::Namespace(mut namespace) = permission.scope.clone() else {
+        return Err(Error::<T>::NotEditable.into());
+    };
+
+    if max_instances == namespace.max_instances {
+        return Ok(());
+    } else if max_instances > namespace.max_instances {
+        for parent in namespace.paths.keys().copied().flatten() {
+            let Some(parent) = Permissions::<T>::get(parent) else {
+                continue;
+            };
+
+            ensure!(
+                max_instances <= parent.available_instances().unwrap_or_default(),
+                Error::<T>::NotEnoughInstances
+            );
+        }
+    } else {
+        ensure!(permission.is_updatable(), Error::<T>::NotAuthorizedToEdit);
+        ensure!(
+            max_instances >= permission.used_instances(),
+            Error::<T>::NotEnoughInstances
+        );
+    }
+
+    namespace.max_instances = max_instances;
+
+    permission.scope = PermissionScope::Namespace(namespace);
+    permission.last_update = frame_system::Pallet::<T>::block_number();
+
+    Permissions::<T>::set(permission_id, Some(permission));
+
+    Ok(())
 }

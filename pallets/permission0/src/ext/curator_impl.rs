@@ -1,7 +1,7 @@
 use crate::{
     Config, CuratorPermissions, CuratorScope, Error, Event, Pallet, PermissionContract,
     PermissionDuration, PermissionScope, Permissions, PermissionsByRecipient, RevocationTerms,
-    generate_permission_id, pallet, update_permission_indices,
+    generate_permission_id, pallet, permission::add_permission_indices,
 };
 
 use pallet_permission0_api::{
@@ -47,7 +47,7 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
                 continue;
             }
 
-            if contract.available_instances() < 1 {
+            if contract.available_instances().unwrap_or_default() < 1 {
                 if !matches!(cur_error, Error::<T>::PermissionInCooldown) {
                     cur_error = Error::<T>::NotEnoughInstances;
                 }
@@ -63,7 +63,7 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
                 continue;
             }
 
-            return Ok(contract.recipient);
+            return Ok(recipient);
         }
 
         Err(cur_error.into())
@@ -81,6 +81,30 @@ impl<T: Config> Permission0CuratorApi<T::AccountId, OriginFor<T>, BlockNumberFor
                     None
                 }
             })
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_curator(recipient: &T::AccountId, flags: ApiCuratorPermissions) {
+        use polkadot_sdk::frame_system::RawOrigin;
+
+        let mut map: BoundedBTreeMap<
+            Option<PermissionId>,
+            CuratorPermissions,
+            T::MaxCuratorSubpermissionsPerPermission,
+        > = BoundedBTreeMap::new();
+        map.try_insert(None, CuratorPermissions::from_bits_truncate(flags.bits()))
+            .unwrap();
+
+        delegate_curator_permission_impl(
+            RawOrigin::Root.into(),
+            recipient.clone(),
+            map,
+            None,
+            PermissionDuration::<T>::Indefinite,
+            RevocationTerms::<T>::Irrevocable,
+            1,
+        )
+        .unwrap();
     }
 }
 
@@ -116,14 +140,14 @@ pub fn delegate_curator_permission_impl<T: Config>(
                 return Err(Error::<T>::ParentPermissionNotFound.into());
             };
 
-            ensure!(
-                parent.recipient == delegator,
-                Error::<T>::NotPermissionRecipient
-            );
-
             let PermissionScope::Curator(scope) = &parent.scope else {
                 return Err(Error::<T>::UnsupportedPermissionType.into());
             };
+
+            ensure!(
+                scope.recipient == delegator,
+                Error::<T>::NotPermissionRecipient
+            );
 
             ensure!(
                 scope.has_permission(*flags),
@@ -131,7 +155,7 @@ pub fn delegate_curator_permission_impl<T: Config>(
             );
 
             ensure!(
-                instances <= parent.available_instances(),
+                instances <= parent.available_instances().unwrap_or_default(),
                 Error::<T>::NotEnoughInstances
             );
 
@@ -151,32 +175,44 @@ pub fn delegate_curator_permission_impl<T: Config>(
         }
     }
 
-    let scope = PermissionScope::Curator(CuratorScope { flags, cooldown });
-    let permission_id = generate_permission_id::<T>(&delegator, &recipient, &scope)?;
+    let scope = PermissionScope::Curator(CuratorScope {
+        recipient: recipient.clone(),
+        flags,
+        cooldown,
+        children: Default::default(),
+        max_instances: 1,
+    });
+    let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
 
     for parent in parents {
         Permissions::<T>::mutate_extant(parent, |parent| {
-            parent.children.try_insert(permission_id).ok()
+            if let Some(children) = parent.children_mut() {
+                children.try_insert(permission_id).ok()
+            } else {
+                Some(false)
+            }
         })
         .ok_or(Error::<T>::TooManyChildren)?;
     }
 
     let contract = PermissionContract::<T>::new(
         delegator,
-        recipient,
         scope,
         duration,
         revocation,
         crate::EnforcementAuthority::None,
-        1,
     );
 
     Permissions::<T>::insert(permission_id, &contract);
-    update_permission_indices::<T>(&contract.delegator, &contract.recipient, permission_id)?;
+
+    add_permission_indices::<T>(
+        &contract.delegator,
+        core::iter::once(&recipient),
+        permission_id,
+    )?;
 
     <Pallet<T>>::deposit_event(Event::PermissionDelegated {
         delegator: contract.delegator,
-        recipient: contract.recipient,
         permission_id,
     });
 

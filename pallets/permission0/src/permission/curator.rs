@@ -3,11 +3,11 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use polkadot_sdk::{
     frame_support::{CloneNoBound, DebugNoBound, EqNoBound, PartialEqNoBound},
     polkadot_sdk_frame::prelude::BlockNumberFor,
-    sp_runtime::BoundedBTreeMap,
+    sp_runtime::{BoundedBTreeMap, BoundedBTreeSet},
 };
 use scale_info::TypeInfo;
 
-use crate::Config;
+use crate::{Config, Permissions};
 
 use super::PermissionId;
 
@@ -45,12 +45,17 @@ bitflags! {
 #[derive(Encode, Decode, CloneNoBound, PartialEq, TypeInfo, MaxEncodedLen, DebugNoBound)]
 #[scale_info(skip_type_params(T))]
 pub struct CuratorScope<T: Config> {
+    pub recipient: T::AccountId,
     pub flags: BoundedBTreeMap<
         Option<PermissionId>,
         CuratorPermissions,
         T::MaxCuratorSubpermissionsPerPermission,
     >,
     pub cooldown: Option<BlockNumberFor<T>>,
+    /// Maximum number of instances of this permission
+    pub max_instances: u32,
+    /// Children permissions
+    pub children: BoundedBTreeSet<PermissionId, T::MaxChildrenPerPermission>,
 }
 
 impl<T: Config> CuratorScope<T> {
@@ -63,10 +68,16 @@ impl<T: Config> CuratorScope<T> {
     /// Cleanup operations when permission is revoked or expired
     pub(crate) fn cleanup(
         &self,
-        _permission_id: polkadot_sdk::sp_core::H256,
+        permission_id: polkadot_sdk::sp_core::H256,
         _last_execution: &Option<crate::BlockNumberFor<T>>,
         _delegator: &T::AccountId,
     ) {
-        // No special cleanup needed for curator permissions
+        for pid in self.flags.keys().cloned().flatten() {
+            Permissions::<T>::mutate_extant(pid, |parent| {
+                if let Some(children) = parent.children_mut() {
+                    children.remove(&permission_id);
+                }
+            });
+        }
     }
 }

@@ -6,8 +6,7 @@ use polkadot_sdk::{
     frame_support::dispatch::DispatchResult,
     sp_core::{H256, blake2_256},
     sp_runtime::{DispatchError, Percent},
-    sp_std::collections::btree_map::BTreeMap,
-    sp_std::vec::Vec,
+    sp_std::{collections::btree_map::BTreeMap, vec::Vec},
 };
 use scale_info::TypeInfo;
 
@@ -27,9 +26,9 @@ pub fn generate_root_stream_id<AccountId: Encode>(agent_id: &AccountId) -> Strea
     blake2_256(&data).into()
 }
 
-/// Defines what portion of emissions the permission applies to
+/// Defines what portion of streams the permission applies to
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
-pub enum EmissionAllocation<Balance> {
+pub enum StreamAllocation<Balance> {
     /// Permission applies to a percentage of all emissions (0-100)
     Streams(BTreeMap<StreamId, Percent>),
     /// Permission applies to a specific fixed amount
@@ -101,22 +100,23 @@ pub trait Permission0Api<Origin> {
     fn execute_permission(who: Origin, permission_id: &PermissionId) -> DispatchResult;
 }
 
-pub trait Permission0EmissionApi<AccountId, Origin, BlockNumber, Balance, NegativeImbalance> {
-    /// Delegate a permission for emission delegation
+pub trait Permission0StreamApi<AccountId, Origin, BlockNumber, Balance, NegativeImbalance> {
+    /// Delegate a permission for streams delegation
     #[allow(clippy::too_many_arguments)]
-    fn delegate_emission_permission(
+    fn delegate_stream_permission(
         delegator: AccountId,
-        recipient: AccountId,
-        allocation: EmissionAllocation<Balance>,
-        targets: Vec<(AccountId, u16)>,
+        recipients: Vec<(AccountId, u16)>,
+        allocation: StreamAllocation<Balance>,
         distribution: DistributionControl<Balance, BlockNumber>,
         duration: PermissionDuration<BlockNumber>,
         revocation: RevocationTerms<AccountId, BlockNumber>,
         enforcement: EnforcementAuthority<AccountId>,
+        recipient_manager: Option<AccountId>,
+        weight_setter: Option<AccountId>,
     ) -> Result<PermissionId, DispatchError>;
 
-    /// Accumulate emissions for an agent with permissions
-    fn accumulate_emissions(agent: &AccountId, stream: &StreamId, amount: &mut NegativeImbalance);
+    /// Accumulate streams for an agent with permissions
+    fn accumulate_streams(agent: &AccountId, stream: &StreamId, amount: &mut NegativeImbalance);
 
     /// Check and process automatic distributions
     fn process_auto_distributions(current_block: BlockNumber);
@@ -151,6 +151,9 @@ pub trait Permission0CuratorApi<AccountId, Origin, BlockNumber> {
 
     /// Finds the curator permission delegated to [`recipient`].
     fn get_curator_permission(recipient: &AccountId) -> Option<PermissionId>;
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn force_curator(recipient: &AccountId, flags: CuratorPermissions);
 }
 
 pub trait Permission0NamespacesApi<AccountId, NamespacePath> {

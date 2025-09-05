@@ -12,11 +12,10 @@ fn fixed_fails_without_balance() {
         register_empty_agent(agent_1);
 
         assert_err!(
-            delegate_emission_permission(
+            delegate_stream_permission(
                 agent_0,
-                agent_1,
-                pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
-                vec![(agent_0, u16::MAX)],
+                vec![(agent_1, u16::MAX)],
+                pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
                 pallet_permission0_api::DistributionControl::Manual,
                 pallet_permission0_api::PermissionDuration::Indefinite,
                 pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -39,11 +38,10 @@ fn fixed_creates() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
-            vec![(agent_0, u16::MAX)],
+            vec![(agent_1, u16::MAX)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -68,11 +66,10 @@ fn fixed_reserves() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
-            vec![(agent_0, u16::MAX)],
+            vec![(agent_1, u16::MAX)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -102,11 +99,10 @@ fn fixed_manual_executes() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -148,11 +144,10 @@ fn fixed_manual_executes_only_once() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -198,11 +193,10 @@ fn fixed_at_block_executes() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let _ = assert_ok!(delegate_emission_permission(
+        let _ = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::AtBlock(20),
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,

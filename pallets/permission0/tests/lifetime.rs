@@ -1,4 +1,4 @@
-use pallet_permission0::Error;
+use pallet_permission0::{Error, PermissionScope, Permissions};
 use polkadot_sdk::frame_support::assert_err;
 use test_utils::*;
 
@@ -17,13 +17,12 @@ fn manual_cant_execute_when_expires() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
-            pallet_permission0_api::PermissionDuration::UntilBlock(1),
+            pallet_permission0_api::PermissionDuration::UntilBlock(2),
             pallet_permission0_api::RevocationTerms::Irrevocable,
             pallet_permission0_api::EnforcementAuthority::None,
         ));
@@ -52,11 +51,10 @@ fn irrevocable() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::Irrevocable,
@@ -68,16 +66,18 @@ fn irrevocable() {
             pallet_permission0::Error::<Test>::NotAuthorizedToRevoke
         );
 
-        assert_err!(
-            Permission0::revoke_permission(get_origin(agent_2), permission_id),
-            pallet_permission0::Error::<Test>::NotAuthorizedToRevoke
-        );
-
         // should still be revocable by recipient
         assert_ok!(Permission0::revoke_permission(
             get_origin(agent_1),
             permission_id
-        ),);
+        ));
+
+        assert_ok!(Permission0::revoke_permission(
+            get_origin(agent_2),
+            permission_id
+        ));
+
+        assert!(!Permissions::<Test>::contains_key(permission_id));
     });
 }
 
@@ -94,13 +94,15 @@ fn revocable_by_delegator() {
         let agent_2 = 2;
         register_empty_agent(agent_2);
 
+        let agent_3 = 3;
+        register_empty_agent(agent_3);
+
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableByDelegator,
@@ -108,14 +110,32 @@ fn revocable_by_delegator() {
         ));
 
         assert_err!(
-            Permission0::revoke_permission(get_origin(agent_2), permission_id),
+            Permission0::revoke_permission(get_origin(agent_3), permission_id),
             pallet_permission0::Error::<Test>::NotAuthorizedToRevoke
+        );
+
+        assert_ok!(Permission0::revoke_permission(
+            get_origin(agent_2),
+            permission_id
+        ));
+
+        let permission = Permissions::<Test>::get(permission_id).unwrap();
+        let PermissionScope::Stream(scope) = permission.scope else {
+            panic!()
+        };
+
+        assert!(
+            scope.recipients.len() == 1
+                && scope.recipients.contains_key(&agent_1)
+                && !scope.recipients.contains_key(&agent_2)
         );
 
         assert_ok!(Permission0::revoke_permission(
             get_origin(agent_0),
             permission_id
         ),);
+
+        assert!(!Permissions::<Test>::contains_key(permission_id));
     });
 }
 
@@ -134,19 +154,18 @@ fn revocable_after_block() {
 
         add_balance(agent_0, as_tors(10) + 1);
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
-            pallet_permission0_api::RevocationTerms::RevocableAfter(1),
+            pallet_permission0_api::RevocationTerms::RevocableAfter(2),
             pallet_permission0_api::EnforcementAuthority::None,
         ));
 
         assert_err!(
-            Permission0::revoke_permission(get_origin(agent_2), permission_id),
+            Permission0::revoke_permission(get_origin(agent_0), permission_id),
             pallet_permission0::Error::<Test>::NotAuthorizedToRevoke
         );
 
@@ -155,7 +174,9 @@ fn revocable_after_block() {
         assert_ok!(Permission0::revoke_permission(
             get_origin(agent_0),
             permission_id
-        ),);
+        ));
+
+        assert!(!Permissions::<Test>::contains_key(permission_id));
     });
 }
 
@@ -172,11 +193,10 @@ fn revocable_by_arbiters() {
         add_balance(agent_0, as_tors(10) + 1);
 
         let delegate_invalid = |accounts: &[AccountId], required_votes| {
-            delegate_emission_permission(
+            delegate_stream_permission(
                 agent_0,
-                agent_1,
-                pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
                 vec![(agent_1, u16::MAX / 2)],
+                pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
                 pallet_permission0_api::DistributionControl::Manual,
                 pallet_permission0_api::PermissionDuration::Indefinite,
                 pallet_permission0_api::RevocationTerms::RevocableByArbiters {
@@ -203,11 +223,10 @@ fn revocable_by_arbiters() {
         let arbiters = [2, 3, 4, 5];
         let not_arbiter = 6;
 
-        let permission_id = assert_ok!(delegate_emission_permission(
+        let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            agent_1,
-            pallet_permission0_api::EmissionAllocation::FixedAmount(as_tors(10)),
             vec![(agent_1, u16::MAX)],
+            pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
             pallet_permission0_api::RevocationTerms::RevocableByArbiters {
