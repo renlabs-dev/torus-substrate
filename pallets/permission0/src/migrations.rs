@@ -1,7 +1,8 @@
 pub mod v7 {
     use polkadot_sdk::{
         frame_support::{migrations::VersionedMigration, traits::UncheckedOnRuntimeUpgrade},
-        sp_std::{vec, vec::Vec},
+        sp_runtime::BoundedBTreeSet,
+        sp_std::vec::Vec,
         sp_tracing::{error, info, warn},
         sp_weights::Weight,
     };
@@ -9,11 +10,12 @@ pub mod v7 {
     use crate::{
         Config, Pallet, PermissionContract, PermissionScope, Permissions, PermissionsByDelegator,
         PermissionsByParticipants, PermissionsByRecipient, StreamScope,
-        permission::add_permission_indices,
-        permission::{CuratorScope, NamespaceScope},
+        permission::{
+            CuratorScope, NamespaceScope, add_permission_indices, remove_permission_from_indices,
+        },
     };
 
-    pub type Migration<T, W> = VersionedMigration<6, 7, MigrateToV7<T>, Pallet<T>, W>;
+    pub type Migration<T, W> = VersionedMigration<5, 7, MigrateToV7<T>, Pallet<T>, W>;
     pub struct MigrateToV7<T>(core::marker::PhantomData<T>);
 
     mod old_storage {
@@ -28,8 +30,8 @@ pub mod v7 {
         use scale_info::TypeInfo;
 
         use crate::{
-            AccountIdOf, Config, CuratorPermissions, EnforcementAuthority, Pallet,
-            PermissionDuration, PermissionId, RevocationTerms, StreamScope,
+            AccountIdOf, Config, CuratorPermissions, DistributionControl, EnforcementAuthority,
+            Pallet, PermissionDuration, PermissionId, RevocationTerms, StreamAllocation,
         };
 
         #[storage_alias]
@@ -65,8 +67,16 @@ pub mod v7 {
 
         #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
         #[scale_info(skip_type_params(T))]
+        pub struct OldEmissionScope<T: Config> {
+            pub allocation: StreamAllocation<T>,
+            pub distribution: DistributionControl<T>,
+            pub targets: BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>,
+            pub accumulating: bool,
+        }
+
+        #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+        #[scale_info(skip_type_params(T))]
         pub struct OldCuratorScope<T: Config> {
-            pub recipient: T::AccountId,
             pub flags: BoundedBTreeMap<
                 Option<PermissionId>,
                 CuratorPermissions,
@@ -78,7 +88,6 @@ pub mod v7 {
         #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
         #[scale_info(skip_type_params(T))]
         pub struct OldNamespaceScope<T: Config> {
-            pub recipient: T::AccountId,
             pub paths: BoundedBTreeMap<
                 Option<PermissionId>,
                 BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>,
@@ -89,7 +98,7 @@ pub mod v7 {
         #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
         #[scale_info(skip_type_params(T))]
         pub enum OldPermissionScope<T: Config> {
-            Stream(StreamScope<T>),
+            Emission(OldEmissionScope<T>),
             Curator(OldCuratorScope<T>),
             Namespace(OldNamespaceScope<T>),
         }
@@ -98,13 +107,12 @@ pub mod v7 {
         #[scale_info(skip_type_params(T))]
         pub struct OldPermissionContract<T: Config> {
             pub delegator: T::AccountId,
+            pub recipient: T::AccountId,
             pub scope: OldPermissionScope<T>,
             pub duration: PermissionDuration<T>,
             pub revocation: RevocationTerms<T>,
             /// Enforcement authority that can toggle the permission
             pub enforcement: EnforcementAuthority<T>,
-            /// Last update block
-            pub last_update: BlockNumberFor<T>,
             /// Last execution block
             #[doc(hidden)]
             pub last_execution: Option<BlockNumberFor<T>>,
@@ -132,23 +140,56 @@ pub mod v7 {
 
             for (permission_id, old_contract) in old_storage::Permissions::<T>::iter() {
                 let new_scope = match old_contract.scope {
-                    old_storage::OldPermissionScope::Stream(stream) => {
+                    old_storage::OldPermissionScope::Emission(old_emission) => {
+                        // For emission permissions, we need to update storage indices:
+                        // 1. Remove the old recipient index (permission recipient)
+                        // 2. Add indices for all the emission targets
+
+                        // Remove old recipient index
+                        remove_permission_from_indices::<T>(
+                            &old_contract.delegator,
+                            core::iter::once(&old_contract.recipient),
+                            permission_id,
+                        );
+
+                        let mut managers = BoundedBTreeSet::new();
+                        let _ = managers.try_insert(old_contract.delegator.clone());
+
+                        let stream = StreamScope::<T> {
+                            recipients: old_emission.targets, // Field renamed from targets to recipients
+                            allocation: old_emission.allocation,
+                            distribution: old_emission.distribution,
+                            accumulating: old_emission.accumulating,
+                            // New manager fields introduced in v6
+                            recipient_managers: managers.clone(),
+                            weight_setters: managers,
+                        };
+
+                        // Add new indices for all emission targets
                         if let Err(e) = add_permission_indices::<T>(
                             &old_contract.delegator,
                             stream.recipients.keys(),
                             permission_id,
                         ) {
                             error!(
-                                "Failed to add permission indices for stream permission {permission_id:?}: {e:?}"
+                                "Failed to add permission indices for emission permission {permission_id:?}: {e:?}"
                             );
                         }
 
                         PermissionScope::Stream(stream)
                     }
                     old_storage::OldPermissionScope::Curator(old_curator) => {
+                        let new_curator = crate::permission::CuratorScope::<T> {
+                            recipient: old_contract.recipient,
+                            flags: old_curator.flags,
+                            cooldown: old_curator.cooldown,
+                            max_instances: old_contract.max_instances,
+                            children: old_contract.children,
+                        };
+
                         if let Err(e) = add_permission_indices::<T>(
                             &old_contract.delegator,
-                            core::iter::once(&old_curator.recipient),
+                            core::iter::once(&new_curator.recipient),
                             permission_id,
                         ) {
                             error!(
@@ -156,33 +197,25 @@ pub mod v7 {
                             );
                         }
 
-                        let new_curator = crate::permission::CuratorScope::<T> {
-                            recipient: old_curator.recipient,
-                            flags: old_curator.flags,
-                            cooldown: old_curator.cooldown,
+                        PermissionScope::Curator(new_curator)
+                    }
+                    old_storage::OldPermissionScope::Namespace(old_namespace) => {
+                        let new_namespace = crate::permission::NamespaceScope::<T> {
+                            recipient: old_contract.recipient,
+                            paths: old_namespace.paths,
                             max_instances: old_contract.max_instances,
                             children: old_contract.children,
                         };
 
-                        PermissionScope::Curator(new_curator)
-                    }
-                    old_storage::OldPermissionScope::Namespace(old_namespace) => {
                         if let Err(e) = add_permission_indices::<T>(
                             &old_contract.delegator,
-                            core::iter::once(&old_namespace.recipient),
+                            core::iter::once(&new_namespace.recipient),
                             permission_id,
                         ) {
                             error!(
                                 "Failed to add permission indices for namespace permission {permission_id:?}: {e:?}"
                             );
                         }
-
-                        let new_namespace = crate::permission::NamespaceScope::<T> {
-                            recipient: old_namespace.recipient,
-                            paths: old_namespace.paths,
-                            max_instances: old_contract.max_instances,
-                            children: old_contract.children,
-                        };
 
                         PermissionScope::Namespace(new_namespace)
                     }
@@ -395,7 +428,7 @@ pub mod v7 {
                 }
                 PermissionScope::Curator(CuratorScope { recipient, .. })
                 | PermissionScope::Namespace(NamespaceScope { recipient, .. }) => {
-                    vec![recipient.clone()]
+                    polkadot_sdk::sp_std::vec![recipient.clone()]
                 }
             };
 
