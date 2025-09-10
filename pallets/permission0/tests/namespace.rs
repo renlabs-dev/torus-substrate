@@ -7,6 +7,7 @@ use pallet_permission0::{
 use pallet_permission0_api::Permission0NamespacesApi;
 use pallet_torus0_api::{NamespacePath, NamespacePathInner};
 use polkadot_sdk::sp_core::{H256, TryCollect};
+use polkadot_sdk::sp_runtime::DispatchError;
 use polkadot_sdk::{
     frame_support::{BoundedBTreeMap, BoundedBTreeSet, assert_err, assert_ok},
     frame_system::RawOrigin,
@@ -2022,5 +2023,181 @@ fn bulk_delegate_namespace_permission_succeeds_within_parent_instance_limit() {
                 .unwrap()
                 .contains(&dave_permission_id)
         );
+    });
+}
+
+#[test]
+fn namespace_instance_overlap_logic_comprehensive_test() {
+    new_test_ext().execute_with(|| {
+        // Register all agents we'll need
+        let alice = 0;
+        register_agent(alice);
+        let bob = 1;
+        register_agent(bob);
+        let charlie = 2;
+        register_agent(charlie);
+        let dave = 3;
+        register_agent(dave);
+        let eve = 4;
+        register_agent(eve);
+        let ferdie = 5;
+        register_agent(ferdie);
+
+        // Register all namespaces we'll need
+        let compute = register_namespace(alice, b"agent.alice.compute");
+        let cpu = register_namespace(alice, b"agent.alice.compute.cpu");
+        let epyc4005 = register_namespace(alice, b"agent.alice.compute.cpu.epyc4005");
+        let xeon = register_namespace(alice, b"agent.alice.compute.cpu.xeon");
+        let gpu = register_namespace(alice, b"agent.alice.compute.gpu");
+        let h100 = register_namespace(alice, b"agent.alice.compute.gpu.h100");
+        let rtx4090 = register_namespace(alice, b"agent.alice.compute.gpu.rtx4090");
+        let cluster1 = register_namespace(alice, b"agent.alice.compute.gpu.h100.cluster1");
+        let cluster2 = register_namespace(alice, b"agent.alice.compute.gpu.h100.cluster2");
+        let storage = register_namespace(alice, b"agent.alice.compute.storage");
+
+        // Helper function that implements the overlap-based instance counting logic
+        fn delegate(
+            delegator: AccountId,
+            recipient: AccountId,
+            parent: Option<PermissionId>,
+            path: &[&NamespacePathInner],
+            instances: u32,
+        ) -> Result<PermissionId, DispatchError> {
+            step_block(1);
+
+            let paths = TryCollect::<crate::BoundedBTreeMap<_, _, _>>::try_collect(
+                vec![(
+                    parent,
+                    TryCollect::<crate::BoundedBTreeSet<_, _>>::try_collect(
+                        path.iter().map(|p| (**p).clone()),
+                    )
+                    .unwrap(),
+                )]
+                .into_iter(),
+            )
+            .unwrap();
+
+            Permission0::delegate_namespace_permission(
+                get_origin(delegator),
+                recipient,
+                paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::RevocableByDelegator,
+                instances,
+            )?;
+
+            Ok(get_last_delegated_permission_id(delegator))
+        }
+
+        // ========== TEST 1 INSTANCE ==========
+        // With 1 instance, no overlapping paths can coexist
+        let parent = delegate(alice, bob, None, &[&compute], 1).unwrap();
+
+        delegate(bob, charlie, Some(parent), &[&gpu], 2)
+            .expect_err("more instances than available");
+
+        // Siblings can coexist (no overlap)
+        delegate(bob, charlie, Some(parent), &[&cpu, &h100, &gpu], 1)
+            .expect_err("gpu overlaps with h100");
+
+        delegate(bob, charlie, Some(parent), &[&cpu], 1).unwrap();
+        delegate(bob, charlie, Some(parent), &[&h100], 1).unwrap(); // OK: h100 is under gpu, not cpu
+
+        // Parent-child overlaps are blocked
+        delegate(bob, charlie, Some(parent), &[&gpu], 1).expect_err("gpu overlaps with h100");
+        delegate(bob, dave, Some(parent), &[&epyc4005], 1).expect_err("epyc4005 overlaps with cpu");
+
+        // But non-overlapping paths work
+        delegate(bob, dave, Some(parent), &[&rtx4090], 1).unwrap(); // OK: sibling to h100
+
+        // ========== TEST 2 INSTANCES ==========
+        // With 2 instances, we can have 2 overlapping chains
+        let parent = delegate(alice, bob, None, &[&compute], 2).unwrap();
+
+        delegate(bob, charlie, Some(parent), &[&cpu], 1).unwrap();
+        delegate(bob, charlie, Some(parent), &[&h100], 1).unwrap();
+
+        // Can delegate same path twice (uses 2 instances)
+        delegate(bob, dave, Some(parent), &[&h100], 1).unwrap(); // 2nd h100
+
+        // Can delegate overlapping paths
+        delegate(bob, eve, Some(parent), &[&epyc4005, &rtx4090, &h100], 1)
+            .expect_err("3rd h100 needs 3 instances"); // Overlaps with cpu
+
+        delegate(bob, eve, Some(parent), &[&epyc4005], 1).unwrap(); // Overlaps with cpu
+        delegate(bob, eve, Some(parent), &[&rtx4090], 1).unwrap(); // Sibling to h100s
+
+        // But 3rd h100 would fail
+        delegate(bob, ferdie, Some(parent), &[&h100], 1).expect_err("3rd h100 needs 3 instances");
+
+        // ========== TEST 3 INSTANCES ==========
+        // Test 3a: Three identical paths
+        let parent3a = delegate(alice, bob, None, &[&compute], 3).unwrap();
+
+        delegate(bob, charlie, Some(parent3a), &[&h100], 1).unwrap(); // h100 #1
+        delegate(bob, dave, Some(parent3a), &[&h100], 1).unwrap(); // h100 #2
+        delegate(bob, eve, Some(parent3a), &[&h100], 1).unwrap(); // h100 #3
+        delegate(bob, ferdie, Some(parent3a), &[&h100], 1).expect_err("4th h100 needs 4 instances");
+
+        // Test 3b: Complex branching with overlaps
+        let parent3b = delegate(alice, bob, None, &[&compute], 3).unwrap();
+
+        delegate(bob, charlie, Some(parent3b), &[&cpu], 1).unwrap(); // CPU branch
+        delegate(bob, charlie, Some(parent3b), &[&gpu], 1).unwrap(); // GPU branch (sibling)
+        delegate(bob, dave, Some(parent3b), &[&epyc4005], 1).unwrap(); // Under CPU (1 overlap)
+        delegate(bob, eve, Some(parent3b), &[&h100], 1).unwrap(); // Under GPU (1 overlap)
+        delegate(bob, eve, Some(parent3b), &[&rtx4090], 1).unwrap(); // Under GPU (1 overlap)
+
+        // xeon would work (only overlaps with cpu, using 1 instance)
+        delegate(bob, ferdie, Some(parent3b), &[&xeon], 1).unwrap();
+
+        // ========== TEST 4 INSTANCES ==========
+        // Test 4a: Four identical paths
+        let parent4a = delegate(alice, bob, None, &[&compute], 4).unwrap();
+
+        delegate(bob, charlie, Some(parent4a), &[&h100], 1).unwrap(); // h100 #1
+        delegate(bob, dave, Some(parent4a), &[&h100], 1).unwrap(); // h100 #2
+        delegate(bob, eve, Some(parent4a), &[&h100], 1).unwrap(); // h100 #3
+        delegate(bob, ferdie, Some(parent4a), &[&h100], 1).unwrap(); // h100 #4
+
+        // Can't add 5th
+        let parent4a_new = delegate(alice, charlie, None, &[&compute], 4).unwrap();
+        delegate(charlie, alice, Some(parent4a_new), &[&h100], 1).unwrap();
+        delegate(charlie, alice, Some(parent4a_new), &[&h100], 1).unwrap();
+        delegate(charlie, alice, Some(parent4a_new), &[&h100], 1).unwrap();
+        delegate(charlie, alice, Some(parent4a_new), &[&h100], 1).unwrap();
+        delegate(charlie, bob, Some(parent4a_new), &[&h100], 1)
+            .expect_err("5th h100 needs 5 instances");
+
+        // Test 4b: Deep hierarchy with siblings
+        let parent4b = delegate(alice, bob, None, &[&compute], 4).unwrap();
+
+        // Build branches
+        delegate(bob, charlie, Some(parent4b), &[&gpu], 1).unwrap(); // GPU root
+        delegate(bob, dave, Some(parent4b), &[&h100], 1).unwrap(); // Under GPU (1 overlap)
+        delegate(bob, eve, Some(parent4b), &[&cluster1], 1).unwrap(); // Under h100 (2 overlaps)
+        delegate(bob, ferdie, Some(parent4b), &[&cluster2], 1).unwrap(); // Sibling to cluster1 (2 overlaps)
+
+        delegate(bob, ferdie, Some(parent4b), &[&cluster1], 1).unwrap();
+        delegate(bob, ferdie, Some(parent4b), &[&cluster1], 1)
+            .expect_err("consumed all cluster1 instances");
+
+        delegate(bob, ferdie, Some(parent4b), &[&cluster2], 1).unwrap();
+        delegate(bob, ferdie, Some(parent4b), &[&cluster2], 1)
+            .expect_err("consumed all cluster2 instances");
+
+        // Can still add non-overlapping branches
+        delegate(bob, charlie, Some(parent4b), &[&cpu], 1).unwrap(); // CPU branch (no overlap)
+        delegate(bob, dave, Some(parent4b), &[&storage], 1).unwrap(); // Storage branch (no overlap)
+
+        // rtx4090 works (only overlaps with gpu root)
+        delegate(bob, eve, Some(parent4b), &[&rtx4090], 1).unwrap();
+
+        // With 2 instances, we can have 2 overlapping chains
+        let parent = delegate(alice, bob, None, &[&gpu, &h100], 2).unwrap();
+
+        delegate(bob, charlie, Some(parent), &[&rtx4090, &h100], 1).unwrap();
+        delegate(bob, charlie, Some(parent), &[&h100], 1).unwrap();
+        delegate(bob, charlie, Some(parent), &[&h100], 1).expect_err("h100 instace pool depleted");
     });
 }
