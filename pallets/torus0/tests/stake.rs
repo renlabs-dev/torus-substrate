@@ -5,7 +5,10 @@ use polkadot_sdk::frame_support::{
     assert_err,
     traits::{Currency, NamedReservableCurrency},
 };
-use test_utils::{Balances, Test, as_tors, assert_ok, get_origin, pallet_governance};
+use test_utils::{
+    Balances, Permission0, Test, as_tors, assert_ok, get_origin, pallet_governance,
+    pallet_permission0,
+};
 
 #[test]
 fn add_stake_correctly() {
@@ -284,5 +287,200 @@ fn remove_stake_with_deregistered_agent() {
         assert_eq!(StakingTo::<Test>::get(from, to), None);
         assert_eq!(StakedBy::<Test>::get(to, from), None);
         assert_eq!(TotalStake::<Test>::get(), 0);
+    });
+}
+
+#[test]
+fn exclusive_wallet_permission_blocks_stake_operations() {
+    test_utils::new_test_ext().execute_with(|| {
+        let staker = 0;
+        let validator1 = 1;
+        let validator2 = 2;
+        let recipient = 3;
+        let stake_amount = MinAllowedStake::<Test>::get();
+        let total_balance = stake_amount * 3;
+
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            validator1
+        ));
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            validator2
+        ));
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            staker
+        ));
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            recipient
+        ));
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            validator1,
+            "validator1".as_bytes().to_vec(),
+            "val1://url".as_bytes().to_vec(),
+            "meta1".as_bytes().to_vec()
+        ));
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            validator2,
+            "validator2".as_bytes().to_vec(),
+            "val2://url".as_bytes().to_vec(),
+            "meta2".as_bytes().to_vec()
+        ));
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            staker,
+            "staker".as_bytes().to_vec(),
+            "staker://url".as_bytes().to_vec(),
+            "meta".as_bytes().to_vec()
+        ));
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            recipient,
+            "recipient".as_bytes().to_vec(),
+            "recipient://url".as_bytes().to_vec(),
+            "meta".as_bytes().to_vec()
+        ));
+
+        let _ = Balances::deposit_creating(&staker, total_balance);
+        assert_ok!(pallet_torus0::Pallet::<Test>::add_stake(
+            get_origin(staker),
+            validator1,
+            stake_amount
+        ));
+
+        assert_ok!(Permission0::delegate_wallet_stake_permission(
+            get_origin(staker),
+            recipient,
+            pallet_permission0::permission::wallet::WalletStake {
+                can_transfer_stake: true,
+                exclusive_stake_access: true,
+            },
+            pallet_permission0::PermissionDuration::Indefinite,
+            pallet_permission0::RevocationTerms::RevocableByDelegator,
+        ));
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::remove_stake(
+                get_origin(staker),
+                validator1,
+                stake_amount / 2
+            ),
+            Error::<Test>::StakeIsDelegated
+        );
+
+        assert_err!(
+            pallet_torus0::Pallet::<Test>::transfer_stake(
+                get_origin(staker),
+                validator1,
+                validator2,
+                stake_amount / 2
+            ),
+            Error::<Test>::StakeIsDelegated
+        );
+
+        assert_eq!(
+            StakingTo::<Test>::get(staker, validator1),
+            Some(stake_amount)
+        );
+        assert_eq!(StakingTo::<Test>::get(staker, validator2), None);
+    });
+}
+
+#[test]
+fn non_exclusive_wallet_permission_allows_stake_operations() {
+    test_utils::new_test_ext().execute_with(|| {
+        let staker = 0;
+        let validator1 = 1;
+        let validator2 = 2;
+        let recipient = 3;
+        let stake_amount = MinAllowedStake::<Test>::get();
+        let total_balance = stake_amount * 3;
+
+        // Setup agents
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            validator1
+        ));
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            validator2
+        ));
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            staker
+        ));
+        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
+            recipient
+        ));
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            validator1,
+            "validator1".as_bytes().to_vec(),
+            "val1://url".as_bytes().to_vec(),
+            "meta1".as_bytes().to_vec()
+        ));
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            validator2,
+            "validator2".as_bytes().to_vec(),
+            "val2://url".as_bytes().to_vec(),
+            "meta2".as_bytes().to_vec()
+        ));
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            staker,
+            "staker".as_bytes().to_vec(),
+            "staker://url".as_bytes().to_vec(),
+            "meta".as_bytes().to_vec()
+        ));
+
+        assert_ok!(pallet_torus0::agent::register::<Test>(
+            recipient,
+            "recipient".as_bytes().to_vec(),
+            "recipient://url".as_bytes().to_vec(),
+            "meta".as_bytes().to_vec()
+        ));
+
+        let _ = Balances::deposit_creating(&staker, total_balance);
+        assert_ok!(pallet_torus0::Pallet::<Test>::add_stake(
+            get_origin(staker),
+            validator1,
+            stake_amount
+        ));
+
+        assert_ok!(Permission0::delegate_wallet_stake_permission(
+            get_origin(staker),
+            recipient,
+            pallet_permission0::permission::wallet::WalletStake {
+                can_transfer_stake: false,
+                exclusive_stake_access: false,
+            },
+            pallet_permission0::PermissionDuration::Indefinite,
+            pallet_permission0::RevocationTerms::RevocableByDelegator,
+        ));
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::remove_stake(
+            get_origin(staker),
+            validator1,
+            stake_amount / 2
+        ));
+
+        assert_eq!(
+            StakingTo::<Test>::get(staker, validator1),
+            Some(stake_amount / 2)
+        );
+
+        assert_ok!(pallet_torus0::Pallet::<Test>::transfer_stake(
+            get_origin(staker),
+            validator1,
+            validator2,
+            stake_amount / 4
+        ));
+
+        assert_eq!(
+            StakingTo::<Test>::get(staker, validator1),
+            Some(stake_amount / 4)
+        );
+        assert_eq!(
+            StakingTo::<Test>::get(staker, validator2),
+            Some(stake_amount / 4)
+        );
     });
 }

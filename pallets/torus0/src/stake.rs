@@ -89,12 +89,12 @@ fn remove_stake0<T: crate::Config>(
 /// [`add_stake`]).
 pub fn transfer_stake<T: crate::Config>(
     staker: AccountIdOf<T>,
-    old_staked: AccountIdOf<T>,
-    new_staked: AccountIdOf<T>,
+    from: AccountIdOf<T>,
+    to: AccountIdOf<T>,
     amount: BalanceOf<T>,
 ) -> DispatchResult {
-    remove_stake::<T>(staker.clone(), old_staked, amount)?;
-    add_stake::<T>(staker, new_staked, amount)?;
+    remove_stake::<T>(staker.clone(), from, amount)?;
+    add_stake::<T>(staker, to, amount)?;
     Ok(())
 }
 
