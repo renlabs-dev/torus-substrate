@@ -1,5 +1,36 @@
 # Changelog
 
+## Spec 26
+
+This release introduces wallet stake delegation permissions, enabling secure delegation of staking operations to trusted accounts while maintaining control over funds.
+
+### Wallet Stake Delegation
+
+The permission system now supports delegating stake management operations to trusted accounts:
+
+- Delegators can grant recipients permission to unstake tokens and optionally transfer stake between validators through the new `delegate_wallet_stake_permission` extrinsic.
+- Permissions can be configured as exclusive, preventing the delegator from managing their own stake while the delegation is active, ensuring no conflicting operations.
+- Recipients execute delegated operations through `execute_wallet_stake_permission`, specifying the operation type via the `WalletStakeOperation` enum.
+- Enables cold-hot wallet architectures where high-value accounts remain offline while trusted hot wallets manage staking positions, significantly reducing exposure to key compromise.
+
+### Stake Operation Access Control
+
+Direct stake management now respects exclusive wallet permissions:
+
+- The `remove_stake` and `transfer_stake` extrinsics check for active exclusive permissions before allowing operations, returning `StakeIsDelegated` error when blocked.
+- Ensures operational consistency by preventing delegators and recipients from issuing conflicting stake commands simultaneously.
+- Only affects accounts that explicitly create exclusive wallet permissions, maintaining backward compatibility for all existing stake operations.
+- Integrates seamlessly with the existing staking system without requiring changes to validator selection or reward distribution logic.
+
+### Permission System Extension
+
+The permission framework gains wallet operation support alongside existing stream, curator, and namespace permissions:
+
+- New `WalletScope` type defines wallet permissions with recipient and operation type configuration.
+- The `WalletStake` struct controls whether recipients can transfer stake between validators and whether access is exclusive.
+- Foundation for future wallet operation types beyond staking, such as transfer permissions or contract interaction delegations.
+- All wallet permissions leverage the existing permission infrastructure including duration limits, revocation terms, and cleanup operations.
+
 ## Spec 25
 
 This release refactors the permission system's internal architecture to improve efficiency and maintainability while preserving all external functionality.

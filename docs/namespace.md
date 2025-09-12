@@ -1,12 +1,12 @@
-# Torus Namespaces: Integrating Off-chain Agent Capabilities with the Chain Permission System
+# Torus Namespaces: Hierarchical Resource Organization and Delegation
 
 ## Overview
 
-The namespace system provides a hierarchical tree naming structure for the Torus Protocol, enabling agents to organize and delegate access to their off-chain services. Think of it as a decentralized DNS where agents control their own namespace trees and can share branches with others through the permission system, delegating authority over APIs.
+The namespace system provides a hierarchical naming structure for the Torus Protocol, enabling agents to organize and delegate access to their off-chain services. Agents control their own namespace trees and can share branches with others through the permission system, delegating authority over resources and APIs.
 
-An agent running a Twitter memory service might register agent.alice.memory.twitter, while another agent providing market data could own agent.bob.data.markets.crypto. These dot-separated paths create a natural hierarchy that mirrors how we think about organizing resources, with agents serving as the root nodes of their namespace trees.
+An agent running a Twitter memory service might register `agent.alice.memory.twitter`, while another agent providing market data could own `agent.bob.data.markets.crypto`. These dot-separated paths create a natural hierarchy that mirrors how we organize resources, with agents serving as the root nodes of their namespace trees.
 
-The system emerges from a practical need, as agents begin offering specialized off-chain services, they need a way to organize these services and delegate access to specific components.
+As agents offer specialized off-chain services, they need a way to organize these services and delegate access to specific components. The namespace system provides this organizational structure while integrating with the permission system for access control.
 
 ## Namespace Paths
 
@@ -51,7 +51,7 @@ By using a double map with the agent as the first key and the full path as the s
 
 ## Economic Model
 
-The namespace pricing model balances accessibility with spam prevention through a simple yet effective fee structure. Rather than the sigmoid curve described in early designs, the implemented system uses a base fee that goes to the treasury plus a refundable deposit based on storage consumption.
+The namespace pricing model uses a sigmoid curve that adjusts fees based on how many namespaces an agent already owns. This creates progressive pricing that becomes more expensive as agents accumulate namespaces, preventing spam while allowing reasonable usage.
 
 ```rust
 pub struct NamespacePricingConfig<T: Config> {
@@ -63,11 +63,26 @@ pub struct NamespacePricingConfig<T: Config> {
 }
 ```
 
-Currently, the fee calculation returns a flat base fee, though the structure allows other pricing engines in the future. The deposit ensures that agents must lock tokens proportional to the storage they consume, which are returned when the namespace is deleted.
+The fee calculation uses the agent's current namespace count to determine their position on the sigmoid curve. Below the midpoint, fees remain relatively low. As agents approach and pass the midpoint (typically 10 namespaces), fees increase following the curve's steepness parameter. The calculation uses `libm::exp` to create a smooth S-curve that eventually plateaus at `base_fee * (1 + max_fee_multiplier)`.
 
-This approach creates natural incentives. Agents think carefully about namespace creation since deposits are locked. The base fee contributes to the treasury, funding network development. Storage deposits scale linearly with path length, discouraging excessively long names.
+The steepness parameter controls how rapidly fees increase around the midpoint. A steepness of 0% creates a flat fee at the midpoint value. Higher steepness values create sharper transitions - at 100%, the curve becomes nearly vertical at the midpoint. This allows the network to adjust pricing dynamics through governance without changing the core mechanism.
+
+Beyond the creation fee, agents must reserve a deposit proportional to the namespace's storage consumption (`deposit_per_byte * path_length`). These deposits are fully refundable when namespaces are deleted, ensuring agents only pay for active storage use. Creation fees go to the treasury, funding network development.
 
 ## Storage Architecture
+
+The storage uses a double map structure with namespace ownership as the first key and the namespace path as the second:
+
+```rust
+pub type Namespaces<T: Config> = StorageDoubleMap<
+    _,
+    Blake2_128Concat,
+    NamespaceOwnership<T>,
+    Blake2_128Concat,
+    NamespacePath,
+    NamespaceMetadata<T>,
+>;
+```
 
 Namespaces are owned by either the system or an account:
 
@@ -78,7 +93,7 @@ pub enum NamespaceOwnership<T: Config> {
 }
 ```
 
-The `System` ownership is used for root-level namespaces like `agent`, while `Account` ownership represents agent-owned namespaces.
+The `System` ownership is used for root-level namespaces like `agent`, while `Account` ownership represents agent-owned namespaces. This separation allows different fee and permission models for system versus user namespaces.
 
 Each namespace stores minimal metadata:
 
@@ -89,7 +104,13 @@ pub struct NamespaceMetadata<T: Config> {
 }
 ```
 
-This approach means each namespace consumes minimal storage. `deposit` tracks the locked amount for refunds.
+The system also tracks namespace counts per owner to enable the sigmoid pricing model:
+
+```rust
+pub type NamespaceCount<T: Config> = StorageMap<_, Blake2_128Concat, NamespaceOwnership<T>, u32>;
+```
+
+This count increments when namespaces are created and decrements when deleted, allowing the pricing algorithm to calculate fees based on current usage.
 
 ## Creating Namespaces
 
@@ -101,7 +122,24 @@ fn create_namespace(origin: OriginFor<T>, path: Vec<u8>) -> DispatchResult;
 
 > This extrinsic lives inside the Torus0 pallet.
 
-The algorithm determines which parent paths need creation by checking from the deepest level upward. It calculates the total fee and deposit required, processes payment atomically, then creates all namespaces in a single transaction.
+The creation process validates that agent-owned namespaces follow the pattern `agent.<agentname>` where the agent name must match the owner's registered name exactly. This coupling prevents agents from creating namespaces under other agents' names.
+
+The algorithm works backward from the deepest path, checking which parents already exist. Once it finds an existing parent (or reaches the root), it stops checking and creates only the missing paths. For each missing namespace, the system calculates the fee based on the owner's current namespace count and reserves the storage deposit. All namespace creation happens atomically - if any step fails, the entire operation rolls back.
+
+## Agent Registration and Namespaces
+
+When an agent registers with the network, the system automatically creates their root namespace `agent.<agentname>`. This happens within the registration transaction itself:
+
+```rust
+// During agent registration
+let namespace_path = NamespacePath::new_agent_root(&name)?;
+namespace::create_namespace::<T>(
+    NamespaceOwnership::Account(agent_key.clone()),
+    namespace_path,
+)?;
+```
+
+If namespace creation fails (for example, if the name contains invalid characters), the entire agent registration fails. This ensures every registered agent has a valid namespace root from which they can create sub-namespaces.
 
 ## Deletion Strategy
 
@@ -113,9 +151,13 @@ fn delete_namespace(origin: OriginFor<T>, path: Vec<u8>) -> DispatchResult;
 
 > This extrinsic lives inside the Torus0 pallet.
 
+When an agent deregisters, the system automatically deletes their root namespace and all child namespaces. The deletion happens recursively - the system iterates through all namespaces owned by the agent, identifies those that are children of the root namespace, and deletes them all in a single transaction. The total deposits from all deleted namespaces are calculated and refunded atomically using `T::Currency::unreserve`.
+
+The check for active delegations uses the permission system's `is_delegating_namespace` function, which examines all permissions held by the delegator to see if any reference the namespace being deleted or its children.
+
 ## Permission Integration
 
-Namespaces gain their true power through integration with the permission system. An agent can delegate access to specific namespace paths or entire subtrees, enabling access control for off-chain services.
+Namespaces integrate with the permission system to enable controlled delegation of access to off-chain services. An agent can delegate access to specific namespace paths or entire subtrees.
 
 ```rust
 pub struct NamespaceScope<T: Config> {
@@ -132,13 +174,45 @@ pub struct NamespaceScope<T: Config> {
 
 The namespace permission scope contains:
 - `recipient`: The account that receives the namespace permission
-- `paths`: A map from parent permission IDs to sets of namespace paths, enabling hierarchical permission structures
-- `max_instances`: Maximum number of instances that can be created from this permission
-- `children`: Set of child permissions created from this permission
+- `paths`: A map from parent permission IDs to sets of namespace paths, creating a hierarchical permission tree
+- `max_instances`: Maximum number of child permissions that can be created from this permission
+- `children`: Set of child permissions already created from this permission
 
-The permission system's existing infrastructure handles the complexity of duration, revocation terms, and enforcement authorities. This means namespace permissions can be temporary, require multi-signature revocation, or include third-party controllers. Read more in [permission0.md](permission0.md).
+### Delegation Depth and Hierarchy
 
-This integration creates composition possibilities. An agent running a data aggregation service could delegate read access to `agent.alice.data.public` while keeping `agent.alice.data.private` restricted, or delegate the entire data scope: `agent.alice.data`. The delegation could be time-limited, revocable by designated arbiters, or controlled by enforcement authorities who verify off-chain conditions.
+The system enforces a maximum delegation depth of 5 levels to prevent infinite delegation chains. When creating a namespace permission, the system traverses the parent permission chain to calculate the current depth. If the new permission would exceed the maximum depth, the operation fails.
+
+Permissions track their parent-child relationships through the `paths` map. When a permission references a parent permission ID, it inherits access only to namespaces that the parent has access to. This creates a tree structure where each level can only delegate a subset of what it received.
+
+### Permission Cleanup
+
+When a namespace permission expires or is revoked, the system performs cleanup operations to maintain consistency:
+
+```rust
+// During cleanup
+for pid in self.paths.keys().cloned().flatten() {
+    Permissions::<T>::mutate_extant(pid, |parent| {
+        if let Some(children) = parent.children_mut() {
+            children.remove(&permission_id);
+        }
+    });
+}
+```
+
+The cleanup process removes the expired permission from all parent permissions' child tracking sets. This prevents the accumulation of dead references in the permission tree.
+
+### Validation and Constraints
+
+When delegating namespace permissions, the system validates:
+- The delegator owns the namespace being delegated
+- Parent permissions (if specified) grant access to the requested namespaces
+- The delegation depth does not exceed the maximum
+- Revocation terms are not stronger than parent permissions
+- The recipient is a registered agent
+
+The permission system's existing infrastructure handles duration, revocation terms, and enforcement authorities. Namespace permissions can be temporary, require multi-signature revocation, or include third-party controllers. See [permission0.md](permission0.md) for details on the permission system.
+
+An agent running a data aggregation service could delegate read access to `agent.alice.data.public` while keeping `agent.alice.data.private` restricted. The delegation could be time-limited, revocable by designated arbiters, or controlled by enforcement authorities who verify off-chain conditions.
 
 ## Practical Applications
 
@@ -152,28 +226,43 @@ Data feeds benefit from hierarchical organization: `agent.data.markets.crypto.bt
 
 ## Implementation Trade-offs
 
-By optimizing for direct lookups, we sacrificed on-chain traversal capabilities. Services cannot efficiently query "all namespaces under `agent.alice.memory`" without iterating through all of Alice's namespaces. This pushes complexity to off-chain indexers, which can build specialized data structures for such queries. Also, we don't expect huge amounts of namespaces from the beginning, and the pricing mechanism should counter that problem to a certain degree.
+By optimizing for direct lookups, we sacrificed on-chain traversal capabilities. Services cannot efficiently query "all namespaces under `agent.alice.memory`" without iterating through all of Alice's namespaces. This pushes complexity to off-chain indexers, which can build specialized data structures for such queries. The current implementation expects moderate namespace counts per agent, with the sigmoid pricing mechanism naturally limiting excessive creation.
 
-Storage efficiency took precedence over feature richness. Each namespace stores minimal metadata rather than extensive configuration. This keeps the on-chain footprint small but means additional features require off-chain coordination or separate storage.
+Storage efficiency took precedence over feature richness. Each namespace stores only creation time and deposit amount rather than extensive configuration. This keeps the on-chain footprint small but means additional features require off-chain coordination or separate storage structures.
 
-The flat fee structure, while simple, doesn't capture the true cost difference between shallow and deep namespaces. This may be refined in future versions as usage patterns emerge and economic requirements become clearer.
+The coupling between agent names and namespace roots (requiring `agent.<agentname>` to match the registered name) provides security but reduces flexibility. Agents cannot create namespaces that don't follow this pattern, even if they might have legitimate use cases for alternative naming schemes.
+
+The maximum delegation depth of 5 levels balances security with usability. Deeper delegation chains could enable more complex permission structures but would increase traversal costs and potential attack vectors. The fixed limit keeps the system predictable and performant.
+
+The sigmoid pricing curve parameters are currently fixed in storage rather than computed dynamically based on network conditions. While governance can adjust these parameters, the system cannot automatically respond to usage spikes or market conditions without a governance proposal.
 
 ## Future Evolution
 
 The namespace system's design anticipates future growth while maintaining backward compatibility. The versioned storage pattern allows seamless upgrades if requirements change. Several enhancements are possible without breaking existing namespaces:
 
-The pricing configuration structure already supports the sigmoid-based fee calculation described in the original design. As the network grows and usage patterns emerge, this more sophisticated pricing can be enabled to better balance accessibility with resource consumption.
+The pricing parameters could become more dynamic, adjusting automatically based on network usage patterns. The sigmoid curve formula could be extended to consider factors beyond just namespace count, such as total network namespace usage or time-based decay of older namespaces.
 
-The metadata structure could be extended to include additional fields like expiration times, usage counters, or permission defaults. The storage migration system makes such upgrades straightforward.
+The metadata structure could be extended to include additional fields like expiration times, usage counters, or custom properties. The storage migration system makes such upgrades straightforward while preserving existing data.
 
-Off-chain indexing services will likely emerge to provide sophisticated query capabilities. These could offer GraphQL APIs for namespace exploration, real-time updates via WebSocket, and specialized search functionality.
+Off-chain indexing services will emerge to provide query capabilities the on-chain system doesn't support. These could offer GraphQL APIs for namespace exploration, real-time updates via WebSocket, and specialized search functionality for discovering available namespaces or tracking delegation chains.
+
+The permission integration could support more complex access patterns, such as conditional permissions based on on-chain state or multi-party approval requirements for sensitive namespaces.
 
 ## Security Considerations
 
-We will need a anti-spam system to emerge in the near future. The current version will, however, allow curators to delete/toggle namespaces.
+The sigmoid pricing curve provides the primary anti-spam mechanism by making namespace accumulation progressively expensive. Agents creating many namespaces face exponentially increasing costs, naturally limiting spam without hard caps. Future versions may introduce additional curator controls for namespace management.
 
-The delegation check during deletion prevents a class of griefing attacks where namespace owners could disrupt dependent services. By requiring delegations to be revoked before deletion, services have warning and can negotiate continued access or migration paths.
+The delegation check during deletion prevents griefing attacks where namespace owners could disrupt dependent services. By requiring all delegations to be revoked before deletion, services have time to migrate or negotiate continued access. The system checks not just direct delegations but also parent-child relationships in the permission tree.
 
-Path validation prevents injection attacks and ensures consistent parsing across different implementations. The character restrictions and length limits bound resource consumption while allowing meaningful names.
+Path validation enforces strict rules on namespace format:
+- Segments must contain only lowercase alphanumerics, hyphens, underscores, and plus signs
+- Each segment must be 1-63 characters long
+- Segments must begin and end with alphanumerics
+- Maximum 10 segments (depth limitation)
+- Total path length cannot exceed 255 bytes
 
-The economic model creates natural spam resistance. The combination of base fees and storage deposits means namespace squatting has real costs. The treasury receives fees from creation, funding network development rather than enriching early adopters.
+The coupling between agent names and namespace roots prevents impersonation. An agent cannot create namespaces under another agent's name, as the system validates that `agent.<name>` matches the creator's registered name exactly.
+
+The maximum delegation depth of 5 levels prevents infinite delegation chains that could cause stack overflows during traversal or create confusion about access rights. Each delegation must specify weaker or equal revocation terms compared to its parent, preventing privilege escalation.
+
+Storage deposits use Substrate's `ReservableCurrency` trait, ensuring deposits are genuinely locked and can always be refunded. This prevents scenarios where promised refunds cannot be delivered due to account drainage.
