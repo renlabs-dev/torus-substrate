@@ -9,7 +9,8 @@ use crate::{
         },
         pallet_permission0::permission::{
             PermissionDuration, PermissionScope, RevocationTerms,
-            emission::{DistributionControl, EmissionAllocation},
+            stream::{DistributionControl, StreamAllocation},
+            wallet::WalletScopeType,
         },
     },
 };
@@ -57,7 +58,8 @@ pub struct PermissionSummaryResponse {
 pub enum Permission {
     Namespace((NamespacePermission, Direction)),
     Curator((CuratorPermission, Direction)),
-    Emission((EmissionPermission, Direction)),
+    Stream((StreamPermission, Direction)),
+    Wallet((WalletPermission, Direction)),
 }
 
 #[derive(Clone, schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
@@ -76,10 +78,10 @@ pub struct NamespacePermission {
 pub struct CuratorPermission {}
 
 #[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
-pub struct EmissionPermission {
+pub struct StreamPermission {
     allocation: Allocation,
     distribution: Distribution,
-    targets: HashMap<String, u16>,
+    recipients: HashMap<String, u16>,
     accumulating: bool,
 }
 
@@ -87,6 +89,19 @@ pub struct EmissionPermission {
 pub enum Allocation {
     Streams(HashMap<String, u8>),
     FixedAmount(u128),
+}
+
+#[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub struct WalletPermission {
+    r#type: WalletPermissionType,
+}
+
+#[derive(schemars::JsonSchema, serde::Deserialize, serde::Serialize)]
+pub enum WalletPermissionType {
+    Stake {
+        can_transfer_stake: bool,
+        exclusive_stake_access: bool,
+    },
 }
 
 pub async fn create_namespace_for_agent(
@@ -206,57 +221,54 @@ pub async fn get_permission_summary_for_agent(
         };
 
         match contract.scope {
-            PermissionScope::Emission(emission) => {
+            PermissionScope::Stream(stream) => {
                 let direction = if contract.delegator == account_id {
-                    let mut recipients = vec![name_or_key(&contract.recipient)];
-                    recipients.append(
-                        &mut emission
-                            .targets
-                            .0
-                            .iter()
-                            .map(|(target, _)| name_or_key(target))
-                            .collect::<Vec<String>>(),
-                    );
+                    let recipients: Vec<_> = stream
+                        .recipients
+                        .0
+                        .iter()
+                        .map(|(target, _)| name_or_key(target))
+                        .collect();
                     Direction::DelegatingTo(recipients)
                 } else {
                     Direction::DelegatedFrom(name_or_key(&contract.delegator))
                 };
 
-                let allocation = match emission.allocation {
-                    EmissionAllocation::Streams(bounded_btree_map) => Allocation::Streams(
+                let allocation = match stream.allocation {
+                    StreamAllocation::Streams(bounded_btree_map) => Allocation::Streams(
                         bounded_btree_map
                             .0
                             .iter()
                             .map(|(stream, percent)| (stream.to_string(), percent.0))
                             .collect::<HashMap<_, _>>(),
                     ),
-                    EmissionAllocation::FixedAmount(amount) => Allocation::FixedAmount(amount),
+                    StreamAllocation::FixedAmount(amount) => Allocation::FixedAmount(amount),
                 };
 
-                let distribution = match emission.distribution {
+                let distribution = match stream.distribution {
                     DistributionControl::Manual => Distribution::Manual,
                     DistributionControl::Automatic(value) => Distribution::Automatic(value),
                     DistributionControl::AtBlock(value) => Distribution::AtBlock(value),
                     DistributionControl::Interval(value) => Distribution::Interval(value),
                 };
 
-                let permission = EmissionPermission {
+                let permission = StreamPermission {
                     allocation,
                     distribution,
-                    targets: emission
-                        .targets
+                    recipients: stream
+                        .recipients
                         .0
                         .iter()
                         .map(|(account, amount)| (name_or_key(account), *amount))
                         .collect(),
-                    accumulating: emission.accumulating,
+                    accumulating: stream.accumulating,
                 };
 
-                permissions.push(Permission::Emission((permission, direction)));
+                permissions.push(Permission::Stream((permission, direction)));
             }
-            PermissionScope::Curator(_) => {
+            PermissionScope::Curator(curator) => {
                 let direction = if contract.delegator == account_id {
-                    Direction::DelegatingTo(vec![name_or_key(&contract.recipient)])
+                    Direction::DelegatingTo(vec![name_or_key(&curator.recipient)])
                 } else {
                     Direction::DelegatedFrom(name_or_key(&contract.delegator))
                 };
@@ -265,7 +277,7 @@ pub async fn get_permission_summary_for_agent(
             }
             PermissionScope::Namespace(namespace) => {
                 let direction = if contract.delegator == account_id {
-                    Direction::DelegatingTo(vec![name_or_key(&contract.recipient)])
+                    Direction::DelegatingTo(vec![name_or_key(&namespace.recipient)])
                 } else {
                     Direction::DelegatedFrom(name_or_key(&contract.delegator))
                 };
@@ -280,6 +292,24 @@ pub async fn get_permission_summary_for_agent(
                         permissions.push(Permission::Namespace((permission, direction.clone())));
                     }
                 }
+            }
+            PermissionScope::Wallet(wallet) => {
+                let direction = if contract.delegator == account_id {
+                    Direction::DelegatingTo(vec![name_or_key(&wallet.recipient)])
+                } else {
+                    Direction::DelegatedFrom(name_or_key(&contract.delegator))
+                };
+
+                let permission = WalletPermission {
+                    r#type: match wallet.r#type {
+                        WalletScopeType::Stake(stake) => WalletPermissionType::Stake {
+                            can_transfer_stake: stake.can_transfer_stake,
+                            exclusive_stake_access: stake.exclusive_stake_access,
+                        },
+                    },
+                };
+
+                permissions.push(Permission::Wallet((permission, direction)));
             }
         }
     }

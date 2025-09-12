@@ -4,7 +4,7 @@ use crate::interfaces::runtime_types::{
     bounded_collections::bounded_btree_map::BoundedBTreeMap,
     pallet_permission0::permission::{
         EnforcementAuthority, PermissionDuration, RevocationTerms,
-        emission::{DistributionControl, EmissionAllocation},
+        stream::{DistributionControl, StreamAllocation},
     },
     sp_arithmetic::per_things::Percent,
 };
@@ -83,17 +83,18 @@ pub async fn delegate_emission(
     match torus_client
         .permission0()
         .calls()
-        .delegate_emission_permission_wait(
-            target_keypair.public_key().to_account_id(),
-            EmissionAllocation::Streams(BoundedBTreeMap(vec![(stream, Percent(request.amount))])),
+        .delegate_stream_permission_wait(
             BoundedBTreeMap(vec![(
                 target_keypair.public_key().to_account_id(),
                 u16::MAX,
             )]),
+            StreamAllocation::Streams(BoundedBTreeMap(vec![(stream, Percent(request.amount))])),
             request.distribution.as_generated_type(),
             request.duration.as_generated_type(),
             RevocationTerms::RevocableByDelegator,
             EnforcementAuthority::None,
+            None,
+            None,
             source_keypair,
         )
         .await
