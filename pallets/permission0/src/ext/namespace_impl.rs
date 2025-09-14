@@ -223,24 +223,18 @@ fn resolve_paths<T: Config>(
                     .paths
                     .values()
                     .flat_map(|p_path| p_path.iter())
-                    .find_map(|parent_path| {
+                    .any(|parent_path| {
                         if *new_path == parent_path {
-                            Some(())
+                            true
+                        } else if parent_path.is_parent_of(new_path)
+                            && let Some(agent_name) = parent_path.agent_name()
+                            && let Some(agent) = T::Torus::find_agent_by_name(agent_name)
+                        {
+                            T::Torus::namespace_exists(&agent, new_path)
                         } else {
-                            let agent_name = parent_path.agent_name()?;
-                            let child_path = new_paths
-                                .iter()
-                                .find(|new_path| parent_path.is_parent_of(new_path))?;
-
-                            let agent = T::Torus::find_agent_by_name(agent_name)?;
-                            if !T::Torus::namespace_exists(&agent, child_path) {
-                                return None;
-                            }
-
-                            Some(())
+                            false
                         }
                     })
-                    .is_some()
             })
             .count();
 
