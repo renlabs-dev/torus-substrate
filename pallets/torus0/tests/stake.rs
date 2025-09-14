@@ -6,29 +6,19 @@ use polkadot_sdk::frame_support::{
     traits::{Currency, NamedReservableCurrency},
 };
 use test_utils::{
-    Balances, Permission0, Test, as_tors, assert_ok, get_origin, pallet_governance,
+    Balances, Permission0, Test, account, as_tors, assert_ok, get_origin, pallet_governance,
     pallet_permission0,
 };
 
 #[test]
 fn add_stake_correctly() {
     test_utils::new_test_ext().execute_with(|| {
-        let from = 0;
-        let to = 1;
         let stake_to_add = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add * 2;
         let balance_after = stake_to_add;
 
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            to,
-            "to".as_bytes().to_vec(),
-            "to://idk".as_bytes().to_vec(),
-            "idk".as_bytes().to_vec()
-        ));
-
-        let _ = Balances::deposit_creating(&from, total_balance);
+        let from = account!(id = 0, bal = total_balance);
+        let to = account!(id = 1, agent = "bob", whitelist);
 
         assert_eq!(Balances::total_balance(&from), total_balance);
         assert_eq!(Balances::total_balance(&to), 0);
@@ -55,35 +45,13 @@ fn add_stake_correctly() {
 #[test]
 fn transfer_stake_correctly() {
     test_utils::new_test_ext().execute_with(|| {
-        let staker = 0;
-        let old_staked = 1;
-        let new_staked = 2;
         let stake_to_add = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add * 2;
         let balance_after = stake_to_add;
 
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            old_staked
-        ));
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            new_staked
-        ));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            old_staked,
-            "to".as_bytes().to_vec(),
-            "to://idk".as_bytes().to_vec(),
-            "idk".as_bytes().to_vec()
-        ));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            new_staked,
-            "transfer".as_bytes().to_vec(),
-            "transfer://idk".as_bytes().to_vec(),
-            "idk".as_bytes().to_vec()
-        ));
-
-        let _ = Balances::deposit_creating(&staker, total_balance);
+        let staker = account!(id = 0, bal = total_balance);
+        let old_staked = account!(id = 1, agent = "bob", whitelist);
+        let new_staked = account!(id = 2, agent = "charlie", whitelist);
 
         assert_eq!(Balances::total_balance(&staker), total_balance);
         assert_eq!(Balances::total_balance(&old_staked), 0);
@@ -144,12 +112,11 @@ fn transfer_stake_correctly() {
 #[test]
 fn add_stake_without_registering_the_agent() {
     test_utils::new_test_ext().execute_with(|| {
-        let from = 0;
-        let to = 1;
         let stake_to_add = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add * 2;
 
-        let _ = Balances::deposit_creating(&from, total_balance);
+        let from = account!(id = 0, bal = total_balance);
+        let to = account!(id = 1);
 
         assert_eq!(Balances::total_balance(&from), total_balance);
         assert_eq!(Balances::total_balance(&to), 0);
@@ -169,12 +136,11 @@ fn add_stake_without_registering_the_agent() {
 #[test]
 fn add_stake_without_the_minimum_stake() {
     test_utils::new_test_ext().execute_with(|| {
-        let from = 0;
-        let to = 1;
         let stake_to_add = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add * 2;
 
-        let _ = Balances::deposit_creating(&from, total_balance);
+        let from = account!(id = 0, bal = total_balance);
+        let to = account!(id = 1, agent = "bob", whitelist);
 
         assert_eq!(Balances::total_balance(&from), total_balance);
         assert_eq!(Balances::total_balance(&to), 0);
@@ -194,21 +160,11 @@ fn add_stake_without_the_minimum_stake() {
 #[test]
 fn remove_stake_correctly() {
     test_utils::new_test_ext().execute_with(|| {
-        let from = 0;
-        let to = 1;
         let stake_to_add_and_remove = MinAllowedStake::<Test>::get();
         let total_balance = stake_to_add_and_remove * 2;
 
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            to,
-            "to".as_bytes().to_vec(),
-            "to://idk".as_bytes().to_vec(),
-            "idk".as_bytes().to_vec()
-        ));
-
-        let _ = Balances::deposit_creating(&from, total_balance);
+        let from = account!(id = 0, bal = total_balance);
+        let to = account!(id = 1, agent = "bob", whitelist);
         assert_eq!(Balances::total_balance(&to), 0);
 
         assert_ok!(pallet_torus0::Pallet::<Test>::add_stake(
@@ -241,21 +197,11 @@ fn remove_stake_correctly() {
 #[test]
 fn remove_stake_with_deregistered_agent() {
     test_utils::new_test_ext().execute_with(|| {
-        let from = 0;
-        let to = 1;
-
         let stake = as_tors(500);
         let total_balance = stake * 2;
 
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(to));
-        assert_ok!(pallet_torus0::Pallet::<Test>::register_agent(
-            get_origin(to),
-            b"to".to_vec(),
-            b"to://idk".to_vec(),
-            b"idk".to_vec()
-        ));
-
-        let _ = Balances::deposit_creating(&from, total_balance);
+        let from = account!(id = 0, bal = total_balance);
+        let to = account!(id = 1, agent = "bob", whitelist);
 
         assert_eq!(Balances::total_balance(&from), total_balance);
         assert_eq!(Balances::total_balance(&to), 0);
@@ -293,55 +239,14 @@ fn remove_stake_with_deregistered_agent() {
 #[test]
 fn exclusive_wallet_permission_blocks_stake_operations() {
     test_utils::new_test_ext().execute_with(|| {
-        let staker = 0;
-        let validator1 = 1;
-        let validator2 = 2;
-        let recipient = 3;
         let stake_amount = MinAllowedStake::<Test>::get();
         let total_balance = stake_amount * 3;
 
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            validator1
-        ));
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            validator2
-        ));
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            staker
-        ));
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            recipient
-        ));
+        let staker = account!(id = 0, agent = "alice", bal = total_balance);
+        let validator1 = account!(id = 1, agent = "bob", whitelist);
+        let validator2 = account!(id = 2, agent = "charlie", whitelist);
+        let recipient = account!(id = 3, agent = "dave", whitelist);
 
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            validator1,
-            "validator1".as_bytes().to_vec(),
-            "val1://url".as_bytes().to_vec(),
-            "meta1".as_bytes().to_vec()
-        ));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            validator2,
-            "validator2".as_bytes().to_vec(),
-            "val2://url".as_bytes().to_vec(),
-            "meta2".as_bytes().to_vec()
-        ));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            staker,
-            "staker".as_bytes().to_vec(),
-            "staker://url".as_bytes().to_vec(),
-            "meta".as_bytes().to_vec()
-        ));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            recipient,
-            "recipient".as_bytes().to_vec(),
-            "recipient://url".as_bytes().to_vec(),
-            "meta".as_bytes().to_vec()
-        ));
-
-        let _ = Balances::deposit_creating(&staker, total_balance);
         assert_ok!(pallet_torus0::Pallet::<Test>::add_stake(
             get_origin(staker),
             validator1,
@@ -389,56 +294,14 @@ fn exclusive_wallet_permission_blocks_stake_operations() {
 #[test]
 fn non_exclusive_wallet_permission_allows_stake_operations() {
     test_utils::new_test_ext().execute_with(|| {
-        let staker = 0;
-        let validator1 = 1;
-        let validator2 = 2;
-        let recipient = 3;
         let stake_amount = MinAllowedStake::<Test>::get();
         let total_balance = stake_amount * 3;
 
-        // Setup agents
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            validator1
-        ));
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            validator2
-        ));
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            staker
-        ));
-        assert_ok!(pallet_governance::whitelist::add_to_whitelist::<Test>(
-            recipient
-        ));
+        let staker = account!(id = 0, agent = "alice", bal = total_balance);
+        let validator1 = account!(id = 1, agent = "bob", whitelist);
+        let validator2 = account!(id = 2, agent = "charlie", whitelist);
+        let recipient = account!(id = 3, agent = "dave", whitelist);
 
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            validator1,
-            "validator1".as_bytes().to_vec(),
-            "val1://url".as_bytes().to_vec(),
-            "meta1".as_bytes().to_vec()
-        ));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            validator2,
-            "validator2".as_bytes().to_vec(),
-            "val2://url".as_bytes().to_vec(),
-            "meta2".as_bytes().to_vec()
-        ));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            staker,
-            "staker".as_bytes().to_vec(),
-            "staker://url".as_bytes().to_vec(),
-            "meta".as_bytes().to_vec()
-        ));
-
-        assert_ok!(pallet_torus0::agent::register::<Test>(
-            recipient,
-            "recipient".as_bytes().to_vec(),
-            "recipient://url".as_bytes().to_vec(),
-            "meta".as_bytes().to_vec()
-        ));
-
-        let _ = Balances::deposit_creating(&staker, total_balance);
         assert_ok!(pallet_torus0::Pallet::<Test>::add_stake(
             get_origin(staker),
             validator1,

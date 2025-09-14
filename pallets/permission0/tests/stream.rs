@@ -47,13 +47,9 @@ fn get_last_delegated_permission_id(delegator: AccountId) -> pallet_permission0:
 fn stream_fails_if_overflow() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -94,13 +90,9 @@ fn stream_fails_if_overflow() {
 fn stream_creates() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -140,13 +132,8 @@ fn stream_manual_executes() {
         let min_stake = MinAllowedStake::<Test>::get();
         MinValidatorStake::<Test>::set(min_stake);
 
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
-
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = account!(id = 1, agent = "bob");
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -261,16 +248,10 @@ fn set_emissions_params() -> (u128, Percent) {
 fn random_cannot_change_permission() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let agent_2 = charlie();
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -316,13 +297,9 @@ fn random_cannot_change_permission() {
 fn delegator_cannot_change_irrevocable_permission() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -371,19 +348,11 @@ fn delegator_cannot_change_irrevocable_permission() {
 fn delegator_cannot_change_arbiter_permission() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let agent_3 = 3;
-        register_empty_agent(agent_3);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let agent_2 = charlie();
+        let agent_3 = dave();
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -435,19 +404,10 @@ fn delegator_cannot_change_arbiter_permission() {
 fn delegator_cannot_change_permission_before_block() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let agent_3 = 3;
-        register_empty_agent(agent_3);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let agent_2 = charlie();
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -513,19 +473,10 @@ fn delegator_cannot_change_permission_before_block() {
 fn recipient_can_only_change_recipients() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let agent_3 = 3;
-        register_empty_agent(agent_3);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let agent_2 = charlie();
 
         let stream_id = generate_root_stream_id(&agent_0);
 
@@ -592,19 +543,9 @@ fn recipient_can_only_change_recipients() {
 fn updating_works() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let agent_3 = 3;
-        register_empty_agent(agent_3);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
 
         let stream = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();
@@ -687,19 +628,10 @@ fn updating_works() {
 fn recipient_revocation_removes_single_recipient_from_multiple() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let agent_3 = 3;
-        register_empty_agent(agent_3);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let agent_2 = charlie();
 
         let stream_id = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();
@@ -776,13 +708,9 @@ fn recipient_revocation_removes_single_recipient_from_multiple() {
 fn recipient_revocation_deletes_permission_when_single_recipient() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
 
         let stream_id = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();
@@ -827,19 +755,11 @@ fn recipient_revocation_deletes_permission_when_single_recipient() {
 fn weight_setter_can_only_modify_weights_not_keys() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let weight_setter = 3;
-        register_empty_agent(weight_setter);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let agent_2 = charlie();
+        let weight_setter = dave();
 
         let stream_id = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();
@@ -895,8 +815,8 @@ fn weight_setter_can_only_modify_weights_not_keys() {
         assert_eq!(*scope.recipients.get(&agent_2).unwrap(), (u16::MAX / 4) * 3);
 
         // Weight setter CANNOT add new recipients (changing keys)
-        let agent_3 = 4;
-        register_empty_agent(agent_3);
+        let agent_3 = eve();
+
         let mut new_recipients = BoundedBTreeMap::new();
         new_recipients.try_insert(agent_1, u16::MAX / 3).unwrap();
         new_recipients.try_insert(agent_3, u16::MAX / 3).unwrap(); // New key
@@ -952,19 +872,11 @@ fn weight_setter_can_only_modify_weights_not_keys() {
 fn recipient_manager_can_modify_keys_and_weights() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let recipient_manager = 3;
-        register_empty_agent(recipient_manager);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let agent_2 = charlie();
+        let recipient_manager = dave();
 
         let stream_id = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();
@@ -1068,19 +980,11 @@ fn recipient_manager_can_modify_keys_and_weights() {
 fn manager_modifications_only_allowed_after_revocable_period() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let recipient_manager = 3;
-        register_empty_agent(recipient_manager);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let agent_2 = charlie();
+        let recipient_manager = dave();
 
         let stream_id = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();
@@ -1152,19 +1056,11 @@ fn manager_modifications_only_allowed_after_revocable_period() {
 fn delegator_can_assign_and_remove_managers() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let weight_setter = 2;
-        register_empty_agent(weight_setter);
-
-        let recipient_manager = 3;
-        register_empty_agent(recipient_manager);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let recipient_manager = dave();
+        let weight_setter = eve();
 
         let stream_id = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();
@@ -1267,22 +1163,12 @@ fn delegator_can_assign_and_remove_managers() {
 fn index_consistency_during_complex_recipient_updates() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let agent_3 = 3;
-        register_empty_agent(agent_3);
-
-        let agent_4 = 4;
-        register_empty_agent(agent_4);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = bob();
+        let agent_2 = charlie();
+        let agent_3 = dave();
+        let agent_4 = eve();
 
         let stream_id = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();
@@ -1402,10 +1288,8 @@ fn index_consistency_during_complex_recipient_updates() {
 fn cannot_create_empty_recipients_for_irrevocable_permissions() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = alice();
 
         let stream_id = generate_root_stream_id(&agent_0);
         let mut streams = BTreeMap::new();

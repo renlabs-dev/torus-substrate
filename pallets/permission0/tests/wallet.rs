@@ -13,15 +13,9 @@ pub fn new_test_ext() -> polkadot_sdk::sp_io::TestExternalities {
 fn setup_agents_with_stake() -> (AccountId, AccountId, AccountId) {
     zero_min_burn();
 
-    let staker = 1;
-    let validator1 = 2;
-    let validator2 = 3;
-
-    register_empty_agent(staker);
-    register_empty_agent(validator1);
-    register_empty_agent(validator2);
-
-    add_balance(staker, as_tors(1000));
+    let staker = alice();
+    let validator1 = account!(id = 1, agent = "bob", bal = 0, allocator);
+    let validator2 = account!(id = 2, agent = "charlie", bal = 0, allocator);
 
     assert_ok!(Torus0::add_stake(
         RuntimeOrigin::signed(staker),
@@ -60,8 +54,7 @@ fn get_last_delegated_permission_id(delegator: AccountId) -> PermissionId {
 fn basic_stake_permission_delegation() {
     new_test_ext().execute_with(|| {
         let (staker, _, _) = setup_agents_with_stake();
-        let recipient = 10;
-        register_empty_agent(recipient);
+        let recipient = dave();
 
         assert_err!(
             Permission0::delegate_wallet_stake_permission(
@@ -111,10 +104,8 @@ fn basic_stake_permission_delegation() {
 fn exclusive_permission_blocks_new_delegations() {
     new_test_ext().execute_with(|| {
         let (staker, _, _) = setup_agents_with_stake();
-        let recipient1 = 10;
-        let recipient2 = 11;
-        register_empty_agent(recipient1);
-        register_empty_agent(recipient2);
+        let recipient1 = dave();
+        let recipient2 = eve();
 
         assert_ok!(Permission0::delegate_wallet_stake_permission(
             RuntimeOrigin::signed(staker),
@@ -147,10 +138,8 @@ fn exclusive_permission_blocks_new_delegations() {
 fn cannot_delegate_exclusive_after_non_exclusive() {
     new_test_ext().execute_with(|| {
         let (staker, _, _) = setup_agents_with_stake();
-        let recipient1 = 10;
-        let recipient2 = 11;
-        register_empty_agent(recipient1);
-        register_empty_agent(recipient2);
+        let recipient1 = dave();
+        let recipient2 = eve();
 
         assert_ok!(Permission0::delegate_wallet_stake_permission(
             RuntimeOrigin::signed(staker),
@@ -183,10 +172,8 @@ fn cannot_delegate_exclusive_after_non_exclusive() {
 fn multiple_non_exclusive_permissions_allowed() {
     new_test_ext().execute_with(|| {
         let (staker, _, _) = setup_agents_with_stake();
-        let recipient1 = 10;
-        let recipient2 = 11;
-        register_empty_agent(recipient1);
-        register_empty_agent(recipient2);
+        let recipient1 = dave();
+        let recipient2 = eve();
 
         // Delegate first non-exclusive stake permission
         assert_ok!(Permission0::delegate_wallet_stake_permission(
@@ -226,8 +213,7 @@ fn multiple_non_exclusive_permissions_allowed() {
 fn unstake_operation_through_permission() {
     new_test_ext().execute_with(|| {
         let (staker, validator, _) = setup_agents_with_stake();
-        let recipient = 10;
-        register_empty_agent(recipient);
+        let recipient = dave();
 
         assert_ok!(Permission0::delegate_wallet_stake_permission(
             RuntimeOrigin::signed(staker),
@@ -260,8 +246,7 @@ fn unstake_operation_through_permission() {
 fn transfer_stake_operation_requires_permission() {
     new_test_ext().execute_with(|| {
         let (staker, validator1, validator2) = setup_agents_with_stake();
-        let recipient = 10;
-        register_empty_agent(recipient);
+        let recipient = dave();
 
         assert_ok!(Permission0::delegate_wallet_stake_permission(
             RuntimeOrigin::signed(staker),
@@ -316,8 +301,7 @@ fn transfer_stake_operation_requires_permission() {
 fn transfer_stake_with_permission() {
     new_test_ext().execute_with(|| {
         let (staker, validator1, validator2) = setup_agents_with_stake();
-        let recipient = 10;
-        register_empty_agent(recipient);
+        let recipient = dave();
 
         assert_ok!(Permission0::delegate_wallet_stake_permission(
             RuntimeOrigin::signed(staker),
@@ -353,10 +337,8 @@ fn transfer_stake_with_permission() {
 fn only_recipient_can_execute_permission() {
     new_test_ext().execute_with(|| {
         let (staker, validator, _) = setup_agents_with_stake();
-        let recipient = 10;
-        let other_user = 11;
-        register_empty_agent(recipient);
-        register_empty_agent(other_user);
+        let recipient = dave();
+        let other_user = eve();
 
         // Delegate stake permission
         assert_ok!(Permission0::delegate_wallet_stake_permission(
@@ -401,8 +383,7 @@ fn only_recipient_can_execute_permission() {
 fn permission_not_found_error() {
     new_test_ext().execute_with(|| {
         let (_, validator, _) = setup_agents_with_stake();
-        let recipient = 10;
-        register_empty_agent(recipient);
+        let recipient = dave();
 
         let invalid_permission_id = [1u8; 32].into();
 
@@ -424,8 +405,7 @@ fn permission_not_found_error() {
 fn revoke_wallet_permission() {
     new_test_ext().execute_with(|| {
         let (staker, validator, _) = setup_agents_with_stake();
-        let recipient = 10;
-        register_empty_agent(recipient);
+        let recipient = dave();
 
         // Delegate stake permission
         assert_ok!(Permission0::delegate_wallet_stake_permission(

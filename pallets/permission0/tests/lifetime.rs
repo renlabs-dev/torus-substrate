@@ -6,16 +6,10 @@ use test_utils::*;
 fn manual_cant_execute_when_expires() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = alice();
+        let agent_1 = bob();
+        let agent_2 = charlie();
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
@@ -40,16 +34,10 @@ fn manual_cant_execute_when_expires() {
 fn irrevocable() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = alice();
+        let agent_1 = bob();
+        let agent_2 = charlie();
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
@@ -85,19 +73,11 @@ fn irrevocable() {
 fn revocable_by_delegator() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        let agent_3 = 3;
-        register_empty_agent(agent_3);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = alice();
+        let agent_1 = bob();
+        let agent_2 = charlie();
+        let agent_3 = dave();
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
@@ -143,16 +123,10 @@ fn revocable_by_delegator() {
 fn revocable_after_block() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = alice();
+        let agent_1 = bob();
+        let agent_2 = charlie();
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
@@ -184,13 +158,9 @@ fn revocable_after_block() {
 fn revocable_by_arbiters() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = alice();
+        let agent_1 = bob();
 
         let delegate_invalid = |accounts: &[AccountId], required_votes| {
             delegate_stream_permission(

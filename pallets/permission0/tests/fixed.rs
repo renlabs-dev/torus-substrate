@@ -5,11 +5,9 @@ use test_utils::*;
 fn fixed_fails_without_balance() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
+        let agent_0 = account!(id = 0, agent = "alice");
+        let agent_1 = account!(id = 1, agent = "bob");
 
         assert_err!(
             delegate_stream_permission(
@@ -30,13 +28,9 @@ fn fixed_fails_without_balance() {
 fn fixed_creates() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = account!(id = 1, agent = "bob");
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
@@ -58,13 +52,9 @@ fn fixed_creates() {
 fn fixed_reserves() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = account!(id = 1, agent = "bob");
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
@@ -88,16 +78,10 @@ fn fixed_reserves() {
 fn fixed_manual_executes() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = account!(id = 1, agent = "bob");
+        let agent_2 = account!(id = 2, agent = "charlie");
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
@@ -133,16 +117,10 @@ fn fixed_manual_executes() {
 fn fixed_manual_executes_only_once() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = account!(id = 1, agent = "bob");
+        let agent_2 = account!(id = 2, agent = "charlie");
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
@@ -182,16 +160,10 @@ fn fixed_manual_executes_only_once() {
 fn fixed_at_block_executes() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_empty_agent(agent_0);
 
-        let agent_1 = 1;
-        register_empty_agent(agent_1);
-
-        let agent_2 = 2;
-        register_empty_agent(agent_2);
-
-        add_balance(agent_0, as_tors(10) + 1);
+        let agent_0 = account!(id = 0, agent = "alice", bal = as_tors(10) + 1);
+        let agent_1 = account!(id = 1, agent = "bob");
+        let agent_2 = account!(id = 2, agent = "charlie");
 
         let _ = assert_ok!(delegate_stream_permission(
             agent_0,
