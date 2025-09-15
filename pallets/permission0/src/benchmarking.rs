@@ -11,6 +11,7 @@ use crate::*;
 
 #[benchmarks]
 mod benchmarks {
+    use codec::alloc::string::ToString;
     use polkadot_sdk::{
         sp_core::TryCollect, sp_std::collections::btree_map::BTreeMap, sp_std::vec,
     };
@@ -386,6 +387,28 @@ mod benchmarks {
                 .expect("failed to register pollution namespace");
         }
 
+        let alice_n = &[
+            b"agent.alice.n.01",
+            b"agent.alice.n.02",
+            b"agent.alice.n.03",
+            b"agent.alice.n.04",
+            b"agent.alice.n.05",
+            b"agent.alice.n.06",
+            b"agent.alice.n.07",
+            b"agent.alice.n.08",
+            b"agent.alice.n.09",
+            b"agent.alice.n.10",
+            b"agent.alice.n.11",
+            b"agent.alice.n.12",
+            b"agent.alice.n.13",
+            b"agent.alice.n.14",
+            b"agent.alice.n.15",
+        ];
+        for namespace_bytes in alice_n {
+            T::Torus::force_register_namespace(&alice, namespace_bytes.to_vec())
+                .expect("failed to register pollution namespace");
+        }
+
         for namespace_bytes in [
             b"agent.bob.compute".to_vec(),
             b"agent.bob.compute.cpu".to_vec(),
@@ -408,6 +431,7 @@ mod benchmarks {
         alice_bob_set.insert(b"agent.alice.compute".to_vec().try_into().unwrap());
         alice_bob_set.insert(b"agent.alice.network".to_vec().try_into().unwrap());
         alice_bob_set.insert(b"agent.alice.storage".to_vec().try_into().unwrap());
+        alice_bob_set.insert(b"agent.alice.n".to_vec().try_into().unwrap());
         let alice_bob_set: BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission> =
             alice_bob_set
                 .try_into()
@@ -435,6 +459,7 @@ mod benchmarks {
         let mut bob_charlie_set: BTreeSet<NamespacePathInner> = BTreeSet::new();
         bob_charlie_set.insert(b"agent.alice.compute.gpu".to_vec().try_into().unwrap());
         bob_charlie_set.insert(b"agent.alice.network.subnet1".to_vec().try_into().unwrap());
+        bob_charlie_set.insert(b"agent.alice.n".to_vec().try_into().unwrap());
         let bob_charlie_set: BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission> =
             bob_charlie_set
                 .try_into()
@@ -458,6 +483,34 @@ mod benchmarks {
             15,
         )
         .expect("failed to create bob->charlie permission");
+
+        for (i, path) in alice_n.iter().enumerate() {
+            let acc: T::AccountId = account("acc", 100 + i as u32, 0);
+            let mut acc_name = "acc".to_string();
+            acc_name.push_str(&i.to_string());
+
+            T::Torus::force_register_agent(&acc, acc_name.as_bytes().to_vec(), vec![], vec![])
+                .expect("failed to register acc");
+
+            let mut set: BTreeSet<NamespacePathInner> = BTreeSet::new();
+            set.insert(path.to_vec().try_into().unwrap());
+            let set: BoundedBTreeSet<_, _> = set.try_into().expect("failed to create bounded set");
+
+            let mut paths: BoundedBTreeMap<_, _, _> = BoundedBTreeMap::new();
+            paths
+                .try_insert(Some(bob_permission_id), set)
+                .expect("failed to insert bob paths");
+
+            ext::namespace_impl::delegate_namespace_permission_impl::<T>(
+                RawOrigin::Signed(charlie.clone()).into(),
+                acc.clone(),
+                paths,
+                PermissionDuration::Indefinite,
+                RevocationTerms::RevocableByDelegator,
+                1,
+            )
+            .expect("failed to create bob->charlie permission");
+        }
 
         let mut charlie_dave_set: BTreeSet<NamespacePathInner> = BTreeSet::new();
         charlie_dave_set.insert(b"agent.alice.compute.gpu.h100".to_vec().try_into().unwrap());
