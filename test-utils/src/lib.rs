@@ -523,3 +523,68 @@ macro_rules! assert_in_range {
         );
     };
 }
+
+pub mod accounts {
+    use super::AccountId;
+    use crate as test_utils;
+
+    pub fn account_id(name: &str) -> AccountId {
+        match name {
+            "alice" => 0,
+            "bob" => 1,
+            "charlie" => 2,
+            "dave" => 3,
+            "eve" => 4,
+            "ferdie" => 5,
+            "grace" => 6,
+            _ => panic!(),
+        }
+    }
+
+    #[macro_export]
+    macro_rules! account {
+        ($account:ident$(, $($t:tt $(= $val:expr)?),+)?) => {
+            account!(id=account_id(stringify!($account))$(, $($t $(= $val)?),+)?)
+        };
+
+        (id=$id:expr$(, $($t:tt $(= $val:expr)?),+)?) => {{
+            $($(account!(mod id=$id, $t $(= $val)?);)+)?
+            $id
+        }};
+
+        (mod id=$id:expr, agent=$agent:expr) => {
+            let name = $agent.as_bytes().to_vec();
+            let path = test_utils::pallet_torus0::namespace::NamespacePath::new_agent_root(&name).unwrap();
+            let (fee, deposit) = test_utils::pallet_torus0::namespace::calculate_cost(
+                &test_utils::pallet_torus0::namespace::NamespaceOwnership::<test_utils::Test>::Account($id),
+                &[path]
+            ).unwrap();
+            let burn = test_utils::pallet_torus0::Burn::<test_utils::Test>::get();
+            test_utils::add_balance($id, fee.saturating_add(deposit).saturating_add(burn));
+            test_utils::Torus0::register_agent(
+                test_utils::get_origin($id), name.clone(), name.clone(), name.clone()
+            ).unwrap();
+        };
+        (mod id=$id:expr, allocator) => {
+            pallet_governance::Whitelist::<Test>::insert($id, ());
+        };
+        (mod id=$id:expr, whitelist) => {
+            pallet_governance::Whitelist::<Test>::insert($id, ());
+        };
+        (mod id=$id:expr, bal=$bal:expr) => {
+            test_utils::add_balance($id, $bal);
+        };
+    }
+
+    macro_rules! agent_fn {
+        ($($name:ident),*) => {
+            $(pub fn $name() -> AccountId {
+                account!($name, agent = stringify!($name), bal = crate::as_tors(1000))
+            })+
+        };
+    }
+
+    agent_fn!(alice, bob, charlie, dave, eve, ferdie, grace);
+}
+
+pub use accounts::*;

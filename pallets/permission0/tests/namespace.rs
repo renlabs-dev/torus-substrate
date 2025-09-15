@@ -125,8 +125,7 @@ fn register_namespace(id: AccountId, name: &[u8]) -> NamespacePathInner {
 fn is_delegating_namespace_returns_false_for_no_permissions() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let agent_0 = 0;
-        register_agent(agent_0);
+        let agent_0 = alice();
 
         let path = NamespacePath::new_agent(b"agent.alice.compute").unwrap();
         assert!(!<Pallet<Test> as Permission0NamespacesApi<
@@ -140,10 +139,9 @@ fn is_delegating_namespace_returns_false_for_no_permissions() {
 fn is_delegating_namespace_returns_true_for_exact_match() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
 
@@ -173,10 +171,9 @@ fn is_delegating_namespace_returns_true_for_exact_match() {
 fn is_delegating_namespace_returns_true_for_parent_child_relationship() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let bounded_parent = register_namespace(delegator, b"agent.alice.compute");
         let bounded_child = register_namespace(delegator, b"agent.alice.compute.gpu.h100");
@@ -209,10 +206,9 @@ fn is_delegating_namespace_returns_true_for_parent_child_relationship() {
 fn is_delegating_namespace_returns_true_for_child_parent_relationship() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let bounded_parent = register_namespace(delegator, b"agent.alice.compute");
 
@@ -244,10 +240,9 @@ fn is_delegating_namespace_returns_true_for_child_parent_relationship() {
 fn is_delegating_namespace_returns_false_for_unrelated_paths() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let bounded_compute = register_namespace(delegator, b"agent.alice.compute.gpu.h100");
 
@@ -279,12 +274,10 @@ fn is_delegating_namespace_returns_false_for_unrelated_paths() {
 fn is_delegating_namespace_handles_multiple_permissions() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient_1 = 1;
-        let recipient_2 = 2;
-        register_agent(delegator);
-        register_agent(recipient_1);
-        register_agent(recipient_2);
+
+        let delegator = alice();
+        let recipient_1 = bob();
+        let recipient_2 = charlie();
 
         let bounded_compute = register_namespace(delegator, b"agent.alice.compute");
         let bounded_storage = register_namespace(delegator, b"agent.alice.storage");
@@ -343,9 +336,9 @@ fn is_delegating_namespace_handles_multiple_permissions() {
 fn delegate_namespace_permission_fails_for_unregistered_delegator() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
+
         let unregistered_delegator = 0;
-        let recipient = 1;
-        register_agent(recipient);
+        let recipient = bob();
 
         let namespace_path = b"agent.alice.compute".to_vec();
         let bounded_namespace: NamespacePathInner = namespace_path.try_into().unwrap();
@@ -372,9 +365,9 @@ fn delegate_namespace_permission_fails_for_unregistered_delegator() {
 fn delegate_namespace_permission_fails_for_unregistered_recipient() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
+
+        let delegator = alice();
         let unregistered_recipient = 1;
-        register_agent(delegator);
 
         let namespace_path = b"agent.alice.compute".to_vec();
         let bounded_namespace: NamespacePathInner = namespace_path.try_into().unwrap();
@@ -401,10 +394,9 @@ fn delegate_namespace_permission_fails_for_unregistered_recipient() {
 fn delegate_namespace_permission_fails_for_nonexistent_namespace() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let nonexistent_namespace = b"agent.alice.nonexistent".to_vec();
         let bounded_namespace: NamespacePathInner = nonexistent_namespace.try_into().unwrap();
@@ -431,10 +423,9 @@ fn delegate_namespace_permission_fails_for_nonexistent_namespace() {
 fn delegate_namespace_permission_fails_for_invalid_namespace_path() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let invalid_namespace = b"invalid.path".to_vec();
         let bounded_namespace: NamespacePathInner = invalid_namespace.try_into().unwrap();
@@ -461,10 +452,9 @@ fn delegate_namespace_permission_fails_for_invalid_namespace_path() {
 fn delegate_namespace_permission_creates_permission_successfully() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
 
@@ -494,10 +484,9 @@ fn delegate_namespace_permission_creates_permission_successfully() {
 fn delegate_namespace_permission_handles_multiple_paths() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let bounded_compute = register_namespace(delegator, b"agent.alice.compute");
         let bounded_storage = register_namespace(delegator, b"agent.alice.storage");
@@ -531,10 +520,9 @@ fn delegate_namespace_permission_handles_multiple_paths() {
 fn delegate_namespace_permission_creates_correct_scope() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
 
@@ -576,8 +564,8 @@ fn delegate_namespace_permission_creates_correct_scope() {
 fn delegate_namespace_permission_fails_with_multiple_parent_permissions() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        register_agent(delegator);
+
+        let delegator = alice();
 
         let bounded_gpu = register_namespace(delegator, b"agent.alice.compute.gpu");
         let bounded_ssd = register_namespace(delegator, b"agent.alice.storage.ssd");
@@ -613,8 +601,8 @@ fn delegate_namespace_permission_fails_with_multiple_parent_permissions() {
 fn delegate_namespace_permission_fails_with_too_many_total_namespaces_across_parents() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        register_agent(delegator);
+
+        let delegator = alice();
 
         let mut parent_namespace_set = BoundedBTreeSet::new();
         for i in 0..6 {
@@ -669,10 +657,9 @@ fn delegate_namespace_permission_fails_with_too_many_total_namespaces_across_par
 fn delegate_namespace_permission_fails_with_nonexistent_parent_permission() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
         let mut namespace_set = BoundedBTreeSet::new();
@@ -702,12 +689,10 @@ fn delegate_namespace_permission_fails_with_nonexistent_parent_permission() {
 fn delegate_namespace_permission_fails_when_delegator_not_recipient_of_parent() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let original_delegator = 0;
-        let wrong_delegator = 1;
-        let recipient = 2;
-        register_agent(original_delegator);
-        register_agent(wrong_delegator);
-        register_agent(recipient);
+
+        let original_delegator = alice();
+        let wrong_delegator = bob();
+        let recipient = charlie();
 
         // Create parent permission
         let bounded_namespace = register_namespace(original_delegator, b"agent.alice.compute");
@@ -753,10 +738,9 @@ fn delegate_namespace_permission_fails_when_delegator_not_recipient_of_parent() 
 fn delegate_namespace_permission_fails_when_parent_has_wrong_scope() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        register_agent(delegator);
-        register_agent(recipient);
+
+        let delegator = alice();
+        let recipient = bob();
 
         // Create a curator permission (non-namespace scope)
         delegate_curator_permission(recipient, CuratorPermissions::all(), None);
@@ -789,12 +773,10 @@ fn delegate_namespace_permission_fails_when_parent_has_wrong_scope() {
 fn delegate_namespace_permission_fails_when_exceeding_available_instances() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        let final_recipient = 2;
-        register_agent(delegator);
-        register_agent(recipient);
-        register_agent(final_recipient);
+
+        let delegator = alice();
+        let recipient = bob();
+        let final_recipient = charlie();
 
         // Create parent permission with limited instances
         let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
@@ -840,12 +822,10 @@ fn delegate_namespace_permission_fails_when_exceeding_available_instances() {
 fn permission_contract_available_instances_reduces_with_children() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        let final_recipient = 2;
-        register_agent(delegator);
-        register_agent(recipient);
-        register_agent(final_recipient);
+
+        let delegator = alice();
+        let recipient = bob();
+        let final_recipient = charlie();
 
         // Create parent permission with 5 instances
         let bounded_namespace = register_namespace(delegator, b"agent.alice.compute");
@@ -896,13 +876,10 @@ fn permission_contract_available_instances_reduces_with_children() {
 fn delegate_granular_namespace_from_parent_permission_succeeds() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
-        let charlie = 2;
 
-        register_agent(alice);
-        register_agent(bob);
-        register_agent(charlie);
+        let alice = alice();
+        let bob = bob();
+        let charlie = charlie();
 
         let parent_compute = register_namespace(alice, b"agent.alice.compute");
         let granular_gpu = register_namespace(alice, b"agent.alice.compute.gpu");
@@ -976,11 +953,9 @@ fn delegate_granular_namespace_from_parent_permission_succeeds() {
 fn delegate_granular_namespace_fails_when_granular_namespace_does_not_exist() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
 
-        register_agent(alice);
-        register_agent(bob);
+        let alice = alice();
+        let bob = bob();
 
         let parent_compute = register_namespace(alice, b"agent.alice.compute");
         // Note: We do NOT create agent.alice.compute.gpu namespace
@@ -1029,11 +1004,9 @@ fn delegate_granular_namespace_fails_when_granular_namespace_does_not_exist() {
 fn delegate_namespace_fails_when_child_not_granular_of_parent() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
 
-        register_agent(alice);
-        register_agent(bob);
+        let alice = alice();
+        let bob = bob();
 
         // Alice creates compute namespace and unrelated storage namespace
         let parent_compute = register_namespace(alice, b"agent.alice.compute");
@@ -1082,11 +1055,9 @@ fn delegate_namespace_fails_when_child_not_granular_of_parent() {
 fn delegate_namespace_succeeds_with_exact_match_from_parent() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
 
-        register_agent(alice);
-        register_agent(bob);
+        let alice = alice();
+        let bob = bob();
 
         // Alice creates namespace
         let compute_gpu = register_namespace(alice, b"agent.alice.compute.gpu");
@@ -1136,18 +1107,12 @@ fn delegate_namespace_succeeds_with_exact_match_from_parent() {
 fn revoke_namespace_permission_cascades_through_multiple_levels() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
-        let charlie = 2;
-        let dave = 3;
-        let eve = 4;
 
-        // Register all agents
-        register_agent(alice);
-        register_agent(bob);
-        register_agent(charlie);
-        register_agent(dave);
-        register_agent(eve);
+        let alice = alice();
+        let bob = bob();
+        let charlie = charlie();
+        let dave = dave();
+        let eve = eve();
 
         // Create hierarchical namespaces
         let level1_compute = register_namespace(alice, b"agent.alice.compute");
@@ -1328,15 +1293,11 @@ fn revoke_namespace_permission_cascades_through_multiple_levels() {
 fn revoke_middle_permission_cascades_to_children_only() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
-        let charlie = 2;
-        let dave = 3;
 
-        register_agent(alice);
-        register_agent(bob);
-        register_agent(charlie);
-        register_agent(dave);
+        let alice = alice();
+        let bob = bob();
+        let charlie = charlie();
+        let dave = dave();
 
         let level1 = register_namespace(alice, b"agent.alice.compute");
         let level2 = register_namespace(alice, b"agent.alice.compute.gpu");
@@ -1523,17 +1484,12 @@ fn revocation_terms_is_weaker_function_tests() {
 fn delegate_namespace_permission_requires_weaker_revocation_terms() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
-        let charlie = 2;
-        let dave = 3;
-        let eve = 4;
 
-        register_agent(alice);
-        register_agent(bob);
-        register_agent(charlie);
-        register_agent(dave);
-        register_agent(eve);
+        let alice = alice();
+        let bob = bob();
+        let charlie = charlie();
+        let dave = dave();
+        let eve = eve();
 
         let compute_namespace = register_namespace(alice, b"agent.alice.compute");
         let gpu_namespace = register_namespace(alice, b"agent.alice.compute.gpu");
@@ -1599,11 +1555,9 @@ fn delegate_namespace_permission_requires_weaker_revocation_terms() {
 fn delegate_namespace_permission_irrevocable_parent_allows_revocable_after() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
 
-        register_agent(alice);
-        register_agent(bob);
+        let alice = alice();
+        let bob = bob();
 
         let alice_paths = paths_map!(None => [register_namespace(alice, b"agent.alice.compute")]);
         assert_ok!(Permission0::delegate_namespace_permission(
@@ -1690,12 +1644,10 @@ fn delegate_namespace_permission_fails_when_exceeding_depth_limit() {
 fn update_namespace_permission_basic_validations() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        let not_delegator = 2;
-        register_agent(delegator);
-        register_agent(recipient);
-        register_agent(not_delegator);
+
+        let delegator = alice();
+        let recipient = bob();
+        let not_delegator = charlie();
 
         let non_existent_id = PermissionId::from([0xFF; 32]);
         assert_err!(
@@ -1735,12 +1687,10 @@ fn update_namespace_permission_basic_validations() {
 fn update_namespace_permission_larger_instances() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient_1 = 1;
-        let recipient_2 = 2;
-        register_agent(delegator);
-        register_agent(recipient_1);
-        register_agent(recipient_2);
+
+        let delegator = alice();
+        let recipient_1 = bob();
+        let recipient_2 = charlie();
 
         let paths_1 = paths_map!(None => [register_namespace(delegator, b"agent.alice.compute")]);
 
@@ -1820,12 +1770,10 @@ fn update_namespace_permission_larger_instances() {
 fn update_namespace_permission_smaller_instances() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let delegator = 0;
-        let recipient = 1;
-        let child_recipient = 2;
-        register_agent(delegator);
-        register_agent(recipient);
-        register_agent(child_recipient);
+
+        let delegator = alice();
+        let recipient = bob();
+        let child_recipient = charlie();
 
         let revocable_after_block = 100;
         let paths = paths_map!(None => [register_namespace(delegator, b"agent.alice.compute")]);
@@ -1931,15 +1879,11 @@ fn update_namespace_permission_smaller_instances() {
 fn bulk_delegate_namespace_permission_fails_when_redelegation_exceeds_parent_instances() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
-        let charlie = 2;
-        let dave = 3;
 
-        register_agent(alice);
-        register_agent(bob);
-        register_agent(charlie);
-        register_agent(dave);
+        let alice = alice();
+        let bob = bob();
+        let charlie = charlie();
+        let dave = dave();
 
         // Alice creates a namespace and delegates to Bob with 3 instances
         let namespace = register_namespace(alice, b"agent.alice.compute");
@@ -2001,15 +1945,11 @@ fn bulk_delegate_namespace_permission_fails_when_redelegation_exceeds_parent_ins
 fn bulk_delegate_namespace_permission_succeeds_within_parent_instance_limit() {
     new_test_ext().execute_with(|| {
         zero_min_burn();
-        let alice = 0;
-        let bob = 1;
-        let charlie = 2;
-        let dave = 3;
 
-        register_agent(alice);
-        register_agent(bob);
-        register_agent(charlie);
-        register_agent(dave);
+        let alice = alice();
+        let bob = bob();
+        let charlie = charlie();
+        let dave = dave();
 
         // Alice creates a namespace and delegates to Bob with 4 instances
         let namespace = register_namespace(alice, b"agent.alice.compute");
