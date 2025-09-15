@@ -3,6 +3,7 @@ use pallet_torus0_api::NamespacePath;
 use polkadot_sdk::{
     frame_support::{CloneNoBound, DebugNoBound, dispatch::DispatchResult},
     sp_runtime::{BoundedBTreeMap, BoundedBTreeSet},
+    sp_std::vec::Vec,
 };
 use scale_info::TypeInfo;
 
@@ -28,13 +29,36 @@ pub struct NamespaceScope<T: Config> {
 }
 
 impl<T: Config> NamespaceScope<T> {
+    fn redelegated_paths(
+        &self,
+        this_id: PermissionId,
+    ) -> impl Iterator<Item = (NamespacePath, u32)> {
+        self.children
+            .iter()
+            .filter_map(|c| {
+                if let PermissionScope::Namespace(scope) = Permissions::<T>::get(c)?.scope {
+                    Some(scope)
+                } else {
+                    None
+                }
+            })
+            .flat_map(move |scope| {
+                scope
+                    .paths
+                    .into_iter()
+                    .filter(move |(pid, _)| pid.as_ref().is_some_and(|pid| pid == &this_id))
+                    .flat_map(|(_, paths)| paths)
+                    .map(move |path| (path, scope.max_instances))
+            })
+    }
+
     /// Checks that the provided paths are allowed to be delegated.
     /// This is true if enough instances are available and unused by
-    /// sibilings.
+    /// siblings.
     ///
     /// Given a subpath, an instance is used if any parent or child
-    /// paths from that subpath were delegated to a sibiling permission.
-    /// Sibiling subpaths do not consume an instance relative to this
+    /// paths from that subpath were delegated to a sibling permission.
+    /// sibling subpaths do not consume an instance relative to this
     /// subpath.
     pub(crate) fn check_available_instances<'a>(
         &self,
@@ -42,35 +66,20 @@ impl<T: Config> NamespaceScope<T> {
         other: impl Iterator<Item = &'a NamespacePath>,
         instances: u32,
     ) -> DispatchResult {
-        let mut sibiling_paths = self
-            .children
-            .iter()
-            .filter_map(|c| {
-                if let PermissionScope::Namespace(sibiling) = Permissions::<T>::get(c)?.scope {
-                    Some(sibiling)
-                } else {
-                    None
-                }
-            })
-            .flat_map(|sibiling| {
-                sibiling
-                    .paths
-                    .into_iter()
-                    .filter(|(pid, _)| pid.as_ref().is_some_and(|pid| pid == &this_id))
-                    .flat_map(|(_, paths)| paths)
-                    .map(move |path| (path, sibiling.max_instances))
-            })
-            .collect::<polkadot_sdk::sp_std::vec::Vec<_>>();
+        let mut redelegated_paths: Vec<_> = self.redelegated_paths(this_id).collect();
 
         for other in other {
-            let mut used_instances = 0u32;
+            let mut available_instances = self.max_instances;
 
-            for (sibiling_path, max_instances) in &sibiling_paths {
-                if sibiling_path == other
-                    || sibiling_path.is_parent_of(other)
-                    || other.is_parent_of(sibiling_path)
+            for (redelegated_path, max_instances) in &redelegated_paths {
+                if redelegated_path == other
+                    || redelegated_path.is_parent_of(other)
+                    || other.is_parent_of(redelegated_path)
                 {
-                    used_instances = used_instances.saturating_add(*max_instances);
+                    available_instances = available_instances.saturating_sub(*max_instances);
+                    if available_instances < instances {
+                        return Err(Error::<T>::NotEnoughInstances.into());
+                    }
                 }
             }
 
@@ -80,18 +89,37 @@ impl<T: Config> NamespaceScope<T> {
             // account for these entries when calculating available
             // instances for the next entries (.compute consume
             // an instance used by .compute.gpu). To solve this
-            // in a single call, we add it to the sibiling path
+            // in a single call, we add it to the sibling path
             // list: the next entry will iterate this path as well.
             //
-            // Earlier paths are sibilings to later paths.
-            sibiling_paths.push((other.clone(), instances));
+            // Earlier paths are siblings to later paths.
+            redelegated_paths.push((other.clone(), instances));
 
-            if self.max_instances.saturating_sub(used_instances) < instances {
+            if available_instances < instances {
                 return Err(Error::<T>::NotEnoughInstances.into());
             }
         }
 
         Ok(())
+    }
+
+    /// Count the number of available instances for a given path.
+    pub fn available_instances(&self, this_id: PermissionId, path: &NamespacePath) -> u32 {
+        let mut available_instances = self.max_instances;
+
+        for (redelegated_path, max_instances) in self.redelegated_paths(this_id) {
+            if &redelegated_path == path
+                || redelegated_path.is_parent_of(path)
+                || path.is_parent_of(&redelegated_path)
+            {
+                available_instances = available_instances.saturating_sub(max_instances);
+                if available_instances == 0 {
+                    return 0;
+                }
+            }
+        }
+
+        available_instances
     }
 
     /// Cleanup operations when permission is revoked or expired

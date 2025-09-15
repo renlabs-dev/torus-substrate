@@ -192,5 +192,8 @@ polkadot_sdk::sp_api::decl_runtime_apis! {
         /// The root stream ID is assigned by the system when emitting
         /// tokens from the STAKE as rewards.
         fn root_stream_id_for_account(account_id: AccountId) -> StreamId;
+
+        /// Calculates the number of available instances for a given path.
+        fn available_namespace_instances(permission_id: PermissionId, path: pallet_torus0_api::NamespacePathInner) -> Result<u32, DispatchError> ;
     }
 }
