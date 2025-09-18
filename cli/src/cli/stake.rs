@@ -135,6 +135,8 @@ pub async fn add(ctx: &CliCtx, key: String, target: String, amount: u128) -> any
 
     let target = AccountId32::from_str(&target)?;
 
+    ctx.confirm(&format!("add {amount} stake to {target}"))?;
+
     println!("Staking...");
 
     if ctx.is_testnet() {
@@ -163,6 +165,8 @@ pub async fn remove(ctx: &CliCtx, key: String, target: String, amount: u128) -> 
     let (_key, keypair) = ctx.decrypt(&key)?;
 
     let target = AccountId32::from_str(&target)?;
+
+    ctx.confirm(&format!("remove {amount} stake from {target}"))?;
 
     println!("Unstaking...");
 
@@ -200,6 +204,10 @@ pub async fn transfer(
     let source = AccountId32::from_str(&source)?;
     let target = AccountId32::from_str(&target)?;
 
+    ctx.confirm(&format!(
+        "transfer {amount} stake from {source} to {target}"
+    ))?;
+
     println!("Transfering stake...");
 
     if ctx.is_testnet() {
@@ -214,7 +222,7 @@ pub async fn transfer(
         client
             .torus0()
             .calls()
-            .add_stake_wait(target, amount, keypair)
+            .transfer_stake_wait(source, target, amount, keypair)
             .await?
     };
 

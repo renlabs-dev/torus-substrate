@@ -82,6 +82,8 @@ pub async fn transfer(
 
     let target = AccountId32::from_str(&target)?;
 
+    ctx.confirm(&format!("transfer {amount} to {target}"))?;
+
     println!("Transfering...");
 
     if ctx.is_testnet() {

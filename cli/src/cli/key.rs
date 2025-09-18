@@ -24,6 +24,9 @@ pub enum KeyCliSubCommand {
 
         #[arg(long)]
         password: bool,
+
+        #[arg(long)]
+        mnemonic: Option<String>,
     },
     Delete {
         name: String,
@@ -65,7 +68,12 @@ pub(super) fn list(_ctx: &CliCtx) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub(super) fn create(_ctx: &CliCtx, name: String, password: bool) -> anyhow::Result<()> {
+pub(super) fn create(
+    _ctx: &CliCtx,
+    name: String,
+    password: bool,
+    mnemonic: Option<String>,
+) -> anyhow::Result<()> {
     if key_exists(&name) {
         println!("A key with this name already exists.");
         return Ok(());
@@ -81,12 +89,17 @@ pub(super) fn create(_ctx: &CliCtx, name: String, password: bool) -> anyhow::Res
         None
     };
 
-    let mnemonic = Mnemonic::generate(12)?;
+    let mnemonic = if let Some(mnemonic) = mnemonic {
+        Mnemonic::parse(mnemonic)?
+    } else {
+        Mnemonic::generate(12)?
+    };
+
     let (keypair, seed) = generate_sr25519_keypair(&mnemonic, password.as_deref())?;
 
     store_new_key(&name, &mnemonic, &seed, &keypair, password.as_deref())?;
 
-    print!(
+    println!(
         "Created key `{}` with public key `{}`.",
         keypair.ss58_address(),
         keypair.hex_public_key()

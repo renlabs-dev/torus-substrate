@@ -10,10 +10,7 @@ use bip39::Mnemonic;
 use blake2::{digest::consts::U32, Digest};
 use nacl::secret_box::NONCE_LENGTH;
 use rand::Rng;
-use sp_core::{
-    bytes::from_hex,
-    crypto::{default_ss58_version},
-};
+use sp_core::crypto::default_ss58_version;
 use torus_client::subxt::utils::AccountId32;
 
 use crate::keypair::Keypair;
@@ -269,16 +266,18 @@ fn decrypt_data(password: &str, data: impl AsRef<[u8]>) -> anyhow::Result<Vec<u8
 pub fn decrypt_key(key: &mut Key, password: &str) -> anyhow::Result<()> {
     key.private_key = BASE64_STANDARD
         .encode(&decrypt_data(password, BASE64_STANDARD.decode(&key.private_key)?)?[..]);
+
     key.mnemonic = key
         .mnemonic
         .as_ref()
         .map(
-            |mnemonic| match decrypt_data(password, from_hex(mnemonic)?) {
+            |mnemonic| match decrypt_data(password, BASE64_STANDARD.decode(mnemonic)?) {
                 Ok(data) => Ok(String::from_utf8_lossy(&data[..]).to_string()),
                 Err(err) => Err(anyhow!("nacl error: {err:?}")),
             },
         )
         .transpose()?;
+
     key.seed_hex = key
         .seed_hex
         .as_ref()
@@ -289,6 +288,7 @@ pub fn decrypt_key(key: &mut Key, password: &str) -> anyhow::Result<()> {
             },
         )
         .transpose()?;
+
     key.encrypted = false;
     key.encryption_metadata = None;
     Ok(())

@@ -1,20 +1,24 @@
 use clap::Parser;
 
 use balance::BalanceCliCommand;
-use inquire::Password;
+use inquire::{Password, PasswordDisplayMode};
 use key::KeyCliCommand;
 
 use crate::{
     cli::{
+        agent::{AgentCliCommand, AgentCliSubCommand},
         key::KeyCliSubCommand,
+        namespace::{NamespaceCliCommand, NamespaceCliSubCommand},
         stake::{StakeCliCommand, StakeCliSubCommand},
     },
     keypair::Keypair,
     store::{decrypt_key, Key},
 };
 
+mod agent;
 mod balance;
 mod key;
+mod namespace;
 mod stake;
 
 pub(super) async fn execute() -> anyhow::Result<()> {
@@ -22,6 +26,19 @@ pub(super) async fn execute() -> anyhow::Result<()> {
     let (ctx, command) = cli.extract_context();
 
     match command {
+        CliSubCommand::Agent(command) => match command.sub_command {
+            Some(AgentCliSubCommand::Info { account }) => agent::info(&ctx, account).await?,
+            Some(AgentCliSubCommand::Register {
+                key,
+                name,
+                metadata,
+                url,
+            }) => agent::register(&ctx, key, name, metadata, url).await?,
+            None if command.account.is_some() => {
+                agent::info(&ctx, command.account.unwrap()).await?
+            }
+            _ => {}
+        },
         CliSubCommand::Balance(command) => match command.sub_command {
             Some(balance::BalanceCliSubCommand::Check { key }) => balance::check(&ctx, key).await?,
             Some(balance::BalanceCliSubCommand::Transfer {
@@ -34,7 +51,11 @@ pub(super) async fn execute() -> anyhow::Result<()> {
         },
         CliSubCommand::Key(command) => match command.sub_command {
             KeyCliSubCommand::List => key::list(&ctx)?,
-            KeyCliSubCommand::Create { name, password } => key::create(&ctx, name, password)?,
+            KeyCliSubCommand::Create {
+                name,
+                password,
+                mnemonic,
+            } => key::create(&ctx, name, password, mnemonic)?,
             KeyCliSubCommand::Delete { name } => key::delete(&ctx, name)?,
             KeyCliSubCommand::Info { name } => key::info(&ctx, name)?,
         },
@@ -60,6 +81,18 @@ pub(super) async fn execute() -> anyhow::Result<()> {
             None if command.key.is_some() => stake::given(&ctx, command.key.unwrap()).await?,
             _ => {}
         },
+        CliSubCommand::Namespace(command) => match command.sub_command {
+            Some(NamespaceCliSubCommand::Info { account }) => {
+                namespace::info(&ctx, account).await?
+            }
+            Some(NamespaceCliSubCommand::Register { key, path }) => {
+                namespace::register(&ctx, key, path).await?
+            }
+            None if command.account.is_some() => {
+                namespace::info(&ctx, command.account.unwrap()).await?
+            }
+            _ => {}
+        },
     }
 
     Ok(())
@@ -81,26 +114,31 @@ pub struct Cli {
 impl Cli {
     pub fn extract_context(self) -> (CliCtx, CliSubCommand) {
         let is_testnet = self.testnet;
+        let yes = self.yes;
 
-        (CliCtx::new(is_testnet), self.command)
+        (CliCtx::new(is_testnet, yes), self.command)
     }
 }
 
 #[derive(clap::Subcommand)]
 pub enum CliSubCommand {
+    Agent(AgentCliCommand),
     Balance(BalanceCliCommand),
     Key(KeyCliCommand),
+    Namespace(NamespaceCliCommand),
     Stake(StakeCliCommand),
 }
 
 pub struct CliCtx {
     testnet: bool,
+    skip_confirmation: bool,
 }
 
 impl CliCtx {
-    pub fn new(is_testnet: bool) -> Self {
+    pub fn new(is_testnet: bool, skip_confirmation: bool) -> Self {
         Self {
             testnet: is_testnet,
+            skip_confirmation,
         }
     }
 
@@ -122,5 +160,22 @@ impl CliCtx {
         decrypt_key(&mut key, &password)?;
 
         Ok((key.clone(), Keypair::from_key(key, Some(&password))?))
+    }
+
+    pub fn confirm(&self, action: &str) -> anyhow::Result<()> {
+        if self.skip_confirmation {
+            return Ok(());
+        }
+
+        let res = Password::new(&format!("Are you sure you want to \"{action}\"? [y/N] "))
+            .without_confirmation()
+            .with_display_mode(PasswordDisplayMode::Full)
+            .prompt()?;
+
+        if !res.to_lowercase().starts_with("y") {
+            return Err(anyhow::anyhow!("not confirmed"));
+        }
+
+        Ok(())
     }
 }

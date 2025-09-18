@@ -136,6 +136,8 @@ pub fn generate_sr25519_keypair(
     password: Option<&str>,
 ) -> anyhow::Result<(Keypair, String)> {
     let (keypair, seed) = sr25519::Pair::from_phrase(&mnemonic.to_string(), password)?;
+
     let seed = to_hex(seed);
+
     Ok((Keypair::SR25519(keypair), seed))
 }
