@@ -26,7 +26,7 @@ pub enum KeyCliSubCommand {
         password: bool,
 
         #[arg(long)]
-        mnemonic: Option<String>,
+        mnemonic: bool,
     },
     Delete {
         name: String,
@@ -72,7 +72,7 @@ pub(super) fn create(
     _ctx: &CliCtx,
     name: String,
     password: bool,
-    mnemonic: Option<String>,
+    mnemonic: bool,
 ) -> anyhow::Result<()> {
     if key_exists(&name) {
         println!("A key with this name already exists.");
@@ -89,7 +89,11 @@ pub(super) fn create(
         None
     };
 
-    let mnemonic = if let Some(mnemonic) = mnemonic {
+    let mnemonic = if mnemonic {
+        let mnemonic = Password::new("Mnemonic: ")
+            .without_confirmation()
+            .prompt()?;
+
         Mnemonic::parse(mnemonic)?
     } else {
         Mnemonic::generate(12)?

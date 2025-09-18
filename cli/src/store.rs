@@ -5,13 +5,12 @@ use std::{
 };
 
 use anyhow::anyhow;
-use base64::{prelude::BASE64_STANDARD, Engine};
 use bip39::Mnemonic;
 use blake2::{digest::consts::U32, Digest};
 use nacl::secret_box::NONCE_LENGTH;
 use rand::Rng;
-use sp_core::crypto::default_ss58_version;
-use torus_client::subxt::utils::AccountId32;
+use sp_core::{bytes::from_hex, crypto::default_ss58_version};
+use torus_client::subxt::utils::{to_hex, AccountId32};
 
 use crate::keypair::Keypair;
 
@@ -264,14 +263,13 @@ fn decrypt_data(password: &str, data: impl AsRef<[u8]>) -> anyhow::Result<Vec<u8
 }
 
 pub fn decrypt_key(key: &mut Key, password: &str) -> anyhow::Result<()> {
-    key.private_key = BASE64_STANDARD
-        .encode(&decrypt_data(password, BASE64_STANDARD.decode(&key.private_key)?)?[..]);
+    key.private_key = to_hex(&decrypt_data(password, from_hex(&key.private_key)?)?[..]);
 
     key.mnemonic = key
         .mnemonic
         .as_ref()
         .map(
-            |mnemonic| match decrypt_data(password, BASE64_STANDARD.decode(mnemonic)?) {
+            |mnemonic| match decrypt_data(password, from_hex(mnemonic)?) {
                 Ok(data) => Ok(String::from_utf8_lossy(&data[..]).to_string()),
                 Err(err) => Err(anyhow!("nacl error: {err:?}")),
             },
@@ -282,8 +280,8 @@ pub fn decrypt_key(key: &mut Key, password: &str) -> anyhow::Result<()> {
         .seed_hex
         .as_ref()
         .map(
-            |seed_hex| match decrypt_data(password, BASE64_STANDARD.decode(seed_hex)?) {
-                Ok(data) => Ok(BASE64_STANDARD.encode(data)),
+            |seed_hex| match decrypt_data(password, from_hex(seed_hex)?) {
+                Ok(data) => Ok(to_hex(data)),
                 Err(err) => Err(anyhow!("nacl error: {err:?}")),
             },
         )
@@ -295,15 +293,14 @@ pub fn decrypt_key(key: &mut Key, password: &str) -> anyhow::Result<()> {
 }
 
 pub fn encrypt_key(key: &mut Key, password: &str) -> anyhow::Result<()> {
-    key.private_key = BASE64_STANDARD
-        .encode(&encrypt_data(password, BASE64_STANDARD.decode(&key.private_key)?)?[..]);
+    key.private_key = to_hex(&encrypt_data(password, from_hex(&key.private_key)?)?[..]);
 
     key.mnemonic = key
         .mnemonic
         .as_ref()
         .map(
             |mnemonic| match encrypt_data(password, mnemonic.as_bytes()) {
-                Ok(data) => Ok(BASE64_STANDARD.encode(data)),
+                Ok(data) => Ok(to_hex(data)),
                 Err(err) => Err(anyhow!("nacl error: {err:?}")),
             },
         )
@@ -313,8 +310,8 @@ pub fn encrypt_key(key: &mut Key, password: &str) -> anyhow::Result<()> {
         .seed_hex
         .as_ref()
         .map(
-            |seed_hex| match encrypt_data(password, BASE64_STANDARD.decode(seed_hex)?) {
-                Ok(data) => Ok(BASE64_STANDARD.encode(data)),
+            |seed_hex| match encrypt_data(password, from_hex(seed_hex)?) {
+                Ok(data) => Ok(to_hex(data)),
                 Err(err) => Err(anyhow!("nacl error: {err:?}")),
             },
         )
