@@ -5,52 +5,60 @@ use inquire::Password;
 use key::KeyCliCommand;
 
 use crate::{
+    cli::{
+        key::KeyCliSubCommand,
+        stake::{StakeCliCommand, StakeCliSubCommand},
+    },
     keypair::Keypair,
     store::{decrypt_key, Key},
 };
 
 mod balance;
 mod key;
+mod stake;
 
 pub(super) async fn execute() -> anyhow::Result<()> {
     let cli = Cli::parse();
     let (ctx, command) = cli.extract_context();
 
     match command {
-        CliSubcommand::Balance { command } => match command {
-            BalanceCliCommand::Free { key } => {
-                balance::free_balance(&ctx, key).await?;
-            }
-            BalanceCliCommand::Staking { key } => balance::staking_balance(&ctx, key).await?,
-            BalanceCliCommand::Staked { key } => balance::staked_balance(&ctx, key).await?,
-            BalanceCliCommand::Show { key } => balance::show_balance(&ctx, key).await?,
-            BalanceCliCommand::Stake {
+        CliSubCommand::Balance(command) => match command.sub_command {
+            Some(balance::BalanceCliSubCommand::Check { key }) => balance::check(&ctx, key).await?,
+            Some(balance::BalanceCliSubCommand::Transfer {
                 key,
                 target,
                 amount,
-            } => balance::stake_balance(&ctx, key, target, amount).await?,
-            BalanceCliCommand::Unstake {
+            }) => balance::transfer(&ctx, key, target, amount).await?,
+            None if command.key.is_some() => balance::check(&ctx, command.key.unwrap()).await?,
+            _ => {}
+        },
+        CliSubCommand::Key(command) => match command.sub_command {
+            KeyCliSubCommand::List => key::list(&ctx)?,
+            KeyCliSubCommand::Create { name, password } => key::create(&ctx, name, password)?,
+            KeyCliSubCommand::Delete { name } => key::delete(&ctx, name)?,
+            KeyCliSubCommand::Info { name } => key::info(&ctx, name)?,
+        },
+        CliSubCommand::Stake(command) => match command.sub_command {
+            Some(StakeCliSubCommand::Given { key }) => stake::given(&ctx, key).await?,
+            Some(StakeCliSubCommand::Received { key }) => stake::received(&ctx, key).await?,
+            Some(StakeCliSubCommand::Add {
                 key,
                 target,
                 amount,
-            } => balance::unstake_balance(&ctx, key, target, amount).await?,
-            BalanceCliCommand::Transfer {
+            }) => stake::add(&ctx, key, target, amount).await?,
+            Some(StakeCliSubCommand::Remove {
                 key,
                 target,
                 amount,
-            } => balance::transfer_balance(&ctx, key, target, amount).await?,
-            BalanceCliCommand::TransferStake {
+            }) => stake::remove(&ctx, key, target, amount).await?,
+            Some(StakeCliSubCommand::Transfer {
                 key,
                 source,
                 target,
                 amount,
-            } => balance::transfer_staked_balance(&ctx, key, source, target, amount).await?,
-        },
-        CliSubcommand::Key { command } => match command {
-            KeyCliCommand::List => key::list(&ctx)?,
-            KeyCliCommand::Create { name, password } => key::create(&ctx, name, password)?,
-            KeyCliCommand::Delete { name } => key::delete(&ctx, name)?,
-            KeyCliCommand::Info { name } => key::info(&ctx, name)?,
+            }) => stake::transfer(&ctx, key, source, target, amount).await?,
+            None if command.key.is_some() => stake::given(&ctx, command.key.unwrap()).await?,
+            _ => {}
         },
     }
 
@@ -58,19 +66,20 @@ pub(super) async fn execute() -> anyhow::Result<()> {
 }
 
 #[derive(clap::Parser)]
+#[command(name = "torurs", version, about)]
 pub struct Cli {
-    #[arg(short, long, default_value_t = 0)]
-    pub debug: u8,
-
     #[arg(short, long, default_value_t = false)]
     pub testnet: bool,
 
+    #[arg(short, long, default_value_t = false)]
+    pub yes: bool,
+
     #[command(subcommand)]
-    pub command: CliSubcommand,
+    pub command: CliSubCommand,
 }
 
 impl Cli {
-    pub fn extract_context(self) -> (CliCtx, CliSubcommand) {
+    pub fn extract_context(self) -> (CliCtx, CliSubCommand) {
         let is_testnet = self.testnet;
 
         (CliCtx::new(is_testnet), self.command)
@@ -78,15 +87,10 @@ impl Cli {
 }
 
 #[derive(clap::Subcommand)]
-pub enum CliSubcommand {
-    Balance {
-        #[command(subcommand)]
-        command: BalanceCliCommand,
-    },
-    Key {
-        #[command(subcommand)]
-        command: KeyCliCommand,
-    },
+pub enum CliSubCommand {
+    Balance(BalanceCliCommand),
+    Key(KeyCliCommand),
+    Stake(StakeCliCommand),
 }
 
 pub struct CliCtx {

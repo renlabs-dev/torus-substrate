@@ -10,8 +10,14 @@ use crate::{
     store::{delete_key, get_all_keys, get_key, key_exists, store_new_key},
 };
 
+#[derive(clap::Parser)]
+pub struct KeyCliCommand {
+    #[command(subcommand)]
+    pub sub_command: KeyCliSubCommand,
+}
+
 #[derive(clap::Subcommand)]
-pub enum KeyCliCommand {
+pub enum KeyCliSubCommand {
     List,
     Create {
         name: String,

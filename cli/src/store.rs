@@ -1,5 +1,6 @@
 use std::{
     path::PathBuf,
+    str::FromStr,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -9,7 +10,11 @@ use bip39::Mnemonic;
 use blake2::{digest::consts::U32, Digest};
 use nacl::secret_box::NONCE_LENGTH;
 use rand::Rng;
-use sp_core::{bytes::from_hex, crypto::default_ss58_version};
+use sp_core::{
+    bytes::from_hex,
+    crypto::{default_ss58_version},
+};
+use torus_client::subxt::utils::AccountId32;
 
 use crate::keypair::Keypair;
 
@@ -62,6 +67,15 @@ pub fn key_exists(name: &str) -> bool {
         .join(format!("{name}.json"));
 
     key_path.exists()
+}
+
+pub fn get_account(val: &str) -> anyhow::Result<AccountId32> {
+    if let Ok(account_id) = AccountId32::from_str(val) {
+        return Ok(account_id);
+    }
+
+    let key = get_key(val)?;
+    Ok(AccountId32::from_str(&key.ss58_address).map_err(|err| anyhow!("{err}"))?)
 }
 
 pub fn get_key(name: &str) -> anyhow::Result<Key> {
