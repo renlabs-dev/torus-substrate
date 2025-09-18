@@ -439,7 +439,7 @@ pub fn tick_proposals<T: crate::Config>(block_number: BlockNumberFor<T>) {
         .try_into()
         .ok()
         .expect("blocknumber wont be greater than 2^64");
-    if block_number_u64 % 100 != 0 {
+    if !block_number_u64.is_multiple_of(100) {
         return;
     }
 

@@ -96,10 +96,10 @@ fn parse_pallet_module(pallet_mod: &ItemMod) -> Result<PalletPattern, Box<dyn Er
 }
 
 fn is_api_impl(impl_item: &ItemImpl, name: &'static str) -> bool {
-    if let Type::Path(TypePath { path, .. }) = &*impl_item.self_ty {
-        if let Some(segment) = path.segments.last() {
-            return segment.ident == name;
-        }
+    if let Type::Path(TypePath { path, .. }) = &*impl_item.self_ty
+        && let Some(segment) = path.segments.last()
+    {
+        return segment.ident == name;
     }
     false
 }
