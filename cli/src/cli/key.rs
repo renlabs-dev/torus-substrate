@@ -22,10 +22,10 @@ pub enum KeyCliSubCommand {
     Create {
         name: String,
 
-        #[arg(long)]
+        #[arg(short, long)]
         no_password: bool,
 
-        #[arg(long)]
+        #[arg(short, long)]
         mnemonic: bool,
     },
     Delete {
