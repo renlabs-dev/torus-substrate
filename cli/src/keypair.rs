@@ -131,13 +131,10 @@ impl Signer<PolkadotConfig> for Keypair {
     }
 }
 
-pub fn generate_ed25519_keypair(
-    mnemonic: &Mnemonic,
-    password: Option<&str>,
-) -> anyhow::Result<(Keypair, String)> {
-    let (keypair, seed) = ed25519::Pair::from_phrase(&mnemonic.to_string(), password)?;
+pub fn generate_sr25519_keypair(mnemonic: &Mnemonic) -> anyhow::Result<(Keypair, String)> {
+    let (keypair, seed) = sr25519::Pair::from_phrase(&mnemonic.to_string(), None)?;
 
     let seed = to_hex(seed);
 
-    Ok((Keypair::ED25519(keypair), seed))
+    Ok((Keypair::SR25519(keypair), seed))
 }
