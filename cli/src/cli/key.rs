@@ -6,7 +6,7 @@ use tabled::{Table, Tabled};
 
 use crate::{
     cli::CliCtx,
-    keypair::generate_sr25519_keypair,
+    keypair::generate_ed25519_keypair,
     store::{delete_key, get_all_keys, get_key, key_exists, store_new_key},
 };
 
@@ -99,7 +99,7 @@ pub(super) fn create(
         Mnemonic::generate(12)?
     };
 
-    let (keypair, seed) = generate_sr25519_keypair(&mnemonic, password.as_deref())?;
+    let (keypair, seed) = generate_ed25519_keypair(&mnemonic, password.as_deref())?;
 
     store_new_key(&name, &mnemonic, &seed, &keypair, password.as_deref())?;
 
