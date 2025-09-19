@@ -25,12 +25,19 @@ pub struct BalanceCliCommand {
 
 #[derive(clap::Subcommand, Clone)]
 pub enum BalanceCliSubCommand {
+    /// Displays the key balance (free and reserved).
     Check {
+        /// The saved key name or valid ss58 address.
         key: String,
     },
+
+    /// Transfers balance to an account.
     Transfer {
+        /// The saved key name or a valid ss58 address that will fund the transfer.
         key: String,
+        /// The saved key name or a valid ss58 address that will receive the amount transfered.
         target: String,
+        /// The amount to be transfered.
         amount: u128,
     },
 }

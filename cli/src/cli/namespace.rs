@@ -20,8 +20,18 @@ pub struct NamespaceCliCommand {
 
 #[derive(clap::Subcommand, Clone)]
 pub enum NamespaceCliSubCommand {
-    Info { account: String },
-    Register { key: String, path: String },
+    /// Prints all namespaces belonging to the given account.
+    Info {
+        /// The saved key name or valid ss58 address to be searched.
+        account: String,
+    },
+    /// Registers a new namespace.
+    Register {
+        /// The saved key name of the agent that will hold the namespace.
+        key: String,
+        /// The namespace path to be created.
+        path: String,
+    },
 }
 
 #[derive(tabled::Tabled)]

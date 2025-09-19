@@ -18,22 +18,27 @@ pub struct KeyCliCommand {
 
 #[derive(clap::Subcommand)]
 pub enum KeyCliSubCommand {
+    /// Lists all saved keys.
     List,
+    /// Creates a new random key and saves it encrypted with the given password.
+    /// Tip: Use --mnemonic to create the key from a mnemonic instead of a random seed.
     Create {
+        /// The name the key will be save on the disk.
         name: String,
 
+        /// Disables the need of a password.
+        /// This also means that the key will not be encrypted.
         #[arg(short, long)]
         no_password: bool,
 
+        /// Allows for regenerating a key from a mnemonic.
         #[arg(short, long)]
         mnemonic: bool,
     },
-    Delete {
-        name: String,
-    },
-    Info {
-        name: String,
-    },
+    /// Deletes a saved key.
+    Delete { name: String },
+    /// Prints all information about a saved key.
+    Info { name: String },
 }
 
 #[derive(Tabled)]

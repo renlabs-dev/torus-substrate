@@ -21,26 +21,43 @@ pub struct StakeCliCommand {
 
 #[derive(clap::Subcommand, Clone)]
 pub enum StakeCliSubCommand {
+    /// Lists all stake the provided key has given to other accounts.
     Given {
+        /// The saved key name or ss58 valid address.
         key: String,
     },
+    /// Lists all stake received by the provided key.
     Received {
+        /// The saved key name or ss58 valid address.
         key: String,
     },
+    /// Stakes the target key by amount.
     Add {
+        /// The saved key name or ss58 valid address.
         key: String,
+        /// The saved key name or ss58 valid address that will receive the stake.
         target: String,
+        /// The amount to be staked.
         amount: u128,
     },
+    /// Removes stake from the given target.
     Remove {
+        /// The saved key name or ss58 valid address that is staking the target.
         key: String,
+        /// The saved key name or ss58 valid address that will lose the stake.
         target: String,
+        /// The amount to be removed.
         amount: u128,
     },
+    /// Transfers stake from the source key to the target key.
     Transfer {
+        /// The saved key name or ss58 valid address that is staking the source.
         key: String,
+        /// The saved key name or ss58 valid address that will lose stake.
         source: String,
+        /// The saved key name or ss58 valid address that will receive stake.
         target: String,
+        /// The amount to be transfered.
         amount: u128,
     },
 }

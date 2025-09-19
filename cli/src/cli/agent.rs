@@ -17,13 +17,20 @@ pub struct AgentCliCommand {
 
 #[derive(clap::Subcommand, Clone)]
 pub enum AgentCliSubCommand {
+    /// Prints information about the given agent key.
     Info {
+        /// The saved key name or ss58 valid address.
         account: String,
     },
+    /// Registers an agent.
     Register {
+        /// The saved key name that will become an agent.
         key: String,
+        /// The name of the agent.
         name: String,
+        /// The metadata of the agent.
         metadata: String,
+        /// The url of the agent.
         url: String,
     },
 }

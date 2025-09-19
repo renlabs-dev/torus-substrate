@@ -122,10 +122,15 @@ impl Cli {
 
 #[derive(clap::Subcommand)]
 pub enum CliSubCommand {
+    /// Commands related to agents.
     Agent(AgentCliCommand),
+    /// Commands related to balance.
     Balance(BalanceCliCommand),
+    /// Commands related to saved keys.
     Key(KeyCliCommand),
+    /// Commands related to namespaces.
     Namespace(NamespaceCliCommand),
+    /// Commands related to stake.
     Stake(StakeCliCommand),
 }
 
