@@ -112,11 +112,13 @@ pub(super) fn create(
     Ok(())
 }
 
-pub(super) fn delete(_ctx: &CliCtx, name: String) -> anyhow::Result<()> {
+pub(super) fn delete(ctx: &CliCtx, name: String) -> anyhow::Result<()> {
     if !key_exists(&name) {
         println!("No keys found with this name.");
         return Ok(());
     }
+
+    ctx.confirm(&format!("delete the key {name:?}"))?;
 
     delete_key(&name)?;
 

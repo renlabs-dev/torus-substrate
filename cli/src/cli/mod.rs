@@ -167,7 +167,7 @@ impl CliCtx {
             return Ok(());
         }
 
-        let res = Password::new(&format!("Are you sure you want to \"{action}\"? [y/N] "))
+        let res = Password::new(&format!("Are you sure you want to {action}? [y/N] "))
             .without_confirmation()
             .with_display_mode(PasswordDisplayMode::Full)
             .prompt()?;
