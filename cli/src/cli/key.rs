@@ -23,7 +23,7 @@ pub enum KeyCliSubCommand {
         name: String,
 
         #[arg(long)]
-        password: bool,
+        no_password: bool,
 
         #[arg(long)]
         mnemonic: bool,
@@ -71,7 +71,7 @@ pub(super) fn list(_ctx: &CliCtx) -> anyhow::Result<()> {
 pub(super) fn create(
     _ctx: &CliCtx,
     name: String,
-    password: bool,
+    no_password: bool,
     mnemonic: bool,
 ) -> anyhow::Result<()> {
     if key_exists(&name) {
@@ -79,14 +79,14 @@ pub(super) fn create(
         return Ok(());
     }
 
-    let password = if password {
+    let password = if no_password {
+        None
+    } else {
         Some(
             Password::new("Password: ")
                 .without_confirmation()
                 .prompt()?,
         )
-    } else {
-        None
     };
 
     let mnemonic = if mnemonic {

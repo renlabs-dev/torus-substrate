@@ -53,9 +53,9 @@ pub(super) async fn execute() -> anyhow::Result<()> {
             KeyCliSubCommand::List => key::list(&ctx)?,
             KeyCliSubCommand::Create {
                 name,
-                password,
+                no_password,
                 mnemonic,
-            } => key::create(&ctx, name, password, mnemonic)?,
+            } => key::create(&ctx, name, no_password, mnemonic)?,
             KeyCliSubCommand::Delete { name } => key::delete(&ctx, name)?,
             KeyCliSubCommand::Info { name } => key::info(&ctx, name)?,
         },
