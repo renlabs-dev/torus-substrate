@@ -71,7 +71,7 @@ pub fn get_account(val: &str) -> anyhow::Result<AccountId32> {
     }
 
     let key = get_key(val)?;
-    Ok(AccountId32::from_str(&key.ss58_address).map_err(|err| anyhow!("{err}"))?)
+    AccountId32::from_str(&key.ss58_address).map_err(|err| anyhow!("{err}"))
 }
 
 pub fn get_key(name: &str) -> anyhow::Result<Key> {

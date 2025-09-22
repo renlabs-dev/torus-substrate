@@ -12,6 +12,7 @@ use torus_client::{
 use crate::{
     cli::CliCtx,
     store::{get_account, get_key},
+    util::torus,
 };
 
 #[derive(clap::Args)]
@@ -65,10 +66,10 @@ pub async fn check(ctx: &CliCtx, key: String) -> anyhow::Result<()> {
     .unwrap_or((0, 0, 0));
 
     let mut table = Table::new(vec![
-        (("free".to_string()), data.0.to_string()),
+        (("free".to_string()), torus(data.0)),
         (
             ("reserved (stake + others)".to_string()),
-            (data.1 + data.2).to_string(),
+            torus(data.1 + data.2),
         ),
     ]);
     table.with(Remove::row(FirstRow));
@@ -89,7 +90,7 @@ pub async fn transfer(
 
     let target = AccountId32::from_str(&target)?;
 
-    ctx.confirm(&format!("transfer {amount} to {target}"))?;
+    ctx.confirm(&format!("transfer {} to {target}", torus(amount)))?;
 
     println!("Transfering...");
 

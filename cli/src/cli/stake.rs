@@ -9,6 +9,7 @@ use torus_client::{
 use crate::{
     cli::CliCtx,
     store::{get_account, get_key},
+    util::torus,
 };
 
 #[derive(clap::Parser)]
@@ -65,11 +66,13 @@ pub enum StakeCliSubCommand {
 #[derive(tabled::Tabled)]
 struct StakingEntry {
     target: String,
-    amount: u128,
+    amount: String,
 }
 
 pub async fn given(ctx: &CliCtx, key: String) -> anyhow::Result<()> {
     let account = get_account(&key)?;
+
+    println!("Fetching given stake...");
 
     let staking = if ctx.is_testnet() {
         let client = TorusClient::for_testnet().await?;
@@ -91,15 +94,22 @@ pub async fn given(ctx: &CliCtx, key: String) -> anyhow::Result<()> {
             .await?
     };
 
-    let staking = staking
-        .into_iter()
+    let mut entries = staking
+        .iter()
         .map(|((_, target), amount)| StakingEntry {
             target: target.to_string(),
-            amount,
-        });
+            amount: torus(*amount),
+        })
+        .collect::<Vec<_>>();
 
-    let table = Table::new(staking);
+    let sum = staking.iter().map(|(_, amount)| *amount).sum::<u128>();
 
+    entries.push(StakingEntry {
+        target: "".to_string(),
+        amount: torus(sum),
+    });
+
+    let table = Table::new(entries);
     println!("{table}");
 
     Ok(())
@@ -108,11 +118,13 @@ pub async fn given(ctx: &CliCtx, key: String) -> anyhow::Result<()> {
 #[derive(tabled::Tabled)]
 struct StakedEntry {
     source: String,
-    amount: u128,
+    amount: String,
 }
 
 pub async fn received(ctx: &CliCtx, key: String) -> anyhow::Result<()> {
     let account = get_account(&key)?;
+
+    println!("Fetching received stake...");
 
     let staked = if ctx.is_testnet() {
         let client = TorusClient::for_testnet().await?;
@@ -134,13 +146,22 @@ pub async fn received(ctx: &CliCtx, key: String) -> anyhow::Result<()> {
             .await?
     };
 
-    let staked = staked.into_iter().map(|((_, source), amount)| StakedEntry {
-        source: source.to_string(),
-        amount,
+    let mut entries = staked
+        .iter()
+        .map(|((_, target), amount)| StakedEntry {
+            source: target.to_string(),
+            amount: torus(*amount),
+        })
+        .collect::<Vec<_>>();
+
+    let sum = staked.iter().map(|(_, amount)| *amount).sum::<u128>();
+
+    entries.push(StakedEntry {
+        source: "".to_string(),
+        amount: torus(sum),
     });
 
-    let table = Table::new(staked);
-
+    let table = Table::new(entries);
     println!("{table}");
 
     Ok(())
@@ -152,7 +173,7 @@ pub async fn add(ctx: &CliCtx, key: String, target: String, amount: u128) -> any
 
     let target = AccountId32::from_str(&target)?;
 
-    ctx.confirm(&format!("add {amount} stake to {target}"))?;
+    ctx.confirm(&format!("add {} stake to {target}", torus(amount)))?;
 
     println!("Staking...");
 
@@ -183,7 +204,7 @@ pub async fn remove(ctx: &CliCtx, key: String, target: String, amount: u128) -> 
 
     let target = AccountId32::from_str(&target)?;
 
-    ctx.confirm(&format!("remove {amount} stake from {target}"))?;
+    ctx.confirm(&format!("remove {} stake from {target}", torus(amount)))?;
 
     println!("Unstaking...");
 
@@ -222,7 +243,8 @@ pub async fn transfer(
     let target = AccountId32::from_str(&target)?;
 
     ctx.confirm(&format!(
-        "transfer {amount} stake from {source} to {target}"
+        "transfer {} stake from {source} to {target}",
+        torus(amount)
     ))?;
 
     println!("Transfering stake...");

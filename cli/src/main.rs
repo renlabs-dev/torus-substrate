@@ -1,6 +1,7 @@
 mod cli;
 mod keypair;
 mod store;
+mod util;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

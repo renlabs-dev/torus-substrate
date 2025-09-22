@@ -1,5 +1,5 @@
 use tabled::Table;
-use torus_client::client::TorusClient;
+use torus_client::{client::TorusClient, subxt::utils::AccountId32};
 
 use crate::{
     cli::CliCtx,
@@ -37,6 +37,7 @@ pub enum AgentCliSubCommand {
 
 #[derive(tabled::Tabled)]
 struct AgentInfo {
+    address: String,
     name: String,
     metadata: String,
     url: String,
@@ -46,6 +47,7 @@ struct AgentInfo {
 
 impl AgentInfo {
     fn new(
+        address: String,
         name: Vec<u8>,
         metadata: Vec<u8>,
         url: Vec<u8>,
@@ -53,6 +55,7 @@ impl AgentInfo {
         registration_block: u64,
     ) -> Self {
         Self {
+            address,
             name: String::from_utf8_lossy(&name[..]).to_string(),
             metadata: String::from_utf8_lossy(&metadata[..]).to_string(),
             url: String::from_utf8_lossy(&url[..]).to_string(),
@@ -67,39 +70,7 @@ pub async fn info(ctx: &CliCtx, account: String) -> anyhow::Result<()> {
 
     println!("Fetching agent data...");
 
-    let agent_info = if ctx.is_testnet() {
-        let client = TorusClient::for_testnet().await?;
-        client
-            .torus0()
-            .storage()
-            .agents_get(&account)
-            .await?
-            .map(|agent| {
-                AgentInfo::new(
-                    agent.name.0,
-                    agent.metadata.0,
-                    agent.url.0,
-                    agent.last_update_block,
-                    agent.registration_block,
-                )
-            })
-    } else {
-        let client = TorusClient::for_mainnet().await?;
-        client
-            .torus0()
-            .storage()
-            .agents_get(&account)
-            .await?
-            .map(|agent| {
-                AgentInfo::new(
-                    agent.name.0,
-                    agent.metadata.0,
-                    agent.url.0,
-                    agent.last_update_block,
-                    agent.registration_block,
-                )
-            })
-    };
+    let agent_info = get_agent_info(ctx, &account).await?;
 
     if let Some(agent_info) = agent_info {
         let table = Table::kv(std::iter::once(agent_info));
@@ -136,7 +107,7 @@ pub async fn register(
                 name.as_bytes().to_vec(),
                 url.as_bytes().to_vec(),
                 metadata.as_bytes().to_vec(),
-                keypair,
+                keypair.clone(),
             )
             .await?;
     } else {
@@ -148,12 +119,61 @@ pub async fn register(
                 name.as_bytes().to_vec(),
                 url.as_bytes().to_vec(),
                 metadata.as_bytes().to_vec(),
-                keypair,
+                keypair.clone(),
             )
             .await?;
     };
 
+    let agent_info = get_agent_info(ctx, &keypair.account()).await?;
+    let Some(agent_info) = agent_info else {
+        println!("Something went wrong...");
+        return Ok(());
+    };
+
     println!("Agent registered successfully!");
 
+    let table = Table::kv(std::iter::once(agent_info));
+    println!("{table}");
+
     Ok(())
+}
+
+async fn get_agent_info(ctx: &CliCtx, account: &AccountId32) -> anyhow::Result<Option<AgentInfo>> {
+    let agent_info = if ctx.is_testnet() {
+        let client = TorusClient::for_testnet().await?;
+        client
+            .torus0()
+            .storage()
+            .agents_get(account)
+            .await?
+            .map(|agent| {
+                AgentInfo::new(
+                    agent.key.to_string(),
+                    agent.name.0,
+                    agent.metadata.0,
+                    agent.url.0,
+                    agent.last_update_block,
+                    agent.registration_block,
+                )
+            })
+    } else {
+        let client = TorusClient::for_mainnet().await?;
+        client
+            .torus0()
+            .storage()
+            .agents_get(account)
+            .await?
+            .map(|agent| {
+                AgentInfo::new(
+                    agent.key.to_string(),
+                    agent.name.0,
+                    agent.metadata.0,
+                    agent.url.0,
+                    agent.last_update_block,
+                    agent.registration_block,
+                )
+            })
+    };
+
+    Ok(agent_info)
 }

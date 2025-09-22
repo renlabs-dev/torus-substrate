@@ -15,6 +15,7 @@ use torus_client::subxt::{
 use crate::store::Key;
 
 #[allow(clippy::large_enum_variant)]
+#[derive(Clone)]
 pub enum Keypair {
     ED25519(ed25519::Pair),
     SR25519(sr25519::Pair),

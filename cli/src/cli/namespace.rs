@@ -7,6 +7,7 @@ use torus_client::{
 use crate::{
     cli::CliCtx,
     store::{get_account, get_key},
+    util::torus,
 };
 
 #[derive(clap::Args)]
@@ -94,7 +95,9 @@ pub async fn register(ctx: &CliCtx, key: String, path: String) -> anyhow::Result
     };
 
     ctx.confirm(&format!(
-        "register namespace {path} for a fee of {fee} and deposit of {deposit}"
+        "register namespace {path} for a fee of {} and deposit of {}",
+        torus(fee),
+        torus(deposit),
     ))?;
 
     println!("Registering namespace...");
