@@ -65,7 +65,7 @@ impl Keypair {
         }
     }
 
-    pub fn from_key(key: Key, password: Option<&str>) -> anyhow::Result<Self> {
+    pub fn from_key(key: Key) -> anyhow::Result<Self> {
         if key.encrypted {
             anyhow::bail!("the key must be decrypted before becoming a keypair")
         }
@@ -74,7 +74,7 @@ impl Keypair {
             0 => {
                 if let Some(mnemonic) = key.mnemonic {
                     Ok(Self::ED25519(
-                        ed25519::Pair::from_phrase(&mnemonic, password)?.0,
+                        ed25519::Pair::from_phrase(&mnemonic, None)?.0,
                     ))
                 } else if let Some(seed) = key.seed_hex {
                     Ok(Self::ED25519(ed25519::Pair::from_seed(
@@ -87,7 +87,7 @@ impl Keypair {
             1 => {
                 if let Some(mnemonic) = key.mnemonic {
                     Ok(Self::SR25519(
-                        sr25519::Pair::from_phrase(&mnemonic, password)?.0,
+                        sr25519::Pair::from_phrase(&mnemonic, None)?.0,
                     ))
                 } else if let Some(seed) = key.seed_hex {
                     Ok(Self::SR25519(sr25519::Pair::from_seed(
@@ -99,9 +99,7 @@ impl Keypair {
             }
             2 => {
                 if let Some(mnemonic) = key.mnemonic {
-                    Ok(Self::Ecdsa(
-                        ecdsa::Pair::from_phrase(&mnemonic, password)?.0,
-                    ))
+                    Ok(Self::Ecdsa(ecdsa::Pair::from_phrase(&mnemonic, None)?.0))
                 } else if let Some(seed) = key.seed_hex {
                     Ok(Self::Ecdsa(ecdsa::Pair::from_seed(
                         &from_hex(&seed)?[0..32].try_into()?,

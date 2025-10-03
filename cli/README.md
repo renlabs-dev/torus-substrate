@@ -8,13 +8,19 @@ Torus blockchain cli using the torus client.
   
 | Command | Description |
 | ------- | ----------- |
-| `torurs key list` | Lists all saved keys. |
-| `torurs key info <name>` | Prints information about a key prompting for the password if it is encrypted. |
-| `torurs key create <name> [-p]` | Generates a new sr25519 key and prompts for a encryption password if `-p` is given. |
-| `torurs key delete <name> [-y]` | Deletes a saved key. |
+| `torurs agent info <account>` | Shows information about the given agent. |
+| `torurs agent register <key> <name> <description> <url> [-y]` | Registers key as an agent. |
+| `torurs agent unregister <key> [-y]` | Unregisters key as an agent. |
 | `torurs balance <account>` | Shows the account balance. |
 | `torurs balance check <account>` | Does the same as the command above. |
 | `torurs balance transfer <key> <target_account> <amount> [-y]` | Transfers **amount** from **key** to **address**. |
+| `torurs key list` | Lists all saved keys. |
+| `torurs key info <name>` | Shows information about a key prompting for the password if it is encrypted. |
+| `torurs key create <name> [-p]` | Generates a new sr25519 key and prompts for a encryption password if `-p` is given. |
+| `torurs key delete <name> [-y]` | Deletes a saved key. |
+| `torurs namespace info <account>` | Shows all namespaces related to the given account. |
+| `torurs namespace register <key> <path>` | Registers a namespace on the given account. |
+| `torurs namespace unregister <key>` | Unregisters a namespace from the given account. |
 | `torurs stake <account>` | Prints all keys **account** is staking with the amount. |
 | `torurs stake given <account>` | Does the same as the command above. |
 | `torurs stake received <account>` | Prints all keys **account** is staked by with the amount. |

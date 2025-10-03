@@ -1,3 +1,3 @@
-pub fn torus(amount: u128) -> String {
-    format!("{:.5}", amount / 10u128.pow(18))
+pub fn format_torus(amount: u128) -> String {
+    format!("{:.5}", amount as f64 / 10f64.powf(18.0))
 }
