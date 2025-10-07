@@ -56,6 +56,18 @@ pub struct Key {
     pub encryption_metadata: Option<KeyEncryptionMedadata>,
 }
 
+impl Key {
+    pub fn name(&self) -> String {
+        PathBuf::from(&self.path)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string()
+            .replace(".json", "")
+    }
+}
+
 pub fn key_exists(name: &str) -> bool {
     let key_path = base_dir()
         .join(CONFIG_FOLDER)

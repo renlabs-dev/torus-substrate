@@ -56,6 +56,7 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
     let pallet = &pattern.pallet;
 
     let wait_fn_name = format_ident!("{}_wait", fn_name);
+    let fee_fn_name = format_ident!("{}_fee", fn_name);
 
     if !UNSIGNED_CALLS.contains(&fn_name.to_string().as_str()) {
         quote! {
@@ -70,6 +71,12 @@ fn generate_pattern_wrappers(network: &InterfaceSource, pattern: &CallPattern) -
                 self.client.tx().sign_and_submit_then_watch_default(&call, &signer).await?.wait_for_finalized_success().await?;
 
                 Ok(())
+            }
+
+            pub async fn #fee_fn_name(&self, #(#param_idents: crate::interfaces::#network::api::#pallet::calls::#param_types,)* signer: impl subxt::tx::signer::Signer<subxt::PolkadotConfig>) -> crate::Result<u128> {
+                let call = crate::interfaces::#network::api::tx().#pallet().#fn_name(#(#param_idents),*);
+
+                Ok(self.client.tx().create_signed(&call, &signer, Default::default()).await?.partial_fee_estimate().await?)
             }
         }
     } else {
