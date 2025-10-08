@@ -201,10 +201,10 @@ pub(crate) fn resolve_expired_applications<T: crate::Config>(current_block: Bloc
         }
 
         crate::AgentApplications::<T>::mutate(application.id, |application| {
-            if let Some(app) = application {
-                if matches!(app.status, ApplicationStatus::Open) {
-                    app.status = ApplicationStatus::Expired;
-                }
+            if let Some(app) = application
+                && matches!(app.status, ApplicationStatus::Open)
+            {
+                app.status = ApplicationStatus::Expired;
             }
         });
 

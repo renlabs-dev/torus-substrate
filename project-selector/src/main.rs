@@ -371,15 +371,14 @@ fn generate_project_json<'a>(
                         .find(|t| matches!(t.kind, TargetKind::Lib))
                         .or_else(|| dep_crate_info.targets.first());
 
-                    if let Some(dep_target) = dep_target {
-                        if let Some(&dep_crate_idx) =
+                    if let Some(dep_target) = dep_target
+                        && let Some(&dep_crate_idx) =
                             target_to_crate_idx.get(&(dep_pkg_id, dep_target.index))
-                        {
-                            deps.push(json::Dep {
-                                krate: json::CrateArrayIdx(dep_crate_idx),
-                                name: dep.name.to_string(),
-                            });
-                        }
+                    {
+                        deps.push(json::Dep {
+                            krate: json::CrateArrayIdx(dep_crate_idx),
+                            name: dep.name.to_string(),
+                        });
                     }
                 }
             }
@@ -495,6 +494,10 @@ fn build_command(
         cmd.args(["--target", target]);
     }
 
+    cmd.env("__CARGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS", "nightly");
+    cmd.arg("-Zunstable-options");
+    cmd.arg("--compile-time-deps");
+
     match &config.features {
         CargoFeatures::All => {
             cmd.arg("--all-features");
@@ -531,7 +534,6 @@ struct BuildOutput {
     proc_macro_dylib: Option<Utf8PathBuf>,
 }
 
-// TODO: wait for rust 1.90, https://github.com/rust-lang/cargo/pull/15674
 fn run_command(mut cmd: Command) -> std::io::Result<HashMap<PackageId, BuildOutput>> {
     fn is_dylib(path: &Utf8Path) -> bool {
         match path.extension().map(|e| e.to_owned().to_lowercase()) {
@@ -568,12 +570,11 @@ fn run_command(mut cmd: Command) -> std::io::Result<HashMap<PackageId, BuildOutp
                     .target
                     .kind
                     .contains(&cargo_metadata::TargetKind::ProcMacro)
+                    && let Some(filename) = message.filenames.iter().find(|file| is_dylib(file))
                 {
-                    if let Some(filename) = message.filenames.iter().find(|file| is_dylib(file)) {
-                        let output = outputs.entry(message.package_id).or_default();
+                    let output = outputs.entry(message.package_id).or_default();
 
-                        output.proc_macro_dylib = Some(filename.clone());
-                    }
+                    output.proc_macro_dylib = Some(filename.clone());
                 }
             }
             Message::BuildFinished(_) => {}

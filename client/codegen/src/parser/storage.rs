@@ -17,11 +17,11 @@ pub(super) fn parse_storage_module(
 
         // Find StorageApi implementation
         for item in items {
-            if let Item::Impl(impl_item) = item {
-                if is_api_impl(impl_item, "StorageApi") {
-                    let methods = extract_storage_methods(impl_item)?;
-                    patterns.extend(analyze_storage_methods(methods, &type_info, pallet_name)?);
-                }
+            if let Item::Impl(impl_item) = item
+                && is_api_impl(impl_item, "StorageApi")
+            {
+                let methods = extract_storage_methods(impl_item)?;
+                patterns.extend(analyze_storage_methods(methods, &type_info, pallet_name)?);
             }
         }
     }
@@ -179,16 +179,15 @@ fn extract_type_info(items: &[Item]) -> Result<HashMap<String, TypeInfo>, Box<dy
 
     // Find the types module
     for item in items {
-        if let Item::Mod(types_mod) = item {
-            if types_mod.ident == "types" {
-                if let Some((_, type_items)) = &types_mod.content {
-                    for type_item in type_items {
-                        if let Item::Mod(storage_type_mod) = type_item {
-                            let storage_name = storage_type_mod.ident.to_string();
-                            let info = parse_storage_type_mod(storage_type_mod)?;
-                            type_info.insert(storage_name, info);
-                        }
-                    }
+        if let Item::Mod(types_mod) = item
+            && types_mod.ident == "types"
+            && let Some((_, type_items)) = &types_mod.content
+        {
+            for type_item in type_items {
+                if let Item::Mod(storage_type_mod) = type_item {
+                    let storage_name = storage_type_mod.ident.to_string();
+                    let info = parse_storage_type_mod(storage_type_mod)?;
+                    type_info.insert(storage_name, info);
                 }
             }
         }

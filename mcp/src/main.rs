@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 #[cfg(all(feature = "testnet", feature = "devnet"))]
 compile_error!("only one of the following features can be enabled at a time: testnet, devnet.");
 

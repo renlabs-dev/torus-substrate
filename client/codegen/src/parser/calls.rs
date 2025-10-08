@@ -15,10 +15,10 @@ pub(super) fn parse_calls_module(
 
     if let Some((_, items)) = &calls_mod.content {
         for item in items {
-            if let Item::Impl(impl_item) = item {
-                if is_api_impl(impl_item, "TransactionApi") {
-                    extract_calls(impl_item, &mut calls, pallet_name)?;
-                }
+            if let Item::Impl(impl_item) = item
+                && is_api_impl(impl_item, "TransactionApi")
+            {
+                extract_calls(impl_item, &mut calls, pallet_name)?;
             }
         }
     }

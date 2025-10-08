@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::{borrow::Cow, net::IpAddr, os::unix::process::CommandExt};
 
 use polkadot_sdk::sp_keyring;

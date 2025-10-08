@@ -176,7 +176,7 @@ mod tests {
         transpose: bool,
     ) -> Vec<Vec<(u16, FixedU128)>> {
         assert!(
-            vector.len() % rows == 0,
+            vector.len().is_multiple_of(rows),
             "Vector of len {:?} cannot reshape to {rows} rows.",
             vector.len()
         );
