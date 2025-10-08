@@ -451,7 +451,10 @@ fn validate_stream_permission_recipients<T: Config>(
 
     for (recipient, weight) in recipients {
         ensure!(delegator != recipient, Error::<T>::InvalidRecipientWeight);
-        ensure!(*weight > 0, Error::<T>::InvalidRecipientWeight);
+        ensure!(
+            revocation.is_revokable() || *weight > 0,
+            Error::<T>::InvalidRecipientWeight
+        );
         ensure!(
             T::Torus::is_agent_registered(recipient),
             Error::<T>::NotRegisteredAgent
