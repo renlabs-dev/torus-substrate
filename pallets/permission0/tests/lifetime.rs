@@ -39,6 +39,19 @@ fn irrevocable() {
         let agent_1 = bob();
         let agent_2 = charlie();
 
+        assert_err!(
+            delegate_stream_permission(
+                agent_0,
+                vec![(agent_1, 0), (agent_2, u16::MAX / 2)],
+                pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
+                pallet_permission0_api::DistributionControl::Manual,
+                pallet_permission0_api::PermissionDuration::Indefinite,
+                pallet_permission0_api::RevocationTerms::Irrevocable,
+                pallet_permission0_api::EnforcementAuthority::None,
+            ),
+            Error::<Test>::InvalidRecipientWeight
+        );
+
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
             vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
@@ -81,7 +94,7 @@ fn revocable_by_delegator() {
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
-            vec![(agent_1, u16::MAX / 2), (agent_2, u16::MAX / 2)],
+            vec![(agent_1, 0), (agent_2, u16::MAX / 2)],
             pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
             pallet_permission0_api::DistributionControl::Manual,
             pallet_permission0_api::PermissionDuration::Indefinite,
@@ -127,6 +140,19 @@ fn revocable_after_block() {
         let agent_0 = alice();
         let agent_1 = bob();
         let agent_2 = charlie();
+
+        assert_err!(
+            delegate_stream_permission(
+                agent_0,
+                vec![(agent_1, 0), (agent_2, u16::MAX / 2)],
+                pallet_permission0_api::StreamAllocation::FixedAmount(as_tors(10)),
+                pallet_permission0_api::DistributionControl::Manual,
+                pallet_permission0_api::PermissionDuration::Indefinite,
+                pallet_permission0_api::RevocationTerms::RevocableAfter(2),
+                pallet_permission0_api::EnforcementAuthority::None,
+            ),
+            Error::<Test>::InvalidRecipientWeight
+        );
 
         let permission_id = assert_ok!(delegate_stream_permission(
             agent_0,
