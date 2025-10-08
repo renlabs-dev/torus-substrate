@@ -39,7 +39,7 @@ pub mod pallet {
 
     use super::*;
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(8);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -220,7 +220,11 @@ pub mod pallet {
         /// An stream distribution happened
         StreamDistribution {
             permission_id: PermissionId,
-            stream_id: Option<StreamId>,
+            /// The source stream ID from which the tokens were derived.
+            source_stream: Option<StreamId>,
+            /// The actual final stream ID to which tokens were accumulated,
+            /// this is the funnel stream ID if enabled.
+            target_stream: Option<StreamId>,
             recipient: T::AccountId,
             amount: BalanceOf<T>,
             reason: permission::stream::DistributionReason,
@@ -230,6 +234,16 @@ pub mod pallet {
             permission_id: PermissionId,
             stream_id: StreamId,
             amount: BalanceOf<T>,
+        },
+        /// Funnel enabled for permission
+        FunnelEnabled {
+            permission_id: PermissionId,
+            derived_stream_id: StreamId,
+        },
+        /// Funnel disabled for permission
+        FunnelDisabled {
+            permission_id: PermissionId,
+            derived_stream_id: StreamId,
         },
     }
 
@@ -329,6 +343,8 @@ pub mod pallet {
         TooManyCuratorPermissions,
         /// Namespace delegation depth exceeded the maximum allowed limit.
         DelegationDepthExceeded,
+        /// Current funnel system is limited to one derived stream per permission.
+        TooManyStreamFunnels,
     }
 
     #[pallet::hooks]
@@ -353,6 +369,7 @@ pub mod pallet {
             enforcement: EnforcementAuthority<T>,
             recipient_manager: Option<T::AccountId>,
             weight_setter: Option<T::AccountId>,
+            enable_funnel: bool,
         ) -> DispatchResult {
             let delegator = ensure_signed(origin)?;
 
@@ -366,6 +383,7 @@ pub mod pallet {
                 enforcement,
                 recipient_manager,
                 weight_setter,
+                enable_funnel,
             )?;
 
             Ok(())
@@ -560,6 +578,7 @@ pub mod pallet {
             new_distribution_control: Option<DistributionControl<T>>,
             new_recipient_manager: Option<Option<T::AccountId>>,
             new_weight_setter: Option<Option<T::AccountId>>,
+            funnel: Option<bool>,
         ) -> DispatchResult {
             ext::stream_impl::update_stream_permission(
                 origin,
@@ -569,6 +588,7 @@ pub mod pallet {
                 new_distribution_control,
                 new_recipient_manager,
                 new_weight_setter,
+                funnel,
             )?;
 
             Ok(())

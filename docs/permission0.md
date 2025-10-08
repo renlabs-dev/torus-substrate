@@ -395,14 +395,16 @@ Batch creates multiple namespace permissions with the same properties but differ
 pub fn update_stream_permission(
     origin: OriginFor<T>,
     permission_id: PermissionId,
-    recipients: Option<Vec<(T::AccountId, u16)>>,
-    accumulating: Option<bool>,
-    recipient_manager: Option<T::AccountId>,
-    weight_setter: Option<T::AccountId>,
+    new_recipients: Option<BoundedBTreeMap<T::AccountId, u16, T::MaxRecipientsPerPermission>>,
+    new_streams: Option<BoundedBTreeMap<StreamId, Percent, T::MaxStreamsPerPermission>>,
+    new_distribution_control: Option<DistributionControl<T>>,
+    new_recipient_manager: Option<Option<T::AccountId>>,
+    new_weight_setter: Option<Option<T::AccountId>>,
+    funnel: Option<bool>,
 ) -> DispatchResult
 ```
 
-Allows delegator or authorized accounts to update stream permission properties, including recipients, accumulation state, and management roles.
+Allows delegator or authorized accounts to update stream permission properties, including recipients, stream allocations, distribution control, management roles, and funnel state. The `funnel` parameter controls whether distributions output the original stream IDs or a derived funnel stream ID to recipients.
 
 ### update_namespace_permission
 
@@ -528,7 +530,76 @@ When streams are redelegated through the permission system, their IDs are preser
 
 This stream-based model allows for much more granular control over stream delegation, enabling agents to specify different delegation percentages for different types of streams they receive.
 
-## Integration with Stream Distribution
+## Funneling Streams
+
+While the stream-based model preserves lineage across delegations, complex multi-level swarms reveal a limitation: when multiple permissions route different portions of the same stream to an agent, all incoming tokens accumulate into a single bucket at `(Agent, StreamId)`. This mixes otherwise distinct delegation paths into one mixed balance, obscuring provenance and preventing agents from treating tokens differently based on their intended purpose or origin.
+
+Consider an agent that performs multiple specialized functions for the same swarm. A research collective with a root stream of 1000 TORS creates two permissions: one allocating 30% for compute services, another allocating 20% for data curation. Both permissions reference the same root stream, so the agent receives 500 TORS total, but cannot distinguish which 300 TORS arrived for compute work versus which 200 TORS came for curation. The agent cannot route compute emissions to GPU infrastructure while directing curation payments to data validators. It cannot apply function-specific fee structures, cannot generate separate invoices for each service, and cannot prove to sub-delegators how much funding flows through each functional role.
+
+This problem compounds when the agent needs to create child permissions. If it wants to forward 50% of compute earnings to a GPU cluster operator and 30% of curation earnings to a dataset validator, the mixed bucket prevents such functional isolation. The semantic separation needed for proper accounting, specialized routing, and role-based policy enforcement is lost.
+
+```mermaid
+graph TB
+    ROOT[Research Collective<br/>RootStream: 1000 TORS]
+
+    ROOT -->|Permission 1: 30%<br/>For Compute<br/>StreamID: 0xABC...| A[Multi-Function Agent]
+    ROOT -->|Permission 2: 20%<br/>For Curation<br/>StreamID: 0xABC...| A
+
+    A -->|Total: 500 TORS<br/>Mixed bucket<br/>Cannot distinguish| MIXED[Indistinguishable<br/>300 TORS compute + 200 TORS curation<br/>Origin lost]
+```
+
+Stream funnels solve this by transforming input streams into new derived Stream IDs that represent specific delegation paths. When a delegator creates a permission with `enable_funnel: true`, the system generates a unique derived Stream ID by hashing the permission ID. This derived stream becomes the output identifier that recipients see and accumulate, effectively creating a new stream identity that carries the semantic context of that delegation path.
+
+With funnels, the research collective creates two separate funnel permissions: one for compute services outputting `derived_stream_compute`, another for curation outputting `derived_stream_curation`. The agent now receives two isolated buckets, each carrying its own functional context. It can create child permissions on `derived_stream_compute` to route compute tokens to GPU providers, and separate permissions on `derived_stream_curation` for data validators. Each sub-delegator knows precisely which functional allocation their tokens originated from, without needing to query complex delegation graphs or reconstruct paths off-chain.
+
+```mermaid
+graph TB
+    ROOT[Research Collective<br/>RootStream: 1000 TORS]
+
+    ROOT -->|Permission 1 with Funnel<br/>Input: RootStream 30%| FC[Funnel: Compute<br/>Outputs: derived_compute]
+    ROOT -->|Permission 2 with Funnel<br/>Input: RootStream 20%| FD[Funnel: Curation<br/>Outputs: derived_curation]
+
+    FC -->|300 TORS<br/>derived_compute| A[Multi-Function Agent]
+    FD -->|200 TORS<br/>derived_curation| A
+
+    A -->|derived_compute<br/>50% sub-delegation| GPU[GPU Clusters<br/>Model training]
+    A -->|derived_curation<br/>30% sub-delegation| VAL[Data Validators<br/>Dataset verification]
+```
+
+Funnels preserve composability throughout the delegation chain. An agent receiving `derived_stream_compute` can create its own permissions on that stream, including another funnel that further specializes the path (for example, separating training workloads from inference services). Revocation works cleanly: revoking a funnel permission stops emissions along that path, but child permissions remain structurally valid and simply stop receiving funds. No cascade deletions occur, no coordination is required between levels.
+
+The funnel structure is minimal, containing only what's necessary for deterministic ID generation:
+
+```rust
+pub struct FunnelStream<T: Config> {
+    pub derived_stream: StreamId,
+    pub nonce: u64,
+    pub created_at: BlockNumberFor<T>,
+}
+```
+
+The derived Stream ID is computed as `hash(permission_id, nonce)` where the nonce is always 1 for the first funnel on a permission. This deterministic generation means any observer can reconstruct the derived stream ID from the permission ID without additional storage lookups. The `created_at` block number provides an audit trail for when the funnel was established.
+
+A stream permission can enable or disable funneling through the `update_stream_permission` extrinsic by passing `funnel: Some(true)` or `funnel: Some(false)`. Accumulation always occurs at the original input stream buckets regardless of funnel state, the funnel only transforms which stream ID recipients see during distribution. Enabling a funnel on a permission that already has accumulated amounts means the next distribution will pass the derived stream ID to recipients instead of the original. Disabling a funnel means recipients will receive the original stream IDs on subsequent distributions.
+
+During distribution, the system reads accumulated amounts from original input stream buckets (where accumulation occurs), but passes the derived Stream ID to recipients through `do_distribute_to_targets`. Recipients accumulate tokens under `(Agent, derived_stream_id, permission_id)` buckets, achieving full separation from other permissions.
+
+Events capture both source and target streams for complete observability:
+
+```rust
+Event::StreamDistribution {
+    permission_id: H256,
+    source_stream: Some(0xROOT...),          // Original input stream
+    target_stream: Some(0xDERIVED_COMPUTE...), // Funnel's derived output
+    recipient: AgentAccount,
+    amount: 300_TORS,
+    reason: DistributionReason,
+}
+```
+
+This dual-stream event structure allows indexers to reconstruct the full flow without maintaining complex state. Accumulation events show original streams, distribution events show both source and target, enabling path tracing from root streams through arbitrary delegation depths. Off-chain systems can identify funnel operations by comparing source and target streams, when they differ, a funnel transformation occurred.
+
+## Hooking into emission rewards
 
 Permission0 integrates with the `Emission0` pallet by intercepting the stream distribution process. When the linear rewards mechanism distributes tokens, the `do_accumulate_streams` function is called to divert portions according to active permissions.
 

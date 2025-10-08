@@ -43,6 +43,7 @@ impl<T: Config>
         enforcement: ApiEnforcementAuthority<T::AccountId>,
         recipient_manager: Option<T::AccountId>,
         weight_setter: Option<T::AccountId>,
+        enable_funnel: bool,
     ) -> Result<PermissionId, DispatchError> {
         let internal_allocation = match allocation {
             ApiStreamAllocation::Streams(streams) => StreamAllocation::Streams(
@@ -81,6 +82,7 @@ impl<T: Config>
             enforcement,
             recipient_manager,
             weight_setter,
+            enable_funnel,
         )
     }
 
@@ -121,6 +123,7 @@ pub(crate) fn delegate_stream_permission_impl<T: Config>(
     enforcement: EnforcementAuthority<T>,
     recipient_manager: Option<T::AccountId>,
     weight_setter: Option<T::AccountId>,
+    enable_funnel: bool,
 ) -> Result<PermissionId, DispatchError> {
     use polkadot_sdk::frame_support::ensure;
 
@@ -155,16 +158,25 @@ pub(crate) fn delegate_stream_permission_impl<T: Config>(
 
     let recipients_ids: Vec<_> = recipients.keys().cloned().collect();
 
-    let scope = PermissionScope::Stream(StreamScope {
+    let mut scope = PermissionScope::Stream(StreamScope {
         recipients,
         allocation: allocation.clone(),
         distribution,
-        accumulating: true, // Start with accumulation enabled by default
+        accumulating: true,
         recipient_managers: validate_stream_managers::<T>(&delegator, recipient_manager)?,
         weight_setters: validate_stream_managers::<T>(&delegator, weight_setter)?,
+        funnels: Default::default(),
     });
 
     let permission_id = generate_permission_id::<T>(&delegator, &scope)?;
+
+    if enable_funnel {
+        let PermissionScope::Stream(stream) = &mut scope else {
+            return Err(Error::<T>::UnsupportedPermissionType.into());
+        };
+
+        stream.enable_funnel(permission_id)?;
+    }
 
     let contract =
         PermissionContract::<T>::new(delegator.clone(), scope, duration, revocation, enforcement);
@@ -316,6 +328,7 @@ pub(crate) fn update_stream_permission<T: Config>(
     new_distribution_control: Option<DistributionControl<T>>,
     new_recipient_manager: Option<Option<T::AccountId>>,
     new_weight_setter: Option<Option<T::AccountId>>,
+    funnel: Option<bool>,
 ) -> DispatchResult {
     let caller = ensure_signed(origin)?;
 
@@ -419,6 +432,20 @@ pub(crate) fn update_stream_permission<T: Config>(
         ensure!(allowed_delegator, Error::<T>::NotAuthorizedToEdit);
         scope.weight_setters =
             validate_stream_managers::<T>(&permission.delegator, new_weight_setter)?;
+    }
+
+    if let Some(funnel) = funnel {
+        ensure!(allowed_delegator, Error::<T>::NotAuthorizedToEdit);
+        ensure!(
+            matches!(scope.allocation, StreamAllocation::Streams(_)),
+            Error::<T>::UnsupportedPermissionType
+        );
+
+        if funnel {
+            let _ = scope.enable_funnel(permission_id);
+        } else {
+            let _ = scope.disable_funnel(permission_id);
+        }
     }
 
     permission.scope = PermissionScope::Stream(scope);
