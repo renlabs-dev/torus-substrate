@@ -67,6 +67,11 @@ Be idiomatic. Use `Iterator`s, `Result`s, etc. PLEASE. Take a look at [Rust's AP
   - the WASM runtime that Substrate runs on cannot unwind, so panics in functions like `on_initialize` will halt the chain (been there - more than once);
   - use `Option` and `Result` types properly for error handling. NEVER allow `unused_must_use`. NEVER;
   - always prefer panic-free functions and treat all potential errors (`checked_div` in favor of `/`, etc.).
+- **Avoid Rust keywords as field names:**
+  - Never use Rust keywords (`type`, `use`, `trait`, `impl`, etc.) as struct field names, especially in public APIs;
+  - keywords require the `r#` prefix in Rust (e.g., `r#type`), which causes serialization inconsistencies across language bindings;
+  - Polkadot.js may convert `r#type` to `r_type` or `rType`, while Serde serializes it as `type`, creating confusion;
+  - use alternative names like `kind`, `variant`, `scope`, `category`, or `mode` instead.
 
 ## Storage modifications and migrations
 

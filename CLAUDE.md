@@ -26,16 +26,19 @@ Torus is a stake-driven peer-to-peer network built on Substrate. The blockchain 
 The `permission0` pallet manages delegated permissions and access control within the Torus network. Key components:
 
 **Core Permission Types** (`pallets/permission0/src/permission.rs`):
+
 - `PermissionContract<T>` - Main permission structure with delegator, recipient, scope, duration, and enforcement
 - `PermissionId` - Unique permission identifier (H256 hash)
 - `PermissionScope<T>` - Defines what actions the permission covers
 - `NamespaceScope<T>` - Defines namespace path permissions for delegation
 
 **Permission Scopes** (`pallets/permission0/src/permission/`):
+
 - `pallets/permission0/src/permission/curator.rs` - `CuratorPermissions` and `CuratorScope` types
 - `pallets/permission0/src/permission/emission.rs` - `EmissionAllocation`, `DistributionControl`, and `EmissionScope` types
 
 **Implementation Handlers** (`pallets/permission0/src/ext/`):
+
 - `pallets/permission0/src/ext/curator_impl.rs` - Functions for curator permission enforcement
 - `pallets/permission0/src/ext/emission_impl.rs` - Functions for emission permission enforcement  
 - `pallets/permission0/src/ext/namespace_impl.rs` - Functions for namespace permission enforcement
@@ -77,6 +80,7 @@ cargo build --release                # Build the node
 - **MUST ALWAYS** use `ensure!` macro for validation, NEVER `assert!`
 - **MUST ALWAYS** use the `?` operator for error propagation
 - **MUST ALWAYS** use pattern matching with proper error handling:
+
   ```rust
   let Some(value) = some_option else {
       return Err(Error::<T>::SomeError.into());
@@ -132,17 +136,32 @@ cargo build --release                # Build the node
 - **MUST ALWAYS** use proper type conversions with `.try_into()` and handle errors
 - **MUST NEVER** use `as` for lossy numeric conversions
 
+### API Design - MANDATORY
+
+- **MUST NEVER** use Rust keywords as struct field names (e.g., `type`, `use`, `trait`, `impl`)
+- **PROBLEM**: Rust keywords require `r#` prefix (e.g., `r#type`), causing serialization inconsistencies:
+  - Polkadot.js converts to `r_type` or `rType`
+  - Serde serializes as `type`
+  - Creates confusion and breaks API consistency across language bindings
+- **MUST ALWAYS** use alternative names: `kind`, `variant`, `scope`, `category`, `mode`, etc.
+- **APPLIES TO**: All public structs, especially those in `api` crates and types exposed to external clients
+
 ### Common Code Patterns - REQUIRED
 
 - **MUST ALWAYS** emit events after successful state changes:
+
   ```rust
   Pallet::<T>::deposit_event(Event::<T>::SomethingHappened(who, what));
   ```
+
 - **MUST ALWAYS** validate string data is UTF-8:
+
   ```rust
   ensure!(core::str::from_utf8(bytes).is_ok(), Error::<T>::InvalidUtf8);
   ```
+
 - **MUST ALWAYS** check bounds before operations:
+
   ```rust
   ensure!(value <= T::MaxValue::get(), Error::<T>::ValueTooLarge);
   ```
@@ -169,7 +188,7 @@ cargo build --release                # Build the node
 - **MUST NEVER** use repetitive and redundant comments within code
 - **MUST NEVER** ignore compiler or clippy warnings with `#[allow(...)]`
 
-### Before committing:
+### Before committing
 
 1. **MUST** run `cargo fmt`
 2. **MUST** run `just check` and fix all warnings
