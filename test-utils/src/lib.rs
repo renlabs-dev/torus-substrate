@@ -456,6 +456,7 @@ pub fn delegate_stream_permission(
         enforcement,
         None,
         None,
+        false,
     )
 }
 
