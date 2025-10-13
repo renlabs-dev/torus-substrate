@@ -286,7 +286,8 @@ fn random_cannot_change_permission() {
                 None,
                 None,
                 None,
-                None
+                None,
+                None,
             ),
             pallet_permission0::Error::<Test>::NotAuthorizedToEdit
         );
@@ -334,6 +335,7 @@ fn delegator_cannot_change_irrevocable_permission() {
                 get_origin(agent_0),
                 permission_id,
                 Some(new_recipients),
+                None,
                 None,
                 None,
                 None,
@@ -393,6 +395,7 @@ fn delegator_cannot_change_arbiter_permission() {
                 None,
                 None,
                 None,
+                None,
                 None
             ),
             pallet_permission0::Error::<Test>::NotAuthorizedToEdit
@@ -445,6 +448,7 @@ fn delegator_cannot_change_permission_before_block() {
                 None,
                 None,
                 None,
+                None,
                 None
             ),
             pallet_permission0::Error::<Test>::NotAuthorizedToEdit
@@ -460,6 +464,7 @@ fn delegator_cannot_change_permission_before_block() {
                 get_origin(agent_0),
                 permission_id,
                 Some(new_recipients),
+                None,
                 None,
                 None,
                 None,
@@ -514,6 +519,7 @@ fn recipient_can_only_change_recipients() {
                 Some(BoundedBTreeMap::new()),
                 None,
                 None,
+                None,
                 None
             ),
             pallet_permission0::Error::<Test>::NotAuthorizedToEdit
@@ -531,6 +537,7 @@ fn recipient_can_only_change_recipients() {
                 Some(new_recipients),
                 None,
                 Some(pallet_permission0::DistributionControl::Manual),
+                None,
                 None,
                 None
             ),
@@ -585,6 +592,7 @@ fn updating_works() {
                 Some(new_recipients.clone()),
                 Some(new_streams.clone().try_into().unwrap()),
                 Some(pallet_permission0::DistributionControl::Interval(100)),
+                None,
                 None,
                 None
             )
@@ -780,6 +788,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
                 pallet_permission0::EnforcementAuthority::None,
                 None,                // recipient_manager
                 Some(weight_setter), // weight_setter
+                false,
             )
         );
 
@@ -799,6 +808,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
                 get_origin(weight_setter),
                 permission_id,
                 Some(updated_recipients),
+                None,
                 None,
                 None,
                 None,
@@ -829,6 +839,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
                 None,
                 None,
                 None,
+                None,
                 None
             ),
             pallet_permission0::Error::<Test>::NotAuthorizedToEdit
@@ -847,6 +858,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
                 None,
                 None,
                 None,
+                None,
                 None
             ),
             pallet_permission0::Error::<Test>::NotAuthorizedToEdit
@@ -859,6 +871,7 @@ fn weight_setter_can_only_modify_weights_not_keys() {
                 permission_id,
                 None,
                 Some(BoundedBTreeMap::new()),
+                None,
                 None,
                 None,
                 None
@@ -896,6 +909,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
                 pallet_permission0::EnforcementAuthority::None,
                 Some(recipient_manager), // recipient_manager
                 None,                    // weight_setter
+                false,
             )
         );
 
@@ -911,6 +925,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
                 get_origin(recipient_manager),
                 permission_id,
                 Some(new_recipients.clone()),
+                None,
                 None,
                 None,
                 None,
@@ -941,6 +956,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
                 None,
                 None,
                 None,
+                None,
                 None
             )
         );
@@ -967,6 +983,7 @@ fn recipient_manager_can_modify_keys_and_weights() {
                 permission_id,
                 None,
                 Some(BoundedBTreeMap::new()),
+                None,
                 None,
                 None,
                 None
@@ -1004,6 +1021,7 @@ fn manager_modifications_only_allowed_after_revocable_period() {
                 pallet_permission0::EnforcementAuthority::None,
                 Some(recipient_manager),
                 None,
+                false,
             )
         );
 
@@ -1022,6 +1040,7 @@ fn manager_modifications_only_allowed_after_revocable_period() {
                 None,
                 None,
                 None,
+                None,
                 None
             ),
             pallet_permission0::Error::<Test>::NotAuthorizedToEdit
@@ -1036,6 +1055,7 @@ fn manager_modifications_only_allowed_after_revocable_period() {
                 get_origin(recipient_manager),
                 permission_id,
                 Some(new_recipients.clone()),
+                None,
                 None,
                 None,
                 None,
@@ -1080,6 +1100,7 @@ fn delegator_can_assign_and_remove_managers() {
                 pallet_permission0::EnforcementAuthority::None,
                 None, // weight_setter
                 None, // recipient_manager
+                false,
             )
         );
 
@@ -1095,6 +1116,7 @@ fn delegator_can_assign_and_remove_managers() {
                 None,
                 Some(Some(recipient_manager)),
                 Some(Some(weight_setter)),
+                None,
             )
         );
 
@@ -1118,6 +1140,7 @@ fn delegator_can_assign_and_remove_managers() {
                 None,
                 None,
                 None,
+                None,
                 None
             )
         );
@@ -1131,7 +1154,8 @@ fn delegator_can_assign_and_remove_managers() {
                 None,
                 None,
                 Some(None), // Remove weight_setter
-                Some(None)  // Remove recipient_manager
+                Some(None), // Remove recipient_manager
+                None,
             )
         );
 
@@ -1149,6 +1173,7 @@ fn delegator_can_assign_and_remove_managers() {
                 get_origin(weight_setter),
                 permission_id,
                 Some(new_recipients),
+                None,
                 None,
                 None,
                 None,
@@ -1190,6 +1215,7 @@ fn index_consistency_during_complex_recipient_updates() {
                 pallet_permission0::EnforcementAuthority::None,
                 None,
                 None,
+                false,
             )
         );
 
@@ -1220,7 +1246,7 @@ fn index_consistency_during_complex_recipient_updates() {
             .unwrap(); // Keep with different weight
         updated_recipients
             .try_insert(agent_3, u16::MAX / 4)
-            .unwrap(); // Keep with different weight  
+            .unwrap(); // Keep with different weight
         updated_recipients
             .try_insert(agent_4, u16::MAX / 4)
             .unwrap(); // Add new
@@ -1230,6 +1256,7 @@ fn index_consistency_during_complex_recipient_updates() {
                 get_origin(agent_0),
                 permission_id,
                 Some(updated_recipients.clone()),
+                None,
                 None,
                 None,
                 None,
@@ -1306,6 +1333,7 @@ fn cannot_create_empty_recipients_for_irrevocable_permissions() {
                 pallet_permission0::EnforcementAuthority::None,
                 None,
                 None,
+                false,
             ),
             pallet_permission0::Error::<Test>::NoRecipientsSpecified
         );
@@ -1321,6 +1349,7 @@ fn cannot_create_empty_recipients_for_irrevocable_permissions() {
                 pallet_permission0::EnforcementAuthority::None,
                 None,
                 None,
+                false,
             ),
             pallet_permission0::Error::<Test>::NoRecipientsSpecified
         );
@@ -1336,6 +1365,7 @@ fn cannot_create_empty_recipients_for_irrevocable_permissions() {
                 pallet_permission0::EnforcementAuthority::None,
                 None,
                 None,
+                false,
             )
         );
     });

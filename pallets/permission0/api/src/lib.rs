@@ -26,6 +26,17 @@ pub fn generate_root_stream_id<AccountId: Encode>(agent_id: &AccountId) -> Strea
     blake2_256(&data).into()
 }
 
+/// Static identifier for funneled streams
+pub const FUNNEL_STREAM_PREFIX: &[u8] = b"torus:permission:funnel-v1";
+
+/// Generates a funneled stream ID.
+pub fn generate_funnel_stream_id(permission_id: &PermissionId, nonce: u32) -> StreamId {
+    let mut data = FUNNEL_STREAM_PREFIX.to_vec();
+    data.extend(permission_id.encode());
+    data.extend(nonce.encode());
+    blake2_256(&data).into()
+}
+
 /// Defines what portion of streams the permission applies to
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, Debug)]
 pub enum StreamAllocation<Balance> {
@@ -113,6 +124,7 @@ pub trait Permission0StreamApi<AccountId, Origin, BlockNumber, Balance, Negative
         enforcement: EnforcementAuthority<AccountId>,
         recipient_manager: Option<AccountId>,
         weight_setter: Option<AccountId>,
+        enable_funnel: bool,
     ) -> Result<PermissionId, DispatchError>;
 
     /// Accumulate streams for an agent with permissions
