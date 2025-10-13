@@ -6,7 +6,7 @@ use inquire::Password;
 use tabled::Table;
 
 use crate::{
-    action::{Action, ActionContext},
+    action::{Action, ActionContext, Changes},
     keypair::generate_sr25519_keypair,
     store::{delete_key, get_all_keys, get_key, key_exists, store_new_key, Key},
 };
@@ -17,11 +17,11 @@ impl Action for ListKeysAction {
     type Params = ();
     type ResponseData = ListKeysActionResponse;
 
-    async fn create(_ctx: &impl ActionContext, _params: Self::Params) -> anyhow::Result<Self> {
+    async fn create(_ctx: &mut impl ActionContext, _params: Self::Params) -> anyhow::Result<Self> {
         Ok(ListKeysAction)
     }
 
-    async fn execute(&self, _ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, _ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         let keys = get_all_keys()?
             .into_iter()
             .map(|key| KeyEntry {
@@ -70,7 +70,7 @@ impl Action for CreateKeyAction {
     type ResponseData = CreateKeyActionResponse;
 
     async fn create(
-        _ctx: &impl ActionContext,
+        _ctx: &mut impl ActionContext,
         (name, no_password, mnemonic): Self::Params,
     ) -> anyhow::Result<Self> {
         Ok(Self {
@@ -80,7 +80,7 @@ impl Action for CreateKeyAction {
         })
     }
 
-    async fn execute(&self, _ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, _ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         let password = if self.no_password {
             None
         } else {
@@ -138,7 +138,7 @@ impl Action for DeleteKeyAction {
     type Params = String;
     type ResponseData = DeleteKeyActionResponse;
 
-    async fn create(_ctx: &impl ActionContext, key: Self::Params) -> anyhow::Result<Self> {
+    async fn create(_ctx: &mut impl ActionContext, key: Self::Params) -> anyhow::Result<Self> {
         if !key_exists(&key) {
             bail!("No keys found with this name.");
         }
@@ -146,17 +146,14 @@ impl Action for DeleteKeyAction {
         Ok(Self { key })
     }
 
-    async fn confirmation_phrase(
-        &self,
-        _ctx: &impl ActionContext,
-    ) -> anyhow::Result<Option<String>> {
-        Ok(Some(format!(
-            "Are you sure you want to delete the key `{}`?\n[y/N]",
-            self.key,
-        )))
+    async fn get_changes(&self, _ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
+        Ok(Some(Changes {
+            changes: vec![format!("Delete the key `{}`", self.key,)],
+            fee: None,
+        }))
     }
 
-    async fn execute(&self, _ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, _ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         delete_key(&self.key)?;
 
         Ok(DeleteKeyActionResponse)
@@ -180,13 +177,13 @@ impl Action for KeyInfoAction {
     type Params = String;
     type ResponseData = KeyInfoActionResponse;
 
-    async fn create(ctx: &impl ActionContext, key: Self::Params) -> anyhow::Result<Self> {
+    async fn create(ctx: &mut impl ActionContext, key: Self::Params) -> anyhow::Result<Self> {
         let key = get_key(&key)?;
         let (key, _) = ctx.decrypt(&key)?;
         Ok(Self { key })
     }
 
-    async fn execute(&self, _ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, _ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         Ok(KeyInfoActionResponse {
             name: self.key.name(),
             address: self.key.ss58_address.clone(),
