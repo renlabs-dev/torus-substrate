@@ -10,10 +10,9 @@ use torus_client::{
 };
 
 use crate::{
-    action::{Action, ActionContext},
+    action::{Action, ActionContext, Changes},
     keypair::Keypair,
     store::{get_account, get_key},
-    util::format_torus,
 };
 
 pub struct NamespaceInfoAction {
@@ -24,12 +23,12 @@ impl Action for NamespaceInfoAction {
     type Params = String;
     type ResponseData = NamespaceInfoActionResponse;
 
-    async fn create(_ctx: &impl ActionContext, account: Self::Params) -> anyhow::Result<Self> {
+    async fn create(_ctx: &mut impl ActionContext, account: Self::Params) -> anyhow::Result<Self> {
         let account = get_account(&account)?;
         Ok(Self { account })
     }
 
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         ctx.info("Fetching namespace data...");
 
         let entries = if ctx.is_testnet() {
@@ -86,13 +85,36 @@ impl Action for RegisterNamespaceAction {
     type Params = (String, String);
     type ResponseData = RegisterNamespaceActionResponse;
 
-    async fn create(ctx: &impl ActionContext, (key, path): Self::Params) -> anyhow::Result<Self> {
+    async fn create(
+        ctx: &mut impl ActionContext,
+        (key, path): Self::Params,
+    ) -> anyhow::Result<Self> {
         let key = get_key(&key)?;
         let (_, keypair) = ctx.decrypt(&key)?;
         Ok(Self { keypair, path })
     }
 
-    async fn estimate_fee(&self, ctx: &impl ActionContext) -> anyhow::Result<u128> {
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
+        let fee = if ctx.is_testnet() {
+            let client = TorusClient::for_testnet().await?;
+            client
+                .torus0()
+                .calls()
+                .create_namespace_fee(torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(self.path.as_bytes().to_vec()), self.keypair.clone())
+                .await?
+        } else {
+            let client = TorusClient::for_mainnet().await?;
+            client
+                .torus0()
+                .calls()
+                .create_namespace_fee(torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(self.path.as_bytes().to_vec()), self.keypair.clone())
+                .await?
+        };
+
+        Ok(fee)
+    }
+
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
         let (fee, deposit) = if ctx.is_testnet() {
             let client = TorusClient::for_testnet().await?;
             client
@@ -107,40 +129,16 @@ impl Action for RegisterNamespaceAction {
                 .await?
         };
 
-        Ok(fee + deposit)
+        Ok(Some(Changes {
+            changes: vec![
+                format!("Register namespace {}", self.path,),
+                format!("Charge {} torus for it", deposit + fee),
+            ],
+            fee: Some(fee),
+        }))
     }
 
-    async fn confirmation_phrase(
-        &self,
-        ctx: &impl ActionContext,
-    ) -> anyhow::Result<Option<String>> {
-        let (fee, deposit) = if ctx.is_testnet() {
-            let client = TorusClient::for_testnet().await?;
-            client
-                .rpc()
-                .namespace_path_creation_cost(self.keypair.account(), self.path.clone())
-                .await?
-        } else {
-            let client = TorusClient::for_mainnet().await?;
-            client
-                .rpc()
-                .namespace_path_creation_cost(self.keypair.account(), self.path.clone())
-                .await?
-        };
-
-        Ok(Some(format!(
-            "Are you sure you want to register namespace {} for {} torus? {}\n[y/N]",
-            self.path,
-            format_torus(deposit),
-            if fee != 0 {
-                format!("(there will be a {} torus fee)", format_torus(fee))
-            } else {
-                "".to_string()
-            }
-        )))
-    }
-
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         ctx.info("Registering namespace...");
 
         if ctx.is_testnet() {
@@ -181,13 +179,16 @@ impl Action for UnregisterNamespaceAction {
     type Params = (String, String);
     type ResponseData = UnregisterNamespaceActionResponse;
 
-    async fn create(ctx: &impl ActionContext, (key, path): Self::Params) -> anyhow::Result<Self> {
+    async fn create(
+        ctx: &mut impl ActionContext,
+        (key, path): Self::Params,
+    ) -> anyhow::Result<Self> {
         let key = get_key(&key)?;
         let (_, keypair) = ctx.decrypt(&key)?;
         Ok(Self { keypair, path })
     }
 
-    async fn estimate_fee(&self, ctx: &impl ActionContext) -> anyhow::Result<u128> {
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
         let fee = if ctx.is_testnet() {
             let client = TorusClient::for_testnet().await?;
             client
@@ -207,24 +208,16 @@ impl Action for UnregisterNamespaceAction {
         Ok(fee)
     }
 
-    async fn confirmation_phrase(
-        &self,
-        ctx: &impl ActionContext,
-    ) -> anyhow::Result<Option<String>> {
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
         let fee = self.estimate_fee(ctx).await?;
 
-        Ok(Some(format!(
-            "Are you sure you want to unregister namespace {}? {}\n[y/N]",
-            self.path,
-            if fee != 0 {
-                format!("(there will be a {} torus fee)", format_torus(fee))
-            } else {
-                "".to_string()
-            }
-        )))
+        Ok(Some(Changes {
+            changes: vec![format!("Unregister namespace {}", self.path,)],
+            fee: Some(fee),
+        }))
     }
 
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         ctx.info("Unregistering namespace...");
 
         if ctx.is_testnet() {

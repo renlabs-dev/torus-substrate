@@ -7,7 +7,7 @@ use torus_client::{
 };
 
 use crate::{
-    action::{Action, ActionContext},
+    action::{Action, ActionContext, Changes},
     keypair::Keypair,
     store::{get_account, get_key},
     util::format_torus,
@@ -21,12 +21,12 @@ impl Action for GivenStakeAction {
     type Params = String;
     type ResponseData = GivenStakeActionResponse;
 
-    async fn create(_ctx: &impl ActionContext, account: Self::Params) -> anyhow::Result<Self> {
+    async fn create(_ctx: &mut impl ActionContext, account: Self::Params) -> anyhow::Result<Self> {
         let account = get_account(&account)?;
         Ok(Self { account })
     }
 
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         ctx.info("Fetching given stake...");
 
         let staking = if ctx.is_testnet() {
@@ -94,12 +94,12 @@ impl Action for ReceivedStakeAction {
     type Params = String;
     type ResponseData = ReceivedStakeActionResponse;
 
-    async fn create(_ctx: &impl ActionContext, account: Self::Params) -> anyhow::Result<Self> {
+    async fn create(_ctx: &mut impl ActionContext, account: Self::Params) -> anyhow::Result<Self> {
         let account = get_account(&account)?;
         Ok(Self { account })
     }
 
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         ctx.info("Fetching given stake...");
 
         let staking = if ctx.is_testnet() {
@@ -170,7 +170,7 @@ impl Action for AddStakeAction {
     type ResponseData = AddStakeActionResponse;
 
     async fn create(
-        ctx: &impl ActionContext,
+        ctx: &mut impl ActionContext,
         (key, target, amount): Self::Params,
     ) -> anyhow::Result<Self> {
         let key = get_key(&key)?;
@@ -185,8 +185,8 @@ impl Action for AddStakeAction {
         })
     }
 
-    async fn estimate_fee(&self, ctx: &impl ActionContext) -> anyhow::Result<u128> {
-        let fee = if !ctx.is_testnet() {
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
+        let fee = if ctx.is_mainnet() {
             let client = TorusClient::for_mainnet().await?;
             client
                 .torus0()
@@ -205,38 +205,33 @@ impl Action for AddStakeAction {
         Ok(fee)
     }
 
-    async fn confirmation_phrase(
-        &self,
-        ctx: &impl ActionContext,
-    ) -> anyhow::Result<Option<String>> {
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
         let fee = self.estimate_fee(ctx).await?;
 
-        Ok(Some(format!(
-            "Are you sure you want to add {} stake to `{}`? {}\n[y/N]",
-            format_torus(self.amount),
-            self.target,
-            if fee != 0 {
-                format!("(there will be a {} torus fee)", format_torus(fee))
-            } else {
-                "".to_string()
-            }
-        )))
+        Ok(Some(Changes {
+            changes: vec![format!(
+                "Add {} stake to `{}`",
+                format_torus(self.amount),
+                self.target,
+            )],
+            fee: Some(fee),
+        }))
     }
 
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
-        if !ctx.is_testnet() {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+        if ctx.is_mainnet() {
             let client = TorusClient::for_mainnet().await?;
             client
                 .torus0()
                 .calls()
-                .add_stake(self.target.clone(), self.amount, self.keypair.clone())
+                .add_stake_wait(self.target.clone(), self.amount, self.keypair.clone())
                 .await?
         } else {
             let client = TorusClient::for_testnet().await?;
             client
                 .torus0()
                 .calls()
-                .add_stake(self.target.clone(), self.amount, self.keypair.clone())
+                .add_stake_wait(self.target.clone(), self.amount, self.keypair.clone())
                 .await?
         };
 
@@ -264,7 +259,7 @@ impl Action for RemoveStakeAction {
     type ResponseData = RemoveStakeActionResponse;
 
     async fn create(
-        ctx: &impl ActionContext,
+        ctx: &mut impl ActionContext,
         (key, target, amount): Self::Params,
     ) -> anyhow::Result<Self> {
         let key = get_key(&key)?;
@@ -279,8 +274,8 @@ impl Action for RemoveStakeAction {
         })
     }
 
-    async fn estimate_fee(&self, ctx: &impl ActionContext) -> anyhow::Result<u128> {
-        let fee = if !ctx.is_testnet() {
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
+        let fee = if ctx.is_mainnet() {
             let client = TorusClient::for_mainnet().await?;
             client
                 .torus0()
@@ -299,37 +294,32 @@ impl Action for RemoveStakeAction {
         Ok(fee)
     }
 
-    async fn confirmation_phrase(
-        &self,
-        ctx: &impl ActionContext,
-    ) -> anyhow::Result<Option<String>> {
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
         let fee = self.estimate_fee(ctx).await?;
-        Ok(Some(format!(
-            "Are you sure you want to remove {} stake from `{}`? {}\n[y/N]",
-            format_torus(self.amount),
-            self.target,
-            if fee != 0 {
-                format!("(there will be a {} torus fee)", format_torus(fee))
-            } else {
-                "".to_string()
-            }
-        )))
+        Ok(Some(Changes {
+            changes: vec![format!(
+                "Remove {} stake from `{}`?",
+                format_torus(self.amount),
+                self.target,
+            )],
+            fee: Some(fee),
+        }))
     }
 
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
-        if !ctx.is_testnet() {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+        if ctx.is_mainnet() {
             let client = TorusClient::for_mainnet().await?;
             client
                 .torus0()
                 .calls()
-                .add_stake(self.target.clone(), self.amount, self.keypair.clone())
+                .remove_stake_wait(self.target.clone(), self.amount, self.keypair.clone())
                 .await?
         } else {
             let client = TorusClient::for_testnet().await?;
             client
                 .torus0()
                 .calls()
-                .add_stake(self.target.clone(), self.amount, self.keypair.clone())
+                .remove_stake_wait(self.target.clone(), self.amount, self.keypair.clone())
                 .await?
         };
 
@@ -358,7 +348,7 @@ impl Action for TransferStakeAction {
     type ResponseData = TransferStakeActionResponse;
 
     async fn create(
-        ctx: &impl ActionContext,
+        ctx: &mut impl ActionContext,
         (key, source, target, amount): Self::Params,
     ) -> anyhow::Result<Self> {
         let key = get_key(&key)?;
@@ -375,8 +365,8 @@ impl Action for TransferStakeAction {
         })
     }
 
-    async fn estimate_fee(&self, ctx: &impl ActionContext) -> anyhow::Result<u128> {
-        let fee = if !ctx.is_testnet() {
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
+        let fee = if ctx.is_mainnet() {
             let client = TorusClient::for_mainnet().await?;
             client
                 .torus0()
@@ -405,51 +395,46 @@ impl Action for TransferStakeAction {
         Ok(fee)
     }
 
-    async fn confirmation_phrase(
-        &self,
-        ctx: &impl ActionContext,
-    ) -> anyhow::Result<Option<String>> {
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
         let fee = self.estimate_fee(ctx).await?;
 
-        Ok(Some(format!(
-            "Are you sure you want to transfer {} stake from `{}` to `{}`? {}\n[y/N]",
-            format_torus(self.amount),
-            self.source,
-            self.target,
-            if fee != 0 {
-                format!("(there will be a {} torus fee)", format_torus(fee))
-            } else {
-                "".to_string()
-            }
-        )))
+        Ok(Some(Changes {
+            changes: vec![format!(
+                "Transfer {} stake from `{}` to `{}`?",
+                format_torus(self.amount),
+                self.source,
+                self.target,
+            )],
+            fee: Some(fee),
+        }))
     }
 
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
-        if !ctx.is_testnet() {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+        if ctx.is_mainnet() {
             let client = TorusClient::for_mainnet().await?;
             client
                 .torus0()
                 .calls()
-                .transfer_stake_fee(
+                .transfer_stake_wait(
                     self.source.clone(),
                     self.target.clone(),
                     self.amount,
                     self.keypair.clone(),
                 )
-                .await?
+                .await?;
         } else {
             let client = TorusClient::for_testnet().await?;
             client
                 .torus0()
                 .calls()
-                .transfer_stake_fee(
+                .transfer_stake_wait(
                     self.source.clone(),
                     self.target.clone(),
                     self.amount,
                     self.keypair.clone(),
                 )
-                .await?
-        };
+                .await?;
+        }
 
         Ok(TransferStakeActionResponse)
     }

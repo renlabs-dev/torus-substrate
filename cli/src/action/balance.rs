@@ -10,7 +10,7 @@ use torus_client::{
 };
 
 use crate::{
-    action::{Action, ActionContext},
+    action::{Action, ActionContext, Changes},
     keypair::Keypair,
     store::{get_account, get_key},
     util::format_torus,
@@ -25,12 +25,12 @@ impl Action for CheckBalanceAction {
 
     type ResponseData = CheckBalanceActionResponse;
 
-    async fn create(_ctx: &impl ActionContext, key: Self::Params) -> anyhow::Result<Self> {
+    async fn create(_ctx: &mut impl ActionContext, key: Self::Params) -> anyhow::Result<Self> {
         let account = get_account(&key)?;
         Ok(Self { account })
     }
 
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
         let data = if ctx.is_testnet() {
             let client = TorusClient::for_testnet().await?;
             client
@@ -93,8 +93,8 @@ impl Action for TransferBalanceAction {
 
     type ResponseData = TransferBalanceActionResponse;
 
-    async fn estimate_fee(&self, ctx: &impl ActionContext) -> anyhow::Result<u128> {
-        let fee = if !ctx.is_testnet() {
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
+        let fee = if ctx.is_mainnet() {
             let client = TorusClient::for_mainnet().await?;
             client
                 .balances()
@@ -121,26 +121,21 @@ impl Action for TransferBalanceAction {
         Ok(fee)
     }
 
-    async fn confirmation_phrase(
-        &self,
-        ctx: &impl ActionContext,
-    ) -> anyhow::Result<Option<String>> {
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
         let fee = self.estimate_fee(ctx).await?;
 
-        Ok(Some(format!(
-            "Are you sure you want to transfer {} to {}? {}\n[y/N]",
-            format_torus(self.amount),
-            self.target,
-            if fee != 0 {
-                format!("(there will be a {} torus fee)", format_torus(fee))
-            } else {
-                "".to_string()
-            }
-        )))
+        Ok(Some(Changes {
+            changes: vec![format!(
+                "Transfer {} to {}",
+                format_torus(self.amount),
+                self.target,
+            )],
+            fee: Some(fee),
+        }))
     }
 
     async fn create(
-        ctx: &impl ActionContext,
+        ctx: &mut impl ActionContext,
         (key, target, amount): Self::Params,
     ) -> anyhow::Result<Self> {
         let key = get_key(&key)?;
@@ -155,8 +150,8 @@ impl Action for TransferBalanceAction {
         })
     }
 
-    async fn execute(&self, ctx: &impl ActionContext) -> anyhow::Result<Self::ResponseData> {
-        if !ctx.is_testnet() {
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+        if ctx.is_mainnet() {
             let client = TorusClient::for_mainnet().await?;
             client
                 .balances()
