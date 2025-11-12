@@ -8,6 +8,929 @@ use crate::{
     keypair::Keypair,
     store::{get_account, get_key},
 };
+
+pub enum Allocation {
+    Streams(Vec<(H256, u8)>),
+    FixedAmount(u128),
+}
+
+pub enum DistributionControl {
+    Manual,
+    Automatic(u128),
+    AtBlock(u64),
+    Interval(u64),
+}
+
+pub enum Duration {
+    UntilBlock(u64),
+    Indefinite,
+}
+
+pub enum RevocationTerms {
+    Irrevocable,
+    RevocableByDelegator,
+    RevocableByArbiters {
+        accounts: Vec<AccountId32>,
+        required_votes: u32,
+    },
+    RevocableAfter(u64),
+}
+
+pub enum EnforcementAuthority {
+    None,
+    ControlledBy {
+        controllers: Vec<AccountId32>,
+        required_votes: u32,
+    },
+}
+
+pub struct DelegateStreamPermissionAction {
+    key: Keypair,
+    recipients: Vec<(AccountId32, u16)>,
+    allocation: Allocation,
+    distribution: DistributionControl,
+    duration: Duration,
+    revocation: RevocationTerms,
+    enforcement: EnforcementAuthority,
+    recipient_manager: Option<AccountId32>,
+    weight_setter: Option<AccountId32>,
+}
+
+impl Action for DelegateStreamPermissionAction {
+    type Params = (
+        String,
+        Vec<(AccountId32, u16)>,
+        Allocation,
+        DistributionControl,
+        Duration,
+        RevocationTerms,
+        EnforcementAuthority,
+        Option<AccountId32>,
+        Option<AccountId32>,
+    );
+    type ResponseData = DelegateStreamPermissionActionResponse;
+
+    async fn create(
+        ctx: &mut impl ActionContext,
+        (
+            key,
+            recipients,
+            allocation,
+            distribution,
+            duration,
+            revocation,
+            enforcement,
+            recipient_manager,
+            weight_setter,
+        ): Self::Params,
+    ) -> anyhow::Result<Self> {
+        let key = get_key(&key)?;
+        let (_, keypair) = ctx.decrypt(&key)?;
+
+        Ok(Self {
+            key: keypair,
+            recipients,
+            allocation,
+            distribution,
+            duration,
+            revocation,
+            enforcement,
+            recipient_manager,
+            weight_setter,
+        })
+    }
+
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+        if ctx.is_mainnet() {
+            let client = TorusClient::for_mainnet().await?;
+
+            let allocation = match &self.allocation {
+                    Allocation::Streams(items) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::StreamAllocation::Streams(
+                        torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(items.iter().map(|(i, j)|
+                        (*i, torus_client::interfaces::mainnet::api::runtime_types::sp_arithmetic::per_things::Percent(*j))).collect())
+                    ),
+                    Allocation::FixedAmount(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::StreamAllocation::FixedAmount(*value)
+                };
+
+            let distribution = match &self.distribution {
+                DistributionControl::Manual => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Manual,
+                DistributionControl::Automatic(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Automatic(*value),
+                DistributionControl::AtBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::AtBlock(*value),
+                DistributionControl::Interval(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Interval(*value),
+            };
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            let enforcement = match &self.enforcement {
+                EnforcementAuthority::None => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::EnforcementAuthority::None,
+                EnforcementAuthority::ControlledBy { controllers, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::EnforcementAuthority::ControlledBy {
+                    controllers: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(controllers.clone()),
+                    required_votes: *required_votes,
+                },
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_stream_permission_wait(
+                    torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(self.recipients.clone()), allocation, distribution, duration, revocation, enforcement, self.recipient_manager.clone(), self.weight_setter.clone(), self.key.clone())
+                .await?
+        } else {
+            let client = TorusClient::for_testnet().await?;
+            let allocation = match &self.allocation {
+                    Allocation::Streams(items) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::StreamAllocation::Streams(
+                        torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(items.iter().map(|(i, j)|
+                        (*i, torus_client::interfaces::testnet::api::runtime_types::sp_arithmetic::per_things::Percent(*j))).collect())
+                    ),
+                    Allocation::FixedAmount(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::StreamAllocation::FixedAmount(*value)
+                };
+
+            let distribution = match &self.distribution {
+                DistributionControl::Manual => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Manual,
+                DistributionControl::Automatic(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Automatic(*value),
+                DistributionControl::AtBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::AtBlock(*value),
+                DistributionControl::Interval(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Interval(*value),
+            };
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            let enforcement = match &self.enforcement {
+                EnforcementAuthority::None => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::EnforcementAuthority::None,
+                EnforcementAuthority::ControlledBy { controllers, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::EnforcementAuthority::ControlledBy {
+                    controllers: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(controllers.clone()),
+                    required_votes: *required_votes,
+                },
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_stream_permission_wait(
+                    torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(self.recipients.clone()), allocation, distribution, duration, revocation, enforcement, self.recipient_manager.clone(), self.weight_setter.clone(), self.key.clone())
+                .await?
+        }
+
+        Ok(DelegateStreamPermissionActionResponse)
+    }
+
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
+        let fee = if ctx.is_mainnet() {
+            let client = TorusClient::for_mainnet().await?;
+
+            let allocation = match &self.allocation {
+                    Allocation::Streams(items) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::StreamAllocation::Streams(
+                        torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(items.iter().map(|(i, j)|
+                        (*i, torus_client::interfaces::mainnet::api::runtime_types::sp_arithmetic::per_things::Percent(*j))).collect())
+                    ),
+                    Allocation::FixedAmount(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::StreamAllocation::FixedAmount(*value)
+                };
+
+            let distribution = match &self.distribution {
+                DistributionControl::Manual => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Manual,
+                DistributionControl::Automatic(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Automatic(*value),
+                DistributionControl::AtBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::AtBlock(*value),
+                DistributionControl::Interval(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Interval(*value),
+            };
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            let enforcement = match &self.enforcement {
+                EnforcementAuthority::None => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::EnforcementAuthority::None,
+                EnforcementAuthority::ControlledBy { controllers, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::EnforcementAuthority::ControlledBy {
+                    controllers: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(controllers.clone()),
+                    required_votes: *required_votes,
+                },
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_stream_permission_fee(
+                    torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(self.recipients.clone()), allocation, distribution, duration, revocation, enforcement, self.recipient_manager.clone(), self.weight_setter.clone(), self.key.clone())
+                .await?
+        } else {
+            let client = TorusClient::for_testnet().await?;
+            let allocation = match &self.allocation {
+                    Allocation::Streams(items) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::StreamAllocation::Streams(
+                        torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(items.iter().map(|(i, j)|
+                        (*i, torus_client::interfaces::testnet::api::runtime_types::sp_arithmetic::per_things::Percent(*j))).collect())
+                    ),
+                    Allocation::FixedAmount(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::StreamAllocation::FixedAmount(*value)
+                };
+
+            let distribution = match &self.distribution {
+                DistributionControl::Manual => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Manual,
+                DistributionControl::Automatic(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Automatic(*value),
+                DistributionControl::AtBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::AtBlock(*value),
+                DistributionControl::Interval(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::stream::DistributionControl::Interval(*value),
+            };
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            let enforcement = match &self.enforcement {
+                EnforcementAuthority::None => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::EnforcementAuthority::None,
+                EnforcementAuthority::ControlledBy { controllers, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::EnforcementAuthority::ControlledBy {
+                    controllers: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(controllers.clone()),
+                    required_votes: *required_votes,
+                },
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_stream_permission_fee(
+                    torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(self.recipients.clone()), allocation, distribution, duration, revocation, enforcement, self.recipient_manager.clone(), self.weight_setter.clone(), self.key.clone())
+                .await?
+        };
+
+        Ok(fee)
+    }
+
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
+        let fee = self.estimate_fee(ctx).await?;
+        Ok(Some(Changes {
+            changes: vec![format!(
+                "Delegate stream permission to {} recipients",
+                self.recipients.len()
+            )],
+            fee: Some(fee),
+        }))
+    }
+}
+
+#[derive(serde::Serialize)]
+pub struct DelegateStreamPermissionActionResponse;
+
+impl Display for DelegateStreamPermissionActionResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Stream permission delegated successfully")
+    }
+}
+
+pub struct DelegateNamespacePermissionAction {
+    pub key: Keypair,
+    pub recipient: AccountId32,
+    pub paths: Vec<(Option<H256>, Vec<String>)>,
+    pub duration: Duration,
+    pub revocation: RevocationTerms,
+    pub instances: u32,
+}
+
+impl Action for DelegateNamespacePermissionAction {
+    type Params = (
+        String,
+        String,
+        Vec<(Option<H256>, Vec<String>)>,
+        Duration,
+        RevocationTerms,
+        u32,
+    );
+    type ResponseData = DelegateNamespacePermissionActionResponse;
+
+    async fn create(
+        ctx: &mut impl ActionContext,
+        (key, recipient, paths, duration, revocation, instances): Self::Params,
+    ) -> anyhow::Result<Self> {
+        let key = get_key(&key)?;
+        let (_, keypair) = ctx.decrypt(&key)?;
+
+        let recipient = get_account(&recipient)?;
+
+        Ok(Self {
+            key: keypair,
+            recipient,
+            paths,
+            duration,
+            revocation,
+            instances,
+        })
+    }
+
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+        if ctx.is_mainnet() {
+            let client = TorusClient::for_mainnet().await?;
+
+            let paths = torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(
+                self.paths.iter().cloned()
+                .map(|(id, paths)| (id, torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet(
+                    paths.into_iter().map(|path| torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(path.as_bytes().to_vec())).collect()
+                ))).collect()
+            );
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_namespace_permission_wait(
+                    self.recipient.clone(),
+                    paths,
+                    duration,
+                    revocation,
+                    self.instances,
+                    self.key.clone(),
+                )
+                .await?;
+        } else {
+            let client = TorusClient::for_testnet().await?;
+
+            let paths = torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(
+                self.paths.iter().cloned()
+                .map(|(id, paths)| (id, torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet(
+                    paths.into_iter().map(|path| torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(path.as_bytes().to_vec())).collect()
+                ))).collect()
+            );
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_namespace_permission_wait(
+                    self.recipient.clone(),
+                    paths,
+                    duration,
+                    revocation,
+                    self.instances,
+                    self.key.clone(),
+                )
+                .await?;
+        }
+
+        Ok(DelegateNamespacePermissionActionResponse)
+    }
+
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
+        let fee = if ctx.is_mainnet() {
+            let client = TorusClient::for_mainnet().await?;
+
+            let paths = torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(
+                self.paths.iter().cloned()
+                .map(|(id, paths)| (id, torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet(
+                    paths.into_iter().map(|path| torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(path.as_bytes().to_vec())).collect()
+                ))).collect()
+            );
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_namespace_permission_fee(
+                    self.recipient.clone(),
+                    paths,
+                    duration,
+                    revocation,
+                    self.instances,
+                    self.key.clone(),
+                )
+                .await?
+        } else {
+            let client = TorusClient::for_testnet().await?;
+
+            let paths = torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(
+                self.paths.iter().cloned()
+                .map(|(id, paths)| (id, torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_set::BoundedBTreeSet(
+                    paths.into_iter().map(|path| torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(path.as_bytes().to_vec())).collect()
+                ))).collect()
+            );
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_namespace_permission_fee(
+                    self.recipient.clone(),
+                    paths,
+                    duration,
+                    revocation,
+                    self.instances,
+                    self.key.clone(),
+                )
+                .await?
+        };
+
+        Ok(fee)
+    }
+
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
+        let fee = self.estimate_fee(ctx).await?;
+        Ok(Some(Changes {
+            changes: vec![format!(
+                "Delegate namespace permission to {}",
+                self.recipient
+            )],
+            fee: Some(fee),
+        }))
+    }
+}
+
+#[derive(serde::Serialize)]
+pub struct DelegateNamespacePermissionActionResponse;
+
+impl Display for DelegateNamespacePermissionActionResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Namespace permission delegated successfully")
+    }
+}
+
+pub struct DelegateWalletPermissionAction {
+    pub key: Keypair,
+    pub recipient: AccountId32,
+    pub can_transfer_stake: bool,
+    pub exclusive_stake_access: bool,
+    pub duration: Duration,
+    pub revocation: RevocationTerms,
+}
+
+impl Action for DelegateWalletPermissionAction {
+    type Params = (String, String, bool, bool, Duration, RevocationTerms);
+    type ResponseData = DelegateWalletPermissionActionResponse;
+
+    async fn create(
+        ctx: &mut impl ActionContext,
+        (key, recipient, can_transfer_stake, exclusive_stake_access, duration, revocation): Self::Params,
+    ) -> anyhow::Result<Self> {
+        let key = get_key(&key)?;
+        let (_, keypair) = ctx.decrypt(&key)?;
+
+        let recipient = get_account(&recipient)?;
+
+        Ok(Self {
+            key: keypair,
+            recipient,
+            can_transfer_stake,
+            exclusive_stake_access,
+            duration,
+            revocation,
+        })
+    }
+
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+        if ctx.is_mainnet() {
+            let client = TorusClient::for_mainnet().await?;
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_wallet_stake_permission_wait(
+                    self.recipient.clone(),
+                    torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::wallet::WalletStake {
+                        can_transfer_stake: self.can_transfer_stake,
+                        exclusive_stake_access: self.exclusive_stake_access
+                    },
+                    duration,
+                    revocation,
+                    self.key.clone()
+                )
+                .await?;
+        } else {
+            let client = TorusClient::for_testnet().await?;
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_wallet_stake_permission_wait(
+                    self.recipient.clone(),
+                    torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::wallet::WalletStake {
+                        can_transfer_stake: self.can_transfer_stake,
+                        exclusive_stake_access: self.exclusive_stake_access
+                    },
+                    duration,
+                    revocation,
+                    self.key.clone()
+                )
+                .await?;
+        }
+
+        Ok(DelegateWalletPermissionActionResponse)
+    }
+
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
+        let fee = if ctx.is_mainnet() {
+            let client = TorusClient::for_mainnet().await?;
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_wallet_stake_permission_fee(
+                    self.recipient.clone(),
+                    torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::wallet::WalletStake {
+                        can_transfer_stake: self.can_transfer_stake,
+                        exclusive_stake_access: self.exclusive_stake_access
+                    },
+                    duration,
+                    revocation,
+                    self.key.clone()
+                )
+                .await?
+        } else {
+            let client = TorusClient::for_testnet().await?;
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_wallet_stake_permission_fee(
+                    self.recipient.clone(),
+                    torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::wallet::WalletStake {
+                        can_transfer_stake: self.can_transfer_stake,
+                        exclusive_stake_access: self.exclusive_stake_access
+                    },
+                    duration,
+                    revocation,
+                    self.key.clone()
+                )
+                .await?
+        };
+
+        Ok(fee)
+    }
+
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
+        let fee = self.estimate_fee(ctx).await?;
+        Ok(Some(Changes {
+            changes: vec![format!(
+                "Delegate wallet stake permission to {}",
+                self.recipient
+            )],
+            fee: Some(fee),
+        }))
+    }
+}
+
+#[derive(serde::Serialize)]
+pub struct DelegateWalletPermissionActionResponse;
+
+impl Display for DelegateWalletPermissionActionResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Wallet stake permission delegated successfully")
+    }
+}
+
+pub struct DelegateCuratorPermissionAction {
+    pub key: Keypair,
+    pub recipient: AccountId32,
+    pub flags: Vec<(Option<H256>, u32)>,
+    pub cooldown: Option<u64>,
+    pub duration: Duration,
+    pub instances: u32,
+    pub revocation: RevocationTerms,
+}
+
+impl Action for DelegateCuratorPermissionAction {
+    type Params = (
+        String,
+        String,
+        Vec<(Option<H256>, u32)>,
+        Option<u64>,
+        Duration,
+        u32,
+        RevocationTerms,
+    );
+    type ResponseData = DelegateCuratorPermissionActionResponse;
+
+    async fn create(
+        ctx: &mut impl ActionContext,
+        (key, recipient, flags, cooldown, duration, instances, revocation): Self::Params,
+    ) -> anyhow::Result<Self> {
+        let key = get_key(&key)?;
+        let (_, keypair) = ctx.decrypt(&key)?;
+
+        let recipient = get_account(&recipient)?;
+
+        Ok(Self {
+            key: keypair,
+            recipient,
+            flags,
+            cooldown,
+            duration,
+            instances,
+            revocation,
+        })
+    }
+
+    async fn execute(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Self::ResponseData> {
+        if ctx.is_mainnet() {
+            let client = TorusClient::for_mainnet().await?;
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_curator_permission_wait(
+                    self.recipient.clone(),
+                    torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(self.flags.clone()),
+                    self.cooldown,
+                    duration,
+                    revocation,
+                    self.instances,
+                    self.key.clone(),
+                )
+                .await?;
+        } else {
+            let client = TorusClient::for_testnet().await?;
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_curator_permission_wait(
+                    self.recipient.clone(),
+                    torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(self.flags.clone()),
+                    self.cooldown,
+                    duration,
+                    revocation,
+                    self.instances,
+                    self.key.clone(),
+                )
+                .await?;
+        }
+
+        Ok(DelegateCuratorPermissionActionResponse)
+    }
+
+    async fn estimate_fee(&self, ctx: &mut impl ActionContext) -> anyhow::Result<u128> {
+        let fee = if ctx.is_mainnet() {
+            let client = TorusClient::for_mainnet().await?;
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::mainnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_curator_permission_fee(
+                    self.recipient.clone(),
+                    torus_client::interfaces::mainnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(self.flags.clone()),
+                    self.cooldown,
+                    duration,
+                    revocation,
+                    self.instances,
+                    self.key.clone(),
+                )
+                .await?
+        } else {
+            let client = TorusClient::for_testnet().await?;
+
+            let duration = match &self.duration {
+                Duration::UntilBlock(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::UntilBlock(*value),
+                Duration::Indefinite => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::PermissionDuration::Indefinite,
+            };
+
+            let revocation = match &self.revocation {
+                RevocationTerms::Irrevocable => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::Irrevocable,
+                RevocationTerms::RevocableByDelegator => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByDelegator,
+                RevocationTerms::RevocableByArbiters { accounts, required_votes } => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableByArbiters {
+                    accounts: torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_vec::BoundedVec(accounts.clone()),
+                    required_votes: *required_votes
+                },
+                RevocationTerms::RevocableAfter(value) => torus_client::interfaces::testnet::api::runtime_types::pallet_permission0::permission::RevocationTerms::RevocableAfter(*value),
+            };
+
+            client
+                .permission0()
+                .calls()
+                .delegate_curator_permission_fee(
+                    self.recipient.clone(),
+                    torus_client::interfaces::testnet::api::runtime_types::bounded_collections::bounded_btree_map::BoundedBTreeMap(self.flags.clone()),
+                    self.cooldown,
+                    duration,
+                    revocation,
+                    self.instances,
+                    self.key.clone(),
+                )
+                .await?
+        };
+
+        Ok(fee)
+    }
+
+    async fn get_changes(&self, ctx: &mut impl ActionContext) -> anyhow::Result<Option<Changes>> {
+        let fee = self.estimate_fee(ctx).await?;
+        Ok(Some(Changes {
+            changes: vec![format!(
+                "Delegate {} instances of curator permission to {}",
+                self.instances, self.recipient
+            )],
+            fee: Some(fee),
+        }))
+    }
+}
+
+#[derive(serde::Serialize)]
+pub struct DelegateCuratorPermissionActionResponse;
+
+impl Display for DelegateCuratorPermissionActionResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Curator permission delegated successfully")
+    }
+}
+
 pub struct RevokePermissionAction {
     key: Keypair,
     permission_id: H256,

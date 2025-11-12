@@ -13,6 +13,8 @@ use crate::{
         namespace::{NamespaceInfoAction, RegisterNamespaceAction, UnregisterNamespaceAction},
         network::{PrintNetworkInfoAction, PrintNetworkSupplyAction, PrintTreasuryAddressAction},
         permission::{
+            DelegateCuratorPermissionAction, DelegateNamespacePermissionAction,
+            DelegateStreamPermissionAction, DelegateWalletPermissionAction,
             ExecutePermissionAction, RevokePermissionAction, SetPermissionAccumulationAction,
             SetPermissionEnforcementAuthorityAction,
         },
@@ -24,8 +26,12 @@ use crate::{
         Action, ActionContext,
     },
     keypair::Keypair,
-    store::decrypt_key,
-    util::format_torus,
+    store::{decrypt_key, get_account},
+    util::{
+        format_torus, parse_allocation, parse_distribution, parse_duration,
+        parse_enforcement_authority, parse_flags, parse_paths, parse_recipients,
+        parse_revocation_terms,
+    },
 };
 
 pub(super) async fn run() -> anyhow::Result<()> {
@@ -167,6 +173,100 @@ pub(super) async fn run() -> anyhow::Result<()> {
         },
         CliSubCommand::Permission(permission_cli_command) => {
             match permission_cli_command.sub_command {
+                PermissionCliSubCommand::Delegate { sub_command } => match sub_command {
+                    PermissionDelegateCliSubCommand::Stream {
+                        key,
+                        recipients,
+                        allocation,
+                        distribution_control,
+                        duration,
+                        revocation_terms,
+                        enforcement_authority,
+                        recipient_manager,
+                        weight_setter,
+                    } => {
+                        execute::<DelegateStreamPermissionAction>(
+                            &mut ctx,
+                            (
+                                key,
+                                parse_recipients(&recipients)?,
+                                parse_allocation(&allocation)?,
+                                parse_distribution(&distribution_control)?,
+                                parse_duration(&duration)?,
+                                parse_revocation_terms(&revocation_terms)?,
+                                parse_enforcement_authority(&enforcement_authority)?,
+                                recipient_manager.map(|acc| get_account(&acc)).transpose()?,
+                                weight_setter.map(|acc| get_account(&acc)).transpose()?,
+                            ),
+                        )
+                        .await?
+                    }
+                    PermissionDelegateCliSubCommand::Namespace {
+                        key,
+                        recipient,
+                        paths,
+                        duration,
+                        revocation_terms,
+                        instances,
+                    } => {
+                        execute::<DelegateNamespacePermissionAction>(
+                            &mut ctx,
+                            (
+                                key,
+                                recipient,
+                                parse_paths(&paths)?,
+                                parse_duration(&duration)?,
+                                parse_revocation_terms(&revocation_terms)?,
+                                instances,
+                            ),
+                        )
+                        .await?
+                    }
+                    PermissionDelegateCliSubCommand::Wallet {
+                        key,
+                        recipient,
+                        can_transfer_stake,
+                        exclusive_stake_access,
+                        duration,
+                        revocation_terms: revocation,
+                    } => {
+                        execute::<DelegateWalletPermissionAction>(
+                            &mut ctx,
+                            (
+                                key,
+                                recipient,
+                                can_transfer_stake,
+                                exclusive_stake_access,
+                                parse_duration(&duration)?,
+                                parse_revocation_terms(&revocation)?,
+                            ),
+                        )
+                        .await?
+                    }
+                    PermissionDelegateCliSubCommand::Curator {
+                        key,
+                        recipient,
+                        flags,
+                        cooldown,
+                        instances,
+                        duration,
+                        revocation_terms: revocation,
+                    } => {
+                        execute::<DelegateCuratorPermissionAction>(
+                            &mut ctx,
+                            (
+                                key,
+                                recipient,
+                                parse_flags(&flags)?,
+                                cooldown,
+                                parse_duration(&duration)?,
+                                instances,
+                                parse_revocation_terms(&revocation)?,
+                            ),
+                        )
+                        .await?
+                    }
+                },
                 PermissionCliSubCommand::Revoke { key, permission_id } => {
                     execute::<RevokePermissionAction>(&mut ctx, (key, permission_id)).await?
                 }
@@ -724,8 +824,13 @@ pub struct PermissionCliCommand {
     pub sub_command: PermissionCliSubCommand,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(clap::Subcommand, Clone)]
 pub enum PermissionCliSubCommand {
+    Delegate {
+        #[command(subcommand)]
+        sub_command: PermissionDelegateCliSubCommand,
+    },
     /// Revokes a permission.
     Revoke { key: String, permission_id: String },
     /// Executes a permission.
@@ -745,6 +850,91 @@ pub enum PermissionCliSubCommand {
     EnforcementAuthority {
         #[command(subcommand)]
         sub_command: PermissionEnforcementAuthorityCliSubCommand,
+    },
+}
+
+#[derive(clap::Args, Clone)]
+#[command(group = ArgGroup::default().id("distribution-control-params").args(&["manual_distribution", "automatic_distribution", "at_block_distribution", "interval_distribution"]))]
+pub struct DistributionControlParams {
+    #[arg(long)]
+    pub manual_distribution: Option<bool>,
+    #[arg(long)]
+    pub automatic_distribution: Option<u128>,
+    #[arg(long)]
+    pub at_block_distribution: Option<u64>,
+    #[arg(long)]
+    pub interval_distribution: Option<u64>,
+}
+
+#[derive(clap::Args, Clone)]
+#[command(group = ArgGroup::default().id("revocation-terms-params").args(&["irrevocable", "revocable_by_delegator", "revocable_by_arbiters", "revocable_after"]))]
+pub struct RevocationTermsParams {
+    #[arg(long)]
+    pub irrevocable: Option<bool>,
+    #[arg(long)]
+    pub revocable_by_delegator: Option<bool>,
+    #[arg(long)]
+    pub revocable_by_arbiters: Option<String>,
+    #[arg(long)]
+    pub revocable_after: Option<u64>,
+}
+
+#[derive(clap::Subcommand, Clone)]
+pub enum PermissionDelegateCliSubCommand {
+    Stream {
+        key: String,
+        recipients: String,
+        allocation: String,
+        #[command(flatten)]
+        distribution_control: DistributionControlParams,
+        #[arg(long)]
+        duration: Option<u64>,
+        #[command(flatten)]
+        revocation_terms: RevocationTermsParams,
+        #[arg(long)]
+        enforcement_authority: Option<String>,
+        #[arg(long)]
+        recipient_manager: Option<String>,
+        #[arg(long)]
+        weight_setter: Option<String>,
+    },
+    Namespace {
+        key: String,
+        recipient: String,
+        #[arg(long)]
+        paths: Vec<String>,
+        #[arg(long)]
+        duration: Option<u64>,
+        #[command(flatten)]
+        revocation_terms: RevocationTermsParams,
+        #[arg(long, default_value_t = 1)]
+        instances: u32,
+    },
+    Wallet {
+        key: String,
+        recipient: String,
+        #[arg(long)]
+        can_transfer_stake: bool,
+        #[arg(long)]
+        exclusive_stake_access: bool,
+        #[arg(long)]
+        duration: Option<u64>,
+        #[command(flatten)]
+        revocation_terms: RevocationTermsParams,
+    },
+    Curator {
+        key: String,
+        recipient: String,
+        #[arg(long)]
+        flags: Option<Vec<String>>,
+        #[arg(long)]
+        cooldown: Option<u64>,
+        #[arg(long, default_value_t = 1)]
+        instances: u32,
+        #[arg(long)]
+        duration: Option<u64>,
+        #[command(flatten)]
+        revocation_terms: RevocationTermsParams,
     },
 }
 
