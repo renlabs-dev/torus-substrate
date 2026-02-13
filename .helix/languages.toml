@@ -2,4 +2,5 @@
 cargo.extraEnv = { SKIP_WASM_BUILD = "true" }
 cargo.features = ["runtime-benchmarks"]
 check.extraEnv = { SKIP_WASM_BUILD = "true" }
-check.overrideCommand = ["cargo", "check", "--tests", "--all", "--message-format=json"]
+check.features = ["runtime-benchmarks"]
+check.overrideCommand = ["cargo", "check", "--message-format=json", "--tests", "--examples", "--all"]

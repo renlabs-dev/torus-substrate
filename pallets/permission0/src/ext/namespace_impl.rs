@@ -94,20 +94,15 @@ pub fn delegate_namespace_permission_impl<T: Config>(
                 );
 
                 ensure!(
-                    max_instances <= parent.available_instances().unwrap_or_default(),
-                    Error::<T>::NotEnoughInstances
-                );
-
-                ensure!(
                     RevocationTerms::<T>::is_weaker(&parent.revocation, &revocation),
                     Error::<T>::RevocationTermsTooStrong
                 );
 
                 parents.push(pid);
 
-                resolve_paths::<T>(&delegator, Some((*pid, namespace)), paths)
+                resolve_paths::<T>(&delegator, Some((*pid, namespace)), paths, max_instances)
             } else {
-                resolve_paths::<T>(&delegator, None, paths)
+                resolve_paths::<T>(&delegator, None, paths, max_instances)
             }?;
 
             Ok((*pid, namespaces))
@@ -211,49 +206,52 @@ fn check_namespace_delegation_depth<T: Config>(
 fn resolve_paths<T: Config>(
     delegator: &T::AccountId,
     parent: Option<(PermissionId, &NamespaceScope<T>)>,
-    paths: &BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
+    new_paths: &BoundedBTreeSet<NamespacePathInner, T::MaxNamespacesPerPermission>,
+    instances: u32,
 ) -> Result<BoundedBTreeSet<NamespacePath, T::MaxNamespacesPerPermission>, DispatchError> {
-    let children = paths.iter().map(|path| {
+    let new_paths = new_paths.iter().map(|path| {
         NamespacePath::new_agent(path).map_err(|_| Error::<T>::NamespacePathIsInvalid.into())
     });
 
-    let paths = if let Some((parent_pid, parent)) = parent {
-        let children = children.collect::<Result<BTreeSet<_>, DispatchError>>()?;
-        let matched_paths = parent
-            .paths
-            .values()
-            .flat_map(|p_path| p_path.iter())
-            .filter_map(|parent_path| {
-                if children.contains(parent_path) {
-                    Some(())
-                } else {
-                    let agent_name = parent_path.agent_name()?;
-                    let child_path = children
-                        .iter()
-                        .find(|child| parent_path.is_parent_of(child))?;
+    let new_paths = if let Some((parent_pid, parent)) = parent {
+        let new_paths = new_paths.collect::<Result<BTreeSet<_>, DispatchError>>()?;
 
-                    let agent = T::Torus::find_agent_by_name(agent_name)?;
-                    if !T::Torus::namespace_exists(&agent, child_path) {
-                        return None;
-                    }
-
-                    Some(())
-                }
+        let matched_paths = new_paths
+            .iter()
+            .filter(|new_path| {
+                parent
+                    .paths
+                    .values()
+                    .flat_map(|p_path| p_path.iter())
+                    .any(|parent_path| {
+                        if *new_path == parent_path {
+                            true
+                        } else if parent_path.is_parent_of(new_path)
+                            && let Some(agent_name) = parent_path.agent_name()
+                            && let Some(agent) = T::Torus::find_agent_by_name(agent_name)
+                        {
+                            T::Torus::namespace_exists(&agent, new_path)
+                        } else {
+                            false
+                        }
+                    })
             })
             .count();
 
         ensure!(
-            matched_paths == children.len(),
+            matched_paths == new_paths.len(),
             Error::<T>::ParentPermissionNotFound
         );
 
-        for child_path in &children {
-            check_namespace_delegation_depth::<T>(child_path, Some(parent_pid), 1)?;
+        for new_path in &new_paths {
+            check_namespace_delegation_depth::<T>(new_path, Some(parent_pid), 1)?;
         }
 
-        children
+        parent.check_available_instances(parent_pid, new_paths.iter(), instances)?;
+
+        new_paths
     } else {
-        children
+        new_paths
             .map(|path| {
                 path.and_then(|path| {
                     if T::Torus::namespace_exists(delegator, &path) {
@@ -266,7 +264,7 @@ fn resolve_paths<T: Config>(
             .collect::<Result<BTreeSet<_>, DispatchError>>()?
     };
 
-    paths
+    new_paths
         .try_into()
         .map_err(|_| Error::<T>::TooManyNamespaces.into())
 }

@@ -11,7 +11,7 @@ build-testnet:
 # Development
 
 check: fmt
-  cargo clippy --tests -- -D clippy::all
+  cargo clippy --tests --features testnet,runtime-benchmarks -- -D clippy::all
 
 test: check
   SKIP_WASM_BUILD=1 cargo nextest run

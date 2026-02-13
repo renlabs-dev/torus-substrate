@@ -470,6 +470,25 @@ impl_runtime_apis! {
         fn root_stream_id_for_account(account_id: AccountId) -> StreamId {
             generate_root_stream_id(&account_id)
         }
+
+        fn available_namespace_instances(
+            permission_id: pallet_permission0_api::PermissionId,
+            path: pallet_torus0_api::NamespacePathInner
+        ) -> Result<u32, DispatchError> {
+            use pallet_permission0::Permissions;
+            use pallet_torus0_api::NamespacePath;
+
+            let namespace_path =
+                NamespacePath::new_agent(&path).map_err(|_| pallet_torus0::Error::<Runtime>::InvalidNamespacePath)?;
+
+            let permission =
+                Permissions::<Runtime>::get(permission_id).ok_or(pallet_permission0::Error::<Runtime>::PermissionNotFound)?;
+            let pallet_permission0::PermissionScope::Namespace(scope) = &permission.scope else {
+                return Err(pallet_permission0::Error::<Runtime>::UnsupportedPermissionType.into());
+            };
+
+            Ok(scope.available_instances(permission_id, &namespace_path))
+         }
     }
 
     impl pallet_torus0_api::api::Torus0RuntimeApi<Block, AccountId, Balance> for Runtime {
@@ -480,7 +499,7 @@ impl_runtime_apis! {
             let namespace_path =
                 NamespacePath::new_agent(&path).map_err(|_| pallet_torus0::Error::<Runtime>::InvalidNamespacePath)?;
 
-                let owner = namespace::NamespaceOwnership::Account(account_id);
+            let owner = namespace::NamespaceOwnership::Account(account_id);
             let missing_paths = namespace::find_missing_paths::<Runtime>(&owner, &namespace_path);
             namespace::calculate_cost::<Runtime>(&owner, &missing_paths)
         }

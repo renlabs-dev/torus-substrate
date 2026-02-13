@@ -30,8 +30,10 @@ mod benchmarks {
         <T::Governance>::force_set_whitelisted(&module_key2);
 
         <T::Governance>::set_allocator(&module_key2);
-        let _ =
-            <T::Currency>::deposit_creating(&module_key2, <T::Torus>::min_validator_stake() * 2);
+        let _ = <T::Currency>::deposit_creating(
+            &module_key2,
+            <T::Torus>::min_validator_stake().saturating_mul(2),
+        );
 
         <T::Torus>::force_set_stake(
             &module_key2,
