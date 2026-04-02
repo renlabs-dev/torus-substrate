@@ -1,7 +1,5 @@
 # Torus Network Node
 
-[![](https://dcbadge.limes.pink/api/server/https://discord.gg/torus)](https://discord.gg/torus)
-
 ![Docker Build](https://github.com/renlabs-dev/torus-substrate/actions/workflows/build-docker.yml/badge.svg)
 
 Torus is a self-assembling and evolving peer-to-peer organism with a
