@@ -65,11 +65,11 @@ install-try-runtime:
   cargo install --git https://github.com/paritytech/try-runtime-cli --locked
 
 try-runtime-upgrade-testnet:
-    SKIP_WASM_BUILD=0 cargo build --release -p torus-runtime --features try-runtime,testnet
+    env -u SKIP_WASM_BUILD -u SKIP_TORUS_RUNTIME_WASM_BUILD FORCE_WASM_BUILD="$(date +%s)" cargo build --release -p torus-runtime --features try-runtime,testnet
     RUST_BACKTRACE=1 RUST_LOG=info try-runtime --runtime target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 8000 live --uri wss://api.testnet.torus.network
 
 try-runtime-upgrade-mainnet:
-    SKIP_WASM_BUILD=0 cargo build --release -p torus-runtime --features try-runtime
+    env -u SKIP_WASM_BUILD -u SKIP_TORUS_RUNTIME_WASM_BUILD FORCE_WASM_BUILD="$(date +%s)" cargo build --release -p torus-runtime --features try-runtime
     RUST_BACKTRACE=1 RUST_LOG=info try-runtime --runtime target/release/wbuild/torus-runtime/torus_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 8000 live --uri wss://api.torus.network
 
 # Github Actions
