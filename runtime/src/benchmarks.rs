@@ -6,6 +6,7 @@ polkadot_sdk::frame_benchmarking::define_benchmarks!(
     [pallet_balances, Balances]
     [pallet_timestamp, Timestamp]
     [pallet_sudo, Sudo]
+    [pallet_authority_admin, AuthorityAdmin]
     [pallet_emission0, Emission0]
     [pallet_governance, Governance]
     [pallet_torus0, Torus0]

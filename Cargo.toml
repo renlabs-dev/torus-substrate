@@ -35,6 +35,7 @@ torus-runtime = { path = "./runtime", default-features = false }
 torus-client = { path = "./client", default-features = false }
 pallet-governance = { path = "./pallets/governance", default-features = false }
 pallet-governance-api = { path = "./pallets/governance/api", default-features = false }
+pallet-authority-admin = { path = "./pallets/authority-admin", default-features = false }
 pallet-emission0 = { path = "./pallets/emission0", default-features = false }
 pallet-emission0-api = { path = "./pallets/emission0/api", default-features = false }
 pallet-faucet = { path = "./pallets/faucet", default-features = false }

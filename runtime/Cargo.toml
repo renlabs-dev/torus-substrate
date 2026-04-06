@@ -19,6 +19,7 @@ std = [
     "substrate-wasm-builder",
 
     "polkadot-sdk/std",
+    "pallet-authority-admin/std",
     "pallet-torus0/std",
     "pallet-emission0/std",
     "pallet-governance/std",
@@ -37,6 +38,7 @@ std = [
 ]
 runtime-benchmarks = [
     "polkadot-sdk/runtime-benchmarks",
+    "pallet-authority-admin/runtime-benchmarks",
     "pallet-torus0/runtime-benchmarks",
     "pallet-emission0/runtime-benchmarks",
     "pallet-governance/runtime-benchmarks",
@@ -48,6 +50,7 @@ runtime-benchmarks = [
 ]
 try-runtime = [
     "polkadot-sdk/try-runtime",
+    "pallet-authority-admin/try-runtime",
     "pallet-torus0/try-runtime",
     "pallet-emission0/try-runtime",
     "pallet-governance/try-runtime",
@@ -89,6 +92,7 @@ pallet-evm-precompile-sha3fips.workspace = true
 pallet-evm-precompile-simple.workspace = true
 
 # Local
+pallet-authority-admin.workspace = true
 pallet-torus0.workspace = true
 pallet-emission0.workspace = true
 pallet-governance.workspace = true
