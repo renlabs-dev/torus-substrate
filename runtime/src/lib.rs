@@ -37,7 +37,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("torus-runtime"),
     impl_name: create_runtime_str!("torus-runtime"),
     authoring_version: 1,
-    spec_version: 26,
+    spec_version: 27,
     impl_version: 1,
     apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -156,6 +156,9 @@ mod runtime {
 
     #[runtime::pallet_index(15)]
     pub type Faucet = pallet_faucet::Pallet<Runtime>;
+
+    #[runtime::pallet_index(16)]
+    pub type AuthorityAdmin = pallet_authority_admin::Pallet<Runtime>;
 }
 
 parameter_types! {

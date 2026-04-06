@@ -8435,6 +8435,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-authority-admin"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "scale-info",
+]
+
+[[package]]
 name = "pallet-authority-discovery"
 version = "38.0.0"
 source = "git+https://github.com/paritytech/polkadot-sdk.git?branch=stable2409#492786da44f1b8ac433f6d98b659d96d2e74e0fc"
@@ -19093,6 +19102,7 @@ dependencies = [
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
+ "pallet-authority-admin",
  "pallet-emission0",
  "pallet-ethereum",
  "pallet-evm",

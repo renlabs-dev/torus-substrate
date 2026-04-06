@@ -1,5 +1,33 @@
 # Changelog
 
+## Spec 27
+
+This release introduces an explicit admin-controlled authority rotation path for the solo-chain runtime, replacing ad hoc emergency storage mutation workflows with a dedicated runtime extrinsic.
+
+### Authority Administration
+
+The runtime now includes a dedicated `authorityAdmin` pallet for privileged consensus authority management:
+
+- Adds the `authorityAdmin.setAuthorities` extrinsic, callable through Root origin, for rotating the full Aura and GRANDPA authority sets in a single runtime call.
+- Provides a clean operational path for `sudo.sudo(...)`-based validator key rotation without coupling consensus administration into `torus0`.
+- Exposes authority rotation through runtime metadata, making the operation auditable and repeatable through standard tooling.
+
+### Aura And GRANDPA Rotation
+
+Authority rotation now updates both block production and finality authorities together:
+
+- Aura authorities are replaced immediately, allowing the new authoring set to take effect without a separate runtime upgrade for each rotation event.
+- GRANDPA changes are scheduled with zero delay and validated to reject empty authority sets, zero-weight authorities, and overlapping pending changes.
+- Emits an `AuthoritySetChanged` event after a successful update so operators and indexers can track authority rotations directly from chain events.
+
+### Solo-Chain GRANDPA Compatibility
+
+The new admin path handles the current runtime's no-session GRANDPA configuration:
+
+- GRANDPA `CurrentSetId` is incremented as part of the admin rotation flow because this runtime does not rely on `pallet_session` to advance GRANDPA set tracking.
+- Keeps the runtime behavior aligned with GRANDPA's expected set-id progression for authority changes while preserving the existing solo-chain architecture.
+- Includes targeted tests covering invalid origins, invalid authority inputs, pending-change rejection, and successful Aura/GRANDPA rotation behavior.
+
 ## Spec 26
 
 This release introduces wallet stake delegation permissions, enabling secure delegation of staking operations to trusted accounts while maintaining control over funds.

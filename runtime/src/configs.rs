@@ -298,6 +298,14 @@ impl pallet_grandpa::Config for Runtime {
     type WeightInfo = ();
 }
 
+// --- Authority Admin ---
+
+impl pallet_authority_admin::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type AdminOrigin = frame_system::EnsureRoot<AccountId>;
+    type WeightInfo = pallet_authority_admin::weights::SubstrateWeight<Runtime>;
+}
+
 // --- Torus ---
 
 const fn as_tors(val: u128) -> u128 {
