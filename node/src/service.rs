@@ -163,6 +163,30 @@ type AuraData = Pin<
     >,
 >;
 
+fn aura_inherent_data_providers(
+    timestamp: sp_timestamp::InherentDataProvider,
+    slot_duration: sp_consensus_aura::SlotDuration,
+    target_gas_price: u64,
+) -> InherentDataProviders {
+    let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+        *timestamp,
+        slot_duration,
+    );
+    let dynamic_fee = fp_dynamic_fee::InherentDataProvider(target_gas_price.into());
+    (slot, timestamp, dynamic_fee)
+}
+
+fn aura_next_slot_timestamp(
+    current: sp_timestamp::InherentDataProvider,
+    slot_duration: sp_consensus_aura::SlotDuration,
+) -> sp_timestamp::InherentDataProvider {
+    let next_slot = current
+        .timestamp()
+        .as_millis()
+        .saturating_add(slot_duration.as_millis());
+    sp_timestamp::InherentDataProvider::new(next_slot.into())
+}
+
 fn aura_data_provider(
     slot_duration: sp_consensus_aura::SlotDuration,
     target_gas_price: u64,
@@ -170,13 +194,28 @@ fn aura_data_provider(
     move |_, ()| {
         Box::pin(async move {
             let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
-            let slot =
-            sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                *timestamp,
+            Ok(aura_inherent_data_providers(
+                timestamp,
                 slot_duration,
-            );
-            let dynamic_fee = fp_dynamic_fee::InherentDataProvider(target_gas_price.into());
-            Ok((slot, timestamp, dynamic_fee))
+                target_gas_price,
+            ))
+        })
+    }
+}
+
+fn aura_pending_data_provider(
+    slot_duration: sp_consensus_aura::SlotDuration,
+    target_gas_price: u64,
+) -> impl Fn(sp_core::H256, ()) -> AuraData {
+    move |_, ()| {
+        Box::pin(async move {
+            let current = sp_timestamp::InherentDataProvider::from_system_time();
+            let timestamp = aura_next_slot_timestamp(current, slot_duration);
+            Ok(aura_inherent_data_providers(
+                timestamp,
+                slot_duration,
+                target_gas_price,
+            ))
         })
     }
 }
@@ -553,7 +592,7 @@ pub async fn new_full<Network: sc_network::NetworkBackend<Block, <Block as Block
                 fee_history_cache_limit,
                 execute_gas_limit_multiplier: eth_config.execute_gas_limit_multiplier,
                 forced_parent_hashes: None,
-                pending_create_inherent_data_providers: aura_data_provider(
+                pending_create_inherent_data_providers: aura_pending_data_provider(
                     slot_duration,
                     eth_config.target_gas_price,
                 ),
@@ -602,4 +641,19 @@ pub async fn new_full<Network: sc_network::NetworkBackend<Block, <Block as Block
 
     network_starter.start_network();
     Ok(task_manager)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn aura_next_slot_timestamp_advances_by_slot_duration() {
+        let current = sp_timestamp::InherentDataProvider::new(1_000_u64.into());
+        let slot_duration = sp_consensus_aura::SlotDuration::from_millis(6_000);
+
+        let timestamp = aura_next_slot_timestamp(current, slot_duration);
+
+        assert_eq!(timestamp.timestamp().as_millis(), 7_000);
+    }
 }

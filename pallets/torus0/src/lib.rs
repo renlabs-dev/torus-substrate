@@ -34,7 +34,7 @@ use crate::{agent::Agent, burn::BurnConfiguration, fee::ValidatorFeeConstraints}
 
 #[frame::pallet]
 pub mod pallet {
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(6);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
 
     use frame::prelude::BlockNumberFor;
     use pallet_emission0_api::Emission0Api;
