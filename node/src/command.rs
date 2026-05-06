@@ -18,7 +18,11 @@
 use benchmarking::{RemarkBuilder, TransferKeepAliveBuilder, inherent_benchmark_data};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::TryFutureExt;
-use polkadot_sdk::{sc_cli::SubstrateCli, sc_service::PartialComponents, *};
+use polkadot_sdk::{
+    sc_cli::SubstrateCli,
+    sc_service::{Configuration, PartialComponents, config::KeystoreConfig},
+    *,
+};
 use torus_runtime::interface::Block;
 
 use crate::{
@@ -28,6 +32,22 @@ use crate::{
 };
 
 mod benchmarking;
+
+fn selected_keystore_config(
+    keystore_in_memory: bool,
+    configured: KeystoreConfig,
+) -> KeystoreConfig {
+    if keystore_in_memory {
+        KeystoreConfig::InMemory
+    } else {
+        configured
+    }
+}
+
+fn apply_keystore_config(mut config: Configuration, keystore_in_memory: bool) -> Configuration {
+    config.keystore = selected_keystore_config(keystore_in_memory, config.keystore);
+    config
+}
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -223,6 +243,8 @@ pub fn run() -> sc_cli::Result<()> {
         None => {
             let runner = cli.create_runner(&cli.run)?;
             runner.run_node_until_exit(|config| async move {
+                let config = apply_keystore_config(config, cli.keystore_in_memory);
+
                 match config.network.network_backend {
                     sc_network::config::NetworkBackendType::Libp2p => {
                         service::new_full::<sc_network::NetworkWorker<_, _>>(
@@ -245,5 +267,36 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             })
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn selected_keystore_config_preserves_configured_keystore_by_default() {
+        let configured = KeystoreConfig::Path {
+            path: PathBuf::from("/tmp/torus-keystore"),
+            password: None,
+        };
+
+        let selected = selected_keystore_config(false, configured);
+
+        assert!(matches!(selected, KeystoreConfig::Path { .. }));
+    }
+
+    #[test]
+    fn selected_keystore_config_uses_in_memory_when_requested() {
+        let configured = KeystoreConfig::Path {
+            path: PathBuf::from("/tmp/torus-keystore"),
+            password: None,
+        };
+
+        let selected = selected_keystore_config(true, configured);
+
+        assert!(matches!(selected, KeystoreConfig::InMemory));
+        assert!(selected.path().is_none());
     }
 }
