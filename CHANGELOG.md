@@ -1,5 +1,18 @@
 # Changelog
 
+## Spec 29
+
+This release migrates the allocator role to the current sudo key.
+
+### Allocator Migration
+
+- Runtime `spec_version` is bumped from `28` to `29`.
+- Governance storage version is bumped from `5` to `6`.
+- The migration reads the current sudo key and makes it the only governance allocator.
+- The sudo allocator is whitelisted, funded with the current registration burn from the DAO treasury, and registered through the normal `torus0` registration path.
+- Existing stake to prior allocators is transferred to the sudo allocator through the `torus0` staking path before prior allocator agents are deregistered.
+- Prior allocator agents are deregistered through the `torus0` deregistration path after their inbound stake has moved.
+
 ## Spec 27
 
 This release introduces an explicit admin-controlled authority rotation path for the solo-chain runtime, replacing ad hoc emergency storage mutation workflows with a dedicated runtime extrinsic.
