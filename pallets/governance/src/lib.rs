@@ -41,7 +41,7 @@ use crate::{
 pub mod pallet {
     #![allow(clippy::too_many_arguments)]
 
-    const STORAGE_VERSION: StorageVersion = StorageVersion::new(5);
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(6);
 
     use pallet_permission0_api::{CuratorPermissions, Permission0Api, Permission0CuratorApi};
     use polkadot_sdk::sp_core::ConstBool;
