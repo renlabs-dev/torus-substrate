@@ -51,6 +51,30 @@ pub struct Cli {
     #[arg(long, default_value = "aura")]
     pub consensus: Consensus,
 
+    /// Keep session keys only in memory.
+    ///
+    /// This disables the on-disk keystore entirely. Keys must be injected at
+    /// runtime through RPC and are lost on restart.
+    #[arg(
+        long,
+        conflicts_with_all = [
+            "alice",
+            "bob",
+            "charlie",
+            "dave",
+            "dev",
+            "eve",
+            "ferdie",
+            "keystore_path",
+            "one",
+            "password",
+            "password_filename",
+            "password_interactive",
+            "two"
+        ]
+    )]
+    pub keystore_in_memory: bool,
+
     #[clap(flatten)]
     pub run: RunCmd,
 
@@ -92,4 +116,53 @@ pub enum Subcommand {
     /// Sub-commands concerned with benchmarking.
     #[command(subcommand)]
     Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::{Parser, error::ErrorKind};
+
+    #[test]
+    fn parses_keystore_in_memory_flag() {
+        let cli = Cli::try_parse_from([
+            "torus-node",
+            "--chain",
+            "dev",
+            "--validator",
+            "--keystore-in-memory",
+        ])
+        .expect("valid CLI arguments");
+
+        assert!(cli.keystore_in_memory);
+    }
+
+    #[test]
+    fn rejects_keystore_in_memory_with_on_disk_keystore_path() {
+        let error = Cli::try_parse_from([
+            "torus-node",
+            "--keystore-in-memory",
+            "--keystore-path",
+            "/tmp/torus-keystore",
+        ])
+        .expect_err("conflicting keystore options should fail");
+
+        assert_eq!(error.kind(), ErrorKind::ArgumentConflict);
+    }
+
+    #[test]
+    fn rejects_keystore_in_memory_with_dev_key_shortcuts() {
+        let error = Cli::try_parse_from(["torus-node", "--keystore-in-memory", "--alice"])
+            .expect_err("dev key shortcuts should fail");
+
+        assert_eq!(error.kind(), ErrorKind::ArgumentConflict);
+    }
+
+    #[test]
+    fn rejects_keystore_in_memory_with_dev_mode() {
+        let error = Cli::try_parse_from(["torus-node", "--keystore-in-memory", "--dev"])
+            .expect_err("dev mode should fail");
+
+        assert_eq!(error.kind(), ErrorKind::ArgumentConflict);
+    }
 }
